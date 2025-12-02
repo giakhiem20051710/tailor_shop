@@ -1,0 +1,691 @@
+import { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import Header from "../components/Header.jsx";
+import { addOrder } from "../utils/orderStorage";
+import { isAuthenticated, getCurrentUserRole, getCurrentUser, ROLES } from "../utils/authStorage";
+
+const CustomerOrderPage = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const productFromDetail = location.state?.product;
+  const promoCodeFromPromotions = location.state?.promoCode;
+
+  const [formData, setFormData] = useState({
+    name: "",
+    phone: "",
+    email: "",
+    address: "",
+    productName: productFromDetail?.name || "",
+    productType: productFromDetail?.tag || "",
+    description: productFromDetail?.desc || productFromDetail?.description || "",
+    budget: "",
+    dueDate: "",
+    notes: "",
+    promoCode: promoCodeFromPromotions || "",
+    measurements: {
+      height: "",
+      weight: "",
+      chest: "",
+      waist: "",
+      hips: "",
+      shoulder: "",
+      sleeve: "",
+      pantsLength: "",
+      shirtLength: "",
+    },
+    appointmentType: "pickup", // pickup hoặc delivery
+    appointmentTime: "",
+  });
+
+  const [currentStep, setCurrentStep] = useState(1);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  // Kiểm tra đăng nhập khi component mount
+  useEffect(() => {
+    const checkAuth = () => {
+      const authenticated = isAuthenticated();
+      const userRole = getCurrentUserRole();
+      
+      // Cho phép nếu đã đăng nhập (bất kỳ role nào) hoặc chưa đăng nhập
+      // Nhưng sẽ hiển thị thông báo nếu chưa đăng nhập
+      setIsLoggedIn(authenticated);
+      setIsCheckingAuth(false);
+    };
+
+    checkAuth();
+  }, []);
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    if (name.startsWith("measurements.")) {
+      const measurementKey = name.split(".")[1];
+      setFormData((prev) => ({
+        ...prev,
+        measurements: {
+          ...prev.measurements,
+          [measurementKey]: value,
+        },
+      }));
+    } else {
+      setFormData((prev) => ({
+        ...prev,
+        [name]: value,
+      }));
+    }
+  };
+
+  const handleNext = () => {
+    if (currentStep === 1) {
+      // Validate step 1
+      if (!formData.name || !formData.phone || !formData.email) {
+        alert("Vui lòng điền đầy đủ thông tin liên hệ");
+        return;
+      }
+    } else if (currentStep === 2) {
+      // Validate step 2
+      if (!formData.productName) {
+        alert("Vui lòng nhập tên sản phẩm");
+        return;
+      }
+    }
+    setCurrentStep(currentStep + 1);
+  };
+
+  const handleBack = () => {
+    setCurrentStep(currentStep - 1);
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+
+    // Nếu chưa ở bước 3 mà form bị submit (ví dụ nhấn Enter), chuyển người dùng tới bước nhập số đo
+    if (currentStep < 3) {
+      setCurrentStep(3);
+      return;
+    }
+
+    // Validate bước 3: yêu cầu phải nhập ít nhất một số đo
+    const measurementValues = Object.values(formData.measurements || {});
+    const hasAnyMeasurement = measurementValues.some(
+      (value) => value !== null && value !== undefined && String(value).trim() !== ""
+    );
+
+    if (!hasAnyMeasurement) {
+      alert("Vui lòng nhập ít nhất một số đo trước khi gửi đơn.");
+      return;
+    }
+
+    // Lấy thông tin người dùng hiện tại (nếu có) để gắn vào đơn
+    const currentUser = getCurrentUser();
+    const appointmentDate =
+      formData.appointmentTime?.split("T")[0] || formData.dueDate || "";
+
+    // Tạo đơn hàng
+    const newOrder = {
+      name: formData.name,
+      phone: formData.phone,
+      email: formData.email,
+      address: formData.address,
+      productName: formData.productName,
+      productType: formData.productType,
+      description: formData.description,
+      budget: formData.budget,
+      dueDate: formData.dueDate,
+      notes: formData.notes,
+      measurements: formData.measurements,
+      appointmentType: formData.appointmentType,
+      appointmentTime: formData.appointmentTime,
+      appointmentDate,
+      promoCode: formData.promoCode,
+      receive: new Date().toISOString().split("T")[0],
+      due: formData.dueDate || "",
+      total: formData.budget ? parseInt(formData.budget.replace(/,/g, "")) : 0,
+      status: "Mới",
+      sampleImages: null,
+      customerId: currentUser?.username,
+      createdAt: new Date().toISOString(),
+    };
+
+    addOrder(newOrder);
+    setShowSuccess(true);
+
+    setTimeout(() => {
+      navigate("/customer/dashboard");
+    }, 2000);
+  };
+
+  // Nếu đang kiểm tra auth, hiển thị loading
+  if (isCheckingAuth) {
+    return (
+      <div className="min-h-screen bg-[#F5F3EF] text-[#1F2933] body-font antialiased">
+        <Header />
+        <div className="pt-[170px] md:pt-[190px] pb-16 flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#1B4332] mx-auto mb-4"></div>
+            <p className="text-[#6B7280]">Đang kiểm tra...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Nếu chưa đăng nhập, hiển thị thông báo
+  if (!isLoggedIn) {
+    return (
+      <div className="min-h-screen bg-[#F5F3EF] text-[#1F2933] body-font antialiased">
+        <Header />
+
+        <div className="pt-[170px] md:pt-[190px] pb-16">
+          <div className="max-w-2xl mx-auto px-5 lg:px-8">
+            <div className="bg-white rounded-2xl p-8 md:p-12 shadow-sm text-center">
+              <div className="text-6xl mb-6">🔒</div>
+              <h1 className="heading-font text-[24px] md:text-[28px] text-[#111827] mb-4">
+                Vui lòng đăng nhập
+              </h1>
+              <p className="text-[14px] text-[#6B7280] mb-8 max-w-md mx-auto">
+                Để đặt may, bạn cần đăng nhập vào tài khoản của mình. Nếu chưa
+                có tài khoản, vui lòng đăng ký trước.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <button
+                  onClick={() => navigate("/login/customer")}
+                  className="px-6 py-3 text-[14px] font-medium bg-[#1B4332] text-white rounded-full hover:bg-[#14532d] transition-all duration-300"
+                >
+                  Đăng nhập
+                </button>
+                <button
+                  onClick={() => navigate("/register")}
+                  className="px-6 py-3 text-[14px] font-medium border-2 border-[#1B4332] text-[#1B4332] rounded-full hover:bg-[#1B4332] hover:text-white transition-all duration-300"
+                >
+                  Đăng ký
+                </button>
+              </div>
+              <div className="mt-6 pt-6 border-t border-[#E5E7EB]">
+                <button
+                  onClick={() => navigate(-1)}
+                  className="text-[13px] text-[#6B7280] hover:text-[#111827] transition-colors"
+                >
+                  ← Quay lại trang trước
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-[#F5F3EF] text-[#1F2933] body-font antialiased">
+      <Header />
+
+      {/* Popup thông báo đặt đơn thành công */}
+      {showSuccess && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-2xl shadow-xl px-8 py-6 max-w-sm w-full text-center">
+            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-green-100">
+              <span className="text-2xl text-green-600">✔</span>
+            </div>
+            <h2 className="text-lg font-semibold text-[#111827] mb-2">
+              Đặt may thành công!
+            </h2>
+            <p className="text-sm text-[#6B7280] mb-3">
+              Cảm ơn bạn đã tin tưởng. Chúng tôi sẽ liên hệ với bạn trong thời gian sớm nhất.
+            </p>
+            <p className="text-xs text-[#9CA3AF]">
+              Hệ thống sẽ tự động chuyển bạn về trang quản lý đơn hàng sau giây lát...
+            </p>
+          </div>
+        </div>
+      )}
+
+      <div className="pt-[170px] md:pt-[190px] pb-16">
+        <div className="max-w-4xl mx-auto px-5 lg:px-8">
+          {/* Header */}
+          <div className="text-center mb-8">
+            <h1 className="heading-font text-[28px] md:text-[32px] text-[#111827] mb-2">
+              Đặt may theo yêu cầu
+            </h1>
+            <p className="text-[14px] text-[#6B7280]">
+              Điền thông tin bên dưới, chúng tôi sẽ liên hệ lại để tư vấn chi
+              tiết
+            </p>
+          </div>
+
+          {/* Progress Steps */}
+          <div className="mb-8">
+            <div className="flex items-center justify-between mb-4">
+              {[1, 2, 3].map((step) => (
+                <div key={step} className="flex items-center flex-1">
+                  <div className="flex flex-col items-center flex-1">
+                    <div
+                      className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold transition-colors ${
+                        currentStep >= step
+                          ? "bg-[#1B4332] text-white"
+                          : "bg-gray-200 text-gray-500"
+                      }`}
+                    >
+                      {step}
+                    </div>
+                    <span className="text-xs mt-2 text-center text-[#6B7280]">
+                      {step === 1 && "Thông tin"}
+                      {step === 2 && "Sản phẩm"}
+                      {step === 3 && "Số đo"}
+                    </span>
+                  </div>
+                  {step < 3 && (
+                    <div
+                      className={`h-1 flex-1 mx-2 ${
+                        currentStep > step ? "bg-[#1B4332]" : "bg-gray-200"
+                      }`}
+                    />
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Form */}
+          <form onSubmit={handleSubmit} className="bg-white rounded-2xl p-6 md:p-8 shadow-sm">
+            {/* Step 1: Thông tin liên hệ */}
+            {currentStep === 1 && (
+              <div className="space-y-6">
+                <h2 className="text-[18px] font-semibold text-[#111827] mb-4">
+                  Thông tin liên hệ
+                </h2>
+
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-[#374151] mb-2">
+                      Họ và tên <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      name="name"
+                      value={formData.name}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-2.5 border border-[#E5E7EB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B4332] focus:border-transparent"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-[#374151] mb-2">
+                      Số điện thoại <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="tel"
+                      name="phone"
+                      value={formData.phone}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-2.5 border border-[#E5E7EB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B4332] focus:border-transparent"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-[#374151] mb-2">
+                      Email <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="email"
+                      name="email"
+                      value={formData.email}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-2.5 border border-[#E5E7EB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B4332] focus:border-transparent"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-[#374151] mb-2">
+                      Địa chỉ
+                    </label>
+                    <input
+                      type="text"
+                      name="address"
+                      value={formData.address}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-2.5 border border-[#E5E7EB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B4332] focus:border-transparent"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Step 2: Thông tin sản phẩm */}
+            {currentStep === 2 && (
+              <div className="space-y-6">
+                <h2 className="text-[18px] font-semibold text-[#111827] mb-4">
+                  Thông tin sản phẩm
+                </h2>
+
+                <div>
+                  <label className="block text-sm font-medium text-[#374151] mb-2">
+                    Tên sản phẩm <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    name="productName"
+                    value={formData.productName}
+                    onChange={handleInputChange}
+                    className="w-full px-4 py-2.5 border border-[#E5E7EB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B4332] focus:border-transparent"
+                    placeholder="Ví dụ: Áo dài cưới, Vest công sở..."
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-[#374151] mb-2">
+                    Loại sản phẩm
+                  </label>
+                  <input
+                    type="text"
+                    name="productType"
+                    value={formData.productType}
+                    onChange={handleInputChange}
+                    className="w-full px-4 py-2.5 border border-[#E5E7EB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B4332] focus:border-transparent"
+                    placeholder="Ví dụ: Áo dài, Vest, Đầm..."
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-[#374151] mb-2">
+                    Mô tả chi tiết
+                  </label>
+                  <textarea
+                    name="description"
+                    value={formData.description}
+                    onChange={handleInputChange}
+                    rows={4}
+                    className="w-full px-4 py-2.5 border border-[#E5E7EB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B4332] focus:border-transparent"
+                    placeholder="Mô tả về sản phẩm bạn muốn may, màu sắc, chất liệu mong muốn..."
+                  />
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-[#374151] mb-2">
+                      Ngân sách dự kiến
+                    </label>
+                    <input
+                      type="text"
+                      name="budget"
+                      value={formData.budget}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-2.5 border border-[#E5E7EB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B4332] focus:border-transparent"
+                      placeholder="Ví dụ: 2.500.000"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-[#374151] mb-2">
+                      Ngày cần nhận
+                    </label>
+                    <input
+                      type="date"
+                      name="dueDate"
+                      value={formData.dueDate}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-2.5 border border-[#E5E7EB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B4332] focus:border-transparent"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-[#374151] mb-2">
+                    Ghi chú thêm
+                  </label>
+                  <textarea
+                    name="notes"
+                    value={formData.notes}
+                    onChange={handleInputChange}
+                    rows={3}
+                    className="w-full px-4 py-2.5 border border-[#E5E7EB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B4332] focus:border-transparent"
+                    placeholder="Bất kỳ yêu cầu đặc biệt nào khác..."
+                  />
+                </div>
+
+                {/* Mã giảm giá */}
+                {promoCodeFromPromotions && (
+                  <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+                    <p className="text-sm font-medium text-green-800 mb-2">
+                      🎁 Mã giảm giá đã được áp dụng
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-green-700">Mã:</span>
+                      <span className="px-3 py-1 bg-green-100 text-green-800 rounded font-mono font-semibold text-sm">
+                        {promoCodeFromPromotions}
+                      </span>
+                    </div>
+                  </div>
+                )}
+                <div>
+                  <label className="block text-sm font-medium text-[#374151] mb-2">
+                    Mã giảm giá (nếu có)
+                  </label>
+                  <input
+                    type="text"
+                    name="promoCode"
+                    value={formData.promoCode}
+                    onChange={handleInputChange}
+                    className="w-full px-4 py-2.5 border border-[#E5E7EB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B4332] focus:border-transparent"
+                    placeholder="Nhập mã giảm giá"
+                  />
+                  {formData.promoCode && (
+                    <p className="text-xs text-[#6B7280] mt-1">
+                      Mã giảm giá sẽ được xác nhận khi chúng tôi liên hệ với bạn.
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Step 3: Số đo */}
+            {currentStep === 3 && (
+              <div className="space-y-6">
+                <h2 className="text-[18px] font-semibold text-[#111827] mb-4">
+                  Số đo (tùy chọn)
+                </h2>
+                <p className="text-sm text-[#6B7280] mb-6">
+                  Nếu bạn đã có số đo, vui lòng điền vào. Nếu chưa, chúng tôi
+                  sẽ đo khi bạn đến tiệm.
+                </p>
+
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-[#374151] mb-2">
+                      Chiều cao (cm)
+                    </label>
+                    <input
+                      type="number"
+                      name="measurements.height"
+                      value={formData.measurements.height}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-2.5 border border-[#E5E7EB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B4332] focus:border-transparent"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-[#374151] mb-2">
+                      Cân nặng (kg)
+                    </label>
+                    <input
+                      type="number"
+                      name="measurements.weight"
+                      value={formData.measurements.weight}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-2.5 border border-[#E5E7EB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B4332] focus:border-transparent"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-[#374151] mb-2">
+                      Vòng ngực (cm)
+                    </label>
+                    <input
+                      type="number"
+                      name="measurements.chest"
+                      value={formData.measurements.chest}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-2.5 border border-[#E5E7EB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B4332] focus:border-transparent"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-[#374151] mb-2">
+                      Vòng eo (cm)
+                    </label>
+                    <input
+                      type="number"
+                      name="measurements.waist"
+                      value={formData.measurements.waist}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-2.5 border border-[#E5E7EB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B4332] focus:border-transparent"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-[#374151] mb-2">
+                      Vòng mông (cm)
+                    </label>
+                    <input
+                      type="number"
+                      name="measurements.hips"
+                      value={formData.measurements.hips}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-2.5 border border-[#E5E7EB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B4332] focus:border-transparent"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-[#374151] mb-2">
+                      Vai (cm)
+                    </label>
+                    <input
+                      type="number"
+                      name="measurements.shoulder"
+                      value={formData.measurements.shoulder}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-2.5 border border-[#E5E7EB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B4332] focus:border-transparent"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-[#374151] mb-2">
+                      Tay áo (cm)
+                    </label>
+                    <input
+                      type="number"
+                      name="measurements.sleeve"
+                      value={formData.measurements.sleeve}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-2.5 border border-[#E5E7EB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B4332] focus:border-transparent"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-[#374151] mb-2">
+                      Dài áo (cm)
+                    </label>
+                    <input
+                      type="number"
+                      name="measurements.shirtLength"
+                      value={formData.measurements.shirtLength}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-2.5 border border-[#E5E7EB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B4332] focus:border-transparent"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-[#374151] mb-2">
+                      Dài quần (cm)
+                    </label>
+                    <input
+                      type="number"
+                      name="measurements.pantsLength"
+                      value={formData.measurements.pantsLength}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-2.5 border border-[#E5E7EB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B4332] focus:border-transparent"
+                    />
+                  </div>
+                </div>
+
+                <div className="mt-6 p-4 bg-[#F9FAFB] rounded-lg">
+                  <h3 className="text-sm font-semibold text-[#111827] mb-2">
+                    Lịch hẹn
+                  </h3>
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-[#374151] mb-2">
+                        Cách nhận đồ
+                      </label>
+                      <select
+                        name="appointmentType"
+                        value={formData.appointmentType}
+                        onChange={handleInputChange}
+                        className="w-full px-4 py-2.5 border border-[#E5E7EB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B4332] focus:border-transparent"
+                      >
+                        <option value="pickup">Nhận tại tiệm</option>
+                        <option value="delivery">Giao hàng tận nơi</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-[#374151] mb-2">
+                        Thời gian hẹn (nếu nhận tại tiệm)
+                      </label>
+                      <input
+                        type="datetime-local"
+                        name="appointmentTime"
+                        value={formData.appointmentTime}
+                        onChange={handleInputChange}
+                        className="w-full px-4 py-2.5 border border-[#E5E7EB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B4332] focus:border-transparent"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Navigation Buttons */}
+            <div className="flex justify-between mt-8 pt-6 border-t border-[#E5E7EB]">
+              {currentStep > 1 ? (
+                <button
+                  type="button"
+                  onClick={handleBack}
+                  className="px-6 py-2.5 text-[14px] font-medium border-2 border-[#1B4332] text-[#1B4332] rounded-full hover:bg-[#1B4332] hover:text-white transition-all duration-300"
+                >
+                  ← Quay lại
+                </button>
+              ) : (
+                <div></div>
+              )}
+
+              {currentStep < 3 ? (
+                <button
+                  type="button"
+                  onClick={handleNext}
+                  className="px-6 py-2.5 text-[14px] font-medium bg-[#1B4332] text-white rounded-full hover:bg-[#14532d] transition-all duration-300"
+                >
+                  Tiếp theo →
+                </button>
+              ) : (
+                <button
+                  type="submit"
+                  className="px-6 py-2.5 text-[14px] font-medium bg-[#1B4332] text-white rounded-full hover:bg-[#14532d] transition-all duration-300"
+                >
+                  Gửi đơn đặt may
+                </button>
+              )}
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default CustomerOrderPage;
+
