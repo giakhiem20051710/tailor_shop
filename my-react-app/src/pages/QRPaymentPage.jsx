@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import Header from "../components/Header.jsx";
+import usePageMeta from "../hooks/usePageMeta.jsx";
 
 export default function QRPaymentPage() {
   const navigate = useNavigate();
@@ -17,6 +18,12 @@ export default function QRPaymentPage() {
   const [timeLeft, setTimeLeft] = useState(15 * 60); // 15 phút = 900 giây
   const [qrCodeUrl, setQrCodeUrl] = useState("");
   const [transferContent, setTransferContent] = useState("");
+
+  // SEO Meta Tags
+  usePageMeta({
+    title: "Thanh toán QR Code | My Hiền Tailor",
+    description: "Thanh toán đơn hàng vải may đo bằng QR Code ngân hàng. Quét mã QR để chuyển khoản nhanh chóng và an toàn.",
+  });
 
   const formatPrice = (price) => {
     return new Intl.NumberFormat("vi-VN").format(price) + " ₫";

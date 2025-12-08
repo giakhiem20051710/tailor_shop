@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import Header from "../components/Header.jsx";
+import usePageMeta from "../hooks/usePageMeta.jsx";
 import {
   getFabricCart,
   removeFromFabricCart,
@@ -16,6 +17,12 @@ export default function FabricCartPage() {
   const [selectedItems, setSelectedItems] = useState(new Set());
   const [promoCode, setPromoCode] = useState("");
   const [discount, setDiscount] = useState(0);
+
+  // SEO Meta Tags
+  usePageMeta({
+    title: "Giỏ hàng vải | My Hiền Tailor",
+    description: "Xem và quản lý giỏ hàng vải may đo của bạn tại My Hiền Tailor. Chọn sản phẩm, áp dụng mã giảm giá và tiến hành thanh toán.",
+  });
 
   useEffect(() => {
     const cart = getFabricCart();

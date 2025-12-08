@@ -2,11 +2,18 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import RegisterHeader from "../components/register/RegisterHeader.jsx";
 import RegisterForm from "../components/register/RegisterForm.jsx";
+import usePageMeta from "../hooks/usePageMeta";
 
 export default function RegisterPage() {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+
+  usePageMeta({
+    title: "Đăng ký tài khoản | Tiệm May Admin",
+    description:
+      "Tạo tài khoản mới để đăng nhập và quản lý đơn hàng trong hệ thống Tiệm May Admin.",
+  });
 
   // No authentication check - users can access this page freely
 

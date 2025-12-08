@@ -1,11 +1,16 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "../components/Header.jsx";
+import usePageMeta from "../hooks/usePageMeta";
+import ProductSchema from "../components/schema/ProductSchema.jsx";
 import {
   getFabricHolds,
   addFabricHold,
   addFabricVisit,
 } from "../utils/fabricHoldStorage.js";
+import { getWorkingSlots, updateWorkingSlot } from "../utils/workingSlotStorage";
+import { addAppointment } from "../utils/appointmentStorage";
+import { getCurrentUser } from "../utils/authStorage";
 
 const baseFabrics = [
   {
@@ -259,14 +264,99 @@ export default function FabricsPage() {
   const [visitKeys, setVisitKeys] = useState([]);
   const [message, setMessage] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [flashNow, setFlashNow] = useState(() => new Date());
+  const [visitModalOpen, setVisitModalOpen] = useState(false);
+  const [selectedFabric, setSelectedFabric] = useState(null);
+  const [visitSlots, setVisitSlots] = useState([]);
+  const [selectedDate, setSelectedDate] = useState("");
+  const [selectedSlotId, setSelectedSlotId] = useState("");
   const itemsPerPage = 18;
   const navigate = useNavigate();
+  const schemaFabrics = useMemo(
+    () =>
+      fabrics.map((fabric) => ({
+        name: fabric.name,
+        desc: fabric.desc,
+        image: fabric.image,
+        price: fabric.price,
+        key: fabric.key,
+        category: fabric.tag,
+        material: fabric.specs?.composition,
+      })),
+    []
+  );
+
+  usePageMeta({
+    title: "Kho vải lụa, linen, satin | My Hiền Tailor",
+    description:
+      "Chọn vải lụa, linen, satin, cashmere... được My Hiền Tailor tuyển chọn cho áo dài, vest và đầm may đo cao cấp.",
+  });
 
   useEffect(() => {
     const holds = getFabricHolds();
     setHeldKeys(holds.filter((h) => h.type === "hold").map((h) => h.key));
     setVisitKeys(holds.filter((h) => h.type === "visit").map((h) => h.key));
   }, []);
+  // open modal for visit booking
+  const openVisitModal = (fabric) => {
+    setSelectedFabric(fabric);
+    const slots = getWorkingSlots().filter(
+      (s) => s.status === "available" && s.type === "consult"
+    );
+    setVisitSlots(slots);
+    const firstDate = slots[0]?.date || "";
+    setSelectedDate(firstDate);
+    setSelectedSlotId("");
+    setVisitModalOpen(true);
+  };
+
+  // Flash sale cấu hình: GIẢM giá vải satin trong 2 giờ
+  const flashSaleConfig = useMemo(
+    () => ({
+      title: "Flash Sale vải satin ít bóng",
+      desc: "Giảm 15% cho tất cả vải satin trong 2 giờ tới khi đặt giữ hoặc hẹn xem vải online.",
+      highlightTag: "Satin",
+      // Đặt giờ kết thúc: 2 tiếng kể từ khi người dùng mở trang
+      endsAt: new Date(flashNow.getTime() + 2 * 60 * 60 * 1000),
+    }),
+    [flashNow]
+  );
+
+  const [flashRemaining, setFlashRemaining] = useState(() =>
+    flashSaleConfig.endsAt.getTime() - Date.now()
+  );
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setFlashRemaining(flashSaleConfig.endsAt.getTime() - Date.now());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [flashSaleConfig.endsAt]);
+
+  const isFlashActive = flashRemaining > 0;
+
+  const formatCountdown = (ms) => {
+    if (ms <= 0) return "00:00:00";
+    const totalSeconds = Math.floor(ms / 1000);
+    const hours = String(Math.floor(totalSeconds / 3600)).padStart(2, "0");
+    const minutes = String(
+      Math.floor((totalSeconds % 3600) / 60)
+    ).padStart(2, "0");
+    const seconds = String(totalSeconds % 60).padStart(2, "0");
+    return `${hours}:${minutes}:${seconds}`;
+  };
+
+  const flashItems = useMemo(
+    () =>
+      fabrics
+        .filter(
+          (fabric) =>
+            fabric.tag?.toLowerCase().includes("satin") ||
+            fabric.name.toLowerCase().includes("satin")
+        )
+        .slice(0, 6),
+    []
+  );
 
   useEffect(() => {
     const section = document.getElementById("fabrics-grid-section");
@@ -281,6 +371,10 @@ export default function FabricsPage() {
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
   const paginatedFabrics = fabrics.slice(startIndex, endIndex);
+  const availableVisitDates = useMemo(
+    () => [...new Set(visitSlots.map((s) => s.date))],
+    [visitSlots]
+  );
 
   const handleHold = (fabric) => {
     const updated = addFabricHold(fabric);
@@ -292,29 +386,191 @@ export default function FabricsPage() {
     }
   };
 
-  const handleVisit = (fabric, extra) => {
-    const updated = addFabricVisit(fabric, extra);
-    if (updated) {
+  const handleVisitSubmit = () => {
+    if (!selectedFabric) return;
+    if (!selectedSlotId) {
+      alert("Vui lòng chọn khung giờ xem vải tại tiệm.");
+      return;
+    }
+    const user = getCurrentUser();
+    if (!user) {
+      alert("Vui lòng đăng nhập để đặt lịch xem vải.");
+      return;
+    }
+    const slot = visitSlots.find((s) => s.id === selectedSlotId);
+    if (!slot) return;
+    const newApp = addAppointment({
+      customerId: user.username || user.phone || "guest",
+      slotId: slot.id,
+      orderId: null,
+      type: "consult",
+      status: "pending",
+      note: `Hẹn xem vải: ${selectedFabric.name}`,
+    });
+    const nextBooked = (slot.bookedCount || 0) + 1;
+    updateWorkingSlot(slot.id, {
+      bookedCount: nextBooked,
+      status: nextBooked >= (slot.capacity || 1) ? "booked" : "available",
+    });
+    const updated = addFabricVisit(selectedFabric, {
+      slotId: slot.id,
+      appointmentId: newApp?.id,
+      visitDate: slot.date,
+      visitTime: `${slot.startTime}–${slot.endTime}`,
+    });
       setHeldKeys(updated.filter((h) => h.type === "hold").map((h) => h.key));
       setVisitKeys(updated.filter((h) => h.type === "visit").map((h) => h.key));
       setMessage(
-        `Đã ghi nhận yêu cầu hẹn xem vải “${fabric.name}”. Nhân viên sẽ gọi lại để chốt lịch.`
+      `Đã đặt lịch xem vải “${selectedFabric.name}” lúc ${slot.startTime}–${slot.endTime} ngày ${slot.date}.`
       );
-      setTimeout(() => setMessage(""), 3000);
-    }
+    setTimeout(() => setMessage(""), 3200);
+    setVisitModalOpen(false);
   };
   return (
     <div className="min-h-screen bg-[#F5F3EF] text-[#1F2933] body-font antialiased">
+      <ProductSchema items={schemaFabrics} />
       <Header currentPage="/fabrics" />
 
       <main className="pt-[170px] md:pt-[190px] pb-16">
         <div className="max-w-7xl mx-auto px-5 lg:px-8 space-y-8">
+          {isFlashActive && (
+            <section className="overflow-hidden rounded-3xl bg-[#B91C1C] text-white shadow-[0_18px_40px_rgba(185,28,28,0.45)] border border-[#F97316]">
+              {/* Banner header giống FPT */}
+              <div className="bg-gradient-to-r from-[#7F1D1D] via-[#B91C1C] to-[#7F1D1D] px-4 md:px-8 py-3 flex items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <span className="text-3xl md:text-4xl">⚡</span>
+                  <div>
+                    <p className="text-[11px] md:text-[12px] uppercase tracking-[0.3em] text-amber-200">
+                      Giờ vàng vải satin
+                    </p>
+                    <h2 className="heading-font text-[18px] md:text-[22px]">
+                      Giá cực sốc cho vải satin ít bóng
+                    </h2>
+                  </div>
+                </div>
+                <div className="text-center">
+                  <p className="text-[11px] uppercase tracking-[0.2em] text-amber-100">
+                    Kết thúc sau
+                  </p>
+                  <div className="mt-1 inline-flex items-center gap-1 rounded-full bg-black/30 px-3 py-1.5 text-sm md:text-base font-semibold">
+                    <span className="tabular-nums">
+                      {formatCountdown(flashRemaining)}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Dãy ngày flash sale đơn giản */}
+              <div className="bg-[#F9FAFB] text-[#111827] flex overflow-x-auto border-y border-[#F87171]">
+                {[0, 1, 2].map((offset) => {
+                  const date = new Date(flashNow);
+                  date.setDate(date.getDate() + offset);
+                  const isToday = offset === 0;
+                  return (
+                    <div
+                      key={offset}
+                      className={`flex-1 min-w-[120px] text-center px-4 py-2 text-[12px] border-r border-[#FCD34D] ${
+                        isToday
+                          ? "bg-[#FEE2E2] font-semibold text-[#B91C1C]"
+                          : "bg-white text-[#4B5563]"
+                      }`}
+                    >
+                      <p className="uppercase tracking-[0.16em]">
+                        {date.toLocaleDateString("vi-VN", {
+                          day: "2-digit",
+                          month: "2-digit",
+                        })}
+                      </p>
+                      <p className="mt-1">
+                        {isToday ? "Đang diễn ra" : "Sắp diễn ra"}
+                      </p>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Danh sách vải flash sale */}
+              <div className="bg-white px-4 md:px-6 pb-4 md:pb-6 pt-4">
+                <div className="flex items-center justify-between mb-3 text-[12px] text-[#6B7280]">
+                  <span>
+                    Chỉ áp dụng cho{" "}
+                    <span className="font-semibold text-[#B91C1C]">
+                      {flashItems.length} mẫu satin
+                    </span>{" "}
+                    khi đặt giữ / hẹn xem trong khung giờ này.
+                  </span>
+                  <button
+                    onClick={() => {
+                      const section = document.getElementById(
+                        "fabrics-grid-section"
+                      );
+                      if (section) {
+                        section.scrollIntoView({
+                          behavior: "smooth",
+                          block: "start",
+                        });
+                      }
+                    }}
+                    className="hidden md:inline-flex items-center gap-1 rounded-full border border-[#B91C1C] text-[#B91C1C] px-3 py-1 hover:bg-[#B91C1C] hover:text-white"
+                  >
+                    Xem tất cả vải
+                    <span>→</span>
+                  </button>
+                </div>
+
+                <div className="grid gap-3 md:grid-cols-3 lg:grid-cols-6 text-[12px]">
+                  {flashItems.map((fabric) => (
+                    <div
+                      key={fabric.key}
+                      className="border border-[#FECACA] rounded-2xl overflow-hidden bg-white hover:shadow-lg transition-shadow"
+                    >
+                      <div className="relative h-28 w-full overflow-hidden bg-gray-100">
+                        <img
+                          src={fabric.image}
+                          alt={fabric.name}
+                          className="w-full h-full object-cover"
+                          loading="lazy"
+                        />
+                        <div className="absolute left-0 top-2 bg-[#FBBF24] text-[#7C2D12] text-[10px] font-semibold px-2 py-1 rounded-r-full flex items-center gap-1">
+                          <span>⚡</span>
+                          <span>Còn 5/5 suất</span>
+                        </div>
+                      </div>
+                      <div className="p-2 space-y-1">
+                        <p className="line-clamp-2 font-semibold text-[#111827]">
+                          {fabric.name}
+                        </p>
+                        <p className="text-[11px] text-[#6B7280] line-clamp-2">
+                          {fabric.desc}
+                        </p>
+                        <div className="mt-1">
+                          <p className="text-sm font-bold text-[#B91C1C]">
+                            {fabric.price}
+                          </p>
+                          <p className="text-[10px] text-[#9CA3AF] line-through">
+                            Giá thường: {fabric.price}
+                          </p>
+                        </div>
+                        <button
+                          onClick={() => handleHold(fabric)}
+                          className="mt-1 w-full rounded-full bg-[#B91C1C] text-white text-[11px] font-semibold py-1.5 hover:bg-[#7F1D1D]"
+                        >
+                          Đặt mua ngay
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </section>
+          )}
+
           <header className="text-center max-w-2xl mx-auto space-y-3">
             <p className="text-[11px] tracking-[0.28em] uppercase text-[#9CA3AF]">
               Vải may đo chọn lọc
             </p>
             <h1 className="heading-font text-[28px] md:text-[32px] text-[#111827]">
-              Chất liệu vải đang có sẵn tại tiệm
+              Kho vải lụa, linen, satin dành cho may đo cao cấp
             </h1>
             <p className="text-[13px] text-[#6B7280]">
               Xem nhanh những chất liệu chủ lực để bạn hình dung trước phom dáng
@@ -323,8 +579,20 @@ export default function FabricsPage() {
           </header>
 
           {message && (
-            <div className="max-w-2xl mx-auto bg-emerald-50 border border-emerald-200 text-emerald-800 text-[13px] px-4 py-3 rounded-2xl shadow-sm">
-              {message}
+            <div className="fixed inset-0 z-50 flex items-start justify-center pointer-events-none">
+              <div className="mt-24 pointer-events-auto bg-white border border-emerald-200 shadow-2xl rounded-2xl px-4 py-3 text-sm text-emerald-900 flex items-start gap-3 max-w-md">
+                <span className="text-lg leading-none">✅</span>
+                <div className="flex-1">
+                  <p className="font-semibold text-emerald-900">Thành công</p>
+                  <p className="text-emerald-800">{message}</p>
+                </div>
+                <button
+                  onClick={() => setMessage("")}
+                  className="text-slate-500 hover:text-slate-800 text-xs"
+                >
+                  ✕
+                </button>
+              </div>
             </div>
           )}
 
@@ -414,7 +682,7 @@ export default function FabricsPage() {
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        navigate(`/fabrics/${fabric.key}`);
+                        openVisitModal(fabric);
                       }}
                       disabled={hasVisit}
                       className={`flex-1 px-4 py-2.5 rounded-full text-[12px] font-semibold transition ${
@@ -518,6 +786,104 @@ export default function FabricsPage() {
           )}
         </div>
       </main>
+
+      {/* Modal đặt lịch xem vải */}
+      {visitModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100">
+              <div>
+                <p className="text-xs text-slate-500 uppercase tracking-[0.2em]">
+                  Hẹn xem vải tại tiệm
+                </p>
+                <h3 className="text-lg font-semibold text-slate-900">
+                  {selectedFabric?.name || "Chọn vải"}
+                </h3>
+              </div>
+              <button
+                onClick={() => setVisitModalOpen(false)}
+                className="text-slate-500 hover:text-slate-800"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="p-4 space-y-4 text-sm">
+              <div className="bg-emerald-50 border border-emerald-100 text-emerald-800 rounded-xl p-3">
+                <p className="font-semibold">Tại Atelier My Hiền</p>
+                <p className="text-xs">
+                  123 Nguyễn Thị Minh Khai, Q.1, TP.HCM · Giờ mở cửa 7:00–23:00
+                </p>
+              </div>
+              <div className="space-y-2">
+                <p className="text-xs text-slate-600 font-semibold">Chọn ngày</p>
+                <div className="flex flex-wrap gap-2">
+                  {availableVisitDates.length === 0 && (
+                    <p className="text-xs text-slate-500">Chưa có ca tư vấn trống.</p>
+                  )}
+                  {availableVisitDates.map((date) => (
+                    <button
+                      key={date}
+                      onClick={() => setSelectedDate(date)}
+                      className={`px-3 py-2 rounded-lg border text-xs ${
+                        selectedDate === date
+                          ? "bg-emerald-600 text-white border-emerald-700"
+                          : "bg-white text-slate-700 border-slate-200 hover:border-emerald-500"
+                      }`}
+                    >
+                      {new Date(date + "T00:00:00").toLocaleDateString("vi-VN", {
+                        weekday: "short",
+                        day: "2-digit",
+                        month: "2-digit",
+                      })}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="space-y-2">
+                <p className="text-xs text-slate-600 font-semibold">Chọn giờ</p>
+                <div className="grid grid-cols-2 gap-2">
+                  {visitSlots
+                    .filter((s) => !selectedDate || s.date === selectedDate)
+                    .map((slot) => (
+                      <button
+                        key={slot.id}
+                        onClick={() => setSelectedSlotId(slot.id)}
+                        className={`px-3 py-2 rounded-lg border text-xs text-left ${
+                          selectedSlotId === slot.id
+                            ? "bg-emerald-600 text-white border-emerald-700"
+                            : "bg-white text-slate-700 border-slate-200 hover:border-emerald-500"
+                        }`}
+                      >
+                        {slot.startTime}–{slot.endTime} ·{" "}
+                        {(slot.capacity || 1) - (slot.bookedCount || 0)} chỗ trống
+                      </button>
+                    ))}
+                  {visitSlots.filter((s) => !selectedDate || s.date === selectedDate)
+                    .length === 0 && (
+                    <p className="text-xs text-slate-500 col-span-2">
+                      Chưa có khung giờ trống cho ngày đã chọn.
+                    </p>
+                  )}
+                </div>
+              </div>
+              <div className="flex justify-end gap-2 pt-2">
+                <button
+                  onClick={() => setVisitModalOpen(false)}
+                  className="px-4 py-2 rounded-full border border-slate-200 text-slate-700 text-xs"
+                >
+                  Đóng
+                </button>
+                <button
+                  onClick={handleVisitSubmit}
+                  className="px-5 py-2 rounded-full bg-emerald-700 text-white text-xs font-semibold hover:bg-emerald-800"
+                >
+                  Xác nhận lịch xem vải
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

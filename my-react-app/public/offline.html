@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Offline - My Hiền Tailor</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      background: linear-gradient(135deg, #FFFBEA 0%, #FFF3C4 100%);
+      color: #111827;
+    }
+    .container {
+      text-align: center;
+      padding: 2rem;
+      max-width: 400px;
+    }
+    h1 {
+      font-size: 2rem;
+      margin-bottom: 1rem;
+    }
+    p {
+      color: #6B7280;
+      margin-bottom: 2rem;
+    }
+    .icon {
+      font-size: 4rem;
+      margin-bottom: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="icon">📡</div>
+    <h1>Bạn đang offline</h1>
+    <p>Vui lòng kiểm tra kết nối internet và thử lại sau.</p>
+    <button onclick="window.location.reload()" style="padding: 0.75rem 1.5rem; background: #1B4332; color: white; border: none; border-radius: 0.5rem; cursor: pointer; font-weight: 500;">
+      Thử lại
+    </button>
+  </div>
+</body>
+</html>
+

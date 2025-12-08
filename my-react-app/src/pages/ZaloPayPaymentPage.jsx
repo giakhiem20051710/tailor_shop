@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import Header from "../components/Header.jsx";
+import usePageMeta from "../hooks/usePageMeta.jsx";
 
 export default function ZaloPayPaymentPage() {
   const navigate = useNavigate();
@@ -17,6 +18,12 @@ export default function ZaloPayPaymentPage() {
   const [timeLeft, setTimeLeft] = useState(15 * 60);
   const [isProcessing, setIsProcessing] = useState(false);
   const [qrCodeUrl, setQrCodeUrl] = useState("");
+
+  // SEO Meta Tags
+  usePageMeta({
+    title: "Thanh toán ZaloPay | My Hiền Tailor",
+    description: "Thanh toán đơn hàng vải may đo qua ZaloPay. Thanh toán nhanh chóng và tiện lợi qua ví điện tử ZaloPay.",
+  });
 
   const formatPrice = (price) => {
     return new Intl.NumberFormat("vi-VN").format(price) + " ₫";
@@ -237,6 +244,9 @@ export default function ZaloPayPaymentPage() {
     </div>
   );
 }
+
+
+
 
 
 

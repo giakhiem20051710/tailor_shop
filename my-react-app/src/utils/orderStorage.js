@@ -1,4 +1,5 @@
 // Utility functions for managing orders in localStorage
+import { recordReferralCompletion } from "./referralStorage.js";
 
 const STORAGE_KEY = "tailorShopOrders";
 
@@ -39,8 +40,19 @@ export const updateOrder = (orderId, updates) => {
   const orders = getOrders();
   const index = orders.findIndex((o) => o.id === orderId);
   if (index !== -1) {
+    const previousStatus = orders[index].status;
     orders[index] = { ...orders[index], ...updates };
     saveOrders(orders);
+    if (
+      orders[index].referralCode &&
+      updates.status === "Hoàn thành" &&
+      previousStatus !== "Hoàn thành"
+    ) {
+      recordReferralCompletion({
+        code: orders[index].referralCode,
+        orderId,
+      });
+    }
     return orders[index];
   }
   return null;

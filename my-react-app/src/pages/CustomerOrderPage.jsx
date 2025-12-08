@@ -3,6 +3,14 @@ import { useNavigate, useLocation } from "react-router-dom";
 import Header from "../components/Header.jsx";
 import { addOrder } from "../utils/orderStorage";
 import { isAuthenticated, getCurrentUserRole, getCurrentUser, ROLES } from "../utils/authStorage";
+import { saveCustomerMeasurements } from "../utils/customerMeasurementsStorage";
+import {
+  getReferralByCode,
+  recordReferralOnOrderCreated,
+} from "../utils/referralStorage.js";
+import usePageMeta from "../hooks/usePageMeta";
+
+const WELCOME_VOUCHER_CODE = "FRIEND-10";
 
 const CustomerOrderPage = () => {
   const navigate = useNavigate();
@@ -35,12 +43,21 @@ const CustomerOrderPage = () => {
     },
     appointmentType: "pickup", // pickup hoặc delivery
     appointmentTime: "",
+    referralCode: "",
   });
 
   const [currentStep, setCurrentStep] = useState(1);
   const [showSuccess, setShowSuccess] = useState(false);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [referralError, setReferralError] = useState("");
+  const [referralVoucher, setReferralVoucher] = useState("");
+
+  usePageMeta({
+    title: "Form đặt may theo số đo | Đặt lịch tư vấn My Hiền Tailor",
+    description:
+      "Gửi yêu cầu may đo áo dài, vest, đầm cùng số đo, ngân sách và lịch hẹn tại My Hiền Tailor TP.HCM.",
+  });
 
   // Kiểm tra đăng nhập khi component mount
   useEffect(() => {
@@ -117,12 +134,21 @@ const CustomerOrderPage = () => {
       return;
     }
 
-    // Lấy thông tin người dùng hiện tại (nếu có) để gắn vào đơn
     const currentUser = getCurrentUser();
     const appointmentDate =
       formData.appointmentTime?.split("T")[0] || formData.dueDate || "";
 
-    // Tạo đơn hàng
+    const referralInput = formData.referralCode?.trim();
+    let referralMeta = null;
+    if (referralInput) {
+      referralMeta = getReferralByCode(referralInput);
+      if (!referralMeta) {
+        setReferralError("Mã giới thiệu không hợp lệ hoặc đã hết hạn.");
+        setCurrentStep(1);
+        return;
+      }
+    }
+
     const newOrder = {
       name: formData.name,
       phone: formData.phone,
@@ -146,9 +172,37 @@ const CustomerOrderPage = () => {
       sampleImages: null,
       customerId: currentUser?.username,
       createdAt: new Date().toISOString(),
+      referralCode: referralMeta ? referralMeta.profile.code : referralInput || undefined,
+      referrerId: referralMeta?.customerId,
+      referralStatus: referralMeta ? "pending" : undefined,
     };
 
-    addOrder(newOrder);
+    const createdOrder = addOrder(newOrder);
+
+    if (referralMeta) {
+      recordReferralOnOrderCreated({
+        code: referralMeta.profile.code,
+        orderId: createdOrder.id,
+        referredName: formData.name,
+      });
+      setReferralVoucher(WELCOME_VOUCHER_CODE);
+    } else {
+      setReferralVoucher("");
+    }
+    
+    // Auto-save measurements to customer history
+    if (currentUser && formData.measurements) {
+      const customerId = currentUser.username || currentUser.phone;
+      const measurementsToSave = {
+        ...formData.measurements,
+        // Map field names to match storage format
+        hip: formData.measurements.hips || formData.measurements.hip,
+        sleeveLength: formData.measurements.sleeve || formData.measurements.sleeveLength,
+        orderId: createdOrder.id,
+      };
+      saveCustomerMeasurements(customerId, measurementsToSave);
+    }
+    
     setShowSuccess(true);
 
     setTimeout(() => {
@@ -234,6 +288,13 @@ const CustomerOrderPage = () => {
             <p className="text-sm text-[#6B7280] mb-3">
               Cảm ơn bạn đã tin tưởng. Chúng tôi sẽ liên hệ với bạn trong thời gian sớm nhất.
             </p>
+            {referralVoucher && (
+              <div className="text-sm text-[#065f46] bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-3 mb-3">
+                Bạn vừa nhận mã ưu đãi{" "}
+                <span className="font-semibold">{referralVoucher}</span> giảm 10%
+                cho đơn kế tiếp. Đừng quên chia sẻ cho bạn bè nhé!
+              </div>
+            )}
             <p className="text-xs text-[#9CA3AF]">
               Hệ thống sẽ tự động chuyển bạn về trang quản lý đơn hàng sau giây lát...
             </p>
@@ -244,13 +305,13 @@ const CustomerOrderPage = () => {
       <div className="pt-[170px] md:pt-[190px] pb-16">
         <div className="max-w-4xl mx-auto px-5 lg:px-8">
           {/* Header */}
-          <div className="text-center mb-8">
-            <h1 className="heading-font text-[28px] md:text-[32px] text-[#111827] mb-2">
-              Đặt may theo yêu cầu
+          <div className="text-center mb-8 space-y-2">
+            <h1 className="heading-font text-[30px] md:text-[34px] text-[#111827]">
+              Form đặt may theo số đo My Hiền Tailor
             </h1>
             <p className="text-[14px] text-[#6B7280]">
-              Điền thông tin bên dưới, chúng tôi sẽ liên hệ lại để tư vấn chi
-              tiết
+              Điền thông tin bên dưới, chúng tôi sẽ liên hệ lại để tư vấn chi tiết
+              và chốt lịch đo thử.
             </p>
           </div>
 
@@ -350,6 +411,36 @@ const CustomerOrderPage = () => {
                       onChange={handleInputChange}
                       className="w-full px-4 py-2.5 border border-[#E5E7EB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B4332] focus:border-transparent"
                     />
+                  </div>
+
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-[#374151] mb-2">
+                    Mã giới thiệu (nếu có)
+                  </label>
+                  <input
+                    type="text"
+                    name="referralCode"
+                    value={formData.referralCode}
+                    onChange={(e) => {
+                      setReferralError("");
+                      handleInputChange({
+                        target: {
+                          name: "referralCode",
+                          value: e.target.value.toUpperCase(),
+                        },
+                      });
+                    }}
+                    placeholder="Ví dụ: MYHI-ABCD"
+                    className={`w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B4332] ${
+                      referralError ? "border-red-400" : "border-[#E5E7EB]"
+                    }`}
+                  />
+                  <p className="text-[12px] text-[#6B7280] mt-1">
+                    Nhập mã do bạn bè chia sẻ để nhận ưu đãi 10% cho đơn đầu tiên.
+                  </p>
+                  {referralError && (
+                    <p className="text-[12px] text-red-500 mt-1">{referralError}</p>
+                  )}
                   </div>
                 </div>
               </div>

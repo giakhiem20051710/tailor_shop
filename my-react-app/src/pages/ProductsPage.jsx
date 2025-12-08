@@ -1,6 +1,9 @@
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useMemo, useState, useEffect } from "react";
 import Header from "../components/Header.jsx";
+import ProductSchema from "../components/schema/ProductSchema.jsx";
+import usePageMeta from "../hooks/usePageMeta";
+import { getStyles as getAdminStyles } from "../utils/styleStorage.js";
 import {
   getFavorites,
   addFavorite,
@@ -83,9 +86,19 @@ const FALLBACK_PRODUCT_IMAGE = femaleFashionImages.aoDaiRed;
 
 const ProductsPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [favoriteLookup, setFavoriteLookup] = useState(() =>
     buildFavoriteLookup()
   );
+
+  // Get search query from URL
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const searchParam = params.get("search");
+    if (searchParam) {
+      setSearch(decodeURIComponent(searchParam));
+    }
+  }, [location.search]);
 
   // ====== DATA GỐC ======
   const handleImageError = (event) => {
@@ -431,9 +444,55 @@ const ProductsPage = () => {
     },
   ];
 
+  const designStyleProducts = useMemo(
+    () =>
+      getAdminStyles().map((style) => ({
+        key: `style-${style.id}`,
+        name: style.name,
+        desc:
+          "Mẫu thiết kế đang dùng tại tiệm – có thể chỉnh theo số đo và chất liệu bạn chọn.",
+        price: `${Number(style.price || 0).toLocaleString("vi-VN")} ₫`,
+        tag: style.category,
+        image: style.image,
+        occasion: "daily",
+        category: "style",
+        budget: "mid",
+        type: "style",
+      })),
+    []
+  );
+
+  const schemaProducts = useMemo(() => {
+    const allProducts = [
+      ...collections,
+      ...newArrivals,
+      ...additionalProducts,
+      ...designStyleProducts,
+    ];
+    return allProducts.map((product) => ({
+      name: product.name,
+      desc: product.desc || product.description,
+      image: product.image,
+      price: product.price,
+      key: product.key,
+      category: product.category || product.tag,
+    }));
+  }, []);
+
+  usePageMeta({
+    title: "Bộ sưu tập áo dài, vest, đầm may đo | My Hiền Tailor",
+    description:
+      "Khám phá áo dài cưới, vest công sở, đầm dạ hội và trang phục hằng ngày được may đo riêng cho bạn tại My Hiền Tailor.",
+  });
+
   // Tạo thêm sản phẩm để đủ 100 sản phẩm với hình ảnh thật theo concept nữ
   const generateMoreProducts = () => {
-    const baseProducts = [...collections, ...newArrivals, ...additionalProducts];
+    const baseProducts = [
+      ...collections,
+      ...newArrivals,
+      ...additionalProducts,
+      ...designStyleProducts,
+    ];
     const moreProducts = [];
     
     const images = Object.values(femaleFashionImages);
@@ -513,7 +572,13 @@ const ProductsPage = () => {
     return moreProducts;
   };
 
-  const allProducts = [...collections, ...newArrivals, ...additionalProducts, ...generateMoreProducts()];
+  const allProducts = [
+    ...collections,
+    ...newArrivals,
+    ...additionalProducts,
+    ...designStyleProducts,
+    ...generateMoreProducts(),
+  ];
 
   // ====== FILTER STATE ======
   const [needFilter, setNeedFilter] = useState("all"); // all | wedding | office | party | daily
@@ -645,6 +710,7 @@ const ProductsPage = () => {
 
   return (
     <div className="min-h-screen bg-[#F5F3EF] text-[#1F2933] body-font antialiased">
+      <ProductSchema items={schemaProducts} />
       <Header currentPage="/products" />
 
       {/* MAIN CONTENT */}
@@ -663,9 +729,9 @@ const ProductsPage = () => {
                   Lavi Tailor · Curated Looks
                 </p>
                 <h1 className="heading-font text-[26px] md:text-[30px] leading-snug text-[#1B4332]">
-                  Tìm thiết kế may đo
+                  Bộ sưu tập may đo của My Hiền Tailor
                   <span className="block text-[#111827]">
-                    phù hợp đúng dịp & đúng “gu” của bạn.
+                    áo dài · vest · đầm chuẩn dáng & đúng dịp của bạn
                   </span>
                 </h1>
                 <p className="text-[13px] md:text-[14px] text-[#4B5563] max-w-xl">
@@ -930,19 +996,32 @@ const ProductsPage = () => {
                     </span>
                   </div>
 
+                  <div className="mt-auto flex gap-2">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate(`/3d-preview/${productKey}`);
+                      }}
+                      className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 px-3 py-2.5 text-[11px] font-medium text-white shadow-sm hover:from-blue-600 hover:to-purple-600 hover:shadow-md transition-all duration-300"
+                      title="Xem trước 3D"
+                    >
+                      <span>🎨</span>
+                      <span>3D</span>
+                    </button>
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
                       handleCardClick(product, index);
                     }}
-                    className="mt-auto w-full inline-flex items-center justify-center gap-2 rounded-full bg-[#1B4332] px-4 py-2.5 text-[12px] font-medium text-white shadow-sm hover:bg-[#133021] hover:shadow-md transition-all duration-300 group/btn"
+                      className="flex-1 inline-flex items-center justify-center gap-2 rounded-full bg-[#1B4332] px-4 py-2.5 text-[12px] font-medium text-white shadow-sm hover:bg-[#133021] hover:shadow-md transition-all duration-300 group/btn"
                   >
                     <span>👁️</span>
-                    <span>Xem chi tiết & tư vấn</span>
+                      <span>Chi tiết</span>
                     <span className="opacity-0 translate-x-0 group-hover/btn:opacity-100 group-hover/btn:translate-x-1 transition-all">
                       →
                     </span>
                   </button>
+                  </div>
                 </div>
                 </article>
               );

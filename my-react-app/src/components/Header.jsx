@@ -1,13 +1,18 @@
 import { useNavigate, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { getFabricCart } from "../utils/fabricCartStorage.js";
+import { isAuthenticated, getCurrentUser } from "../utils/authStorage.js";
 
 const Header = ({ currentPage = "" }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [isScrolled, setIsScrolled] = useState(false);
   const [showSupportDropdown, setShowSupportDropdown] = useState(false);
+  const [showAIDropdown, setShowAIDropdown] = useState(false);
   const [cartCount, setCartCount] = useState(0);
+  const [currentUser, setCurrentUser] = useState(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
 
   useEffect(() => {
     const updateCartCount = () => {
@@ -17,6 +22,14 @@ const Header = ({ currentPage = "" }) => {
     updateCartCount();
     const interval = setInterval(updateCartCount, 1000);
     return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    if (isAuthenticated()) {
+      setCurrentUser(getCurrentUser());
+    } else {
+      setCurrentUser(null);
+    }
   }, []);
 
   useEffect(() => {
@@ -56,6 +69,16 @@ const Header = ({ currentPage = "" }) => {
   const handleLoginClick = (e) => {
     e.preventDefault();
     navigate("/login-selection");
+  };
+
+  const handleLogoutClick = (e) => {
+    e.preventDefault();
+    localStorage.removeItem("isAuthenticated");
+    localStorage.removeItem("userRole");
+    localStorage.removeItem("username");
+    localStorage.removeItem("userData");
+    setCurrentUser(null);
+    navigate("/", { replace: true });
   };
 
   const isActive = (page) => {
@@ -124,27 +147,82 @@ const Header = ({ currentPage = "" }) => {
 
           {/* Search */}
           <div className="flex-1 hidden md:flex items-center">
-            <div className="w-full flex rounded-full border border-[#E5E7EB] overflow-hidden bg-white">
+            <form
+              className="w-full flex rounded-full border border-[#E5E7EB] overflow-hidden bg-white"
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (searchQuery.trim()) {
+                  navigate(`/products?search=${encodeURIComponent(searchQuery.trim())}`);
+                  setSearchQuery("");
+                }
+              }}
+              role="search"
+              aria-label="Tìm kiếm sản phẩm"
+            >
               <input
                 type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
                 className="flex-1 px-4 py-2 text-[12px] outline-none"
-                placeholder="Tìm váy, đầm, nội y..."
+                placeholder="Tìm váy, đầm, vải, sản phẩm..."
+                aria-label="Nhập từ khóa tìm kiếm"
               />
-              <button className="px-6 text-[12px] font-semibold bg-[#111827] text-white hover:bg-[#0f172a] transition-colors">
+              <button
+                type="submit"
+                className="px-6 text-[12px] font-semibold bg-[#111827] text-white hover:bg-[#0f172a] transition-colors"
+                aria-label="Tìm kiếm"
+              >
                 TÌM KIẾM
               </button>
-            </div>
+            </form>
           </div>
+
+          {/* Mobile Menu Toggle */}
+          <button
+            onClick={() => setShowMobileMenu(!showMobileMenu)}
+            className="md:hidden p-2 text-[#374151] hover:text-[#111827] transition-colors"
+            aria-label={showMobileMenu ? "Đóng menu" : "Mở menu"}
+            aria-expanded={showMobileMenu}
+            aria-controls="mobile-menu"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              {showMobileMenu ? (
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              ) : (
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              )}
+            </svg>
+          </button>
 
           {/* Actions */}
           <div className="flex items-center gap-3 text-[12px]">
-            <button
-              onClick={handleLoginClick}
-              className="text-[#374151] hover:text-[#111827] transition-colors"
-            >
-              Đăng nhập / Đăng ký
-            </button>
-            <span className="text-[#D1D5DB]">|</span>
+            {currentUser ? (
+              <>
+                <span className="text-[#374151]">
+                  Xin chào,{" "}
+                  <span className="font-semibold">
+                    {currentUser.name || currentUser.username}
+                  </span>
+                </span>
+                <button
+                  onClick={handleLogoutClick}
+                  className="text-[#374151] hover:text-[#111827] underline underline-offset-2 transition-colors"
+                >
+                  Đăng xuất
+                </button>
+                <span className="text-[#D1D5DB]">|</span>
+              </>
+            ) : (
+              <>
+                <button
+                  onClick={handleLoginClick}
+                  className="text-[#374151] hover:text-[#111827] transition-colors"
+                >
+                  Đăng nhập / Đăng ký
+                </button>
+                <span className="text-[#D1D5DB]">|</span>
+              </>
+            )}
             <button
               onClick={() => navigate("/cart")}
               className="flex items-center gap-1 px-3 py-1 rounded-full border border-[#E5E7EB] text-[#374151] hover:bg-[#F9FAFB] transition-colors relative"
@@ -192,6 +270,81 @@ const Header = ({ currentPage = "" }) => {
             >
               SẢN PHẨM
             </a>
+            {/* AI & AR Features Dropdown */}
+            <div
+              className="relative"
+              onMouseEnter={() => setShowAIDropdown(true)}
+              onMouseLeave={() => setShowAIDropdown(false)}
+            >
+              <a
+                href="#"
+                className={`hover:text-[#111827] transition-colors flex items-center gap-1 ${
+                  isActive("/ai-style-suggestions") || 
+                  isActive("/3d-preview") || 
+                  isActive("/virtual-tryon") || 
+                  isActive("/trend-analysis")
+                    ? "text-[#111827] font-semibold" : ""
+                }`}
+                onClick={(e) => {
+                  e.preventDefault();
+                }}
+              >
+                AI & AR
+                <span className="text-[10px]">▼</span>
+              </a>
+              {showAIDropdown && (
+                <div className="absolute top-full left-0 pt-1 w-64 bg-transparent z-50">
+                  <div className="bg-white border border-[#E5E7EB] rounded-lg shadow-lg">
+                    <div className="py-1">
+                      <a
+                        href="/ai-style-suggestions"
+                        className="block px-4 py-2.5 text-[12px] text-[#374151] hover:bg-[#F9FAFB] transition-colors border-b border-[#E5E7EB]"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          navigate("/ai-style-suggestions");
+                          setShowAIDropdown(false);
+                        }}
+                      >
+                        <span className="font-semibold">🤖</span> AI Gợi ý Phong cách
+                      </a>
+                      <a
+                        href="/3d-preview"
+                        className="block px-4 py-2.5 text-[12px] text-[#374151] hover:bg-[#F9FAFB] transition-colors border-b border-[#E5E7EB]"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          navigate("/3d-preview");
+                          setShowAIDropdown(false);
+                        }}
+                      >
+                        <span className="font-semibold">🎨</span> Xem trước 3D
+                      </a>
+                      <a
+                        href="/virtual-tryon"
+                        className="block px-4 py-2.5 text-[12px] text-[#374151] hover:bg-[#F9FAFB] transition-colors border-b border-[#E5E7EB]"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          navigate("/virtual-tryon");
+                          setShowAIDropdown(false);
+                        }}
+                      >
+                        <span className="font-semibold">📱</span> Thử áo ảo AR
+                      </a>
+                      <a
+                        href="/trend-analysis"
+                        className="block px-4 py-2.5 text-[12px] text-[#374151] hover:bg-[#F9FAFB] transition-colors"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          navigate("/trend-analysis");
+                          setShowAIDropdown(false);
+                        }}
+                      >
+                        <span className="font-semibold">📊</span> Phân tích Xu hướng
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
             <a
               href="/fabrics"
               className={`hover:text-[#111827] transition-colors ${
@@ -376,6 +529,140 @@ const Header = ({ currentPage = "" }) => {
           </div>
         </div>
       </div>
+
+      {/* Mobile Menu */}
+      {showMobileMenu && (
+        <div
+          id="mobile-menu"
+          className="md:hidden bg-white border-t border-[#E5E7EB] shadow-lg"
+          role="navigation"
+          aria-label="Menu điều hướng chính"
+        >
+          {/* Mobile Search */}
+          <div className="p-4 border-b border-[#E5E7EB]">
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (searchQuery.trim()) {
+                  navigate(`/products?search=${encodeURIComponent(searchQuery.trim())}`);
+                  setSearchQuery("");
+                  setShowMobileMenu(false);
+                }
+              }}
+              className="flex gap-2"
+            >
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="flex-1 px-4 py-2 text-sm border border-[#E5E7EB] rounded-lg outline-none focus:border-[#111827]"
+                placeholder="Tìm kiếm..."
+              />
+              <button
+                type="submit"
+                className="px-4 py-2 bg-[#111827] text-white rounded-lg hover:bg-[#0f172a] transition-colors"
+              >
+                Tìm
+              </button>
+            </form>
+          </div>
+
+          {/* Mobile Navigation */}
+          <nav className="py-4 px-5 space-y-1">
+            <a
+              href="/customer-home"
+              onClick={(e) => {
+                e.preventDefault();
+                handleHomeClick(e);
+                setShowMobileMenu(false);
+              }}
+              className={`block px-4 py-3 rounded-lg transition-colors ${
+                isActive("/customer-home") ? "bg-[#111827] text-white" : "text-[#374151] hover:bg-[#F9FAFB]"
+              }`}
+            >
+              TRANG CHỦ
+            </a>
+            <a
+              href="/products"
+              onClick={(e) => {
+                e.preventDefault();
+                handleProductsClick(e);
+                setShowMobileMenu(false);
+              }}
+              className={`block px-4 py-3 rounded-lg transition-colors ${
+                isActive("/products") ? "bg-[#111827] text-white" : "text-[#374151] hover:bg-[#F9FAFB]"
+              }`}
+            >
+              SẢN PHẨM
+            </a>
+            <a
+              href="/fabrics"
+              onClick={(e) => {
+                e.preventDefault();
+                navigate("/fabrics");
+                setShowMobileMenu(false);
+              }}
+              className={`block px-4 py-3 rounded-lg transition-colors ${
+                isActive("/fabrics") ? "bg-[#111827] text-white" : "text-[#374151] hover:bg-[#F9FAFB]"
+              }`}
+            >
+              BÁN VẢI
+            </a>
+            <a
+              href="/customer/order"
+              onClick={(e) => {
+                e.preventDefault();
+                handleOrderClick(e);
+                setShowMobileMenu(false);
+              }}
+              className={`block px-4 py-3 rounded-lg transition-colors ${
+                isActive("/customer/order") ? "bg-[#111827] text-white" : "text-[#374151] hover:bg-[#F9FAFB]"
+              }`}
+            >
+              ĐẶT MAY
+            </a>
+            <a
+              href="/ai-style-suggestions"
+              onClick={(e) => {
+                e.preventDefault();
+                navigate("/ai-style-suggestions");
+                setShowMobileMenu(false);
+              }}
+              className="block px-4 py-3 rounded-lg text-[#374151] hover:bg-[#F9FAFB] transition-colors"
+            >
+              🤖 AI & AR
+            </a>
+            <a
+              href="/favorites"
+              onClick={(e) => {
+                e.preventDefault();
+                navigate("/favorites");
+                setShowMobileMenu(false);
+              }}
+              className={`block px-4 py-3 rounded-lg transition-colors ${
+                isActive("/favorites") ? "bg-[#111827] text-white" : "text-[#374151] hover:bg-[#F9FAFB]"
+              }`}
+            >
+              YÊU THÍCH
+            </a>
+            {currentUser && (
+              <a
+                href="/customer/dashboard"
+                onClick={(e) => {
+                  e.preventDefault();
+                  navigate("/customer/dashboard");
+                  setShowMobileMenu(false);
+                }}
+                className={`block px-4 py-3 rounded-lg transition-colors ${
+                  isActive("/customer/dashboard") ? "bg-[#111827] text-white" : "text-[#374151] hover:bg-[#F9FAFB]"
+                }`}
+              >
+                TÀI KHOẢN
+              </a>
+            )}
+          </nav>
+        </div>
+      )}
     </header>
   );
 };

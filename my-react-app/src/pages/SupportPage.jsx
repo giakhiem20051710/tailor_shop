@@ -1,9 +1,17 @@
 import { useNavigate, useParams } from "react-router-dom";
 import Header from "../components/Header.jsx";
+import DynamicFAQ from "../components/DynamicFAQ.jsx";
+import usePageMeta from "../hooks/usePageMeta";
 
 const SupportPage = () => {
   const navigate = useNavigate();
   const { section } = useParams();
+
+  usePageMeta({
+    title: "Trung tâm hỗ trợ may đo | Bảng size & chính sách My Hiền Tailor",
+    description:
+      "Tra cứu bảng size, hướng dẫn đo, chính sách thanh toán, giao hàng và bảo hành của My Hiền Tailor.",
+  });
 
   const supportSections = {
     "size-consultation": {
@@ -226,13 +234,16 @@ const SupportPage = () => {
       <div className="pt-[170px] md:pt-[190px] pb-16">
         <div className="max-w-4xl mx-auto px-5 lg:px-8">
           {/* Header */}
-          <div className="text-center mb-12">
-            <p className="text-[11px] tracking-[0.25em] uppercase text-[#6B7280] mb-2">
+          <div className="text-center mb-12 space-y-2">
+            <p className="text-[11px] tracking-[0.25em] uppercase text-[#6B7280]">
               Hỗ trợ khách hàng
             </p>
-            <h1 className="heading-font text-[28px] md:text-[32px] text-[#111827] mb-4">
-              {currentSection.title}
+            <h1 className="heading-font text-[30px] md:text-[34px] text-[#111827]">
+              Trung tâm hỗ trợ may đo My Hiền Tailor
             </h1>
+            <h2 className="heading-font text-[20px] md:text-[22px] text-[#1B4332]">
+              {currentSection.title}
+            </h2>
             <p className="text-[14px] text-[#6B7280] max-w-2xl mx-auto">
               Thông tin chi tiết về các chính sách và dịch vụ hỗ trợ của chúng tôi.
             </p>
@@ -460,24 +471,83 @@ const SupportPage = () => {
             </div>
           </div>
 
-          {/* Contact */}
-          <div className="mt-8 text-center">
-            <p className="text-[13px] text-[#6B7280] mb-4">
-              Cần hỗ trợ thêm? Liên hệ với chúng tôi:
-            </p>
-            <div className="flex flex-wrap justify-center gap-4 text-[13px]">
-              <a
-                href="tel:0901134256"
-                className="px-4 py-2 bg-[#1B4332] text-white rounded-full hover:bg-[#14532d] transition-colors"
-              >
-                📞 0901 134 256
-              </a>
-              <a
-                href="mailto:dvkh@camfashion.vn"
-                className="px-4 py-2 border-2 border-[#1B4332] text-[#1B4332] rounded-full hover:bg-[#1B4332] hover:text-white transition-colors"
-              >
-                ✉ dvkh@camfashion.vn
-              </a>
+          {/* FAQ Section */}
+          <div className="mt-12 bg-white rounded-2xl p-6 md:p-8 shadow-sm">
+            <div className="text-center mb-8">
+              <h2 className="heading-font text-[22px] md:text-[24px] text-[#111827] mb-2">
+                Câu hỏi thường gặp
+              </h2>
+              <p className="text-[13px] text-[#6B7280]">
+                Tìm câu trả lời nhanh cho các thắc mắc phổ biến
+              </p>
+            </div>
+            <DynamicFAQ />
+          </div>
+
+          {/* Contact & Social Support */}
+          <div className="mt-8 space-y-6">
+            {/* Contact */}
+            <div className="text-center">
+              <p className="text-[13px] text-[#6B7280] mb-4">
+                Cần hỗ trợ thêm? Liên hệ với chúng tôi:
+              </p>
+              <div className="flex flex-wrap justify-center gap-3 text-[13px]">
+                <a
+                  href="tel:0901134256"
+                  className="px-4 py-2 bg-[#1B4332] text-white rounded-full hover:bg-[#14532d] transition-colors flex items-center gap-2"
+                >
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" />
+                  </svg>
+                  0901 134 256
+                </a>
+                <a
+                  href="mailto:dvkh@camfashion.vn"
+                  className="px-4 py-2 border-2 border-[#1B4332] text-[#1B4332] rounded-full hover:bg-[#1B4332] hover:text-white transition-colors flex items-center gap-2"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                  </svg>
+                  dvkh@camfashion.vn
+                </a>
+              </div>
+            </div>
+
+            {/* Social Media Support */}
+            <div className="bg-gradient-to-r from-[#1B4332] to-[#14532d] rounded-2xl p-6 text-white">
+              <h3 className="text-[16px] font-semibold mb-4 text-center">
+                Hỗ trợ qua mạng xã hội
+              </h3>
+              <p className="text-[12px] text-white/80 mb-4 text-center">
+                Nhắn tin trực tiếp với chúng tôi qua Zalo hoặc Facebook để được tư vấn nhanh nhất
+              </p>
+              <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                <a
+                  href="https://zalo.me/0901134256"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-6 py-3 bg-[#0068FF] hover:bg-[#0052CC] rounded-full transition-colors flex items-center justify-center gap-2 text-[13px] font-medium shadow-lg"
+                >
+                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2C6.48 2 2 5.58 2 10c0 2.5 1.5 4.75 3.8 6.24L4.5 21.5l5.5-1.2c1.4.38 2.9.6 4.5.6 5.52 0 10-3.58 10-8s-4.48-8-10-8zm0 14c-1.1 0-2.1-.2-3.1-.5l-.7-.2-1.5.3.3-1.5-.2-.7c-.3-1-.5-2-.5-3.1 0-3.31 2.69-6 6-6s6 2.69 6 6-2.69 6-6 6z"/>
+                  </svg>
+                  Nhắn tin Zalo
+                </a>
+                <a
+                  href="https://m.me/camfashion"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-6 py-3 bg-[#1877F2] hover:bg-[#1565C0] rounded-full transition-colors flex items-center justify-center gap-2 text-[13px] font-medium shadow-lg"
+                >
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                  </svg>
+                  Nhắn tin Facebook
+                </a>
+              </div>
+              <p className="text-[11px] text-white/70 mt-4 text-center">
+                ⏰ Thời gian phản hồi: 07:00 - 23:00 hàng ngày
+              </p>
             </div>
           </div>
         </div>
