@@ -2,10 +2,16 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import "./AboutPage.css";
 import Header from "../components/Header.jsx";
+import usePageMeta from "../hooks/usePageMeta";
 
 const AboutPage = () => {
   const navigate = useNavigate();
 
+  usePageMeta({
+    title: "Về My Hiền Tailor | Atelier may đo tại TP.HCM",
+    description:
+      "Khám phá hành trình, đội ngũ và quy trình may đo cá nhân hoá của My Hiền Tailor – atelier áo dài, vest, đầm tại TP.HCM.",
+  });
 
   return (
     <div className="about-page">
@@ -19,8 +25,7 @@ const AboutPage = () => {
           <div className="about-hero__left">
             <p className="about-hero__eyebrow">VỀ MỸ HIỀN FASHION</p>
             <h1 className="about-hero__title">
-              MỸ HIỀN FASHION – THƯƠNG HIỆU THIẾT KẾ VÁY, ĐẦM & NỘI Y DÀNH CHO
-              PHÁI ĐẸP
+              MY HIỀN TAILOR – ATELIER MAY ĐO ÁO DÀI, VEST & ĐẦM TẠI TP.HCM
             </h1>
             <p className="about-hero__subtitle">
               Với tiêu chí{" "}

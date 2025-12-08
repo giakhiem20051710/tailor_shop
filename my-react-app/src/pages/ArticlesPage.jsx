@@ -1,8 +1,12 @@
-import { useNavigate } from "react-router-dom";
 import Header from "../components/Header.jsx";
+import usePageMeta from "../hooks/usePageMeta";
 
 const ArticlesPage = () => {
-  const navigate = useNavigate();
+  usePageMeta({
+    title: "Blog thời trang & cảm hứng may đo | My Hiền Tailor",
+    description:
+      "Cập nhật xu hướng áo dài, vest, đầm, hướng dẫn chọn chất liệu và mẹo phối đồ từ đội ngũ My Hiền Tailor.",
+  });
 
   const articles = [
     {
@@ -14,6 +18,8 @@ const ArticlesPage = () => {
       date: "15/01/2025",
       readTime: "5 phút đọc",
       featured: true,
+      sourceUrl: "https://vnexpress.net/giai-tri/thoi-trang",
+      sourceName: "VnExpress - Thời trang",
     },
     {
       id: 2,
@@ -24,6 +30,8 @@ const ArticlesPage = () => {
       date: "12/01/2025",
       readTime: "4 phút đọc",
       featured: false,
+      sourceUrl: "https://elle.vn",
+      sourceName: "Elle Vietnam",
     },
     {
       id: 3,
@@ -34,6 +42,8 @@ const ArticlesPage = () => {
       date: "10/01/2025",
       readTime: "6 phút đọc",
       featured: false,
+      sourceUrl: "https://vogue.vn",
+      sourceName: "Vogue Vietnam",
     },
     {
       id: 4,
@@ -44,6 +54,8 @@ const ArticlesPage = () => {
       date: "08/01/2025",
       readTime: "7 phút đọc",
       featured: false,
+      sourceUrl: "https://vnexpress.net/giai-tri/thoi-trang",
+      sourceName: "VnExpress - Thời trang",
     },
     {
       id: 5,
@@ -54,6 +66,8 @@ const ArticlesPage = () => {
       date: "05/01/2025",
       readTime: "5 phút đọc",
       featured: false,
+      sourceUrl: "https://harpersbazaar.vn",
+      sourceName: "Harper's Bazaar Vietnam",
     },
     {
       id: 6,
@@ -64,6 +78,8 @@ const ArticlesPage = () => {
       date: "03/01/2025",
       readTime: "8 phút đọc",
       featured: false,
+      sourceUrl: "https://vnexpress.net/giai-tri/thoi-trang",
+      sourceName: "VnExpress - Thời trang",
     },
     {
       id: 7,
@@ -74,6 +90,8 @@ const ArticlesPage = () => {
       date: "01/01/2025",
       readTime: "6 phút đọc",
       featured: false,
+      sourceUrl: "https://elle.vn",
+      sourceName: "Elle Vietnam",
     },
     {
       id: 8,
@@ -84,6 +102,8 @@ const ArticlesPage = () => {
       date: "28/12/2024",
       readTime: "5 phút đọc",
       featured: false,
+      sourceUrl: "https://vogue.vn",
+      sourceName: "Vogue Vietnam",
     },
   ];
 
@@ -101,7 +121,7 @@ const ArticlesPage = () => {
               Tin tức & Xu hướng
             </p>
             <h1 className="heading-font text-[32px] md:text-[42px] text-[#111827] mb-4">
-              BÀI VIẾT
+              Blog thời trang & cảm hứng may đo My Hiền Tailor
             </h1>
             <p className="text-[15px] text-[#6B7280] max-w-2xl mx-auto">
               Cập nhật những xu hướng thời trang mới nhất, bí quyết styling và kiến thức về thời trang từ các chuyên gia
@@ -116,7 +136,11 @@ const ArticlesPage = () => {
                 return (
                   <article 
                     className="bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-shadow cursor-pointer"
-                    onClick={() => navigate(`/articles/${featured.id}`)}
+                    onClick={() => {
+                      if (featured.sourceUrl) {
+                        window.open(featured.sourceUrl, '_blank', 'noopener,noreferrer');
+                      }
+                    }}
                   >
                     <div className="md:flex">
                       <div className="md:w-1/2">
@@ -142,11 +166,16 @@ const ArticlesPage = () => {
                         <h2 className="heading-font text-[24px] md:text-[32px] text-[#111827] mb-4 leading-tight">
                           {featured.title}
                         </h2>
-                        <p className="text-[15px] text-[#4B5563] leading-relaxed mb-6">
+                        <p className="text-[15px] text-[#4B5563] leading-relaxed mb-4">
                           {featured.excerpt}
                         </p>
+                        {featured.sourceName && (
+                          <p className="text-[12px] text-[#6B7280] mb-4">
+                            Nguồn: <span className="font-semibold text-[#8B4513]">{featured.sourceName}</span>
+                          </p>
+                        )}
                         <button className="inline-flex items-center gap-2 text-[#8B4513] font-semibold text-[14px] hover:gap-3 transition-all">
-                          Đọc tiếp
+                          Đọc tiếp tại nguồn
                           <span>→</span>
                         </button>
                       </div>
@@ -177,7 +206,11 @@ const ArticlesPage = () => {
                 <article
                   key={article.id}
                   className="bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all cursor-pointer group"
-                  onClick={() => navigate(`/articles/${article.id}`)}
+                  onClick={() => {
+                    if (article.sourceUrl) {
+                      window.open(article.sourceUrl, '_blank', 'noopener,noreferrer');
+                    }
+                  }}
                 >
                   <div className="relative h-48 overflow-hidden">
                     <img 
@@ -200,11 +233,16 @@ const ArticlesPage = () => {
                     <h3 className="heading-font text-[18px] text-[#111827] mb-3 leading-tight group-hover:text-[#8B4513] transition-colors">
                       {article.title}
                     </h3>
-                    <p className="text-[13px] text-[#4B5563] leading-relaxed mb-4 line-clamp-3">
+                    <p className="text-[13px] text-[#4B5563] leading-relaxed mb-3 line-clamp-3">
                       {article.excerpt}
                     </p>
+                    {article.sourceName && (
+                      <p className="text-[11px] text-[#6B7280] mb-3">
+                        Nguồn: <span className="font-semibold text-[#8B4513]">{article.sourceName}</span>
+                      </p>
+                    )}
                     <button className="text-[#8B4513] font-semibold text-[13px] hover:underline">
-                      Đọc tiếp →
+                      Đọc tiếp tại nguồn →
                     </button>
                   </div>
                 </article>

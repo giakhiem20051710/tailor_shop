@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import Header from "../components/Header.jsx";
+import usePageMeta from "../hooks/usePageMeta.jsx";
 
 export default function InternationalPaymentPage() {
   const navigate = useNavigate();
@@ -20,6 +21,12 @@ export default function InternationalPaymentPage() {
   const [expiryDate, setExpiryDate] = useState("");
   const [cvv, setCvv] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
+
+  // SEO Meta Tags
+  usePageMeta({
+    title: "Thanh toán quốc tế | My Hiền Tailor",
+    description: "Thanh toán đơn hàng vải may đo bằng thẻ tín dụng/ghi nợ quốc tế. Hỗ trợ Visa, Mastercard và các thẻ quốc tế khác.",
+  });
 
   const formatPrice = (price) => {
     return new Intl.NumberFormat("vi-VN").format(price) + " ₫";
@@ -273,6 +280,9 @@ export default function InternationalPaymentPage() {
     </div>
   );
 }
+
+
+
 
 
 

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import Header from "../components/Header.jsx";
+import usePageMeta from "../hooks/usePageMeta.jsx";
 
 export default function MBBankPaymentPage() {
   const navigate = useNavigate();
@@ -16,6 +17,12 @@ export default function MBBankPaymentPage() {
 
   const [timeLeft, setTimeLeft] = useState(15 * 60);
   const [isProcessing, setIsProcessing] = useState(false);
+
+  // SEO Meta Tags
+  usePageMeta({
+    title: "Thanh toán MB Bank | My Hiền Tailor",
+    description: "Thanh toán đơn hàng vải may đo qua MB Bank. Chuyển khoản nhanh chóng và tiện lợi qua ngân hàng MB Bank.",
+  });
 
   const formatPrice = (price) => {
     return new Intl.NumberFormat("vi-VN").format(price) + " ₫";
@@ -226,6 +233,9 @@ export default function MBBankPaymentPage() {
     </div>
   );
 }
+
+
+
 
 
 

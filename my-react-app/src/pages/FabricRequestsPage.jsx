@@ -1,5 +1,6 @@
 import { useMemo, useState, useEffect } from "react";
 import { getFabricHolds } from "../utils/fabricHoldStorage.js";
+import { getWorkingSlots } from "../utils/workingSlotStorage.js";
 
 const formatDateTime = (iso) => {
   if (!iso) return "—";
@@ -11,6 +12,21 @@ const formatDateTime = (iso) => {
   }
 };
 
+const formatDateVN = (dateStr) => {
+  if (!dateStr) return "—";
+  try {
+    const d = new Date(dateStr + "T00:00:00");
+    return d.toLocaleDateString("vi-VN", {
+      weekday: "long",
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    });
+  } catch {
+    return dateStr;
+  }
+};
+
 const METHOD_LABEL = {
   hold: "Đặt giữ cuộn vải",
   visit: "Hẹn xem vải",
@@ -19,9 +35,11 @@ const METHOD_LABEL = {
 export default function FabricRequestsPage() {
   const [requests, setRequests] = useState([]);
   const [filterType, setFilterType] = useState("all");
+  const [slots, setSlots] = useState([]);
 
   useEffect(() => {
     setRequests(getFabricHolds());
+    setSlots(getWorkingSlots());
   }, []);
 
   const filtered = useMemo(() => {
@@ -81,7 +99,8 @@ export default function FabricRequestsPage() {
             <table className="w-full text-sm">
               <thead className="bg-slate-900 text-white">
                 <tr>
-                  <th className="px-3 py-2 text-left">Thời gian</th>
+                  <th className="px-3 py-2 text-left">Thời gian yêu cầu</th>
+                  <th className="px-3 py-2 text-left">Lịch hẹn</th>
                   <th className="px-3 py-2 text-left">Khách hàng</th>
                   <th className="px-3 py-2 text-left">Loại</th>
                   <th className="px-3 py-2 text-left">Vải</th>
@@ -90,13 +109,43 @@ export default function FabricRequestsPage() {
               </thead>
               <tbody>
                 {filtered.length ? (
-                  filtered.map((req) => (
+                  filtered.map((req) => {
+                    // Tìm slot nếu có slotId
+                    const slot = req.slotId
+                      ? slots.find((s) => s.id === req.slotId)
+                      : null;
+                    const appointmentDate = req.visitDate || slot?.date;
+                    const appointmentTime = req.visitTime || (slot ? `${slot.startTime}–${slot.endTime}` : null);
+
+                    return (
                     <tr
                       key={`${req.type}-${req.key}-${req.createdAt}`}
-                      className="border-b border-slate-100 last:border-0"
+                        className="border-b border-slate-100 last:border-0 hover:bg-slate-50"
                     >
                       <td className="px-3 py-2 whitespace-nowrap">
+                          <p className="text-xs text-slate-500">
                         {formatDateTime(req.createdAt)}
+                          </p>
+                        </td>
+                        <td className="px-3 py-2">
+                          {req.type === "visit" && appointmentDate ? (
+                            <div className="space-y-1">
+                              <p className="font-semibold text-emerald-700">
+                                📅 {formatDateVN(appointmentDate)}
+                              </p>
+                              {appointmentTime && (
+                                <p className="text-xs text-slate-600">
+                                  ⏰ {appointmentTime}
+                                </p>
+                              )}
+                            </div>
+                          ) : req.type === "hold" ? (
+                            <p className="text-xs text-slate-400 italic">
+                              Chưa có lịch hẹn
+                            </p>
+                          ) : (
+                            <p className="text-xs text-slate-400">—</p>
+                          )}
                       </td>
                       <td className="px-3 py-2">
                         <p className="font-medium text-slate-900">
@@ -129,11 +178,12 @@ export default function FabricRequestsPage() {
                         Giá tham khảo: {req.price}
                       </td>
                     </tr>
-                  ))
+                    );
+                  })
                 ) : (
                   <tr>
                     <td
-                      colSpan={5}
+                      colSpan={6}
                       className="px-3 py-6 text-center text-slate-500"
                     >
                       Hiện chưa có yêu cầu nào từ khách hàng.

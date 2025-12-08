@@ -1,11 +1,14 @@
 import { useLocation, useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Header from "../components/Header.jsx";
 import {
   addFavorite,
   removeFavorite,
   isFavorite,
 } from "../utils/favoriteStorage.js";
+import { getCurrentUser } from "../utils/authStorage.js";
+import { getWorkingSlots, updateWorkingSlot } from "../utils/workingSlotStorage.js";
+import { addAppointment } from "../utils/appointmentStorage.js";
 
 const ProductDetailPage = () => {
   const location = useLocation();
@@ -35,6 +38,12 @@ const ProductDetailPage = () => {
   const [isFavoriteProduct, setIsFavoriteProduct] = useState(() =>
     isFavorite(productKey)
   );
+  const [showConsultationModal, setShowConsultationModal] = useState(false);
+  const [selectedDate, setSelectedDate] = useState("");
+  const [selectedSlotId, setSelectedSlotId] = useState(null);
+  const [availableSlots, setAvailableSlots] = useState([]);
+  const [isBooking, setIsBooking] = useState(false);
+  const [bookingSuccess, setBookingSuccess] = useState(false);
 
   // ====== GALLERY ======
   const productImages = [
@@ -62,6 +71,114 @@ const ProductDetailPage = () => {
       setIsFavoriteProduct(true);
     }
   };
+
+  // Load available consultation slots
+  useEffect(() => {
+    if (showConsultationModal) {
+      const slots = getWorkingSlots().filter(
+        (slot) =>
+          slot.type === "consult" &&
+          slot.status === "available" &&
+          (slot.bookedCount || 0) < (slot.capacity || 1)
+      );
+      setAvailableSlots(slots);
+    }
+  }, [showConsultationModal]);
+
+  // Get next 14 days
+  const next14Days = useMemo(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return Array.from({ length: 14 }).map((_, idx) => {
+      const d = new Date(today);
+      d.setDate(today.getDate() + idx);
+      return d;
+    });
+  }, []);
+
+  // Get days with available slots
+  const daysWithSlots = useMemo(() => {
+    const daysSet = new Set(
+      availableSlots.map((slot) => slot.date)
+    );
+    return daysSet;
+  }, [availableSlots]);
+
+  // Get available time slots for selected date
+  const timeSlotsForDate = useMemo(() => {
+    if (!selectedDate) return [];
+    return availableSlots
+      .filter((slot) => slot.date === selectedDate)
+      .sort((a, b) => a.startTime.localeCompare(b.startTime));
+  }, [availableSlots, selectedDate]);
+
+  const handleOpenConsultation = () => {
+    const user = getCurrentUser();
+    if (!user) {
+      alert("Vui lòng đăng nhập để đặt lịch tư vấn.");
+      navigate("/login");
+      return;
+    }
+    setShowConsultationModal(true);
+    setSelectedDate("");
+    setSelectedSlotId(null);
+    setBookingSuccess(false);
+  };
+
+  const handleConfirmBooking = () => {
+    if (!selectedSlotId || !selectedDate) {
+      alert("Vui lòng chọn ngày và giờ hẹn.");
+      return;
+    }
+
+    const user = getCurrentUser();
+    if (!user) {
+      alert("Vui lòng đăng nhập để đặt lịch.");
+      return;
+    }
+
+    setIsBooking(true);
+    const slot = availableSlots.find((s) => s.id === selectedSlotId);
+    if (!slot) {
+      setIsBooking(false);
+      alert("Slot không còn khả dụng. Vui lòng chọn slot khác.");
+      return;
+    }
+
+    const customerId = user.username || user.phone;
+    const newAppointment = addAppointment({
+      customerId,
+      slotId: slot.id,
+      orderId: null,
+      type: "consult",
+      status: "pending",
+      note: `Tư vấn về sản phẩm: ${product.name}`,
+    });
+
+    const nextBooked = (slot.bookedCount || 0) + 1;
+    updateWorkingSlot(slot.id, {
+      bookedCount: nextBooked,
+      status: nextBooked >= (slot.capacity || 1) ? "booked" : "available",
+    });
+
+    setIsBooking(false);
+    setBookingSuccess(true);
+    
+    setTimeout(() => {
+      setShowConsultationModal(false);
+      setBookingSuccess(false);
+      alert(
+        `Đã đặt lịch tư vấn về "${product.name}" vào ${slot.date} lúc ${slot.startTime}–${slot.endTime}. Chúng tôi sẽ liên hệ xác nhận.`
+      );
+    }, 2000);
+  };
+
+  const formatDateLabel = (d) =>
+    d.toLocaleDateString("vi-VN", {
+      weekday: "short",
+      day: "2-digit",
+      month: "2-digit",
+    });
 
   return (
     <div className="min-h-screen bg-[#F5F3EF] text-[#1F2933] body-font antialiased">
@@ -264,7 +381,10 @@ const ProductDetailPage = () => {
                     →
                   </span>
                 </button>
-                <button className="flex-1 px-6 py-3.5 text-[14px] font-medium border-2 border-[#1B4332] text-[#1B4332] rounded-full hover:bg-[#1B4332] hover:text-white transition-all duration-300 flex items-center justify-center gap-2">
+                <button
+                  onClick={handleOpenConsultation}
+                  className="flex-1 px-6 py-3.5 text-[14px] font-medium border-2 border-[#1B4332] text-[#1B4332] rounded-full hover:bg-[#1B4332] hover:text-white transition-all duration-300 flex items-center justify-center gap-2"
+                >
                   <span>💬</span>
                   <span>Hẹn tư vấn riêng cho tôi</span>
                 </button>
@@ -290,6 +410,156 @@ const ProductDetailPage = () => {
           </div>
         </div>
       </main>
+
+      {/* Consultation Booking Modal */}
+      {showConsultationModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-auto">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 sticky top-0 bg-white">
+              <h2 className="text-xl font-semibold text-slate-900">
+                Đặt lịch tư vấn về "{product.name}"
+              </h2>
+              <button
+                onClick={() => setShowConsultationModal(false)}
+                className="text-slate-500 hover:text-slate-800 text-2xl"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="p-6">
+              {bookingSuccess ? (
+                <div className="text-center py-8">
+                  <div className="text-6xl mb-4">✅</div>
+                  <h3 className="text-xl font-semibold text-slate-900 mb-2">
+                    Đặt lịch thành công!
+                  </h3>
+                  <p className="text-slate-600">
+                    Chúng tôi sẽ liên hệ xác nhận với bạn sớm nhất.
+                  </p>
+                </div>
+              ) : (
+                <>
+                  {/* Product Info */}
+                  <div className="bg-slate-50 rounded-xl p-4 mb-6 flex items-center gap-4">
+                    <img
+                      src={product.image}
+                      alt={product.name}
+                      className="w-20 h-20 object-cover rounded-lg"
+                    />
+                    <div>
+                      <p className="font-semibold text-slate-900">{product.name}</p>
+                      <p className="text-sm text-slate-600">{product.tag}</p>
+                    </div>
+                  </div>
+
+                  {/* Step 1: Select Date */}
+                  <div className="mb-6">
+                    <label className="block text-sm font-semibold text-slate-700 mb-3">
+                      Chọn ngày hẹn *
+                    </label>
+                    <div className="grid grid-cols-7 gap-2">
+                      {next14Days.map((day) => {
+                        const dateStr = day.toISOString().split("T")[0];
+                        const hasSlots = daysWithSlots.has(dateStr);
+                        const isSelected = selectedDate === dateStr;
+                        const isPast = day < new Date().setHours(0, 0, 0, 0);
+
+                        return (
+                          <button
+                            key={dateStr}
+                            onClick={() => hasSlots && !isPast && setSelectedDate(dateStr)}
+                            disabled={!hasSlots || isPast}
+                            className={`aspect-square rounded-lg text-xs font-medium transition ${
+                              isSelected
+                                ? "bg-[#1B4332] text-white shadow-md"
+                                : hasSlots && !isPast
+                                ? "bg-white border-2 border-slate-200 hover:border-[#1B4332] text-slate-700"
+                                : "bg-slate-100 text-slate-400 cursor-not-allowed"
+                            }`}
+                          >
+                            <div>{formatDateLabel(day)}</div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                    {selectedDate && (
+                      <p className="mt-2 text-sm text-slate-600">
+                        Đã chọn: {new Date(selectedDate).toLocaleDateString("vi-VN", {
+                          weekday: "long",
+                          day: "numeric",
+                          month: "long",
+                          year: "numeric",
+                        })}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Step 2: Select Time */}
+                  {selectedDate && (
+                    <div className="mb-6">
+                      <label className="block text-sm font-semibold text-slate-700 mb-3">
+                        Chọn giờ hẹn *
+                      </label>
+                      {timeSlotsForDate.length === 0 ? (
+                        <p className="text-sm text-slate-500 italic">
+                          Ngày này không còn slot trống. Vui lòng chọn ngày khác.
+                        </p>
+                      ) : (
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                          {timeSlotsForDate.map((slot) => (
+                            <button
+                              key={slot.id}
+                              onClick={() => setSelectedSlotId(slot.id)}
+                              className={`px-4 py-3 rounded-xl border-2 text-sm font-medium transition ${
+                                selectedSlotId === slot.id
+                                  ? "border-[#1B4332] bg-[#1B4332] text-white"
+                                  : "border-slate-200 hover:border-[#1B4332] text-slate-700"
+                              }`}
+                            >
+                              {slot.startTime}–{slot.endTime}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Info */}
+                  <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6">
+                    <p className="text-sm text-blue-800">
+                      <strong>📍 Địa điểm:</strong> 123 Nguyễn Thị Minh Khai, Q.1, TP.HCM
+                    </p>
+                    <p className="text-sm text-blue-800 mt-1">
+                      <strong>⏰ Thời gian:</strong> 07:00 - 23:00 hàng ngày
+                    </p>
+                    <p className="text-sm text-blue-800 mt-1">
+                      <strong>📞 Hotline:</strong> 0901 134 256
+                    </p>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => setShowConsultationModal(false)}
+                      className="flex-1 px-6 py-3 border-2 border-slate-300 text-slate-700 rounded-xl font-medium hover:bg-slate-50 transition"
+                    >
+                      Hủy
+                    </button>
+                    <button
+                      onClick={handleConfirmBooking}
+                      disabled={!selectedSlotId || isBooking}
+                      className="flex-1 px-6 py-3 bg-[#1B4332] text-white rounded-xl font-medium hover:bg-[#14532d] transition disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {isBooking ? "Đang xử lý..." : "Xác nhận đặt lịch"}
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* FOOTER (giữ giống các page khác) */}
       <footer className="bg-[#111827] text-white py-10 text-[12px]">

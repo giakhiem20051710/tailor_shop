@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "../components/Header.jsx";
+import usePageMeta from "../hooks/usePageMeta";
 
 const CustomerHomePage = () => {
   const navigate = useNavigate();
@@ -9,11 +10,19 @@ const CustomerHomePage = () => {
   const [activeStyle, setActiveStyle] = useState("wedding");
   const heroRef = useRef(null);
 
+  usePageMeta({
+    title: "My Hiền Tailor TP.HCM | May đo áo dài, vest, đầm & kho vải",
+    description:
+      "My Hiền Tailor đồng hành cùng bạn trong hành trình may đo áo dài, vest và đầm dạ hội. Đặt lịch tư vấn, xem bộ sưu tập và kho vải chọn lọc ngay tại TP.HCM.",
+    ogImage:
+      "https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?w=1200&auto=format&fit=crop&q=80",
+  });
+
   const heroImages = [
+    "https://watermark.lovepik.com/photo/20211124/large/lovepik-fashion-womens-summer-shopping-image-picture_500961857.jpg",
     "https://images.unsplash.com/photo-1594938291221-94f18cbb566b?w=1200&auto=format&fit=crop&q=80",
     "https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?w=1200&auto=format&fit=crop&q=80",
     "https://images.unsplash.com/photo-1601925260368-ae2f83d34b08?w=1200&auto=format&fit=crop&q=80",
-    "https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=1200&auto=format&fit=crop&q=80",
   ];
 
   useEffect(() => {
@@ -168,22 +177,74 @@ const CustomerHomePage = () => {
     },
   ];
 
+  const trustBadges = [
+    {
+      title: "Bảo hành form 90 ngày",
+      desc: "Chỉnh sửa miễn phí nếu bạn chưa thấy thật sự vừa vặn.",
+    },
+    {
+      title: "Tư vấn 1:1 miễn phí",
+      desc: "Stylist đồng hành từ lúc chọn mẫu tới khi nhận đồ.",
+    },
+    {
+      title: "Minh bạch chi phí",
+      desc: "Bảng giá rõ ràng, báo trước mọi chi tiết phát sinh.",
+    },
+  ];
+
+  const fittingTips = [
+    {
+      title: "Dáng người nhỏ / gầy",
+      body: "Ưu tiên phom vừa người, vai không rơi, tay áo gọn. Tránh đồ quá rộng dễ bị “nuốt dáng”.",
+    },
+    {
+      title: "Dáng người đầy đặn",
+      body: "Chọn chất liệu rủ nhẹ, ít nhăn, ưu tiên cổ chữ V hoặc cổ vuông để phần trên thanh thoát hơn.",
+    },
+    {
+      title: "Đi làm hằng ngày",
+      body: "Nên chọn vải ít nhăn, màu trung tính (đen, nâu, xám, navy) để dễ phối với đồ sẵn có.",
+    },
+  ];
+
+  const faqs = [
+    {
+      q: "Mất bao lâu để hoàn thành một bộ đồ may đo?",
+      a: "Thời gian trung bình 5–10 ngày làm việc tuỳ mẫu. Với các dịp gấp, My Hiền sẽ ưu tiên lịch và báo rõ thời gian ngay từ lúc tư vấn.",
+    },
+    {
+      q: "Nếu nhận đồ chưa vừa ý thì sao?",
+      a: "Bạn được chỉnh sửa form miễn phí trong 90 ngày. Chúng tôi ưu tiên sự thoải mái và tự tin của bạn hơn bất cứ điều gì khác.",
+    },
+    {
+      q: "Tôi chưa rõ mình hợp kiểu đồ nào, có cần chuẩn bị gì không?",
+      a: "Bạn chỉ cần cho biết dịp, phong cách mong muốn và ngân sách. Stylist sẽ gợi ý vài phương án và cho bạn thử phom trực tiếp.",
+    },
+  ];
+
+  const handleScrollTo = (id) => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-[#F5F3EF] text-[#1F2933] body-font antialiased overflow-x-hidden">
+    <div className="min-h-screen bg-[#FFFBEA] text-[#111827] body-font antialiased overflow-x-hidden">
       {/* HEADER */}
       <Header currentPage="/customer-home" />
 
 
       {/* HERO */}
       <section
-  id="top"
-  ref={heroRef}
-  className="relative min-h-[480px] md:min-h-[560px] flex items-center pt-[170px] md:pt-[190px] pb-16 md:pb-18 overflow-hidden"
->
+        id="top"
+        ref={heroRef}
+        className="relative min-h-[520px] md:min-h-[600px] flex items-center pt-[170px] md:pt-[190px] pb-16 md:pb-20 overflow-hidden bg-gradient-to-br from-[#FFFBEA] via-[#FFF3C4] to-[#FFFBF5]"
+      >
         {/* Light background blob */}
         <div className="absolute inset-0 pointer-events-none">
           <div
-            className="absolute w-56 h-56 md:w-72 md:h-72 bg-[#E0B973]/18 rounded-full blur-3xl transition-all duration-500"
+            className="absolute w-56 h-56 md:w-80 md:h-80 bg-[#FACC15]/22 rounded-full blur-3xl transition-all duration-500"
             style={{
               left: `${mousePosition.x * 0.08}px`,
               top: `${mousePosition.y * 0.08}px`,
@@ -192,54 +253,68 @@ const CustomerHomePage = () => {
         </div>
 
         <div className="max-w-7xl mx-auto px-5 lg:px-8 w-full relative z-10">
-          <div className="grid lg:grid-cols-12 gap-8 items-center">
+            <div className="grid lg:grid-cols-12 gap-10 items-center">
             {/* Left text */}
             <div className="lg:col-span-5 space-y-5">
-              <span className="inline-flex items-center text-[10px] tracking-[0.25em] uppercase text-[#1B4332] font-semibold bg-white/80 backdrop-blur px-3 py-1 rounded-full border border-[#E0B973]/40">
-                Bespoke Tailoring Studio
+              <span className="inline-flex items-center text-[10px] tracking-[0.25em] uppercase text-[#854D0E] font-semibold bg-white/80 backdrop-blur px-3 py-1 rounded-full border border-[#FACC15]/40">
+                My Hiền • Fashion Design Studio
               </span>
 
-              <h1 className="heading-font text-[26px] leading-snug md:text-[30px] lg:text-[32px] text-[#111827]">
-                Trang phục may đo
+              <h1 className="heading-font text-[28px] leading-snug md:text-[34px] lg:text-[38px] text-[#111827]">
+                My Hiền Tailor – May đo áo dài, vest, đầm
                 <br />
-                <span className="text-[#1B4332]">
-                  vừa vặn & tự nhiên với bạn
+                <span className="text-[#854D0E]">
+                  chuẩn dáng người Việt & thoải mái mỗi ngày
                 </span>
               </h1>
 
               <p className="text-[13px] md:text-[14px] text-[#4B5563] leading-relaxed max-w-md">
-                Không chỉ là “đồ đẹp để chụp hình”, Lavi Tailor ưu tiên cảm giác
+                Không chỉ là “đồ đẹp để chụp hình”, My Hiền ưu tiên cảm giác
                 thoải mái khi mặc – từ lúc di chuyển, ngồi làm việc, đến lúc
                 cười nói với bạn bè.
               </p>
 
               {/* Small trust line */}
-              <p className="text-[11px] text-[#6B7280]">
+              <p className="text-[11px] text-[#4B5563]">
                 Hơn{" "}
-                <span className="font-semibold text-[#1B4332]">
-                  3.000+
-                </span>{" "}
+                <span className="font-semibold text-[#B45309]">3.000+</span>{" "}
                 bộ đồ đã hoàn thiện,{" "}
-                <span className="font-semibold text-[#1B4332]">
-                  1.500+
-                </span>{" "}
-                khách hàng quay lại.
+                <span className="font-semibold text-[#B45309]">1.500+</span>{" "}
+                khách hàng quay lại & giới thiệu thêm bạn bè.
               </p>
 
               {/* Buttons */}
-              <div className="flex flex-wrap gap-3 pt-1">
-                <button className="px-5 py-2.5 text-[13px] bg-[#1B4332] text-white rounded-full hover:bg-[#14532d] transition-colors">
-                  Xem các mẫu được đặt nhiều
+              <div className="flex flex-wrap gap-3 pt-2">
+                <button
+                  className="px-5 py-2.5 text-[13px] bg-[#B45309] text-white rounded-full hover:bg-[#92400E] transition-colors shadow-md flex items-center gap-2"
+                  onClick={() => navigate("/customer/order")}
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  Đặt may mẫu
                 </button>
-                <button className="px-5 py-2.5 text-[13px] border border-[#1B4332] text-[#1B4332] rounded-full hover:bg-[#1B4332] hover:text-white transition-colors">
-                  Tìm hiểu quy trình đặt may
+                <button
+                  className="px-5 py-2.5 text-[13px] border border-[#1B4332] text-[#1B4332] rounded-full hover:bg-[#1B4332] hover:text-white transition-colors bg-white/70 flex items-center gap-2"
+                  onClick={() => navigate("/fabrics")}
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                  </svg>
+                  Mua vải
+                </button>
+                <button
+                  className="px-5 py-2.5 text-[13px] border border-[#B45309] text-[#B45309] rounded-full hover:bg-[#B45309] hover:text-white transition-colors bg-white/70"
+                  onClick={() => handleScrollTo("process")}
+                >
+                  Tìm hiểu quy trình
                 </button>
               </div>
             </div>
 
             {/* Right: main hero image */}
             <div className="lg:col-span-7">
-              <div className="relative h-[250px] sm:h-[300px] md:h-[340px] lg:h-[380px] rounded-3xl overflow-hidden shadow-xl bg-gray-200">
+              <div className="relative h-[260px] sm:h-[320px] md:h-[360px] lg:h-[400px] rounded-[32px] overflow-hidden shadow-xl bg-gray-200">
                 {heroImages.map((img, index) => (
                   <div
                     key={index}
@@ -260,7 +335,7 @@ const CustomerHomePage = () => {
                 <div className="absolute inset-0 bg-gradient-to-r from-black/25 via-transparent to-black/5" />
 
                 {/* Small info card */}
-                <div className="absolute bottom-4 left-4 bg-white/92 backdrop-blur px-4 py-3 rounded-2xl shadow-md text-[11px] md:text-[12px] max-w-[230px]">
+                <div className="absolute bottom-4 left-4 bg-white/92 backdrop-blur px-4 py-3 rounded-2xl shadow-md text-[11px] md:text-[12px] max-w-[260px]">
                   <div className="heading-font text-[13px] text-[#111827]">
                     Áo dài & Vest may đo
                   </div>
@@ -270,7 +345,7 @@ const CustomerHomePage = () => {
                 </div>
 
                 {/* Counter */}
-                <div className="absolute bottom-4 right-4 bg-black/40 text-white text-[11px] px-3 py-1.5 rounded-full flex items-center gap-1">
+                <div className="absolute bottom-4 right-4 bg-black/45 text-white text-[11px] px-3 py-1.5 rounded-full flex items-center gap-1">
                   <span>
                     {String(currentImageIndex + 1).padStart(2, "0")}
                   </span>
@@ -285,10 +360,164 @@ const CustomerHomePage = () => {
         </div>
       </section>
 
+      {/* TRUST BADGES – CAM KẾT TỪ MY HIỀN */}
+      <section className="bg-white border-y border-[#FDEFC2] py-8">
+        <div className="max-w-7xl mx-auto px-5 lg:px-8">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
+            <div>
+              <p className="text-[11px] tracking-[0.25em] uppercase text-[#6B7280] mb-1">
+                Vì sao khách tin My Hiền
+              </p>
+              <h2 className="heading-font text-[18px] md:text-[20px] text-[#111827]">
+                3 cam kết để bạn yên tâm trước khi quyết định may đo
+              </h2>
+            </div>
+          </div>
+          <div className="grid md:grid-cols-3 gap-4 text-[12px] md:text-[13px]">
+            {trustBadges.map((item, index) => (
+              <div
+                key={index}
+                className="flex items-start gap-3 bg-[#FFFBF2] rounded-2xl px-4 py-4 shadow-sm border border-[#FDEFC2]"
+              >
+                <div className="mt-1 w-7 h-7 rounded-full bg-[#B45309]/10 flex items-center justify-center text-[13px]">
+                  {index === 0 && "✓"}
+                  {index === 1 && "👩‍🎨"}
+                  {index === 2 && "₫"}
+                </div>
+                <div>
+                  <h3 className="heading-font text-[13px] md:text-[14px] text-[#111827] mb-0.5">
+                    {item.title}
+                  </h3>
+                  <p className="text-[11px] md:text-[12px] text-[#6B7280]">
+                    {item.desc}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* AI & AR FEATURES – TÍNH NĂNG THÔNG MINH */}
+      <section className="bg-gradient-to-br from-purple-50 via-pink-50 to-indigo-50 py-16 border-y border-purple-100">
+        <div className="max-w-7xl mx-auto px-5 lg:px-8">
+          <div className="text-center mb-10">
+            <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-purple-100 text-purple-700 text-[11px] uppercase tracking-[0.2em] font-semibold mb-4">
+              <span>✨</span>
+              <span>Trải nghiệm công nghệ</span>
+            </span>
+            <h2 className="heading-font text-[24px] md:text-[28px] text-[#111827] mb-3">
+              Khám phá với AI & AR
+            </h2>
+            <p className="text-[13px] md:text-[14px] text-[#6B7280] max-w-2xl mx-auto">
+              Sử dụng công nghệ AI và AR để tìm phong cách phù hợp và xem trước sản phẩm trên người bạn
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* AI Style Suggestions */}
+            <button
+              onClick={() => navigate("/ai-style-suggestions")}
+              className="group bg-white rounded-2xl p-6 shadow-sm hover:shadow-xl transition-all border-2 border-transparent hover:border-purple-300 text-left"
+            >
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                <span className="text-2xl">🤖</span>
+              </div>
+              <h3 className="heading-font text-[15px] text-[#111827] mb-2">
+                AI Gợi ý Phong cách
+              </h3>
+              <p className="text-[12px] text-[#6B7280] mb-4">
+                Cho AI biết về bạn và dịp sử dụng, nhận gợi ý thiết kế phù hợp nhất
+              </p>
+              <span className="text-[11px] text-purple-600 font-semibold flex items-center gap-1 group-hover:gap-2 transition-all">
+                Thử ngay <span>→</span>
+              </span>
+            </button>
+
+            {/* 3D Preview */}
+            <button
+              onClick={() => navigate("/3d-preview")}
+              className="group bg-white rounded-2xl p-6 shadow-sm hover:shadow-xl transition-all border-2 border-transparent hover:border-blue-300 text-left"
+            >
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                <span className="text-2xl">🎨</span>
+              </div>
+              <h3 className="heading-font text-[15px] text-[#111827] mb-2">
+                Xem trước 3D
+              </h3>
+              <p className="text-[12px] text-[#6B7280] mb-4">
+                Xoay 360° sản phẩm, thay đổi màu sắc và chất liệu trực tiếp trên màn hình
+              </p>
+              <span className="text-[11px] text-blue-600 font-semibold flex items-center gap-1 group-hover:gap-2 transition-all">
+                Khám phá <span>→</span>
+              </span>
+            </button>
+
+            {/* Virtual Try-On */}
+            <button
+              onClick={() => navigate("/virtual-tryon")}
+              className="group bg-white rounded-2xl p-6 shadow-sm hover:shadow-xl transition-all border-2 border-transparent hover:border-green-300 text-left"
+            >
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-green-500 to-emerald-500 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                <span className="text-2xl">📱</span>
+              </div>
+              <h3 className="heading-font text-[15px] text-[#111827] mb-2">
+                Thử áo ảo AR
+              </h3>
+              <p className="text-[12px] text-[#6B7280] mb-4">
+                Sử dụng camera để thử sản phẩm trực tiếp trên người bạn bằng công nghệ AR
+              </p>
+              <span className="text-[11px] text-green-600 font-semibold flex items-center gap-1 group-hover:gap-2 transition-all">
+                Bắt đầu <span>→</span>
+              </span>
+            </button>
+
+            {/* Trend Analysis */}
+            <button
+              onClick={() => navigate("/trend-analysis")}
+              className="group bg-white rounded-2xl p-6 shadow-sm hover:shadow-xl transition-all border-2 border-transparent hover:border-indigo-300 text-left"
+            >
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                <span className="text-2xl">📊</span>
+              </div>
+              <h3 className="heading-font text-[15px] text-[#111827] mb-2">
+                Phân tích Xu hướng
+              </h3>
+              <p className="text-[12px] text-[#6B7280] mb-4">
+                Khám phá những xu hướng thời trang đang thịnh hành dựa trên dữ liệu thực tế
+              </p>
+              <span className="text-[11px] text-indigo-600 font-semibold flex items-center gap-1 group-hover:gap-2 transition-all">
+                Xem ngay <span>→</span>
+              </span>
+            </button>
+          </div>
+
+          {/* Quick access banner */}
+          <div className="mt-8 bg-gradient-to-r from-purple-600 to-pink-600 rounded-2xl p-6 text-white text-center">
+            <p className="text-[13px] md:text-[14px] mb-3">
+              💬 <strong>Chat với AI Assistant</strong> để được tư vấn ngay lập tức về size, giá cả, và phong cách phù hợp
+            </p>
+            <button
+              onClick={() => {
+                // Trigger chat widget if available
+                const chatButton = document.querySelector('[aria-label="Mở chat"]');
+                if (chatButton) {
+                  chatButton.click();
+                }
+              }}
+              className="inline-flex items-center gap-2 px-5 py-2 bg-white text-purple-600 rounded-full text-[12px] font-semibold hover:bg-purple-50 transition"
+            >
+              <span>💬</span>
+              <span>Mở Chat AI</span>
+            </button>
+          </div>
+        </div>
+      </section>
+
       {/* NEW ARRIVALS – HÀNG MỚI VỀ */}
       <section
         id="new-arrivals"
-        className="bg-white border-y border-[#E5E7EB] py-12"
+        className="bg-[#FFFDF5] border-y border-[#FDEFC2] py-12"
       >
         <div className="max-w-7xl mx-auto px-5 lg:px-8">
           <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-6">
@@ -310,7 +539,7 @@ const CustomerHomePage = () => {
             {newArrivals.map((item, index) => (
               <div
                 key={index}
-                className="bg-[#F9FAFB] rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow flex flex-col"
+                className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow flex flex-col border border-[#FDEFC2]"
               >
                 <div className="relative h-40 md:h-44 w-full overflow-hidden bg-gray-200">
                   <img
@@ -334,7 +563,7 @@ const CustomerHomePage = () => {
                   <p className="text-[12px] text-[#6B7280] flex-1">
                     {item.desc}
                   </p>
-                  <div className="mt-2 text-[13px] font-semibold text-[#1B4332]">
+                  <div className="mt-2 text-[13px] font-semibold text-[#B45309]">
                     {item.price}
                   </div>
                   <button
@@ -361,7 +590,7 @@ const CustomerHomePage = () => {
       {/* STYLE SELECTOR – PHÙ HỢP VỚI DỊP NÀO */}
       <section
         id="styles"
-        className="bg-[#F5F3EF] border-b border-[#E5E7EB] py-10"
+        className="bg-[#FFFBEA] border-b border-[#FDEFC2] py-10"
       >
         <div className="max-w-7xl mx-auto px-5 lg:px-8">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
@@ -386,8 +615,8 @@ const CustomerHomePage = () => {
                 onClick={() => setActiveStyle(c.key)}
                 className={`px-4 py-2 text-[12px] rounded-full border transition-colors ${
                   activeStyle === c.key
-                    ? "bg-[#1B4332] text-white border-[#1B4332]"
-                    : "bg-white text-[#374151] border-[#D1D5DB] hover:border-[#1B4332]"
+                    ? "bg-[#B45309] text-white border-[#B45309]"
+                    : "bg-white text-[#374151] border-[#FDEFC2] hover:border-[#B45309]"
                 }`}
               >
                 {c.tag}
@@ -427,6 +656,47 @@ const CustomerHomePage = () => {
         </div>
       </section>
 
+      {/* FITTING ADVICE – GÓC TƯ VẤN NHANH */}
+      <section className="bg-white border-b border-[#FDEFC2] py-12">
+        <div className="max-w-7xl mx-auto px-5 lg:px-8">
+          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-6">
+            <div>
+              <p className="text-[11px] tracking-[0.25em] uppercase text-[#6B7280] mb-1">
+                Góc tư vấn nhanh
+              </p>
+              <h2 className="heading-font text-[20px] md:text-[22px] text-[#111827]">
+                Chưa biết chọn dáng nào? Bắt đầu từ đây nhé
+              </h2>
+            </div>
+            <p className="text-[12px] md:text-[13px] text-[#6B7280] max-w-md">
+              Dưới đây là vài gợi ý cơ bản My Hiền thường chia sẻ với khách mới.
+              Khi đến tiệm, chúng tôi sẽ dựa trên dáng người thật của bạn để tư vấn kỹ hơn.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-5 text-[13px]">
+            {fittingTips.map((tip, index) => (
+              <div
+                key={index}
+                className="bg-[#FFFBF2] rounded-2xl p-5 border border-[#FDEFC2] shadow-sm"
+              >
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="w-7 h-7 rounded-full bg-[#1D3557]/10 flex items-center justify-center text-[11px] font-semibold text-[#1D3557]">
+                    0{index + 1}
+                  </span>
+                  <h3 className="heading-font text-[14px] text-[#111827]">
+                    {tip.title}
+                  </h3>
+                </div>
+                <p className="text-[12px] text-[#4B5563] leading-relaxed">
+                  {tip.body}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* COLLECTION CARDS */}
       <section
         id="collections"
@@ -437,8 +707,8 @@ const CustomerHomePage = () => {
             <p className="text-[11px] tracking-[0.25em] uppercase text-[#6B7280] mb-1">
               Bộ sưu tập
             </p>
-            <h2 className="heading-font text-[20px] md:text-[22px] text-[#111827]">
-              Một vài dòng sản phẩm tại Lavi
+              <h2 className="heading-font text-[20px] md:text-[22px] text-[#111827]">
+                Một vài dòng sản phẩm tại My Hiền
             </h2>
           </div>
 
@@ -446,7 +716,7 @@ const CustomerHomePage = () => {
             {collections.map((c, index) => (
               <div
                 key={index}
-                className="bg-[#F9FAFB] rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow flex flex-col"
+                className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow flex flex-col border border-[#FDEFC2]"
               >
                 <div className="h-36 md:h-40 w-full overflow-hidden bg-gray-200">
                   <img
@@ -501,7 +771,7 @@ const CustomerHomePage = () => {
               Quy trình
             </p>
             <h2 className="heading-font text-[20px] md:text-[22px] text-[#111827]">
-              Đặt may tại Lavi diễn ra ra sao?
+              Đặt may tại My Hiền diễn ra như thế nào?
             </h2>
           </div>
 
@@ -530,6 +800,45 @@ const CustomerHomePage = () => {
               </div>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* FAQ – MỘT VÀI CÂU HỎI THƯỜNG GẶP */}
+      <section className="py-14 md:py-18 bg-white border-t border-[#FDEFC2]">
+        <div className="max-w-5xl mx-auto px-5 lg:px-8">
+          <div className="text-center mb-8">
+            <p className="text-[11px] tracking-[0.25em] uppercase text-[#6B7280] mb-1">
+              Hỏi nhanh – Đáp gọn
+            </p>
+            <h2 className="heading-font text-[20px] md:text-[22px] text-[#111827]">
+              Trước khi đặt may, khách thường hỏi gì?
+            </h2>
+          </div>
+          <div className="space-y-3 text-[13px]">
+            {faqs.map((item, index) => (
+              <div
+                key={index}
+                className="bg-[#FFFBF2] rounded-xl px-4 py-3 border border-[#FDEFC2]"
+              >
+                <button
+                  type="button"
+                  className="w-full flex items-start justify-between gap-3 text-left"
+                >
+                  <div>
+                    <p className="font-semibold text-[#111827]">{item.q}</p>
+                    <p className="mt-1 text-[12px] text-[#4B5563]">
+                      {item.a}
+                    </p>
+                  </div>
+                  <span className="text-[#9CA3AF] text-[16px]">?</span>
+                </button>
+              </div>
+            ))}
+          </div>
+          <p className="mt-4 text-[11px] text-center text-[#6B7280]">
+            Nếu bạn có câu hỏi riêng, hãy để lại ghi chú khi đặt lịch tư vấn –
+            My Hiền sẽ chuẩn bị kỹ trước buổi gặp.
+          </p>
         </div>
       </section>
 
@@ -584,23 +893,132 @@ const CustomerHomePage = () => {
         </div>
       </section>
 
-      {/* CTA */}
-      <section className="py-16 md:py-20 bg-[#1B4332] text-white">
-        <div className="max-w-5xl mx-auto px-5 lg:px-8 text-center">
-          <h2 className="heading-font text-[20px] md:text-[24px] mb-3">
-            Bạn đang chuẩn bị cho dịp gì?
-          </h2>
-          <p className="text-[13px] md:text-[14px] text-[#E5E7EB] mb-6">
-            Cưới hỏi, lễ kỷ niệm, buổi thuyết trình quan trọng hay đơn giản là
-            muốn có bộ đồ vừa vặn hơn cho mỗi ngày?
-          </p>
-          <div className="flex flex-wrap justify-center gap-3 text-[13px]">
-            <button className="px-5 py-2.5 bg-white text-[#1B4332] rounded-full font-medium hover:bg-[#F3F4F6] transition-colors">
-              Đặt lịch tư vấn tại tiệm
-            </button>
-            <button className="px-5 py-2.5 border border-white rounded-full hover:bg-white/10 transition-colors">
-              Gửi yêu cầu may online
-            </button>
+      {/* SERVICES - ĐẶT MAY MẪU & MUA VẢI */}
+      <section className="py-16 md:py-20 bg-gradient-to-br from-[#1B4332] via-[#14532d] to-[#1B4332] text-white">
+        <div className="max-w-6xl mx-auto px-5 lg:px-8">
+          <div className="text-center mb-10">
+            <h2 className="heading-font text-[24px] md:text-[28px] mb-3">
+              Bạn muốn làm gì?
+            </h2>
+            <p className="text-[13px] md:text-[14px] text-[#E5E7EB] max-w-2xl mx-auto">
+              Chọn dịch vụ phù hợp với nhu cầu của bạn: đặt may mẫu theo yêu cầu hoặc mua vải chất lượng cao
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-6">
+            {/* Card 1: Đặt may mẫu */}
+            <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 border border-white/20 hover:bg-white/15 transition-all duration-300 hover:shadow-xl">
+              <div className="text-center mb-6">
+                <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-white/20 flex items-center justify-center">
+                  <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                </div>
+                <h3 className="heading-font text-[22px] md:text-[24px] mb-2">
+                  Đặt may mẫu
+                </h3>
+                <p className="text-[13px] md:text-[14px] text-[#E5E7EB] mb-4">
+                  May đo theo số đo cá nhân, tư vấn mẫu và chất liệu phù hợp với dịp của bạn
+                </p>
+              </div>
+
+              <div className="space-y-3 mb-6 text-[12px] md:text-[13px]">
+                <div className="flex items-start gap-3">
+                  <span className="text-[#D1FAE5] mt-1">✓</span>
+                  <span className="text-[#E5E7EB]">Đo số đo chi tiết tại tiệm hoặc online</span>
+                </div>
+                <div className="flex items-start gap-3">
+                  <span className="text-[#D1FAE5] mt-1">✓</span>
+                  <span className="text-[#E5E7EB]">Tư vấn mẫu và phong cách phù hợp</span>
+                </div>
+                <div className="flex items-start gap-3">
+                  <span className="text-[#D1FAE5] mt-1">✓</span>
+                  <span className="text-[#E5E7EB]">Chọn vải và màu sắc theo yêu cầu</span>
+                </div>
+                <div className="flex items-start gap-3">
+                  <span className="text-[#D1FAE5] mt-1">✓</span>
+                  <span className="text-[#E5E7EB]">Theo dõi tiến độ và nhận đồ tận nơi</span>
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-3">
+                <button
+                  className="w-full px-6 py-3 bg-white text-[#1B4332] rounded-full font-semibold hover:bg-[#F3F4F6] transition-all duration-300 shadow-lg hover:shadow-xl text-[13px] md:text-[14px]"
+                  onClick={() => navigate("/customer/order")}
+                >
+                  Đặt lịch tư vấn tại tiệm
+                </button>
+                <button
+                  className="w-full px-6 py-3 border-2 border-white text-white rounded-full font-medium hover:bg-white/10 transition-all duration-300 text-[13px] md:text-[14px]"
+                  onClick={() =>
+                    navigate("/customer/order", {
+                      state: { source: "online-request" },
+                    })
+                  }
+                >
+                  Gửi yêu cầu may online
+                </button>
+              </div>
+
+              <p className="mt-4 text-[11px] text-center text-[#D1FAE5]">
+                Phản hồi trong vòng <span className="font-semibold">24 giờ</span>
+              </p>
+            </div>
+
+            {/* Card 2: Mua vải */}
+            <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 border border-white/20 hover:bg-white/15 transition-all duration-300 hover:shadow-xl">
+              <div className="text-center mb-6">
+                <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-white/20 flex items-center justify-center">
+                  <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                  </svg>
+                </div>
+                <h3 className="heading-font text-[22px] md:text-[24px] mb-2">
+                  Mua vải
+                </h3>
+                <p className="text-[13px] md:text-[14px] text-[#E5E7EB] mb-4">
+                  Mua vải chất lượng cao với nhiều loại, màu sắc đa dạng cho dự án may đo của bạn
+                </p>
+              </div>
+
+              <div className="space-y-3 mb-6 text-[12px] md:text-[13px]">
+                <div className="flex items-start gap-3">
+                  <span className="text-[#D1FAE5] mt-1">✓</span>
+                  <span className="text-[#E5E7EB]">Hơn 100+ loại vải cao cấp</span>
+                </div>
+                <div className="flex items-start gap-3">
+                  <span className="text-[#D1FAE5] mt-1">✓</span>
+                  <span className="text-[#E5E7EB]">Nhiều màu sắc và hoa văn đa dạng</span>
+                </div>
+                <div className="flex items-start gap-3">
+                  <span className="text-[#D1FAE5] mt-1">✓</span>
+                  <span className="text-[#E5E7EB]">Giá cả minh bạch, bán theo mét</span>
+                </div>
+                <div className="flex items-start gap-3">
+                  <span className="text-[#D1FAE5] mt-1">✓</span>
+                  <span className="text-[#E5E7EB]">Giao hàng tận nơi hoặc nhận tại cửa hàng</span>
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-3">
+                <button
+                  className="w-full px-6 py-3 bg-white text-[#1B4332] rounded-full font-semibold hover:bg-[#F3F4F6] transition-all duration-300 shadow-lg hover:shadow-xl text-[13px] md:text-[14px]"
+                  onClick={() => navigate("/fabrics")}
+                >
+                  Xem danh sách vải
+                </button>
+                <button
+                  className="w-full px-6 py-3 border-2 border-white text-white rounded-full font-medium hover:bg-white/10 transition-all duration-300 text-[13px] md:text-[14px]"
+                  onClick={() => navigate("/cart")}
+                >
+                  Xem giỏ hàng
+                </button>
+              </div>
+
+              <p className="mt-4 text-[11px] text-center text-[#D1FAE5]">
+                Miễn phí vận chuyển cho đơn hàng <span className="font-semibold">trên 500.000₫</span>
+              </p>
+            </div>
           </div>
         </div>
       </section>
@@ -613,21 +1031,25 @@ const CustomerHomePage = () => {
         <div className="max-w-7xl mx-auto px-5 lg:px-8">
           <div className="grid md:grid-cols-4 gap-8 mb-6">
             <div className="md:col-span-2">
-              <h3 className="heading-font text-[16px] mb-2">LAVI TAILOR</h3>
+              <h3 className="heading-font text-[16px] mb-2">
+                My Hiền • Fashion Design Studio
+              </h3>
               <p className="text-[#9CA3AF] max-w-md">
-                Tiệm may đo nhỏ, nhưng cẩn thận trong từng đường kim mũi chỉ.
-                Chúng tôi mong bạn có thể mặc đồ may đo thường xuyên, không chỉ
-                trong những dịp “đặc biệt”.
+                Tiệm may đo tập trung vào cảm giác mặc thật sự thoải mái,
+                vừa vặn với cuộc sống hằng ngày của bạn. Mỗi sản phẩm đều được
+                theo dõi hồ sơ số đo để lần sau may nhanh hơn, chuẩn hơn.
               </p>
             </div>
             <div>
               <h4 className="font-semibold mb-2 text-[#E5E7EB] text-[13px]">
-                Địa chỉ
+                Địa chỉ atelier
               </h4>
               <p className="text-[#9CA3AF]">
-                123 Đường ABC
+                123 Nguyễn Thị Minh Khai, Q.1
                 <br />
-                Quận XYZ, TP. Hồ Chí Minh
+                TP. Hồ Chí Minh
+                <br />
+                (Đặt lịch trước khi ghé để được tư vấn kỹ hơn)
               </p>
             </div>
             <div>
@@ -635,19 +1057,19 @@ const CustomerHomePage = () => {
                 Liên hệ
               </h4>
               <p className="text-[#9CA3AF]">
-                Email: info@lavitailor.com
+                Email: dvkh@camfashion.vn
                 <br />
-                Phone: 0901 234 567
+                Hotline: 0901 134 256
                 <br />
-                Giờ mở cửa: 9:00 - 20:00
+                Giờ mở cửa: 07:00 - 23:00
               </p>
             </div>
           </div>
           <div className="border-t border-[#1F2937] pt-4 flex justify-between items-center text-[#6B7280] text-[11px]">
-            <span>© 2025 Lavi Tailor</span>
+            <span>© 2025 My Hiền Fashion Design Studio. All rights reserved.</span>
             <div className="flex gap-4">
-              <a href="#">Privacy</a>
-              <a href="#">Terms</a>
+              <a href="#">Chính sách bảo mật</a>
+              <a href="#">Điều khoản sử dụng</a>
             </div>
           </div>
         </div>

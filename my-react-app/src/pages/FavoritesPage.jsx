@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "../components/Header.jsx";
 import { getFavorites, removeFavorite } from "../utils/favoriteStorage.js";
+import usePageMeta from "../hooks/usePageMeta";
 
 const getSlug = (product, index = 0) => {
   if (product?.key) return product.key;
@@ -19,6 +20,12 @@ const getSlug = (product, index = 0) => {
 export default function FavoritesPage() {
   const [favorites, setFavorites] = useState([]);
   const navigate = useNavigate();
+
+  usePageMeta({
+    title: "Danh sách yêu thích | My Hiền Tailor",
+    description:
+      "Lưu lại các mẫu áo dài, vest, đầm may đo bạn đang cân nhắc để stylist My Hiền chuẩn bị sẵn chất liệu và phom dáng.",
+  });
 
   useEffect(() => {
     setFavorites(getFavorites());
@@ -48,7 +55,7 @@ export default function FavoritesPage() {
                 Danh sách yêu thích
               </p>
               <h1 className="heading-font text-[28px] md:text-[32px] text-[#111827]">
-                Những thiết kế bạn đang cân nhắc
+                Danh sách mẫu may đo yêu thích tại My Hiền Tailor
               </h1>
               <p className="text-[13px] text-[#6B7280] max-w-2xl">
                 Lưu lại các mẫu muốn thử để khi đến tiệm, stylist chuẩn bị sẵn

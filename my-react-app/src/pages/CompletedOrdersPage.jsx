@@ -103,21 +103,23 @@ export default function CompletedOrdersPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5 md:space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-semibold text-gray-700">Danh sách đồ đã may</h1>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <h1 className="text-2xl md:text-3xl font-semibold text-gray-700">
+          Danh sách đồ đã may
+        </h1>
         <button
           onClick={() => navigate("/tailors/orders")}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 transition"
+          className="inline-flex items-center justify-center px-3 py-2 text-sm md:text-base bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 transition w-full sm:w-auto"
         >
           ← Quay lại đơn hàng
         </button>
       </div>
 
       {/* Statistics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
+        <div className="bg-white border border-gray-200 rounded-xl p-4 md:p-6 shadow-sm">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-500 mb-1">Tổng số đơn đã may</p>
@@ -131,7 +133,7 @@ export default function CompletedOrdersPage() {
           </div>
         </div>
 
-        <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
+        <div className="bg-white border border-gray-200 rounded-xl p-4 md:p-6 shadow-sm">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-500 mb-1">Tổng doanh thu</p>
@@ -145,7 +147,7 @@ export default function CompletedOrdersPage() {
           </div>
         </div>
 
-        <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
+        <div className="bg-white border border-gray-200 rounded-xl p-4 md:p-6 shadow-sm">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-500 mb-1">Số thợ may</p>
@@ -161,8 +163,8 @@ export default function CompletedOrdersPage() {
       </div>
 
       {/* Filters */}
-      <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="bg-white border border-gray-200 rounded-xl p-4 md:p-5 shadow-sm">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
           {/* Search */}
           <div className="lg:col-span-2">
             <label className="text-sm text-gray-600 block mb-2">Tìm kiếm</label>
@@ -204,7 +206,7 @@ export default function CompletedOrdersPage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4 mt-4">
           <div>
             <label className="text-sm text-gray-600 block mb-2">Đến ngày</label>
             <input
@@ -235,20 +237,20 @@ export default function CompletedOrdersPage() {
       </div>
 
       {/* Orders Table */}
-      <div className="bg-white rounded-xl shadow border border-gray-200 p-6">
+      <div className="bg-white rounded-xl shadow border border-gray-200 p-3 md:p-6">
         {completedOrders.length === 0 ? (
           <div className="text-center py-12 text-gray-400">
             <p className="text-lg">Không có đơn hàng nào đã hoàn thành</p>
           </div>
         ) : (
           <>
-            <div className="mb-4 text-sm text-gray-600">
+            <div className="mb-3 md:mb-4 text-xs md:text-sm text-gray-600">
               Hiển thị <span className="font-semibold">{completedOrders.length}</span> đơn hàng
             </div>
-            <div className="overflow-x-auto">
-              <table className="w-full border-collapse">
-                <thead>
-                  <tr className="bg-gray-50 text-gray-600 text-sm border-b">
+            <div className="overflow-x-auto -mx-3 md:mx-0">
+              <table className="min-w-full border-collapse text-xs md:text-sm">
+                <thead className="sticky top-16 md:top-auto bg-gray-50">
+                  <tr className="bg-gray-50 text-gray-600 border-b">
                     <th className="p-3 text-left">Mã đơn</th>
                     <th className="p-3 text-left">Khách hàng</th>
                     <th className="p-3 text-left">SĐT</th>

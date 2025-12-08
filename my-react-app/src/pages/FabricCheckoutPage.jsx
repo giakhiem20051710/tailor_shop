@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import Header from "../components/Header.jsx";
+import usePageMeta from "../hooks/usePageMeta.jsx";
 import { vietnamWardsData } from "../data/vietnamWardsData.js";
 import { addOrder } from "../utils/orderStorage";
 import { getCurrentUser } from "../utils/authStorage";
@@ -35,6 +36,12 @@ export default function FabricCheckoutPage() {
   const [detailedAddress, setDetailedAddress] = useState("");
   const [suggestedWards, setSuggestedWards] = useState([]);
   const [selectedSuggestedWard, setSelectedSuggestedWard] = useState("");
+
+  // SEO Meta Tags
+  usePageMeta({
+    title: "Thanh toán | My Hiền Tailor",
+    description: "Hoàn tất đơn hàng vải may đo của bạn tại My Hiền Tailor. Nhập thông tin giao hàng, chọn phương thức thanh toán và xác nhận đơn hàng.",
+  });
 
   const formatPrice = (price) => {
     return new Intl.NumberFormat("vi-VN").format(price) + " ₫";
@@ -292,6 +299,7 @@ export default function FabricCheckoutPage() {
       sampleImages: null,
       customerId: currentUser?.username,
       isFabricOrder: true,
+      items: orderData.items || [], // Lưu items để có thể lấy hình ảnh
     });
 
     // Điều hướng đến trang thanh toán tương ứng với phương thức đã chọn

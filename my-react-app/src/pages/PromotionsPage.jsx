@@ -1,9 +1,16 @@
 import { useNavigate } from "react-router-dom";
 import { useState, useMemo, useEffect } from "react";
 import Header from "../components/Header.jsx";
+import usePageMeta from "../hooks/usePageMeta";
 
 const PromotionsPage = () => {
   const navigate = useNavigate();
+
+  usePageMeta({
+    title: "Ưu đãi may đo áo dài, vest & đầm | My Hiền Tailor",
+    description:
+      "Cập nhật voucher may đo, combo vest, ưu đãi sinh nhật và flash sale cho khách hàng thân thiết tại My Hiền Tailor.",
+  });
 
   // ====== DATA ƯU ĐÃI THEO DỊP LỄ ======
   const promotions = [
@@ -428,8 +435,10 @@ const PromotionsPage = () => {
                 </div>
               </div>
               <h1 className="heading-font text-[30px] md:text-[36px] text-[#111827] leading-tight">
-                Đặt may đúng dịp,{" "}
-                <span className="text-[#B45309]">ưu đãi tự áp dụng</span>
+                Ưu đãi may đo áo dài, vest, đầm tại My Hiền Tailor
+                <span className="block text-[#B45309]">
+                  tự động áp dụng theo mùa & dịp lễ
+                </span>
               </h1>
               <p className="text-[14px] text-[#4B5563] max-w-2xl leading-relaxed">
                 Lavi Tailor thiết kế gói ưu đãi theo từng mùa lễ hội, sự kiện và

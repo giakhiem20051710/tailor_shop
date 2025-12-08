@@ -1,9 +1,11 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
 import Header from "../components/Header.jsx";
+import usePageMeta from "../hooks/usePageMeta.jsx";
 import { fabrics } from "./FabricsPage.jsx";
 import { addFabricVisit, addFabricHold } from "../utils/fabricHoldStorage.js";
 import { addToFabricCart } from "../utils/fabricCartStorage.js";
+import { getReviewsByFabricKey, getReviews } from "../utils/reviewStorage.js";
 
 export default function FabricDetailPage() {
   const { key } = useParams();
@@ -24,14 +26,41 @@ export default function FabricDetailPage() {
   const [quantity, setQuantity] = useState(1);
   const [activeTab, setActiveTab] = useState("description"); // description | reviews | qa
   const [starFilter, setStarFilter] = useState(0); // 0 = all
+  const [refreshKey, setRefreshKey] = useState(0); // Force re-render when reviews update
   const [showShippingDetails, setShowShippingDetails] = useState(false);
   const [showBuyNowModal, setShowBuyNowModal] = useState(false);
   const [buyNowQuantity, setBuyNowQuantity] = useState(1);
   const [showAddToCartSuccess, setShowAddToCartSuccess] = useState(false);
+  const [showImageLightbox, setShowImageLightbox] = useState(null);
+  const [sortBy, setSortBy] = useState("newest"); // "newest" | "oldest" | "highest" | "lowest"
+
+  // SEO Meta Tags
+  usePageMeta({
+    title: `${fabric.name} | Vải may đo chất lượng cao | My Hiền Tailor`,
+    description: `${fabric.description || fabric.name} - Vải ${fabric.category || "cao cấp"} tại My Hiền Tailor. Giá ${fabric.price}. ${fabric.material ? `Chất liệu: ${fabric.material}.` : ""} Đặt mua ngay hoặc hẹn xem tại tiệm.`,
+    ogImage: fabric.image || fabric.images?.[0],
+  });
 
   useEffect(() => {
     window.scrollTo({ top: 0 });
   }, [key]);
+
+  // Force re-render when reviews change (from localStorage)
+  useEffect(() => {
+    const handleReviewsUpdate = () => {
+      // Force component to re-render by updating refreshKey
+      setRefreshKey(prev => prev + 1);
+    };
+    
+    window.addEventListener('storage', handleReviewsUpdate);
+    // Also listen for custom event if reviews are updated in same tab
+    window.addEventListener('reviewsUpdated', handleReviewsUpdate);
+    
+    return () => {
+      window.removeEventListener('storage', handleReviewsUpdate);
+      window.removeEventListener('reviewsUpdated', handleReviewsUpdate);
+    };
+  }, []);
 
   if (!fabric) return null;
 
@@ -39,7 +68,41 @@ export default function FabricDetailPage() {
     fabric.gallery && fabric.gallery.length ? fabric.gallery : [fabric.image];
   const unit = fabric.unit || "đ/m";
 
-  const reviews = fabric.reviews && fabric.reviews.length ? fabric.reviews : [];
+  // Lấy reviews từ localStorage (đánh giá từ customer) và merge với reviews từ fabric data
+  const customerReviews = useMemo(() => {
+    if (!fabric || !fabric.key) return [];
+    
+    // Lấy tất cả reviews và filter theo fabricKey
+    const allReviews = getReviews() || [];
+    const reviews = allReviews.filter((review) => {
+      if (!review.fabricKeys || !Array.isArray(review.fabricKeys)) return false;
+      return review.fabricKeys.includes(fabric.key);
+    });
+    
+    return reviews;
+  }, [fabric?.key, refreshKey]);
+
+  // Merge reviews: ưu tiên customer reviews, sau đó là fabric.reviews
+  const reviews = useMemo(() => {
+    const staticReviews = fabric.reviews && fabric.reviews.length ? fabric.reviews : [];
+    // Merge và loại bỏ duplicate (nếu có)
+    const allReviews = [...customerReviews, ...staticReviews];
+    // Loại bỏ duplicate dựa trên customerId và comment hoặc orderId
+    const uniqueReviews = allReviews.filter((review, index, self) =>
+      index === self.findIndex((r) => 
+        // Match bằng orderId (ưu tiên nhất)
+        (r.orderId && review.orderId && r.orderId === review.orderId) ||
+        // Hoặc match bằng customerId + comment + orderId
+        (r.customerId && review.customerId && r.customerId === review.customerId && 
+         r.comment === review.comment &&
+         r.orderId === review.orderId) ||
+        // Hoặc match static reviews bằng name + comment
+        (!r.customerId && !review.customerId && !r.orderId && !review.orderId && 
+         r.comment === review.comment && r.name === review.name)
+      )
+    );
+    return uniqueReviews;
+  }, [customerReviews, fabric.reviews]);
 
   const ratingSummary = useMemo(() => {
     if (!reviews.length) return { avg: fabric.rating || 0, counts: {} };
@@ -56,10 +119,46 @@ export default function FabricDetailPage() {
     };
   }, [reviews, fabric.rating]);
 
+  const sortedReviews = useMemo(() => {
+    });
+    const sorted = [...reviews];
+    let result;
+    switch (sortBy) {
+      case "newest":
+        result = sorted.sort((a, b) => {
+          const dateA = new Date(a.createdAt || a.updatedAt || 0);
+          const dateB = new Date(b.createdAt || b.updatedAt || 0);
+          return dateB - dateA;
+        });
+        break;
+      case "oldest":
+        result = sorted.sort((a, b) => {
+          const dateA = new Date(a.createdAt || a.updatedAt || 0);
+          const dateB = new Date(b.createdAt || b.updatedAt || 0);
+          return dateA - dateB;
+        });
+        break;
+      case "highest":
+        result = sorted.sort((a, b) => (b.rating || 5) - (a.rating || 5));
+        break;
+      case "lowest":
+        result = sorted.sort((a, b) => (a.rating || 5) - (b.rating || 5));
+        break;
+      default:
+        result = sorted;
+    }
+    return result;
+  }, [reviews, sortBy]);
+
   const filteredReviews = useMemo(() => {
-    if (!starFilter) return reviews;
-    return reviews.filter((r) => (r.rating || 5) === starFilter);
-  }, [reviews, starFilter]);
+    if (!starFilter || starFilter === 0) {
+      return sortedReviews;
+    }
+    return sortedReviews.filter((r) => {
+      const reviewRating = r.rating || 5;
+      return reviewRating === starFilter;
+    });
+  }, [sortedReviews, starFilter]);
 
   const renderStars = (value) => {
     const full = Math.round(value || 0);
@@ -499,57 +598,132 @@ export default function FabricDetailPage() {
                           / 5 ({reviews.length} đánh giá)
                         </span>
                       </div>
-                      <div className="flex flex-wrap gap-2">
-                        <button
-                          onClick={() => setStarFilter(0)}
-                          className={`px-3 py-1 rounded-full border text-[11px] ${
-                            starFilter === 0
-                              ? "bg-[#1B4332] text-white border-[#1B4332]"
-                              : "border-[#E5E7EB] text-[#374151]"
-                          }`}
-                        >
-                          Tất cả
-                        </button>
-                        {[5, 4, 3, 2, 1].map((star) => (
+                      <div className="flex flex-wrap gap-2 items-center justify-between">
+                        <div className="flex flex-wrap gap-2">
                           <button
-                            key={star}
-                            onClick={() => setStarFilter(star)}
+                            onClick={() => setStarFilter(0)}
                             className={`px-3 py-1 rounded-full border text-[11px] ${
-                              starFilter === star
+                              starFilter === 0
                                 ? "bg-[#1B4332] text-white border-[#1B4332]"
                                 : "border-[#E5E7EB] text-[#374151]"
                             }`}
                           >
-                            {star}★ ({ratingSummary.counts?.[star] || 0})
+                            Tất cả
                           </button>
-                        ))}
-                      </div>
-                      <div className="space-y-2">
-                        {(filteredReviews.length ? filteredReviews : reviews).map(
-                          (review, idx) => (
-                            <div
-                              key={idx}
-                              className="flex items-start gap-3 rounded-xl border border-[#E5E7EB] bg-white/70 p-2.5"
+                          {[5, 4, 3, 2, 1].map((star) => (
+                            <button
+                              key={star}
+                              onClick={() => setStarFilter(star)}
+                              className={`px-3 py-1 rounded-full border text-[11px] ${
+                                starFilter === star
+                                  ? "bg-[#1B4332] text-white border-[#1B4332]"
+                                  : "border-[#E5E7EB] text-[#374151]"
+                              }`}
                             >
-                              <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-200 flex-shrink-0">
-                                <img
-                                  src={review.image}
-                                  alt={review.name}
-                                  className="w-full h-full object-cover"
-                                />
+                              {star}★ ({ratingSummary.counts?.[star] || 0})
+                            </button>
+                          ))}
+                        </div>
+                        <select
+                          value={sortBy}
+                          onChange={(e) => setSortBy(e.target.value)}
+                          className="px-3 py-1 rounded-full border border-[#E5E7EB] text-[11px] text-[#374151] bg-white focus:outline-none focus:border-[#1B4332]"
+                        >
+                          <option value="newest">Mới nhất</option>
+                          <option value="oldest">Cũ nhất</option>
+                          <option value="highest">Đánh giá cao nhất</option>
+                          <option value="lowest">Đánh giá thấp nhất</option>
+                        </select>
+                      </div>
+                      <div className="space-y-3">
+                        {(() => {
+                          const reviewsToShow = filteredReviews;
+                          
+                          if (!reviewsToShow || !Array.isArray(reviewsToShow) || reviewsToShow.length === 0) {
+                            return (
+                              <div className="text-center py-8 text-[#6B7280] text-[12px]">
+                                <p>Chưa có đánh giá nào cho sản phẩm này</p>
+                                <p className="text-[11px] text-[#9CA3AF] mt-1">
+                                  {starFilter > 0 
+                                    ? `Không có đánh giá ${starFilter} sao nào`
+                                    : "Hãy là người đầu tiên đánh giá sản phẩm này"}
+                                </p>
                               </div>
-                              <div className="text-[11px]">
-                                <p className="font-semibold text-[#111827] flex items-center gap-2">
-                                  {review.name}
-                                  {renderStars(review.rating || 5)}
-                                </p>
-                                <p className="text-[#4B5563]">
-                                  {review.comment}
-                                </p>
+                            );
+                          }
+                          
+                          return reviewsToShow.map((review, idx) => (
+                            <div
+                              key={review.id || `review-${idx}`}
+                              className="flex items-start gap-3 rounded-xl border border-[#E5E7EB] bg-white/70 p-3 hover:shadow-sm transition-shadow"
+                            >
+                              {/* Avatar */}
+                              <div className="w-10 h-10 rounded-full overflow-hidden bg-gradient-to-br from-teal-400 to-cyan-500 flex-shrink-0 flex items-center justify-center">
+                                {review.images && review.images.length > 0 ? (
+                                  <img
+                                    src={review.images[0]}
+                                    alt={review.customerName || review.name}
+                                    className="w-full h-full object-cover"
+                                  />
+                                ) : (
+                                  <span className="text-white font-semibold text-sm">
+                                    {(review.customerName || review.name || "K")[0].toUpperCase()}
+                                  </span>
+                                )}
+                              </div>
+                              
+                              {/* Review Content */}
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 mb-1">
+                                  <p className="font-semibold text-[#111827] text-[12px]">
+                                    {review.customerName || review.name || "Khách hàng"}
+                                  </p>
+                                  <div className="flex items-center">
+                                    {renderStars(review.rating || 5)}
+                                  </div>
+                                  {review.createdAt && (
+                                    <span className="text-[10px] text-[#9CA3AF] ml-auto">
+                                      {new Date(review.createdAt).toLocaleDateString("vi-VN")}
+                                    </span>
+                                  )}
+                                </div>
+                                {review.comment && (
+                                  <p className="text-[#4B5563] text-[12px] mb-2 leading-relaxed">
+                                    {review.comment}
+                                  </p>
+                                )}
+                                
+                                {/* Review Images */}
+                                {review.images && review.images.length > 0 && (
+                                  <div className="grid grid-cols-4 gap-2 mt-2">
+                                    {review.images.slice(0, 4).map((img, imgIdx) => (
+                                      <img
+                                        key={imgIdx}
+                                        src={img}
+                                        alt={`Review ${imgIdx + 1}`}
+                                        className="w-full h-16 object-cover rounded border border-gray-200 cursor-pointer hover:opacity-80 transition-opacity"
+                                        onClick={() => {
+                                          setShowImageLightbox({ review, imageIndex: imgIdx });
+                                        }}
+                                      />
+                                    ))}
+                                  </div>
+                                )}
+                                
+                                {/* Verified badge if from order */}
+                                {review.orderId && (
+                                  <div className="flex items-center gap-1 mt-2">
+                                    <svg className="w-3 h-3 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    <span className="text-[10px] text-green-600">Đã mua hàng</span>
+                                  </div>
+                                )}
                               </div>
                             </div>
-                          )
-                        )}
+                            );
+                          });
+                        })()}
                       </div>
                     </div>
                   )}
@@ -1006,6 +1180,66 @@ export default function FabricDetailPage() {
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Image Lightbox */}
+      {showImageLightbox !== null && showImageLightbox.review?.images && (
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90"
+          onClick={() => setShowImageLightbox(null)}
+        >
+          <button
+            onClick={() => setShowImageLightbox(null)}
+            className="absolute top-4 right-4 w-10 h-10 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center text-white transition-colors"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+          {showImageLightbox.review.images.length > 1 && (
+            <>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowImageLightbox(prev => ({
+                    ...prev,
+                    imageIndex: prev.imageIndex > 0 ? prev.imageIndex - 1 : prev.review.images.length - 1
+                  }));
+                }}
+                className="absolute left-4 w-10 h-10 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center text-white transition-colors"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowImageLightbox(prev => ({
+                    ...prev,
+                    imageIndex: prev.imageIndex < prev.review.images.length - 1 ? prev.imageIndex + 1 : 0
+                  }));
+                }}
+                className="absolute right-4 w-10 h-10 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center text-white transition-colors"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+            </>
+          )}
+          <img
+            src={showImageLightbox.review.images[showImageLightbox.imageIndex]}
+            alt={`Review image ${showImageLightbox.imageIndex + 1}`}
+            className="max-w-full max-h-[90vh] object-contain rounded-lg"
+            onClick={(e) => e.stopPropagation()}
+          />
+          {showImageLightbox.review.images.length > 1 && (
+            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 text-white text-sm">
+              {showImageLightbox.imageIndex + 1} / {showImageLightbox.review.images.length}
+            </div>
+          )}
         </div>
       )}
     </div>

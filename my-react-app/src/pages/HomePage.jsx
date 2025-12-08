@@ -1,13 +1,56 @@
-import React, { useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import './HomePage.css';
+import React, { useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import "./HomePage.css";
+import usePageMeta from "../hooks/usePageMeta";
 
 const HomePage = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const [selectedCategory, setSelectedCategory] = useState('Tất cả');
+  const [selectedCategory, setSelectedCategory] = useState("Tất cả");
 
-  const categories = ['Tất cả', 'Áo dài', 'Vest', 'Váy', 'Đồng phục'];
+  usePageMeta({
+    title: "My Hiền Tailor | Atelier may đo áo dài, vest, đầm cao cấp",
+    description:
+      "Khám phá bộ sưu tập và trải nghiệm atelier của My Hiền Tailor: tư vấn stylist 1:1, may đo chuẩn dáng và kho vải tuyển chọn.",
+  });
+
+  const categories = ["Tất cả", "Áo dài", "Vest", "Váy", "Đồng phục"];
+
+  const heroHighlights = [
+    { label: "Khách hàng thân thiết", value: "12.4K+", description: "đã may đo mỗi năm" },
+    { label: "Đảm bảo form dáng", value: "100%", description: "chỉnh sửa miễn phí" },
+    { label: "Thời gian hoàn thiện", value: "72H", description: "fast track cho sự kiện gấp" },
+  ];
+
+  const servicePillars = [
+    {
+      title: "Atelier Service",
+      desc: "Trải nghiệm thử phom riêng tư với stylist và thợ trưởng.",
+      tag: "Signature",
+      icon: "🎩",
+    },
+    {
+      title: "Digital Fitting",
+      desc: "Đo số đo qua app AR, theo dõi tiến độ realtime và nhận báo cáo.",
+      tag: "Tech-enabled",
+      icon: "📱",
+    },
+    {
+      title: "Material Library",
+      desc: "Hơn 250 chất liệu thủ công được tuyển, kèm chứng chỉ nguồn gốc.",
+      tag: "Curated",
+      icon: "🧵",
+    },
+  ];
+
+  const atelierSteps = [
+    { title: "Book lịch tư vấn", desc: "Chọn stylist, lịch fitting trực tuyến hoặc tại atelier." },
+    { title: "Chốt phom & chất liệu", desc: "Tạo moodboard, xem thử phom 3D, xác nhận chi tiết." },
+    { title: "Theo dõi tiến độ", desc: "Nhận cập nhật từng mốc, có thể yêu cầu điều chỉnh online." },
+    { title: "Nhận đồ & chăm sóc", desc: "Giao tận nơi, kèm chính sách chăm sóc & chỉnh sửa 90 ngày." },
+  ];
+
+  const pressLogos = ["Vogue VN", "Harper's Bazaar", "ELLE", "L'Officiel"];
 
   const products = [
     {
@@ -72,9 +115,10 @@ const HomePage = () => {
     }
   ];
 
-  const filteredProducts = selectedCategory === 'Tất cả' 
-    ? products 
-    : products.filter(p => p.category === selectedCategory);
+  const filteredProducts =
+    selectedCategory === "Tất cả"
+      ? products
+      : products.filter((p) => p.category === selectedCategory);
 
   const scrollToProducts = () => {
     const element = document.getElementById('products-section');
@@ -85,19 +129,10 @@ const HomePage = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleHomeClick = (e) => {
-    e.preventDefault();
-    navigate('/customer-home');
+  const handleNavigation = (path) => {
+    navigate(path);
     setTimeout(() => {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }, 100);
-  };
-
-  const handleAboutClick = (e) => {
-    e.preventDefault();
-    navigate('/about');
-    setTimeout(() => {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      window.scrollTo({ top: 0, behavior: "smooth" });
     }, 100);
   };
 
@@ -120,110 +155,95 @@ const HomePage = () => {
   ];
 
   return (
-    <div className="home-page">
-      {/* Header */}
-      <header className="home-header">
-        {/* Top Bar - Golden Yellow */}
-        <div className="header-top-bar">
-          <div className="top-bar-content">
-            <p className="top-bar-text">PHỤ NỮ HÃY LUÔN ĐẸP, ĐỪNG CHỈ ĐẸP KHI CẦN!</p>
-            <div className="top-bar-icons">
-              <a href="#" className="social-icon">f</a>
-              <a href="#" className="social-icon">✉</a>
-              <a href="#" className="social-icon">📞</a>
-            </div>
+    <div className="home-page brand-home">
+      <header className="brand-hero" id="home">
+        <div className="brand-hero__nav">
+          <div className="brand-hero__logo">
+            <span className="logo-mark">Lavi Tailor</span>
+            <span className="logo-tagline">Atelier since 1998</span>
+          </div>
+          <nav className="brand-hero__links">
+            <button onClick={() => handleNavigation("/customer-home")}>Trang chủ</button>
+            <button onClick={() => handleNavigation("/about")}>Giới thiệu</button>
+            <button onClick={() => scrollToProducts()}>Bộ sưu tập</button>
+            <button onClick={() => handleNavigation("/promotions")}>Ưu đãi</button>
+            <button onClick={() => handleNavigation("/support")}>Hỗ trợ</button>
+          </nav>
+          <div className="brand-hero__cta">
+            <button className="ghost-btn" onClick={() => handleNavigation("/login-selection")}>
+              Đăng nhập
+            </button>
+            <button className="filled-btn" onClick={() => (window.location.href = "/orders/new")}>
+              Đặt may nhanh
+            </button>
           </div>
         </div>
 
-        {/* Middle Section - White */}
-        <div className="header-middle">
-          <div className="header-middle-content">
-            <div className="header-logo">
-              <span className="logo-icon">☀</span>
-              <span className="logo-text">CAM</span>
+        <div className="brand-hero__content">
+          <div className="brand-hero__text">
+            <p className="eyebrow">Chuyên nghiệp & cá nhân hoá</p>
+            <h1>
+              My Hiền Tailor – thiết kế may đo chuẩn haute couture,{" "}
+              <span>đồng hành cùng mọi khoảnh khắc của bạn.</span>
+            </h1>
+            <p className="lede">
+              Đội ngũ stylist và thợ trưởng của Lavi Tailor tạo nên từng phom dáng theo phong cách
+              riêng. Từ áo dài cưới, vest công sở đến capsule wardrobe, mọi gói đều có quy trình chăm
+              sóc trọn vẹn.
+            </p>
+            <div className="hero-actions">
+              <button className="filled-btn" onClick={scrollToProducts}>
+                Khám phá bộ sưu tập
+              </button>
+              <button className="ghost-btn" onClick={() => handleNavigation("/about")}>
+                Quy trình atelier
+              </button>
             </div>
-            <div className="header-search">
-              <input type="text" placeholder="Search..." className="search-input" />
-              <button className="search-btn">🔍</button>
-            </div>
-            <div className="header-actions">
-              <a href="/login-selection" className="action-link">LOGIN/REGISTER</a>
-              <span className="divider">|</span>
-              <a href="#" className="action-link">CART / 0 ₫</a>
-              <span className="cart-icon">🛍️ <span className="cart-count">0</span></span>
+            <div className="hero-highlights">
+              {heroHighlights.map((item) => (
+                <div key={item.label}>
+                  <p>{item.value}</p>
+                  <span>{item.label}</span>
+                  <small>{item.description}</small>
+                </div>
+              ))}
             </div>
           </div>
-        </div>
 
-        {/* Bottom Menu - Light Pink */}
-        <div className="header-bottom-menu">
-          <div className="menu-content">
-            <nav className="main-nav">
-              <a 
-                href="/customer-home" 
-                className="nav-link active"
-                onClick={handleHomeClick}
-              >
-                TRANG CHỦ
-              </a>
-              <a
-                href="/about"
-                className="nav-link"
-                onClick={handleAboutClick}
-              >
-                GIỚI THIỆU
-              </a>
-              <a href="#products" className="nav-link">
-                SẢN PHẨM <span className="dropdown-arrow">▼</span>
-              </a>
-              <a href="#order" className="nav-link">
-                ĐẶT MAY <span className="dropdown-arrow">▼</span>
-              </a>
-              <a href="#photography" className="nav-link">
-                CHỤP ẢNH <span className="dropdown-arrow">▼</span>
-              </a>
-              <a href="#promotions" className="nav-link">ƯU ĐÃI</a>
-              <a href="#support" className="nav-link">
-                HỖ TRỢ <span className="dropdown-arrow">▼</span>
-              </a>
-              <a href="#articles" className="nav-link">BÀI VIẾT</a>
-            </nav>
-            <div className="contact-info">
-              <span className="contact-item">📍 HCM</span>
-              <span className="divider">|</span>
-              <span className="contact-item">🕐 07:00 - 23:00</span>
-              <span className="divider">|</span>
-              <span className="contact-item">📞 0901134256</span>
+          <div className="brand-hero__media">
+            <div className="media-card primary">
+              <img
+                src="https://images.pexels.com/photos/6311678/pexels-photo-6311678.jpeg?auto=compress&cs=tinysrgb&w=1200"
+                alt="Elegant gown"
+              />
+              <div className="media-card__label">
+                <p>Haute Wedding Capsule</p>
+                <span>Limited 2025</span>
+              </div>
+            </div>
+            <div className="media-card secondary">
+              <img
+                src="https://images.pexels.com/photos/7130498/pexels-photo-7130498.jpeg?auto=compress&cs=tinysrgb&w=1200"
+                alt="Tailor details"
+              />
+              <div className="floating-card">
+                <p>Stylist 1-1</p>
+                <strong>12 stylist đang online</strong>
+              </div>
             </div>
           </div>
         </div>
       </header>
 
-      {/* Hero Section */}
-      <section className="hero-section" id="home">
-        <div className="hero-content">
-          <h1 className="hero-headline">
-            Đặt may quần áo theo số đo – giao hàng tận nhà
-          </h1>
-          <p className="hero-description">
-            Chúng tôi chuyên may đo quần áo theo yêu cầu với độ chính xác cao.
-            <br />
-            Từ áo dài truyền thống đến vest hiện đại, tất cả đều được may tỉ mỉ, chuẩn số đo.
-          </p>
-          <div className="hero-buttons">
-            <button className="btn-primary" onClick={scrollToProducts}>
-              Xem bộ sưu tập
-            </button>
-            <button className="btn-secondary" onClick={() => window.location.href = '/orders/new'}>
-              Đặt may ngay
-            </button>
-          </div>
+      <section className="trust-bar">
+        <div className="trust-marquee">
+          {pressLogos.map((logo) => (
+            <span key={logo}>{logo}</span>
+          ))}
         </div>
-        <div className="hero-image">
-          <img 
-            src="https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?w=800" 
-            alt="Áo dài truyền thống" 
-          />
+        <div className="trust-pill">
+          <p>Đánh giá 4.9/5 • Được các thương hiệu thời trang Việt yêu thích</p>
+          <button onClick={() => handleNavigation("/about")}>Xem câu chuyện thương hiệu</button>
         </div>
       </section>
 
@@ -233,7 +253,7 @@ const HomePage = () => {
           {categories.map((cat) => (
             <button
               key={cat}
-              className={`category-chip ${selectedCategory === cat ? 'active' : ''}`}
+              className={`category-chip ${selectedCategory === cat ? "active" : ""}`}
               onClick={() => {
                 setSelectedCategory(cat);
                 scrollToProducts();
@@ -245,7 +265,26 @@ const HomePage = () => {
         </div>
       </section>
 
-      {/* Products Grid */}
+      <section className="service-pillar-section">
+        <div className="section-container">
+          <div className="section-heading">
+            <p className="eyebrow">Trải nghiệm atelier</p>
+            <h2>Thiết kế hướng đến niềm tin & sự đồng hành lâu dài</h2>
+          </div>
+          <div className="pillar-grid">
+            {servicePillars.map((pillar) => (
+              <article key={pillar.title} className="pillar-card">
+                <div className="pillar-card__icon">{pillar.icon}</div>
+                <div className="pillar-card__tag">{pillar.tag}</div>
+                <h3>{pillar.title}</h3>
+                <p>{pillar.desc}</p>
+                <button onClick={scrollToProducts}>Xem chi tiết</button>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
       <section className="products-section" id="products-section">
         <div className="section-container">
           <h2 className="section-title">Bộ sưu tập mẫu</h2>
@@ -300,45 +339,50 @@ const HomePage = () => {
         </div>
       </section>
 
-      {/* Why Choose Us */}
-      <section className="why-choose-section">
+      <section className="atelier-section">
         <div className="section-container">
-          <h2 className="section-title">Vì sao chọn tiệm của bạn?</h2>
-          <div className="features-grid">
-            <div className="feature-item">
-              <div className="feature-icon">✅</div>
-              <h3 className="feature-title">May chuẩn số đo</h3>
-              <p className="feature-text">Đo đạc chính xác, may vừa vặn từng chi tiết</p>
+          <div className="atelier-shell">
+            <div className="atelier-intro">
+              <p className="eyebrow">Quy trình 4 bước</p>
+              <h2>Atelier trải nghiệm riêng tư, minh bạch từng chi tiết.</h2>
+              <p>
+                Từ lúc đặt lịch đến khi nhận đồ, bạn được theo sát bởi stylist & thợ trưởng. Mọi
+                thông số được lưu trên hồ sơ cá nhân để tái đặt may nhanh hơn ở những lần sau.
+              </p>
+              <button className="filled-btn" onClick={() => (window.location.href = "/orders/new")}>
+                Đặt lịch fitting
+              </button>
             </div>
-            <div className="feature-item">
-              <div className="feature-icon">🚚</div>
-              <h3 className="feature-title">Giao nội thành 3–5 ngày</h3>
-              <p className="feature-text">Giao hàng nhanh chóng, đúng hẹn</p>
-            </div>
-            <div className="feature-item">
-              <div className="feature-icon">💬</div>
-              <h3 className="feature-title">Tư vấn 1-1 với thợ may</h3>
-              <p className="feature-text">Được tư vấn trực tiếp bởi thợ may chuyên nghiệp</p>
-            </div>
-            <div className="feature-item">
-              <div className="feature-icon">⭐</div>
-              <h3 className="feature-title">Chất lượng đảm bảo</h3>
-              <p className="feature-text">Vải tốt, đường may chắc chắn, bền đẹp</p>
+            <div className="atelier-steps">
+              {atelierSteps.map((step, index) => (
+                <div key={step.title} className="atelier-step">
+                  <span>{index + 1}</span>
+                  <div>
+                    <h4>{step.title}</h4>
+                    <p>{step.desc}</p>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </div>
       </section>
 
-      {/* Reviews */}
       <section className="reviews-section">
         <div className="section-container">
-          <h2 className="section-title">Khách hàng nói gì về chúng tôi</h2>
+          <div className="section-heading">
+            <p className="eyebrow">Testimonial</p>
+            <h2>Khách hàng tin tưởng Lavi Tailor vì sự tận tâm & chỉn chu.</h2>
+          </div>
           <div className="reviews-grid">
             {reviews.map((review, index) => (
               <div key={index} className="review-card">
                 <div className="review-header">
                   <img src={review.image} alt={review.name} className="review-avatar" />
-                  <div className="review-name">{review.name}</div>
+                  <div>
+                    <p className="review-name">{review.name}</p>
+                    <span>Verified client</span>
+                  </div>
                 </div>
                 <p className="review-text">"{review.text}"</p>
               </div>
@@ -347,33 +391,44 @@ const HomePage = () => {
         </div>
       </section>
 
-      {/* Footer */}
       <footer className="home-footer" id="contact">
         <div className="footer-container">
-          <div className="footer-section">
-            <h3 className="footer-title">Tiệm May Của Bạn</h3>
-            <p className="footer-text">
-              123 Đường ABC, Quận XYZ<br />
-              TP. Hồ Chí Minh
-            </p>
+          <div className="footer-brand">
+            <h3>Lavi Tailor</h3>
+            <p>Atelier 01: 123 Nguyễn Thị Minh Khai, Q.1, TP.HCM</p>
+            <p>Atelier 02: 45 Hai Bà Trưng, Hà Nội</p>
           </div>
-          <div className="footer-section">
-            <h3 className="footer-title">Liên hệ</h3>
-            <p className="footer-text">
-              📞 Hotline: 0900 123 456<br />
-              📧 Email: info@tiemmay.com
-            </p>
+          <div className="footer-links">
+            <h4>Dịch vụ</h4>
+            <a href="#" onClick={scrollToProducts}>
+              Bộ sưu tập
+            </a>
+            <a href="#" onClick={() => handleNavigation("/orders/new")}>
+              Đặt may
+            </a>
+            <a href="#" onClick={() => handleNavigation("/support")}>
+              Chăm sóc khách hàng
+            </a>
           </div>
-          <div className="footer-section">
-            <h3 className="footer-title">Theo dõi chúng tôi</h3>
-            <div className="footer-social">
-              <a href="#" className="social-link">Facebook</a>
-              <a href="#" className="social-link">Zalo</a>
+          <div className="footer-links">
+            <h4>Kết nối</h4>
+            <a href="tel:+84901134256">Hotline: 0901 134 256</a>
+            <a href="mailto:atelier@lavi.vn">atelier@lavi.vn</a>
+            <a href="#">Instagram</a>
+            <a href="#">TikTok</a>
+          </div>
+          <div className="footer-newsletter">
+            <h4>Nhận bản tin Atelier</h4>
+            <p>Cập nhật drop mới, khuyến mãi dành riêng cho khách thân thiết.</p>
+            <div className="newsletter-control">
+              <input type="email" placeholder="you@email.com" />
+              <button>Đăng ký</button>
             </div>
           </div>
         </div>
         <div className="footer-bottom">
-          <p>&copy; 2024 Tiệm May Của Bạn. All rights reserved.</p>
+          <span>© {new Date().getFullYear()} Lavi Tailor. Crafted with care.</span>
+          <button onClick={scrollToTop}>Về đầu trang ↑</button>
         </div>
       </footer>
     </div>

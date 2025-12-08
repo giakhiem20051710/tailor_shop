@@ -1,7 +1,7 @@
 import { NavLink } from "react-router-dom";
 import LogoutButton from "../auth/LogoutButton.jsx";
 
-export default function Sidebar() {
+export default function Sidebar({ onNavigate }) {
   const menu = [
     { label: "Dashboard", path: "/dashboard" },
     { label: "Đơn đặt may", path: "/orders" },
@@ -12,6 +12,7 @@ export default function Sidebar() {
     { label: "Mẫu thiết kế", path: "/styles" },
     { label: "Hóa đơn", path: "/invoice" },
     { label: "Giao dịch", path: "/transactions" },
+    { label: "Kho vải", path: "/fabric-inventory" },
     { label: "Vải / Booking", path: "/fabric-requests" },
     { label: "Tài khoản", path: "/profile" },
   ];
@@ -25,6 +26,9 @@ export default function Sidebar() {
           <NavLink
             key={i}
             to={m.path}
+            onClick={() => {
+              if (onNavigate) onNavigate();
+            }}
             className={({ isActive }) =>
               `px-4 py-2 rounded-lg transition ${
                 isActive ? "bg-green-700 font-semibold" : "hover:bg-green-800"

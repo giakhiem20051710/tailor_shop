@@ -1,7 +1,16 @@
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { getOrders } from "../utils/orderStorage";
+import { getOrders, updateOrder } from "../utils/orderStorage";
 import { getUsersByRole, ROLES } from "../utils/authStorage";
+import {
+  addWorkingSlot,
+  getWorkingSlots,
+  updateWorkingSlot,
+} from "../utils/workingSlotStorage.js";
+import {
+  getAppointments,
+  updateAppointment,
+} from "../utils/appointmentStorage.js";
 
 export default function SchedulePage() {
   const navigate = useNavigate();
@@ -15,6 +24,20 @@ export default function SchedulePage() {
   const [statusFilter, setStatusFilter] = useState("all"); // all or status
   const [searchQuery, setSearchQuery] = useState("");
   const [viewMode, setViewMode] = useState("day"); // day, week
+  const [showSlotForm, setShowSlotForm] = useState(false);
+  const [slotForm, setSlotForm] = useState({
+    date: new Date().toISOString().split("T")[0],
+    startTime: "09:00",
+    endTime: "21:30",
+    type: "consult",
+    tailorId: "all",
+    capacity: 1,
+  });
+  const [workingSlots, setWorkingSlots] = useState([]);
+  const [appointments, setAppointments] = useState([]);
+  const [slotDetail, setSlotDetail] = useState(null);
+  const [showWeeklyModal, setShowWeeklyModal] = useState(false);
+  const [weeklyModalDate, setWeeklyModalDate] = useState(selectedDate);
 
   useEffect(() => {
     const allOrders = getOrders();
@@ -23,6 +46,9 @@ export default function SchedulePage() {
     // Load tailors
     const tailorUsers = getUsersByRole(ROLES.TAILOR);
     setTailors(tailorUsers);
+
+    setWorkingSlots(getWorkingSlots());
+    setAppointments(getAppointments());
   }, []);
 
   // Get date range for week view
@@ -43,68 +69,71 @@ export default function SchedulePage() {
     return { start: selectedDate, end: selectedDate };
   };
 
-  // Get appointments for selected date(s)
-  const appointments = useMemo(() => {
+  // Map appointments with slot info
+  const appointmentsView = useMemo(() => {
+    return appointments
+      .map((app) => {
+        const slot = workingSlots.find((s) => s.id === app.slotId);
+        if (!slot) return null;
+        return { ...app, slot };
+      })
+      .filter(Boolean);
+  }, [appointments, workingSlots]);
+
+  // Get appointments for selected date(s) with filters
+  const filteredAppointments = useMemo(() => {
     const dateRange = getDateRange();
-    return orders.filter(order => {
-      if (!order.appointmentDate) return false;
-      
-      // Check if appointment date is in range
-      const appointmentDate = order.appointmentDate;
-      const inRange = appointmentDate >= dateRange.start && appointmentDate <= dateRange.end;
-      
+    return appointmentsView.filter((app) => {
+      const { slot } = app;
+      const inRange =
+        slot.date >= dateRange.start && slot.date <= dateRange.end;
       if (!inRange) return false;
 
-      // Filter by type
-      if (typeFilter !== "all" && order.appointmentType !== typeFilter) return false;
+      if (typeFilter !== "all" && slot.type !== typeFilter) return false;
 
-      // Filter by tailor
-      if (tailorFilter !== "all" && order.assignedTailor !== tailorFilter) return false;
+      if (tailorFilter !== "all" && slot.tailorId !== tailorFilter) return false;
 
-      // Filter by status
-      if (statusFilter !== "all" && order.status !== statusFilter) return false;
+      if (statusFilter !== "all" && app.status !== statusFilter) return false;
 
-      // Filter by search query
       if (searchQuery) {
         const query = searchQuery.toLowerCase();
-        const matchesName = order.name?.toLowerCase().includes(query);
-        const matchesPhone = order.phone?.includes(query);
-        const matchesId = order.id?.toLowerCase().includes(query);
+        const matchesName = app.customerId?.toLowerCase().includes(query);
+        const matchesPhone = app.phone?.includes(query);
+        const matchesId = app.id?.toLowerCase().includes(query);
         if (!matchesName && !matchesPhone && !matchesId) return false;
       }
 
       return true;
     });
-  }, [orders, selectedDate, typeFilter, tailorFilter, statusFilter, searchQuery, viewMode]);
+  }, [
+    appointmentsView,
+    selectedDate,
+    typeFilter,
+    tailorFilter,
+    statusFilter,
+    searchQuery,
+    viewMode,
+  ]);
 
-  // Group appointments by type
+  // Group appointments by type (for the two cards)
   const appointmentsByType = useMemo(() => {
     const groups = {
-      fitting: [], // Thử đồ
-      pickup: [],  // Nhận đồ
+      fitting: [],
+      pickup: [],
     };
-
-    appointments.forEach(order => {
-      if (order.appointmentType === "fitting") {
-        groups.fitting.push(order);
-      } else if (order.appointmentType === "pickup") {
-        groups.pickup.push(order);
-      }
+    filteredAppointments.forEach((app) => {
+      if (app.slot.type === "fitting") groups.fitting.push(app);
+      if (app.slot.type === "pickup") groups.pickup.push(app);
     });
-
-    // Sort by appointment time
     const sortByTime = (a, b) => {
-      if (!a.appointmentTime && !b.appointmentTime) return 0;
-      if (!a.appointmentTime) return 1;
-      if (!b.appointmentTime) return -1;
-      return a.appointmentTime.localeCompare(b.appointmentTime);
+      const ta = a.slot.startTime || "";
+      const tb = b.slot.startTime || "";
+      return ta.localeCompare(tb);
     };
-
     groups.fitting.sort(sortByTime);
     groups.pickup.sort(sortByTime);
-
     return groups;
-  }, [appointments]);
+  }, [filteredAppointments]);
 
   // Quick date navigation
   const navigateDate = (direction) => {
@@ -133,15 +162,139 @@ export default function SchedulePage() {
     return `${Number(amount).toLocaleString("vi-VN")} đ`;
   };
 
+  // Map slotId -> appointments
+  const slotBookings = useMemo(() => {
+    const map = {};
+    appointments.forEach((a) => {
+      if (a.status === "cancelled") return;
+      if (!map[a.slotId]) map[a.slotId] = [];
+      map[a.slotId].push(a);
+    });
+    return map;
+  }, [appointments]);
+
+  // Pending/confirmed count per slot for capacity display
+  const pendingCountBySlot = useMemo(() => {
+    const map = {};
+    appointments.forEach((a) => {
+      if (a.status === "pending" || a.status === "confirmed") {
+        map[a.slotId] = (map[a.slotId] || 0) + 1;
+      }
+    });
+    return map;
+  }, [appointments]);
+
+  const recalcSlotStatus = (slotId) => {
+    const slot = workingSlots.find((s) => s.id === slotId);
+    if (!slot) return;
+    const active = pendingCountBySlot[slotId] || 0;
+    const capacity = slot.capacity || 1;
+    const status =
+      slot.status === "blocked"
+        ? "blocked"
+        : active >= capacity
+        ? "booked"
+        : "available";
+    const updated = updateWorkingSlot(slotId, {
+      bookedCount: active,
+      status,
+    });
+    if (updated) {
+      setWorkingSlots((prev) =>
+        prev.map((s) => (s.id === updated.id ? updated : s))
+      );
+    }
+  };
+
+  const handleSlotFormChange = (e) => {
+    const { name, value } = e.target;
+    setSlotForm((prev) => ({
+      ...prev,
+      [name]: name === "capacity" ? Number(value || 1) : value,
+    }));
+  };
+
+  const handleCreateSlot = (e) => {
+    e.preventDefault();
+    if (!slotForm.date || !slotForm.startTime || !slotForm.endTime) return;
+    if (slotForm.endTime <= slotForm.startTime) {
+      alert("Giờ kết thúc phải sau giờ bắt đầu.");
+      return;
+    }
+    if (slotForm.tailorId === "all") {
+      alert("Vui lòng chọn thợ phụ trách.");
+      return;
+    }
+
+    const toMinutes = (time) => {
+      const [h, m] = time.split(":").map(Number);
+      return h * 60 + m;
+    };
+
+    const newStart = toMinutes(slotForm.startTime);
+    const newEnd = toMinutes(slotForm.endTime);
+
+    const existingSlots = getWorkingSlots();
+    const conflict = existingSlots.some((slot) => {
+      if (
+        slot.tailorId !== slotForm.tailorId ||
+        slot.date !== slotForm.date
+      ) {
+        return false;
+      }
+      const start = toMinutes(slot.startTime);
+      const end = toMinutes(slot.endTime);
+      // khoảng thời gian chồng lên nhau
+      return newStart < end && newEnd > start;
+    });
+
+    if (conflict) {
+      alert(
+        "Ca rảnh này bị trùng với một ca đã tồn tại của thợ. Vui lòng chọn giờ khác."
+      );
+      return;
+    }
+
+    const created = addWorkingSlot({
+      date: slotForm.date,
+      startTime: slotForm.startTime,
+      endTime: slotForm.endTime,
+      type: slotForm.type,
+      tailorId: slotForm.tailorId,
+      capacity: slotForm.capacity || 1,
+    });
+    setWorkingSlots((prev) => [...prev, created]);
+    setShowSlotForm(false);
+  };
+
+  const toggleSlotStatus = (slot) => {
+    const updated = updateWorkingSlot(slot.id, {
+      status: slot.status === "blocked" ? "available" : "blocked",
+    });
+    if (updated) {
+      setWorkingSlots((prev) =>
+        prev.map((s) => (s.id === updated.id ? updated : s))
+      );
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-semibold text-gray-700">Lịch hẹn</h1>
-        <div className="flex gap-3 items-center">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <h1 className="text-2xl md:text-3xl font-semibold text-gray-700">
+          Lịch hẹn
+        </h1>
+        <div className="flex gap-2 sm:gap-3 items-center">
+          <button
+            onClick={() => setShowSlotForm(true)}
+            className="px-4 py-2 bg-emerald-700 text-white rounded-lg shadow hover:bg-emerald-800 transition text-sm md:text-base"
+          >
+            + Thêm ca rảnh
+          </button>
           <button
             onClick={() => navigate("/orders/new")}
-            className="px-4 py-2 bg-green-700 text-white rounded-lg shadow hover:bg-green-800 transition"
+            className="px-4 py-2 bg-green-700 text-white rounded-lg shadow hover:bg-green-800 transition text-sm md:text-base"
           >
             + Tạo đơn mới
           </button>
@@ -225,14 +378,16 @@ export default function SchedulePage() {
               Theo ngày
             </button>
             <button
-              onClick={() => setViewMode("week")}
-              className={`px-3 py-1.5 rounded-lg text-sm transition ${
-                viewMode === "week"
-                  ? "bg-green-600 text-white"
-                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-              }`}
+              onClick={() => {
+                setWeeklyModalDate(selectedDate);
+                setShowWeeklyModal(true);
+              }}
+              className="px-3 py-1.5 rounded-lg text-sm transition bg-gradient-to-r from-[#1B4332] to-[#2D5A47] text-white hover:from-[#14532d] hover:to-[#1B4332] shadow-md hover:shadow-lg flex items-center gap-2"
             >
-              Theo tuần
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              Xem lịch tuần
             </button>
           </div>
 
@@ -317,10 +472,345 @@ export default function SchedulePage() {
           </div>
           <div className="text-right">
             <p className="text-sm opacity-90">Tổng số lịch hẹn</p>
-            <p className="text-2xl font-bold">{appointments.length}</p>
+            <p className="text-2xl font-bold">{filteredAppointments.length}</p>
           </div>
         </div>
       </div>
+
+      {/* Working slots grid for tuần/ngày */}
+      <section className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 space-y-4">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h2 className="text-xl font-bold text-gray-900 mb-1">
+              Ca rảnh của thợ
+            </h2>
+            <p className="text-xs text-gray-500">
+              Nhấn vào ca để xem chi tiết, lịch đã đặt và chặn/mở giờ
+            </p>
+          </div>
+        </div>
+        {viewMode === "week" ? (
+          <div className="grid grid-cols-1 sm:grid-cols-7 gap-4">
+            {(() => {
+              const range = getDateRange();
+              const startDate = new Date(range.start + "T00:00:00");
+              return Array.from({ length: 7 }).map((_, idx) => {
+                const d = new Date(startDate);
+                d.setDate(startDate.getDate() + idx);
+                const dateStr = d.toISOString().split("T")[0];
+                const daySlots = workingSlots.filter(
+                  (s) => s.date === dateStr
+                );
+                const isToday = dateStr === new Date().toISOString().split("T")[0];
+                return (
+                  <div
+                    key={dateStr}
+                    className={`border-2 rounded-xl p-3 space-y-2 min-h-[120px] transition-all ${
+                      isToday
+                        ? "border-[#1B4332] bg-[#1B4332]/5 shadow-md"
+                        : "border-gray-200 bg-gray-50/50"
+                    }`}
+                  >
+                    <div className={`text-xs font-bold flex justify-between items-center pb-2 border-b ${
+                      isToday ? "text-[#1B4332] border-[#1B4332]/20" : "text-gray-700 border-gray-200"
+                    }`}>
+                      <span className="uppercase">
+                        {d.toLocaleDateString("vi-VN", {
+                          weekday: "short",
+                        })}
+                      </span>
+                      <span className={`px-2 py-0.5 rounded-full ${
+                        isToday ? "bg-[#1B4332] text-white" : "bg-gray-200 text-gray-600"
+                      }`}>
+                        {d.getDate().toString().padStart(2, "0")}
+                      </span>
+                    </div>
+                    {daySlots.length === 0 ? (
+                      <div className="text-center py-4">
+                        <div className="text-2xl mb-1 opacity-30">📅</div>
+                        <p className="text-[10px] text-gray-400">Chưa có ca</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        {daySlots
+                          .slice()
+                          .sort((a, b) => a.startTime.localeCompare(b.startTime))
+                          .map((slot) => {
+                            const booked = pendingCountBySlot[slot.id] || 0;
+                            const tailorName = (tailors.find(
+                              (t) =>
+                                t.username === slot.tailorId ||
+                                t.id === slot.tailorId
+                            ) || {}).name || "Thợ";
+                            
+                            const slotConfig = {
+                              consult: {
+                                gradient: "from-sky-500 to-blue-600",
+                                bg: "bg-gradient-to-br from-sky-50 to-blue-50",
+                                border: "border-sky-300",
+                                text: "text-sky-800",
+                                icon: "💬",
+                                label: "Tư vấn",
+                              },
+                              measure: {
+                                gradient: "from-purple-500 to-indigo-600",
+                                bg: "bg-gradient-to-br from-purple-50 to-indigo-50",
+                                border: "border-purple-300",
+                                text: "text-purple-800",
+                                icon: "📏",
+                                label: "Đo số đo",
+                              },
+                              fitting: {
+                                gradient: "from-amber-500 to-orange-600",
+                                bg: "bg-gradient-to-br from-amber-50 to-orange-50",
+                                border: "border-amber-300",
+                                text: "text-amber-800",
+                                icon: "👔",
+                                label: "Thử đồ",
+                              },
+                              pickup: {
+                                gradient: "from-emerald-500 to-green-600",
+                                bg: "bg-gradient-to-br from-emerald-50 to-green-50",
+                                border: "border-emerald-300",
+                                text: "text-emerald-800",
+                                icon: "✅",
+                                label: "Nhận đồ",
+                              },
+                            };
+
+                            const config = slot.status === "blocked"
+                              ? {
+                                  gradient: "from-gray-400 to-gray-500",
+                                  bg: "bg-gray-100",
+                                  border: "border-gray-300",
+                                  text: "text-gray-600",
+                                  icon: "🚫",
+                                  label: "Đã chặn",
+                                }
+                              : slotConfig[slot.type] || slotConfig.consult;
+
+                            return (
+                              <button
+                                key={slot.id}
+                                type="button"
+                                onClick={() =>
+                                  setSlotDetail({
+                                    slot,
+                                    apps: slotBookings[slot.id] || [],
+                                  })
+                                }
+                                className={`w-full ${config.bg} ${config.border} border-2 rounded-lg p-2 hover:shadow-md transition-all duration-200 group`}
+                              >
+                                <div className="flex items-start gap-2">
+                                  <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${config.gradient} flex items-center justify-center text-sm flex-shrink-0 shadow-sm`}>
+                                    {config.icon}
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-center justify-between mb-1">
+                                      <p className={`font-bold text-xs ${config.text}`}>
+                                        {slot.startTime}–{slot.endTime}
+                                      </p>
+                                      <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold ${
+                                        slot.status === "blocked"
+                                          ? "bg-gray-200 text-gray-600"
+                                          : booked >= (slot.capacity || 1)
+                                          ? "bg-red-100 text-red-700"
+                                          : "bg-green-100 text-green-700"
+                                      }`}>
+                                        {slot.status === "blocked"
+                                          ? "🚫"
+                                          : `${booked}/${slot.capacity || 1}`}
+                                      </span>
+                                    </div>
+                                    <p className="text-[10px] text-gray-600 truncate">
+                                      {tailorName}
+                                    </p>
+                                    <p className={`text-[10px] ${config.text} font-medium mt-0.5`}>
+                                      {config.label}
+                                    </p>
+                                  </div>
+                                </div>
+                              </button>
+                            );
+                          })}
+                      </div>
+                    )}
+                  </div>
+                );
+              });
+            })()}
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {(() => {
+              const daySlots = workingSlots.filter(
+                (s) => s.date === selectedDate
+              );
+              if (daySlots.length === 0) {
+                return (
+                  <div className="text-center py-12 bg-gray-50 rounded-xl border-2 border-dashed border-gray-200">
+                    <div className="text-5xl mb-3 opacity-30">📅</div>
+                    <p className="text-gray-500 font-medium mb-1">
+                      Chưa có ca rảnh nào
+                    </p>
+                    <p className="text-sm text-gray-400">
+                      Nhấn "+ Thêm ca rảnh" để tạo ca làm việc mới
+                    </p>
+                  </div>
+                );
+              }
+              return daySlots
+                .slice()
+                .sort((a, b) => a.startTime.localeCompare(b.startTime))
+                .map((slot) => {
+                  const booked = pendingCountBySlot[slot.id] || 0;
+                  const tailorName = (tailors.find(
+                    (t) =>
+                      t.username === slot.tailorId ||
+                      t.id === slot.tailorId
+                  ) || {}).name || "Thợ";
+                  
+                  const slotConfig = {
+                    consult: {
+                      gradient: "from-sky-500 to-blue-600",
+                      bg: "bg-gradient-to-br from-sky-50 to-blue-50",
+                      border: "border-sky-300",
+                      text: "text-sky-800",
+                      icon: "💬",
+                      label: "Tư vấn / chọn mẫu",
+                      lightBg: "bg-sky-100",
+                    },
+                    measure: {
+                      gradient: "from-purple-500 to-indigo-600",
+                      bg: "bg-gradient-to-br from-purple-50 to-indigo-50",
+                      border: "border-purple-300",
+                      text: "text-purple-800",
+                      icon: "📏",
+                      label: "Đo số đo",
+                      lightBg: "bg-purple-100",
+                    },
+                    fitting: {
+                      gradient: "from-amber-500 to-orange-600",
+                      bg: "bg-gradient-to-br from-amber-50 to-orange-50",
+                      border: "border-amber-300",
+                      text: "text-amber-800",
+                      icon: "👔",
+                      label: "Thử đồ",
+                      lightBg: "bg-amber-100",
+                    },
+                    pickup: {
+                      gradient: "from-emerald-500 to-green-600",
+                      bg: "bg-gradient-to-br from-emerald-50 to-green-50",
+                      border: "border-emerald-300",
+                      text: "text-emerald-800",
+                      icon: "✅",
+                      label: "Nhận đồ",
+                      lightBg: "bg-emerald-100",
+                    },
+                  };
+
+                  const config = slot.status === "blocked"
+                    ? {
+                        gradient: "from-gray-400 to-gray-500",
+                        bg: "bg-gray-100",
+                        border: "border-gray-300",
+                        text: "text-gray-600",
+                        icon: "🚫",
+                        label: "Đã chặn",
+                        lightBg: "bg-gray-200",
+                      }
+                    : slotConfig[slot.type] || slotConfig.consult;
+
+                  const isFull = booked >= (slot.capacity || 1);
+                  const isAvailable = slot.status !== "blocked" && !isFull;
+
+                  return (
+                    <button
+                      key={slot.id}
+                      type="button"
+                      onClick={() =>
+                        setSlotDetail({
+                          slot,
+                          apps: slotBookings[slot.id] || [],
+                        })
+                      }
+                      className={`w-full ${config.bg} ${config.border} border-2 rounded-xl p-4 hover:shadow-lg transition-all duration-200 group relative overflow-hidden`}
+                    >
+                      {/* Gradient overlay on hover */}
+                      <div className={`absolute inset-0 bg-gradient-to-br ${config.gradient} opacity-0 group-hover:opacity-10 transition-opacity`}></div>
+                      
+                      <div className="relative flex items-center gap-4">
+                        {/* Icon */}
+                        <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${config.gradient} flex items-center justify-center text-2xl flex-shrink-0 shadow-lg group-hover:scale-110 transition-transform`}>
+                          {config.icon}
+                        </div>
+                        
+                        {/* Content */}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between mb-2">
+                            <div>
+                              <p className={`text-lg font-bold ${config.text} mb-1`}>
+                                {slot.startTime}–{slot.endTime}
+                              </p>
+                              <p className={`text-sm font-semibold ${config.text}`}>
+                                {config.label}
+                              </p>
+                            </div>
+                            <div className="flex flex-col items-end gap-1">
+                              <span className={`text-xs px-2.5 py-1 rounded-full font-bold ${
+                                slot.status === "blocked"
+                                  ? "bg-gray-200 text-gray-700"
+                                  : isFull
+                                  ? "bg-red-100 text-red-700"
+                                  : "bg-green-100 text-green-700"
+                              }`}>
+                                {slot.status === "blocked"
+                                  ? "🚫 Đã chặn"
+                                  : isFull
+                                  ? "✅ Đã đầy"
+                                  : "🟢 Còn chỗ"}
+                              </span>
+                              <span className="text-xs text-gray-600 font-medium">
+                                {booked}/{slot.capacity || 1} khách
+                              </span>
+                            </div>
+                          </div>
+                          
+                          <div className="flex items-center gap-3 mt-3 pt-3 border-t border-white/50">
+                            <div className="flex items-center gap-2">
+                              <div className={`w-8 h-8 rounded-full ${config.lightBg || "bg-white/50"} flex items-center justify-center`}>
+                                <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                </svg>
+                              </div>
+                              <span className="text-sm font-medium text-gray-700">
+                                {tailorName}
+                              </span>
+                            </div>
+                            {isAvailable && (
+                              <div className="ml-auto">
+                                <span className="text-xs text-gray-500 bg-white/70 px-2 py-1 rounded-full">
+                                  Có thể đặt lịch
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                        
+                        {/* Arrow */}
+                        <div className="flex-shrink-0">
+                          <svg className={`w-6 h-6 ${config.text} group-hover:translate-x-1 transition-transform`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                          </svg>
+                        </div>
+                      </div>
+                    </button>
+                  );
+                });
+            })()}
+          </div>
+        )}
+      </section>
 
       {/* Appointments Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -351,40 +841,37 @@ export default function SchedulePage() {
             </div>
           ) : (
             <div className="space-y-3">
-              {appointmentsByType.fitting.map((order) => (
+              {appointmentsByType.fitting.map((app) => (
                 <div
-                  key={order.id}
+                  key={app.id}
                   className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition cursor-pointer"
-                  onClick={() => navigate(`/orders/${order.id}`)}
                 >
                   <div className="flex justify-between items-start mb-2">
                     <div>
-                      <p className="font-semibold text-gray-700">{order.name}</p>
-                      <p className="text-sm text-gray-500">{order.phone}</p>
+                      <p className="font-semibold text-gray-700">
+                        {app.customerId || "Khách lẻ"}
+                      </p>
+                      <p className="text-sm text-gray-500">
+                        {app.slot.date}
+                      </p>
                     </div>
                     <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-medium">
-                      {order.id}
+                      {app.id}
                     </span>
                   </div>
                   <div className="text-sm text-gray-600 space-y-1">
                     <div className="flex items-center justify-between">
-                      <p>Thợ may: <span className="font-medium">{getTailorName(order.assignedTailor)}</span></p>
+                      <p>Thợ may: <span className="font-medium">{getTailorName(app.slot.tailorId)}</span></p>
                       {viewMode === "week" && (
                         <span className="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded">
-                          {new Date(order.appointmentDate).toLocaleDateString("vi-VN", { day: "numeric", month: "short" })}
+                          {new Date(app.slot.date).toLocaleDateString("vi-VN", { day: "numeric", month: "short" })}
                         </span>
                       )}
                     </div>
-                    {order.appointmentTime && (
-                      <p>Giờ hẹn: <span className="font-medium">{order.appointmentTime}</span></p>
+                    {app.slot.startTime && (
+                      <p>Giờ hẹn: <span className="font-medium">{app.slot.startTime}–{app.slot.endTime}</span></p>
                     )}
-                    {order.correctionNotes && (
-                      <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded">
-                        <p className="text-xs text-yellow-800">
-                          <span className="font-semibold">Ghi chú sửa:</span> {order.correctionNotes}
-                        </p>
-                      </div>
-                    )}
+                    <p className="text-xs text-gray-500">Trạng thái: {app.status}</p>
                   </div>
                 </div>
               ))}
@@ -419,36 +906,710 @@ export default function SchedulePage() {
             </div>
           ) : (
             <div className="space-y-3">
-              {appointmentsByType.pickup.map((order) => (
+              {appointmentsByType.pickup.map((app) => (
                 <div
-                  key={order.id}
+                  key={app.id}
                   className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition cursor-pointer"
-                  onClick={() => navigate(`/orders/${order.id}`)}
                 >
                   <div className="flex justify-between items-start mb-2">
                     <div>
-                      <p className="font-semibold text-gray-700">{order.name}</p>
-                      <p className="text-sm text-gray-500">{order.phone}</p>
+                      <p className="font-semibold text-gray-700">
+                        {app.customerId || "Khách lẻ"}
+                      </p>
+                      <p className="text-sm text-gray-500">{app.slot.date}</p>
                     </div>
                     <span className="px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-medium">
-                      {order.id}
+                      {app.id}
                     </span>
                   </div>
                   <div className="text-sm text-gray-600 space-y-1">
                     <div className="flex items-center justify-between">
-                      <p>Thợ may: <span className="font-medium">{getTailorName(order.assignedTailor)}</span></p>
+                      <p>Thợ may: <span className="font-medium">{getTailorName(app.slot.tailorId)}</span></p>
                       {viewMode === "week" && (
                         <span className="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded">
-                          {new Date(order.appointmentDate).toLocaleDateString("vi-VN", { day: "numeric", month: "short" })}
+                          {new Date(app.slot.date).toLocaleDateString("vi-VN", { day: "numeric", month: "short" })}
                         </span>
                       )}
                     </div>
-                    {order.appointmentTime && (
-                      <p>Giờ hẹn: <span className="font-medium">{order.appointmentTime}</span></p>
+                    {app.slot.startTime && (
+                      <p>Giờ hẹn: <span className="font-medium">{app.slot.startTime}–{app.slot.endTime}</span></p>
                     )}
-                    <p className="text-green-600 font-medium">
-                      Tổng tiền: {formatCurrency(order.total)}
+                    <p className="text-xs text-gray-500">Trạng thái: {app.status}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Weekly Schedule Modal */}
+      {showWeeklyModal && (
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setShowWeeklyModal(false);
+            }
+          }}
+        >
+          <div 
+            className="bg-white rounded-2xl shadow-2xl w-full max-w-[98vw] max-h-[95vh] flex flex-col overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {(() => {
+              // Get week range
+              const getWeekDates = () => {
+                const date = new Date(weeklyModalDate + "T00:00:00");
+                const day = date.getDay();
+                const diff = date.getDate() - day + (day === 0 ? -6 : 1); // Get Monday
+                const monday = new Date(date);
+                monday.setDate(diff);
+                
+                const weekDates = [];
+                for (let i = 0; i < 7; i++) {
+                  const d = new Date(monday);
+                  d.setDate(monday.getDate() + i);
+                  weekDates.push(d.toISOString().split("T")[0]);
+                }
+                return weekDates;
+              };
+
+              const navigateWeek = (direction) => {
+                const date = new Date(weeklyModalDate + "T00:00:00");
+                date.setDate(date.getDate() + (direction * 7));
+                setWeeklyModalDate(date.toISOString().split("T")[0]);
+              };
+
+              const goToTodayWeek = () => {
+                setWeeklyModalDate(new Date().toISOString().split("T")[0]);
+              };
+
+              const weekDates = getWeekDates();
+              const isToday = (dateStr) => dateStr === new Date().toISOString().split("T")[0];
+              const isSelected = (dateStr) => dateStr === selectedDate;
+
+              // Generate time slots from 8:00 to 22:00
+              const timeSlots = [];
+              for (let hour = 8; hour <= 22; hour++) {
+                timeSlots.push(`${hour.toString().padStart(2, "0")}:00`);
+              }
+
+              // Helper to convert time to minutes
+              const timeToMinutes = (timeStr) => {
+                const [h, m] = timeStr.split(":").map(Number);
+                return h * 60 + m;
+              };
+
+              // Helper to calculate position and height
+              const getAppointmentStyle = (app) => {
+                const startMinutes = timeToMinutes(app.slot.startTime);
+                const endMinutes = timeToMinutes(app.slot.endTime);
+                const duration = endMinutes - startMinutes;
+                
+                // Timeline starts at 8:00 (480 minutes)
+                const startOffset = startMinutes - 480;
+                const totalMinutes = 14 * 60; // 8:00 to 22:00 = 14 hours
+                
+                // Each hour slot is 48px (h-12)
+                const totalHeight = timeSlots.length * 48;
+                const topPx = (startOffset / totalMinutes) * totalHeight;
+                const heightPx = (duration / totalMinutes) * totalHeight;
+                
+                return {
+                  top: `${topPx}px`,
+                  height: `${heightPx}px`,
+                };
+              };
+
+              const slotConfig = {
+                consult: {
+                  gradient: "from-sky-500 to-blue-600",
+                  bg: "bg-gradient-to-br from-sky-50 to-blue-50",
+                  border: "border-sky-300",
+                  text: "text-sky-800",
+                  icon: "💬",
+                  label: "Tư vấn",
+                },
+                measure: {
+                  gradient: "from-purple-500 to-indigo-600",
+                  bg: "bg-gradient-to-br from-purple-50 to-indigo-50",
+                  border: "border-purple-300",
+                  text: "text-purple-800",
+                  icon: "📏",
+                  label: "Đo số đo",
+                },
+                fitting: {
+                  gradient: "from-amber-500 to-orange-600",
+                  bg: "bg-gradient-to-br from-amber-50 to-orange-50",
+                  border: "border-amber-300",
+                  text: "text-amber-800",
+                  icon: "👔",
+                  label: "Thử đồ",
+                },
+                pickup: {
+                  gradient: "from-emerald-500 to-green-600",
+                  bg: "bg-gradient-to-br from-emerald-50 to-green-50",
+                  border: "border-emerald-300",
+                  text: "text-emerald-800",
+                  icon: "✅",
+                  label: "Nhận đồ",
+                },
+              };
+
+              // Get appointments for each day
+              const getDayAppointments = (dateStr) => {
+                return appointmentsView
+                  .filter((a) => a.slot.date === dateStr)
+                  .sort((a, b) => a.slot.startTime.localeCompare(b.slot.startTime));
+              };
+
+              const dayNames = ["Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7", "CN"];
+
+              return (
+                <>
+                  {/* Modal Header */}
+                  <div className="bg-gradient-to-br from-[#1B4332] via-[#2D5A47] to-[#1B4332] text-white p-4 flex items-center justify-between border-b-2 border-white/10">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className="w-10 h-10 rounded-lg bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                          </svg>
+                        </div>
+                        <div className="flex-1">
+                          <h2 className="text-xl font-bold">Lịch hẹn theo tuần</h2>
+                          <p className="text-xs text-white/80 mt-0.5">
+                            {new Date(weekDates[0]).toLocaleDateString("vi-VN", { day: "numeric", month: "long" })} - {new Date(weekDates[6]).toLocaleDateString("vi-VN", { day: "numeric", month: "long", year: "numeric" })}
+                          </p>
+                        </div>
+                        {/* Week Navigation */}
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => navigateWeek(-1)}
+                            className="w-8 h-8 rounded-lg bg-white/20 hover:bg-white/30 backdrop-blur-sm flex items-center justify-center transition-colors"
+                            aria-label="Tuần trước"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                            </svg>
+                          </button>
+                          <button
+                            onClick={goToTodayWeek}
+                            className="px-3 py-1.5 rounded-lg bg-white/20 hover:bg-white/30 backdrop-blur-sm text-xs font-medium transition-colors"
+                          >
+                            Hôm nay
+                          </button>
+                          <button
+                            onClick={() => navigateWeek(1)}
+                            className="w-8 h-8 rounded-lg bg-white/20 hover:bg-white/30 backdrop-blur-sm flex items-center justify-center transition-colors"
+                            aria-label="Tuần sau"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                            </svg>
+                          </button>
+                        </div>
+                      </div>
+                      
+                      {/* Week dates header */}
+                      <div className="grid grid-cols-7 gap-1.5">
+                        {weekDates.map((dateStr, idx) => {
+                          const d = new Date(dateStr + "T00:00:00");
+                          const dayAppointments = getDayAppointments(dateStr);
+                          const isSelectedDay = isSelected(dateStr);
+                          const isTodayDay = isToday(dateStr);
+                          
+                          return (
+                            <button
+                              key={dateStr}
+                              type="button"
+                              onClick={() => {
+                                setSelectedDate(dateStr);
+                                setShowWeeklyModal(false);
+                              }}
+                              className={`text-center p-2 rounded-lg transition-all duration-200 ${
+                                isSelectedDay
+                                  ? "bg-white text-[#1B4332] shadow-lg transform scale-105"
+                                  : isTodayDay
+                                  ? "bg-white/25 backdrop-blur-sm hover:bg-white/30"
+                                  : "bg-white/10 backdrop-blur-sm hover:bg-white/20"
+                              }`}
+                            >
+                              <p className={`text-[10px] font-semibold mb-1 uppercase tracking-wide ${
+                                isSelectedDay ? "text-[#1B4332]/70" : "text-white/80"
+                              }`}>
+                                {dayNames[idx]}
+                              </p>
+                              <p className={`text-lg font-bold mb-0.5 ${
+                                isSelectedDay ? "text-[#1B4332]" : "text-white"
+                              }`}>
+                                {d.getDate()}
+                              </p>
+                              <p className={`text-[10px] mb-1 ${
+                                isSelectedDay ? "text-[#1B4332]/70" : "text-white/70"
+                              }`}>
+                                {d.toLocaleDateString("vi-VN", { month: "short" })}
+                              </p>
+                              {dayAppointments.length > 0 && (
+                                <div className="mt-1">
+                                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${
+                                    isSelectedDay
+                                      ? "bg-[#1B4332] text-white"
+                                      : "bg-white/30 text-white backdrop-blur-sm"
+                                  }`}>
+                                    {dayAppointments.length}
+                                  </span>
+                                </div>
+                              )}
+                              {isTodayDay && !isSelectedDay && (
+                                <div className="mt-0.5">
+                                  <span className="text-[8px] text-white/60">Hôm nay</span>
+                                </div>
+                              )}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                    
+                    <div className="ml-4 flex flex-col items-end gap-2">
+                      <button
+                        onClick={() => setShowWeeklyModal(false)}
+                        className="w-8 h-8 rounded-lg bg-white/20 hover:bg-white/30 backdrop-blur-sm flex items-center justify-center transition-colors"
+                        aria-label="Đóng"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                      <div className="text-right bg-white/10 rounded-lg px-3 py-2 backdrop-blur-sm">
+                        <p className="text-[10px] text-white/80 mb-0.5 font-medium">Tổng lịch</p>
+                        <p className="text-2xl font-bold">
+                          {filteredAppointments.length}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Modal Content - Timetable */}
+                  <div className="flex-1 overflow-auto bg-gray-50">
+                    <div className="min-w-[1200px]">
+                      {/* Header Row */}
+                      <div className="grid grid-cols-8 bg-white border-b-2 border-gray-300 sticky top-0 z-20 shadow-sm">
+                        {/* Time column header */}
+                        <div className="border-r-2 border-gray-300 bg-gradient-to-br from-gray-100 to-gray-50 p-2 font-bold text-gray-800 text-xs">
+                          <div className="flex items-center justify-center">
+                            <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            Giờ
+                          </div>
+                        </div>
+                        
+                        {/* Day column headers */}
+                        {weekDates.map((dateStr, idx) => {
+                          const d = new Date(dateStr + "T00:00:00");
+                          const dayAppointments = getDayAppointments(dateStr);
+                          const isSelectedDay = isSelected(dateStr);
+                          const isTodayDay = isToday(dateStr);
+                          
+                          return (
+                            <div
+                              key={dateStr}
+                              className={`border-r-2 border-gray-300 p-2 text-center transition-all ${
+                                isSelectedDay
+                                  ? "bg-gradient-to-br from-[#1B4332] to-[#2D5A47] text-white shadow-lg"
+                                  : isTodayDay
+                                  ? "bg-gradient-to-br from-blue-100 to-blue-50"
+                                  : "bg-gradient-to-br from-gray-100 to-gray-50"
+                              }`}
+                            >
+                              <p className={`text-[10px] font-semibold mb-0.5 ${
+                                isSelectedDay ? "text-white/90" : "text-gray-600"
+                              }`}>
+                                {dayNames[idx]}
+                              </p>
+                              <p className={`text-sm font-bold mb-0.5 ${
+                                isSelectedDay ? "text-white" : isTodayDay ? "text-blue-700" : "text-gray-900"
+                              }`}>
+                                {d.getDate()}
+                              </p>
+                              <p className={`text-[10px] mb-1 ${
+                                isSelectedDay ? "text-white/80" : "text-gray-500"
+                              }`}>
+                                {d.toLocaleDateString("vi-VN", { month: "short" })}
+                              </p>
+                              {dayAppointments.length > 0 && (
+                                <div className="mt-1">
+                                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${
+                                    isSelectedDay
+                                      ? "bg-white/20 text-white border border-white/30"
+                                      : isTodayDay
+                                      ? "bg-blue-200 text-blue-800"
+                                      : "bg-gray-200 text-gray-700"
+                                  }`}>
+                                    {dayAppointments.length}
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      {/* Timeline Grid */}
+                      <div className="grid grid-cols-8">
+                        {/* Time column */}
+                        <div className="border-r-2 border-gray-300 bg-white">
+                          {timeSlots.map((time) => (
+                            <div
+                              key={time}
+                              className="border-b border-gray-200 h-12 flex items-center justify-end pr-2 bg-gray-50/50"
+                            >
+                              <span className="text-[10px] font-semibold text-gray-600">
+                                {time}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+
+                        {/* Day columns with appointments */}
+                        {weekDates.map((dateStr) => {
+                          const dayAppointments = getDayAppointments(dateStr);
+                          const isSelectedDay = isSelected(dateStr);
+                          const isTodayDay = isToday(dateStr);
+                          
+                          return (
+                            <div
+                              key={dateStr}
+                              className={`border-r-2 border-gray-300 relative ${
+                                isSelectedDay ? "bg-white" : isTodayDay ? "bg-blue-50/30" : "bg-white"
+                              }`}
+                            >
+                              {/* Time grid cells */}
+                              <div className="relative" style={{ minHeight: `${timeSlots.length * 48}px` }}>
+                                {timeSlots.map((time) => (
+                                  <div
+                                    key={time}
+                                    className="border-b border-gray-200 h-12 hover:bg-gray-50/50 transition-colors"
+                                  />
+                                ))}
+                                
+                                {/* Appointments overlay */}
+                                {dayAppointments.map((app) => {
+                                  const config = slotConfig[app.slot.type] || slotConfig.consult;
+                                  const style = getAppointmentStyle(app);
+                                  const tailorName = getTailorName(app.slot.tailorId);
+                                  
+                                  return (
+                                    <button
+                                      key={app.id}
+                                      type="button"
+                                      onClick={() => {
+                                        setSlotDetail({
+                                          slot: app.slot,
+                                          apps: [app],
+                                        });
+                                        setShowWeeklyModal(false);
+                                      }}
+                                      className={`absolute left-0.5 right-0.5 ${config.bg} ${config.border} border rounded-md p-1.5 shadow-sm hover:shadow-md transition-all duration-200 group cursor-pointer z-10 overflow-hidden`}
+                                      style={style}
+                                    >
+                                      {/* Gradient overlay on hover */}
+                                      <div className={`absolute inset-0 bg-gradient-to-br ${config.gradient} opacity-0 group-hover:opacity-10 transition-opacity`}></div>
+                                      
+                                      <div className="relative flex items-start gap-1.5">
+                                        <div className={`w-5 h-5 rounded-md bg-gradient-to-br ${config.gradient} flex items-center justify-center text-[10px] flex-shrink-0 shadow-sm group-hover:scale-110 transition-transform`}>
+                                          {config.icon}
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                          <div className="flex items-center justify-between mb-0.5">
+                                            <p className={`font-bold text-[10px] ${config.text}`}>
+                                              {app.slot.startTime} - {app.slot.endTime}
+                                            </p>
+                                            <span className={`text-[8px] px-1 py-0.5 rounded-full font-semibold ${
+                                              app.status === "pending"
+                                                ? "bg-yellow-100 text-yellow-700"
+                                                : app.status === "confirmed"
+                                                ? "bg-blue-100 text-blue-700"
+                                                : app.status === "done"
+                                                ? "bg-green-100 text-green-700"
+                                                : "bg-gray-100 text-gray-700"
+                                            }`}>
+                                              {app.status === "pending" ? "Chờ" :
+                                               app.status === "confirmed" ? "OK" :
+                                               app.status === "done" ? "Xong" :
+                                               app.status === "cancelled" ? "Hủy" : app.status}
+                                            </span>
+                                          </div>
+                                          <p className="font-semibold text-gray-900 text-[10px] truncate mb-0.5">
+                                            {app.customerId || "Khách lẻ"}
+                                          </p>
+                                          <div className="flex items-center gap-1 text-[9px] text-gray-600">
+                                            <span className="font-medium">{config.label}</span>
+                                            <span>•</span>
+                                            <span className="truncate">{tailorName}</span>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                </>
+              );
+            })()}
+          </div>
+            </div>
+          )}
+
+
+      {/* Slot form modal */}
+      {showSlotForm && (
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl w-full max-w-xl mx-4">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100">
+              <h2 className="text-lg font-semibold text-slate-900">
+                Thêm ca rảnh cho thợ
+              </h2>
+              <button
+                type="button"
+                onClick={() => setShowSlotForm(false)}
+                className="text-slate-500 hover:text-slate-800"
+              >
+                ✕
+              </button>
+            </div>
+            <form
+              onSubmit={handleCreateSlot}
+              className="px-4 py-4 grid grid-cols-1 md:grid-cols-2 gap-3 text-sm"
+            >
+              <div>
+                <label className="block mb-1 text-slate-600">Ngày</label>
+                <input
+                  type="date"
+                  name="date"
+                  value={slotForm.date}
+                  onChange={handleSlotFormChange}
+                  className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                />
+              </div>
+              <div>
+                <label className="block mb-1 text-slate-600">Thợ phụ trách</label>
+                <select
+                  name="tailorId"
+                  value={slotForm.tailorId}
+                  onChange={handleSlotFormChange}
+                  className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                >
+                  <option value="all">-- Chọn thợ may --</option>
+                  {tailors.map((tailor) => (
+                    <option
+                      key={tailor.username || tailor.id}
+                      value={tailor.username || tailor.id}
+                    >
+                      {tailor.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block mb-1 text-slate-600">Giờ bắt đầu</label>
+                <input
+                  type="time"
+                  name="startTime"
+                  value={slotForm.startTime}
+                  onChange={handleSlotFormChange}
+                  className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                />
+              </div>
+              <div>
+                <label className="block mb-1 text-slate-600">Giờ kết thúc</label>
+                <input
+                  type="time"
+                  name="endTime"
+                  value={slotForm.endTime}
+                  onChange={handleSlotFormChange}
+                  className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                />
+              </div>
+              <div>
+                <label className="block mb-1 text-slate-600">Loại lịch</label>
+                <select
+                  name="type"
+                  value={slotForm.type}
+                  onChange={handleSlotFormChange}
+                  className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                >
+                  <option value="consult">Tư vấn / chọn mẫu</option>
+                  <option value="measure">Đo số đo</option>
+                  <option value="fitting">Thử đồ</option>
+                  <option value="pickup">Nhận đồ</option>
+                </select>
+              </div>
+              <div>
+                <label className="block mb-1 text-slate-600">
+                  Số khách tối đa
+                </label>
+                <input
+                  type="number"
+                  name="capacity"
+                  min="1"
+                  value={slotForm.capacity}
+                  onChange={handleSlotFormChange}
+                  className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                />
+              </div>
+              <div className="md:col-span-2 flex justify-end gap-2 mt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowSlotForm(false)}
+                  className="px-4 py-2 rounded-full border border-slate-300 text-slate-600 text-sm hover:bg-slate-50"
+                >
+                  Hủy
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 rounded-full bg-emerald-700 text-white text-sm font-semibold hover:bg-emerald-800 shadow"
+                >
+                  Lưu ca rảnh
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+      {/* Slot detail modal */}
+      {slotDetail && (
+        <SlotDetailModal
+          slot={slotDetail.slot}
+          appointments={slotDetail.apps}
+          tailors={tailors}
+          onClose={() => setSlotDetail(null)}
+          onUpdateStatus={(appId, newStatus) => {
+            const updated = updateAppointment(appId, { status: newStatus });
+            if (updated) {
+              setAppointments(getAppointments());
+              if (updated.orderId) {
+                const nextStatus =
+                  newStatus === "done"
+                    ? updated.type === "pickup"
+                      ? "Hoàn thành"
+                      : "Đang may"
+                    : undefined;
+                if (nextStatus) updateOrder(updated.orderId, { status: nextStatus });
+              }
+              recalcSlotStatus(updated.slotId);
+            }
+          }}
+          onToggleBlock={() => toggleSlotStatus(slotDetail.slot)}
+        />
+      )}
+    </div>
+  );
+}
+
+function SlotDetailModal({
+  slot,
+  appointments,
+  tailors,
+  onClose,
+  onUpdateStatus,
+  onToggleBlock,
+}) {
+  const getTailorName = (tailorId) =>
+    (tailors.find((t) => t.username === tailorId || t.id === tailorId) || {})
+      .name || "Thợ";
+
+  const typeLabel = (type) => {
+    switch (type) {
+      case "consult":
+        return "Tư vấn";
+      case "measure":
+        return "Đo số đo";
+      case "fitting":
+        return "Thử đồ";
+      case "pickup":
+        return "Nhận đồ";
+      default:
+        return "Lịch hẹn";
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-auto">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100">
+          <div>
+            <h3 className="text-lg font-semibold text-slate-900">Chi tiết ca rảnh</h3>
+            <p className="text-xs text-slate-500">
+              {slot.date} · {slot.startTime}–{slot.endTime} · {typeLabel(slot.type)} ·{" "}
+              {getTailorName(slot.tailorId)}
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={onToggleBlock}
+              className="px-3 py-1 rounded-full text-xs border border-slate-200 text-slate-700 hover:bg-slate-50"
+            >
+              {slot.status === "blocked" ? "Mở lại" : "Chặn giờ"}
+            </button>
+            <button
+              type="button"
+              onClick={onClose}
+              className="text-slate-500 hover:text-slate-800"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+
+        <div className="p-4 space-y-3 text-sm">
+          {(!appointments || appointments.length === 0) && (
+            <p className="text-slate-500 italic">Chưa có khách đặt slot này.</p>
+          )}
+
+          {appointments && appointments.length > 0 && (
+            <div className="space-y-2">
+              {appointments.map((app) => (
+                <div
+                  key={app.id}
+                  className="border border-slate-200 rounded-lg p-3 flex justify-between items-start"
+                >
+                  <div>
+                    <p className="font-semibold text-slate-900">
+                      Khách: {app.customerId || "Khách lẻ"}
                     </p>
+                    <p className="text-xs text-slate-500">Loại lịch: {typeLabel(app.type)}</p>
+                    <p className="text-xs text-slate-500">
+                      Trạng thái: <span className="font-semibold">{app.status}</span>
+                    </p>
+                  </div>
+                  <div className="flex gap-2">
+                    {app.status !== "done" && (
+                      <button
+                        onClick={() => onUpdateStatus(app.id, "done")}
+                        className="px-3 py-1 rounded-full bg-emerald-600 text-white text-xs hover:bg-emerald-700"
+                      >
+                        Đánh dấu xong
+                      </button>
+                    )}
+                    {app.status !== "cancelled" && (
+                      <button
+                        onClick={() => onUpdateStatus(app.id, "cancelled")}
+                        className="px-3 py-1 rounded-full bg-red-100 text-red-700 text-xs hover:bg-red-200"
+                      >
+                        Hủy lịch
+                      </button>
+                    )}
                   </div>
                 </div>
               ))}
