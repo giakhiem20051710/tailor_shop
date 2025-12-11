@@ -1,0 +1,369 @@
+# Cursor Rules for Tailor Shop Backend
+
+## Project Overview
+Spring Boot 3.3.3 application using Java 17, MySQL, JWT authentication, AWS S3, Flyway migrations.
+
+## Architecture Patterns
+
+### Modules-by-Feature Structure
+- Code organized by feature modules: `auth`, `user`, `order`, `measurement`, `appointment`
+- Each module contains: `domain`, `dto`, `repository`, `service`, `controller`
+- Use `@Service`, `@Repository`, `@RestController` annotations
+- Follow dependency injection via constructor
+
+### Domain-Driven Design
+- Entities in `domain` package (e.g., `OrderEntity`, `UserEntity`)
+- Use JPA annotations: `@Entity`, `@Table`, `@ManyToOne`, `@OneToMany`
+- Enums for status/type (e.g., `OrderStatus`, `AppointmentType`)
+- Soft delete pattern: `isDeleted` boolean field
+
+## Coding Standards
+
+### Code Formatting
+- **Max line length**: 120 characters (hard limit, break lines if longer)
+- **Indentation**: 4 spaces (NO tabs, ever)
+- **Imports**: 
+  - NO wildcard imports (e.g., `import java.util.*` is forbidden)
+  - Organize imports automatically (IDE should sort: static imports, java.*, jakarta.*, org.*, com.*)
+  - Remove unused imports
+- **Line breaks**: Break lines logically for readability:
+  - Method parameters: break after comma, align parameters vertically if needed
+  - Method chains: break after each method call (`.method()`)
+  - Long expressions: break at operators (+, -, &&, ||)
+  - String concatenation: break before `+` operator
+- **Example of proper formatting**:
+```java
+// Good: Method with proper line breaks
+public ResponseEntity<CommonResponse<Page<AppointmentResponse>>> list(
+        @RequestParam(value = "tailorId", required = false) Long tailorId,
+        @RequestParam(value = "customerId", required = false) Long customerId,
+        @PageableDefault(size = 20, sort = "appointmentDate") Pageable pageable
+) {
+    // method body
+}
+
+// Good: Method chain with breaks
+String result = someService
+        .getData()
+        .process()
+        .format();
+
+// Bad: Line too long (over 120 chars)
+public ResponseEntity<CommonResponse<Page<AppointmentResponse>>> list(@RequestParam(value = "tailorId", required = false) Long tailorId, @RequestParam(value = "customerId", required = false) Long customerId) {
+```
+
+### Java Code Style & Lombok Usage
+- **Lombok for DTOs**: ALWAYS use `@Data`, `@Builder`, `@NoArgsConstructor`, `@AllArgsConstructor`.
+- **Lombok for Entities**:
+  - Use `@Getter`, `@Setter`, `@Builder`, `@NoArgsConstructor`, `@AllArgsConstructor`.
+  - ⚠️ **STRICTLY FORBIDDEN**: Do NOT use `@Data` or `@EqualsAndHashCode` on `@Entity` classes (causes severe JPA/Hibernate performance issues and infinite recursion).
+  - Use `@ToString` but exclude lazy-loaded relationships: `@ToString(exclude = {"orders", "appointments"})`.
+- **Dependency Injection**: Use `@RequiredArgsConstructor` for Constructor Injection in Services and Controllers (instead of writing manual constructors).
+- **Logging**: Use `@Slf4j` annotation for logging.
+- **Transactions**: Use `@Transactional` on service methods (public methods).
+- **Security**: Use `@PreAuthorize` for RBAC.
+- Always wrap controller responses with `CommonResponse<T>`
+- Use `ResponseUtil.success(traceId, data)` for success responses
+- Use `TraceIdUtil.getOrCreateTraceId()` for trace IDs
+- Use Java 17 features (records, pattern matching where appropriate)
+
+### Naming Conventions
+- Entities: `*Entity` suffix (e.g., `OrderEntity`, `UserEntity`)
+- DTOs: `*Request`, `*Response` suffix (e.g., `OrderRequest`, `OrderResponse`)
+- Repositories: `*Repository` suffix (e.g., `OrderRepository`)
+- Services: `*Service` interface, `*ServiceImpl` implementation
+- Controllers: `*Controller` suffix
+- Enums: PascalCase (e.g., `OrderStatus`, `AppointmentType`)
+
+### Exception Handling
+- Use custom exceptions: `BusinessException`, `NotFoundException`, `BadRequestException`, `UnauthorizedException`
+- All exceptions handled by `GlobalExceptionHandler`
+- Return `CommonResponse` with error details (message, traceId, timestamp)
+- Use appropriate HTTP status codes: 400 (BadRequest), 404 (NotFound), 401 (Unauthorized), 403 (Forbidden)
+
+### Validation
+- Use Jakarta Validation: `@NotNull`, `@NotBlank`, `@Email`, `@Size`, `@Min`, `@Max`, `@Pattern`
+- Use `@Valid` on controller method parameters
+- Custom validation logic in service layer
+- Validate business rules (e.g., status transitions, conflicts, ownership)
+
+### Logging Standards
+- Use `org.slf4j.Logger` via `LoggerFactory.getLogger(ClassName.class)`
+- Log format: `[TraceId: {}] Message...` (Use `TraceIdUtil.getTraceId()`)
+- Log Levels:
+  - `ERROR`: For exceptions and system failures (include stack trace)
+  - `WARN`: For business rule violations or handled anomalies
+  - `INFO`: For significant state changes (e.g., "Order created", "Status changed")
+  - `DEBUG`: For detailed payload inspection (only in dev/test profiles)
+- NEVER log sensitive data (passwords, tokens, PII)
+
+### Date & Time Handling
+- Always use `java.time` API (Instant, LocalDateTime, ZonedDateTime)
+- Database columns usually store UTC. Ensure backend logic handles timezone conversion explicitly if needed.
+- Prefer `Instant` for `createdAt` and `updatedAt`.
+
+## Security & Authentication
+
+### JWT Authentication
+- Use `JwtService` for token generation/validation
+- Use `CustomUserDetails` and `CustomUserDetailsService`
+- Use `@AuthenticationPrincipal CustomUserDetails principal` in controllers
+- Extract user ID: `principal != null ? principal.getId() : null`
+
+### Role-Based Access Control (RBAC)
+- Roles: `ADMIN`, `STAFF`, `TAILOR`, `CUSTOMER`
+- Use `@PreAuthorize("hasAnyRole('ADMIN','STAFF','TAILOR')")` for authorization
+- Check customer ownership: `isCustomer && !entity.getCustomer().getId().equals(currentUserId)`
+- Admin/Staff: full access
+- Tailor: limited access (own appointments, own working slots)
+- Customer: view-only access (own data)
+
+## Database & Migrations
+
+### Flyway Migrations
+- Migration files: `V{version}__{description}.sql` in `src/main/resources/db.migration/`
+- Always use Flyway for schema changes, never modify entities without migrations
+- Use `CREATE TABLE IF NOT EXISTS` for safety
+- Add indexes for foreign keys and frequently queried columns
+- Use `is_deleted` boolean for soft delete pattern
+
+### JPA Best Practices
+- Use `FetchType.EAGER` for `role` in `UserEntity` (avoid LazyInitializationException)
+- Use `FetchType.LAZY` for other relationships unless needed eagerly
+- Use `@CreatedTimestamp` and `@UpdateTimestamp` for audit fields
+- Use `@Column` with explicit names for database columns
+- Use `OffsetDateTime` for timestamp fields (stored as TIMESTAMP in MySQL)
+- Use `LocalDate` for date-only fields (stored as DATE in MySQL)
+- Use `LocalTime` for time-only fields (stored as TIME in MySQL)
+
+## API Design
+
+### RESTful Endpoints
+- Use standard HTTP methods: GET (read), POST (create), PUT (update), PATCH (partial update), DELETE (delete)
+- Use plural nouns: `/api/v1/orders`, `/api/v1/appointments`
+- Use path variables for IDs: `/api/v1/orders/{id}`
+- Use query parameters for filtering: `?status=PENDING&customerId=1&page=0&size=20`
+- Use `@PageableDefault` for pagination defaults
+
+### Response Format
+- Always return `ResponseEntity<CommonResponse<T>>`
+- Success: `ResponseUtil.success(traceId, data)` with HTTP 200 (or 201 for POST)
+- Error: Handled by `GlobalExceptionHandler` returning `CommonResponse` with error details
+- Include traceId, timestamp, success flag, data/message
+
+### Request Validation
+- Use DTOs for request bodies (never expose entities directly)
+- Validate all inputs: `@Valid @RequestBody DTO`
+- Return meaningful error messages for validation failures
+
+## Service Layer Patterns
+
+### Transaction Management
+- Use `@Transactional` on service methods (not repositories)
+- Use `@Transactional(readOnly = true)` for read-only methods
+- Handle business logic in service, not controller
+
+### Error Handling
+- Throw `NotFoundException` when entity not found
+- Throw `BadRequestException` for validation/business rule violations
+- Throw `UnauthorizedException` for authentication failures
+- Always provide clear error messages
+
+### Business Logic
+- Validate state transitions (e.g., order status changes)
+- Check conflicts (e.g., appointment time conflicts)
+- Validate ownership (e.g., customer can only view own orders)
+- Use helper methods for complex logic (e.g., `validateAppointmentTime`, `checkConflict`)
+
+## File Upload (AWS S3)
+
+### S3 Integration
+- Use `S3StorageService` for file uploads
+- Upload path pattern: `{module}/{entityId}/{filename}` (e.g., `orders/1/image.jpg`)
+- File size limit: 50MB (configured in `application.yml`)
+- Store metadata: `fileName`, `fileUrl`, `fileSize`, `fileType` in entities
+- Handle upload errors gracefully
+
+## Testing Considerations
+
+### Postman Collections
+- Create Postman collections for each module
+- Include all CRUD operations
+- Include error cases (validation, authorization, not found)
+- Use environment variables: `{{base_url}}`, `{{token}}`
+
+### Test Cases to Cover
+- Happy path: create, read, update, delete
+- Validation: invalid input, missing required fields
+- Authorization: unauthorized access, wrong role
+- Business rules: conflicts, state transitions, ownership
+- Edge cases: empty lists, null values, boundary conditions
+
+### Unit Testing (JUnit 5 & Mockito)
+- Write unit tests for Service layer logic
+- Use `@ExtendWith(MockitoExtension.class)`
+- Mock all dependencies (Repositories, External Services)
+- Verify interactions: `verify(repository, times(1)).save(any())`
+- Test assertions must cover: Result data, Exception throwing, State changes
+- Test file location: `src/test/java/com/example/tailor_shop/modules/{module}/service/impl/{Service}ImplTest.java`
+- Use `@Mock` for dependencies, `@InjectMocks` for service under test
+- Test both success and failure scenarios
+- Use `ArgumentMatchers` (e.g., `any()`, `eq()`, `isNull()`) for flexible matching
+
+## Code Organization
+
+### Package Structure
+```
+com.example.tailor_shop
+├── common/              # Common utilities (CommonResponse, ResponseUtil, TraceIdUtil)
+├── config/              # Configuration (SecurityConfig, S3Config, exception handlers)
+├── modules/             # Feature modules
+│   ├── auth/
+│   ├── user/
+│   ├── order/
+│   ├── measurement/
+│   └── appointment/
+└── TailorShopApplication.java
+```
+
+### Module Structure
+```
+module/
+├── domain/              # JPA entities
+├── dto/                 # Request/Response DTOs
+├── repository/          # Spring Data JPA repositories
+├── service/             # Service interfaces
+│   └── impl/            # Service implementations
+└── controller/          # REST controllers
+```
+
+## Common Patterns
+
+### DTO Mapping
+- Create `toResponse()` methods in service implementations
+- Map entities to DTOs manually (avoid exposing entities)
+- Include nested objects (e.g., `Party` for customer/tailor info)
+
+### Pagination
+- Use Spring Data `Pageable` for pagination
+- Default: `@PageableDefault(size = 20, sort = "createdAt,desc")`
+- Return `Page<T>` from repositories, map to `Page<ResponseDTO>`
+
+### Filtering
+- Use `@Query` annotations for complex queries
+- Support multiple optional filters (use `IS NULL OR` pattern)
+- Use indexes for performance
+
+## Don'ts
+
+- ❌ Don't use `@Data` on JPA Entities (use `@Getter/@Setter` instead).
+- ❌ Don't use `@EqualsAndHashCode` on JPA Entities (causes infinite recursion with bidirectional relationships).
+- ❌ Don't use `@Autowired` on fields (use `@RequiredArgsConstructor` for constructor injection).
+- ❌ Don't write manual Getters/Setters/Constructors/Builders (let Lombok handle it).
+- ❌ Don't modify entities without creating Flyway migrations
+- ❌ Don't expose entities directly in API responses
+- ❌ Don't put business logic in controllers
+- ❌ Don't skip validation
+- ❌ Don't return raw exceptions to clients
+- ❌ Don't use `ddl-auto: create-drop` in production
+- ❌ Don't hardcode values (use constants or configuration)
+
+## Do's
+
+- ✅ Always use `CommonResponse` wrapper
+- ✅ Always validate inputs
+- ✅ Always check authorization
+- ✅ Always use transactions for write operations
+- ✅ Always use Flyway for schema changes
+- ✅ Always handle errors gracefully
+- ✅ Always provide meaningful error messages
+- ✅ Always use `@RequiredArgsConstructor` for constructor injection (Lombok)
+- ✅ Always use Lombok annotations (`@Data` for DTOs, `@Getter/@Setter` for Entities)
+- ✅ Always use `@Slf4j` for logging
+- ✅ Always check entity existence before operations
+- ✅ Always use soft delete pattern (`isDeleted`)
+- ✅ **ALWAYS explain errors before fixing them** (analyze → propose solutions → implement)
+
+## When Adding New Features
+
+1. **Design First**: Update `BACKEND_DESIGN_PROCESS.md` with API contract, domain model, security rules
+2. **Create Migration**: Add Flyway migration file for schema changes
+3. **Create Domain**: Add entities with proper JPA annotations
+4. **Create DTOs**: Add Request/Response DTOs with validation
+5. **Create Repository**: Add repository with custom queries if needed
+6. **Create Service**: Add service interface and implementation with business logic
+7. **Create Controller**: Add REST controller with proper security and response wrapping
+8. **Test**: Create Postman collection and test all scenarios
+9. **Document**: Add explanation file (e.g., `MODULE_NAME_MODULE_EXPLAINED.md`)
+
+## When Fixing Bugs or Errors
+
+**ALWAYS explain the error first, then code the fix.**
+
+### Step 1: Analyze the Error
+- **What is the error?** Read the stack trace/log carefully
+- **Where does it occur?** Identify the specific file, method, line
+- **Why does it happen?** Root cause analysis (code issue, configuration, dependency, etc.)
+- **Who is affected?** Which endpoints, users, or features are impacted
+
+### Step 2: Propose Solutions
+- **Solution 1**: Describe approach, pros/cons
+- **Solution 2**: Alternative approach if applicable
+- **Recommended Solution**: Which one to use and why
+
+### Step 3: Implement the Fix
+- **File X**: What changes and why
+- **File Y**: What changes and why
+- **Testing**: How to verify the fix works
+
+### Example Error Analysis Format:
+```
+## Error Analysis
+
+**Error**: [Error message from stack trace]
+
+**Location**: [File:Line or Method]
+
+**Root Cause**: 
+- [Explanation of why this error occurs]
+
+**Impact**:
+- [What functionality is broken]
+- [Who is affected]
+
+**Solutions**:
+1. **Solution A**: [Description]
+   - Pros: [...]
+   - Cons: [...]
+2. **Solution B**: [Description]
+   - Pros: [...]
+   - Cons: [...]
+
+**Recommended**: Solution A because [reason]
+
+## Implementation
+[Then proceed with code changes]
+```
+
+## Code Review Checklist
+
+- [ ] Uses `CommonResponse` wrapper
+- [ ] Proper validation annotations
+- [ ] Proper authorization checks
+- [ ] Transaction management
+- [ ] Error handling
+- [ ] No hardcoded values
+- [ ] Follows naming conventions
+- [ ] Proper JPA relationships
+- [ ] Indexes for foreign keys
+- [ ] Soft delete pattern
+- [ ] No business logic in controller
+- [ ] Meaningful error messages
+- [ ] Proper logging with traceId
+- [ ] Correct date/time handling (java.time API)
+- [ ] Unit tests written for service layer
+- [ ] Errors explained before fixes (if applicable)
+- [ ] Code formatting: max 120 chars per line, 4 spaces indentation
+- [ ] No wildcard imports, imports organized
+- [ ] Lines broken logically for readability
+
