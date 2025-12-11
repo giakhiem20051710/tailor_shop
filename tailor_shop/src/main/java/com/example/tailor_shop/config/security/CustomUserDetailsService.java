@@ -17,11 +17,12 @@ public class CustomUserDetailsService implements UserDetailsService {
     }
 
     @Override
-    public UserDetails loadUserByUsername(String phoneOrEmail) throws UsernameNotFoundException {
-        // Try to find by phone first (if it looks like a phone number), then by email
-        UserEntity user = userRepository.findByPhoneAndIsDeletedFalse(phoneOrEmail)
-                .or(() -> userRepository.findByEmailAndIsDeletedFalse(phoneOrEmail))
-                .orElseThrow(() -> new UsernameNotFoundException("User not found with phone or email: " + phoneOrEmail));
+    public UserDetails loadUserByUsername(String phoneOrEmailOrUsername) throws UsernameNotFoundException {
+        // Try phone -> email -> username to be flexible for admin login
+        UserEntity user = userRepository.findByPhoneAndIsDeletedFalse(phoneOrEmailOrUsername)
+                .or(() -> userRepository.findByEmailAndIsDeletedFalse(phoneOrEmailOrUsername))
+                .or(() -> userRepository.findByUsernameAndIsDeletedFalse(phoneOrEmailOrUsername))
+                .orElseThrow(() -> new UsernameNotFoundException("User not found with phone, email, or username: " + phoneOrEmailOrUsername));
         return new CustomUserDetails(user);
     }
 }

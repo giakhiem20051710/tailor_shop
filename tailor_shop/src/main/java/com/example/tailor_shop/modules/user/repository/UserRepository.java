@@ -24,5 +24,7 @@ public interface UserRepository extends JpaRepository<UserEntity, Long> {
     Optional<UserEntity> findByPhoneAndIsDeletedFalse(String phone);
 
     Page<UserEntity> findByIsDeletedFalse(Pageable pageable);
+    Optional<UserEntity> findByIdAndIsDeletedFalse(Long id);
+    Page<UserEntity> findByRole_CodeAndIsDeletedFalse(String roleCode, Pageable pageable);
 }
 

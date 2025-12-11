@@ -1,0 +1,453 @@
+{
+  "info": {
+    "name": "TailorShop Appointments",
+    "description": "API collection cho Appointment module (Appointments & Working Slots)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_postman_id": "appointment-collection-001"
+  },
+  "item": [
+    {
+      "name": "Appointments",
+      "item": [
+        {
+          "name": "List Appointments",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/appointments?tailorId=1&customerId=1&date=2024-12-20&status=scheduled&type=fitting&page=0&size=20&sort=appointmentDate,appointmentTime",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "appointments"],
+              "query": [
+                {
+                  "key": "tailorId",
+                  "value": "1",
+                  "description": "Filter theo tailor ID (optional)"
+                },
+                {
+                  "key": "customerId",
+                  "value": "1",
+                  "description": "Filter theo customer ID (optional)"
+                },
+                {
+                  "key": "date",
+                  "value": "2024-12-20",
+                  "description": "Filter theo ngày (YYYY-MM-DD, optional)"
+                },
+                {
+                  "key": "status",
+                  "value": "scheduled",
+                  "description": "Filter theo status: scheduled/completed/cancelled (optional)"
+                },
+                {
+                  "key": "type",
+                  "value": "fitting",
+                  "description": "Filter theo type: fitting/pickup/delivery (optional)"
+                },
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "20"
+                },
+                {
+                  "key": "sort",
+                  "value": "appointmentDate,appointmentTime"
+                }
+              ]
+            },
+            "description": "Lấy danh sách appointments với filters. Admin/Staff/Tailor xem tất cả, Customer chỉ xem của mình."
+          }
+        },
+        {
+          "name": "Appointment Detail",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/appointments/{{appointmentId}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "appointments", "{{appointmentId}}"]
+            },
+            "description": "Lấy chi tiết appointment theo ID. Customer chỉ xem của mình."
+          }
+        },
+        {
+          "name": "Create Appointment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"orderId\": 1,\n  \"customerId\": 1,\n  \"tailorId\": 2,\n  \"type\": \"fitting\",\n  \"appointmentDate\": \"2024-12-25\",\n  \"appointmentTime\": \"09:00:00\",\n  \"notes\": \"Đo quần áo cho khách hàng\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/appointments",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "appointments"]
+            },
+            "description": "Tạo appointment mới. Chỉ Admin/Staff/Tailor. tailorId là optional (có thể assign sau). appointmentDate phải >= today."
+          }
+        },
+        {
+          "name": "Update Appointment",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"orderId\": 1,\n  \"customerId\": 1,\n  \"tailorId\": 2,\n  \"type\": \"pickup\",\n  \"appointmentDate\": \"2024-12-26\",\n  \"appointmentTime\": \"14:00:00\",\n  \"notes\": \"Nhận hàng đã hoàn thành\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/appointments/{{appointmentId}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "appointments", "{{appointmentId}}"]
+            },
+            "description": "Cập nhật appointment. Chỉ Admin/Staff/Tailor. Kiểm tra conflict và working hours."
+          }
+        },
+        {
+          "name": "Update Appointment Status",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"completed\",\n  \"notes\": \"Đã hoàn thành đo quần áo\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/appointments/{{appointmentId}}/status",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "appointments", "{{appointmentId}}", "status"]
+            },
+            "description": "Cập nhật status appointment (scheduled/completed/cancelled). Chỉ Admin/Staff/Tailor."
+          }
+        },
+        {
+          "name": "Delete Appointment",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/appointments/{{appointmentId}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "appointments", "{{appointmentId}}"]
+            },
+            "description": "Soft delete appointment. Chỉ Admin/Staff/Tailor."
+          }
+        },
+        {
+          "name": "Get Schedule",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/appointments/schedule?tailorId=2&date=2024-12-25&type=fitting",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "appointments", "schedule"],
+              "query": [
+                {
+                  "key": "tailorId",
+                  "value": "2",
+                  "description": "Tailor ID (required)"
+                },
+                {
+                  "key": "date",
+                  "value": "2024-12-25",
+                  "description": "Ngày cần xem lịch (YYYY-MM-DD, required)"
+                },
+                {
+                  "key": "type",
+                  "value": "fitting",
+                  "description": "Filter theo type: fitting/pickup/delivery (optional)"
+                }
+              ]
+            },
+            "description": "Lấy lịch appointments của tailor trong ngày cụ thể. Chỉ Admin/Staff/Tailor."
+          }
+        },
+        {
+          "name": "Get Available Slots",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/appointments/available-slots?tailorId=2&date=2024-12-25&duration=30",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "appointments", "available-slots"],
+              "query": [
+                {
+                  "key": "tailorId",
+                  "value": "2",
+                  "description": "Tailor ID (required)"
+                },
+                {
+                  "key": "date",
+                  "value": "2024-12-25",
+                  "description": "Ngày cần xem slots (YYYY-MM-DD, required)"
+                },
+                {
+                  "key": "duration",
+                  "value": "30",
+                  "description": "Duration mỗi slot (phút, optional, default 30)"
+                }
+              ]
+            },
+            "description": "Lấy danh sách slots còn trống của tailor trong ngày. Chỉ Admin/Staff/Tailor."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Working Slots",
+      "item": [
+        {
+          "name": "List Working Slots",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/appointments/working-slots?tailorId=2&date=2024-12-25&page=0&size=20",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "appointments", "working-slots"],
+              "query": [
+                {
+                  "key": "tailorId",
+                  "value": "2",
+                  "description": "Tailor ID (required)"
+                },
+                {
+                  "key": "date",
+                  "value": "2024-12-25",
+                  "description": "Filter theo ngày (YYYY-MM-DD, optional)"
+                },
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": "Lấy danh sách working slots của tailor. Chỉ Admin/Staff/Tailor."
+          }
+        },
+        {
+          "name": "Working Slot Detail",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/appointments/working-slots/{{workingSlotId}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "appointments", "working-slots", "{{workingSlotId}}"]
+            },
+            "description": "Lấy chi tiết working slot theo ID. Chỉ Admin/Staff/Tailor."
+          }
+        },
+        {
+          "name": "Create Working Slot",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tailorId\": 2,\n  \"dayOfWeek\": \"MONDAY\",\n  \"startTime\": \"08:00:00\",\n  \"endTime\": \"17:00:00\",\n  \"breakStartTime\": \"12:00:00\",\n  \"breakEndTime\": \"13:00:00\",\n  \"isActive\": true,\n  \"effectiveFrom\": \"2024-12-01\",\n  \"effectiveTo\": \"2024-12-31\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/appointments/working-slots",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "appointments", "working-slots"]
+            },
+            "description": "Tạo working slot mới cho tailor. Chỉ Admin/Staff/Tailor. dayOfWeek: MONDAY-SUNDAY. effectiveFrom/To là optional."
+          }
+        },
+        {
+          "name": "Update Working Slot",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tailorId\": 2,\n  \"dayOfWeek\": \"MONDAY\",\n  \"startTime\": \"09:00:00\",\n  \"endTime\": \"18:00:00\",\n  \"breakStartTime\": \"12:30:00\",\n  \"breakEndTime\": \"13:30:00\",\n  \"isActive\": true,\n  \"effectiveFrom\": \"2025-01-01\",\n  \"effectiveTo\": null\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/appointments/working-slots/{{workingSlotId}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "appointments", "working-slots", "{{workingSlotId}}"]
+            },
+            "description": "Cập nhật working slot. Chỉ Admin/Staff/Tailor. Kiểm tra startTime < endTime và breakTime trong working hours."
+          }
+        },
+        {
+          "name": "Delete Working Slot",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/appointments/working-slots/{{workingSlotId}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "appointments", "working-slots", "{{workingSlotId}}"]
+            },
+            "description": "Xóa working slot. Chỉ Admin/Staff/Tailor."
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8083",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "YOUR_JWT_TOKEN",
+      "type": "string"
+    },
+    {
+      "key": "appointmentId",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "workingSlotId",
+      "value": "1",
+      "type": "string"
+    }
+  ]
+}
+

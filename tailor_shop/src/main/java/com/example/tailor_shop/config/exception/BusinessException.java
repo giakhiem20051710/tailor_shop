@@ -2,19 +2,19 @@ package com.example.tailor_shop.config.exception;
 
 public class BusinessException extends RuntimeException {
 
-    private final String errorCode;
+    private final ErrorCode errorCode;
 
-    public BusinessException(String message) {
-        super(message);
-        this.errorCode = "BUSINESS_ERROR";
-    }
-
-    public BusinessException(String errorCode, String message) {
-        super(message);
+    public BusinessException(ErrorCode errorCode) {
+        super(errorCode.getMessage());
         this.errorCode = errorCode;
     }
 
-    public String getErrorCode() {
+    public BusinessException(ErrorCode errorCode, String overrideMessage) {
+        super(overrideMessage);
+        this.errorCode = errorCode;
+    }
+
+    public ErrorCode getErrorCode() {
         return errorCode;
     }
 }

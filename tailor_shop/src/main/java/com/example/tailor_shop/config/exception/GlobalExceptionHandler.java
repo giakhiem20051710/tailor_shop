@@ -3,9 +3,6 @@ package com.example.tailor_shop.config.exception;
 import com.example.tailor_shop.common.CommonResponse;
 import com.example.tailor_shop.common.ResponseUtil;
 import com.example.tailor_shop.common.TraceIdUtil;
-import com.example.tailor_shop.config.exception.BadRequestException;
-import com.example.tailor_shop.config.exception.BusinessException;
-import com.example.tailor_shop.config.exception.NotFoundException;
 import lombok.extern.slf4j.Slf4j;
 import jakarta.validation.ConstraintViolationException;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -14,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
@@ -41,8 +39,13 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(BusinessException.class)
     public ResponseEntity<CommonResponse<Object>> handleBusiness(BusinessException ex) {
-        return buildError(HttpStatus.BAD_REQUEST, ex.getErrorCode(), ex.getMessage());
+        return buildError(
+                ex.getErrorCode().getHttpStatus(),  // dùng đúng HttpStatus của enum
+                String.valueOf(ex.getErrorCode().getCode()), // code là int -> convert sang String
+                ex.getMessage()                     // message override hoặc message mặc định
+        );
     }
+
 
     @ExceptionHandler(NotFoundException.class)
     public ResponseEntity<CommonResponse<Object>> handleNotFound(NotFoundException ex) {
@@ -89,6 +92,12 @@ public class GlobalExceptionHandler {
     public ResponseEntity<CommonResponse<Object>> handleTypeMismatch(MethodArgumentTypeMismatchException ex) {
         String message = "Parameter '" + ex.getName() + "' must be of type " +
                 (ex.getRequiredType() != null ? ex.getRequiredType().getSimpleName() : "unknown");
+        return buildError(HttpStatus.BAD_REQUEST, "400", message);
+    }
+
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    public ResponseEntity<CommonResponse<Object>> handleMissingParameter(MissingServletRequestParameterException ex) {
+        String message = "Required parameter '" + ex.getParameterName() + "' is missing";
         return buildError(HttpStatus.BAD_REQUEST, "400", message);
     }
 
