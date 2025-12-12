@@ -54,5 +54,5 @@ aws:
     bucket: 
     region: 
     access-key: 
-    secret-key: 
+    secret-key:
     base-url: 
