@@ -1,3 +1,114 @@
+# Appointment Module Explained
+
+Tài liệu ngắn gọn, giao cho khách hàng/dev mới để hiểu nhanh cách hoạt động module Lịch hẹn & Khung giờ làm việc.
+
+## 1. Mục tiêu & phạm vi
+- Đặt lịch giữa khách hàng và nhân viên (staff) theo đơn hàng hoặc nhu cầu.
+- Kiểm tra trùng giờ, tuân thủ giờ làm, chặn ngày nghỉ/đóng cửa.
+- Quản lý khung giờ làm việc (working slots) theo từng nhân viên, hỗ trợ bulk, reset, đóng ngày.
+- Tra cứu lịch, slot trống để khách đặt.
+
+## 2. Kiến trúc & thành phần
+- Package `modules.appointment`
+  - `domain`: `AppointmentEntity`, `WorkingSlotEntity`, enum `AppointmentStatus`, `AppointmentType`.
+  - `dto`: `AppointmentRequest/Response`, `UpdateAppointmentStatusRequest`, `AvailableSlotResponse`, `WorkingSlotRequest/Response`, `BulkWorkingSlotRequest`, `CloseDateRequest`, `WorkingHoursResponse`.
+  - `repository`: `AppointmentRepository`, `WorkingSlotRepository`.
+  - `service`: `AppointmentService`, `AppointmentServiceImpl`.
+  - `controller`: `AppointmentController`.
+- Migration gần nhất: `V7__rename_tailor_to_staff.sql` (đổi tailor_id → staff_id cho bảng appointments, working_slots).
+- Tuân thủ `.cursorrules`: Lombok cho DTO, @Getter/@Setter/@Builder cho entity, CommonResponse + TraceIdUtil, không wildcard import.
+
+## 3. Mô hình dữ liệu
+- `AppointmentEntity`: FK `order`, `customer`, `staff`; thuộc tính `type`, `appointmentDate`, `appointmentTime`, `status`, `notes`, `isDeleted`, `createdAt/updatedAt`.
+- `WorkingSlotEntity`: FK `staff`; thuộc tính `dayOfWeek`, `startTime`, `endTime`, `breakStartTime`, `breakEndTime`, `isActive` (true mở, false đóng), `effectiveFrom/To`, `createdAt/updatedAt`.
+
+## 4. DTO & Validation
+- `AppointmentRequest`: `orderId` (req), `customerId` (req), `staffId` (optional), `type` (req), `appointmentDate` (req), `appointmentTime` (req), `notes`.
+- `AppointmentResponse`: thông tin order, customer, staff, loại, ngày/giờ, trạng thái, ghi chú, audit.
+- `WorkingSlotRequest`: `staffId`, `dayOfWeek`, `startTime`, `endTime`, break optional, effective optional, `isActive`.
+- `WorkingSlotResponse`: staff (Party), ngày/giờ, break, active, effective, audit.
+- `BulkWorkingSlotRequest`: `staffId`, danh sách `daysOfWeek`, `startTime`, `endTime`, break/effective optional, `isActive`.
+- `CloseDateRequest`: `staffId`, chọn một trong: `singleDate`, `dates[]`, `weekStart/weekEnd`, hoặc `year/month`, có `reason`.
+- `WorkingHoursResponse`: thông tin staff + giờ làm Mon–Sat, ưu tiên custom, fallback default.
+- `UpdateAppointmentStatusRequest`: `status`, `notes`.
+- `AvailableSlotResponse`: danh sách khoảng giờ và cờ `available`.
+
+## 5. Repository & Query
+- `AppointmentRepository.search`: filter optional `staffId`, `customerId`, `date`, `status`, `type`.
+- `AppointmentRepository.findByStaffAndDate`, `findConflicts`: hỗ trợ kiểm tra trùng lịch.
+- `WorkingSlotRepository`: tìm slot active/đóng theo staff + day + effective range; liệt kê slot đóng trong khoảng.
+
+## 6. Luồng nghiệp vụ chính (AppointmentServiceImpl)
+- `list(...)`: filter + auto gán customerId cho customer login, sort mặc định theo ngày; map response.
+- `detail(...)`: kiểm tra soft delete; nếu customer thì phải sở hữu lịch.
+- `create(...)`:
+  1) Load order (nếu có) và validate thuộc customer.  
+  2) Validate staff (role STAFF/ADMIN) nếu được gán; check `validateAppointmentTime` và `checkConflict`.  
+  3) Lưu appointment `status=scheduled`.
+- `update(...)`: giống create, có excludeId khi check trùng.
+- `updateStatus(...)`: đổi trạng thái + notes nếu có.
+- `delete(...)`: soft delete.
+- `getSchedule(staffId, date, type)`: trả lịch theo ngày, filter type optional.
+- `getAvailableSlots(staffId, date, durationMinutes)`:
+  - Chặn Chủ nhật; nếu ngày bị đóng (slot isActive=false) → rỗng.
+  - Lấy appointment đã đặt để mark booked.
+  - Nếu có working slot custom (active, hợp lệ effective) → sinh slot theo duration, bỏ break, đánh dấu available nếu không booked.
+  - Nếu không có custom → dùng default 07:00-23:00.
+- Working Slots:
+  - CRUD slot: list, detail, create, update, delete.
+  - Bulk tạo slot: cùng giờ cho nhiều thứ trong tuần.
+  - Reset giờ mặc định: xóa toàn bộ slot custom active của staff.
+  - `getWorkingHours`: Mon–Sat, ưu tiên custom, nếu không trả default.
+  - `closeDates`: tạo slot đóng cửa (isActive=false) cho các ngày chỉ định, bỏ qua Chủ nhật, skip nếu đã có slot đóng.
+- Helpers:
+  - `validateAppointmentTime`: chặn Chủ nhật, ngày đóng; kiểm tra trong khung giờ custom (nếu có) hoặc default.
+  - `checkConflict`: tìm appointment trùng giờ cùng staff (excludeId khi update).
+
+## 7. Controller (AppointmentController)
+- Base `/api/v1/appointments`, trả `CommonResponse`.
+- Endpoint chính:
+  - GET `/` list (ADMIN/STAFF/TAILOR/CUSTOMER; customer chỉ thấy của mình).
+  - GET `/{id}` detail.
+  - POST `/` create; PUT `/{id}` update; PATCH `/{id}/status` cập nhật trạng thái.
+  - DELETE `/{id}` soft delete.
+  - GET `/schedule` (staffId, date, optional type).
+  - GET `/available-slots` (staffId, date, optional duration).
+  - Working slots:
+    - GET `/working-slots` (filter staffId optional) / `{id}`
+    - POST `/working-slots`, PUT `/working-slots/{id}`, DELETE `/working-slots/{id}`
+    - POST `/working-slots/bulk`
+    - POST `/working-slots/{staffId}/reset`
+    - GET `/working-slots/{staffId}/hours`
+    - POST `/working-slots/close-dates`
+
+## 8. Bảo mật & quyền
+- `@PreAuthorize`: ADMIN/STAFF/TAILOR cho quản trị lịch/slot; CUSTOMER chỉ xem lịch của mình.
+- Service `detail` bảo vệ quyền customer; controller lấy `principal` để suy ra currentUserId và isCustomer.
+
+## 9. Migrations
+- `V7__rename_tailor_to_staff.sql`: thêm staff_id, copy dữ liệu từ tailor_id, drop cột cũ, cập nhật FK cho `appointments`, `working_slots`.
+
+## 10. Kiểm thử nhanh
+1) Tạo slot custom hoặc bulk cho staff.  
+2) `GET /working-slots/{staffId}/hours` xem khung giờ.  
+3) `GET /available-slots` cho ngày không đóng cửa.  
+4) `POST /appointments` đặt lịch trong khung → thành công.  
+5) `POST /working-slots/close-dates` chặn ngày → available rỗng.  
+6) `POST /working-slots/{staffId}/reset` → giờ về mặc định, available theo default 07:00-23:00.
+
+## 11. Hướng phát triển
+- Giới hạn số booking song song mỗi slot.
+- Thông báo (email/SMS/push) khi đặt/đổi/hủy.
+- Hỗ trợ timezone rõ ràng nếu đa khu vực.
+- Báo cáo: số lịch theo staff/ngày/loại, tỉ lệ hủy.
+
+## 12. Tuân thủ .cursorrules
+- Lombok cho DTO (@Data/@Builder), entity dùng @Getter/@Setter/@Builder (không @Data).
+- CommonResponse + TraceIdUtil cho response.
+- Max 120 ký tự/line, 4 spaces, không wildcard import.
+
+---
+Tài liệu này đi kèm mã nguồn hiện có; có thể giao trực tiếp cho khách hàng như “hồ sơ sử dụng” module Appointment.
 # Appointment Module - Giải thích chi tiết (phi kỹ thuật, đã refactor `staffId`)
 
 ## 📋 Appointment là gì?

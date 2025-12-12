@@ -302,7 +302,7 @@ WorkingSlot {
 ✅ Billing
    - Invoice List
    - Invoice Detail
-   - Transaction Management
+   - Transaction Management 
    - Payment (VNPay, MoMo, ZaloPay...)
 
 ✅ Product/Catalog
