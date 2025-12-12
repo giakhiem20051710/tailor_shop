@@ -8,7 +8,7 @@ import java.time.OffsetDateTime;
 public class WorkingSlotResponse {
 
     private Long id;
-    private Party tailor;
+    private Party staff;
     private DayOfWeek dayOfWeek;
     private LocalTime startTime;
     private LocalTime endTime;
@@ -57,12 +57,12 @@ public class WorkingSlotResponse {
         this.id = id;
     }
 
-    public Party getTailor() {
-        return tailor;
+    public Party getStaff() {
+        return staff;
     }
 
-    public void setTailor(Party tailor) {
-        this.tailor = tailor;
+    public void setStaff(Party staff) {
+        this.staff = staff;
     }
 
     public DayOfWeek getDayOfWeek() {

@@ -34,7 +34,7 @@ public class AppointmentController {
     @GetMapping
     @PreAuthorize("hasAnyRole('ADMIN','STAFF','TAILOR','CUSTOMER')")
     public ResponseEntity<CommonResponse<Page<AppointmentResponse>>> list(
-            @RequestParam(value = "tailorId", required = false) Long tailorId,
+            @RequestParam(value = "staffId", required = false) Long staffId,
             @RequestParam(value = "customerId", required = false) Long customerId,
             @RequestParam(value = "date", required = false) LocalDate date,
             @RequestParam(value = "status", required = false) AppointmentStatus status,
@@ -44,7 +44,7 @@ public class AppointmentController {
     ) {
         boolean isCustomer = principal != null && principal.getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equals("ROLE_CUSTOMER"));
-        Page<AppointmentResponse> data = appointmentService.list(tailorId, customerId, date, status, type,
+        Page<AppointmentResponse> data = appointmentService.list(staffId, customerId, date, status, type,
                 principal != null ? principal.getId() : null, isCustomer, pageable);
         return ResponseEntity.ok(ResponseUtil.success(TraceIdUtil.getOrCreateTraceId(), data));
     }
@@ -108,22 +108,22 @@ public class AppointmentController {
     @GetMapping("/schedule")
     @PreAuthorize("hasAnyRole('ADMIN','STAFF','TAILOR')")
     public ResponseEntity<CommonResponse<List<AppointmentResponse>>> getSchedule(
-            @RequestParam(value = "tailorId") Long tailorId,
+            @RequestParam(value = "staffId") Long staffId,
             @RequestParam(value = "date") LocalDate date,
             @RequestParam(value = "type", required = false) AppointmentType type
     ) {
-        List<AppointmentResponse> data = appointmentService.getSchedule(tailorId, date, type);
+        List<AppointmentResponse> data = appointmentService.getSchedule(staffId, date, type);
         return ResponseEntity.ok(ResponseUtil.success(TraceIdUtil.getOrCreateTraceId(), data));
     }
 
     @GetMapping("/available-slots")
     @PreAuthorize("hasAnyRole('ADMIN','STAFF','TAILOR')")
     public ResponseEntity<CommonResponse<List<AvailableSlotResponse>>> getAvailableSlots(
-            @RequestParam(value = "tailorId") Long tailorId,
+            @RequestParam(value = "staffId") Long staffId,
             @RequestParam(value = "date") LocalDate date,
             @RequestParam(value = "duration", required = false) Integer durationMinutes
     ) {
-        List<AvailableSlotResponse> data = appointmentService.getAvailableSlots(tailorId, date, durationMinutes);
+        List<AvailableSlotResponse> data = appointmentService.getAvailableSlots(staffId, date, durationMinutes);
         return ResponseEntity.ok(ResponseUtil.success(TraceIdUtil.getOrCreateTraceId(), data));
     }
 
@@ -131,13 +131,13 @@ public class AppointmentController {
     @GetMapping("/working-slots")
     @PreAuthorize("hasAnyRole('ADMIN','STAFF','TAILOR')")
     public ResponseEntity<CommonResponse<Page<WorkingSlotResponse>>> listWorkingSlots(
-            @RequestParam(value = "tailorId", required = false) Long tailorId,
+            @RequestParam(value = "staffId", required = false) Long staffId,
             @RequestParam(value = "date", required = false) LocalDate date,
             @PageableDefault(size = 20) Pageable pageable
     ) {
         Page<WorkingSlotResponse> data;
-        if (tailorId != null) {
-            data = appointmentService.listWorkingSlots(tailorId, date, pageable);
+        if (staffId != null) {
+            data = appointmentService.listWorkingSlots(staffId, date, pageable);
         } else {
             data = appointmentService.listAllWorkingSlots(date, pageable);
         }
@@ -182,6 +182,50 @@ public class AppointmentController {
     ) {
         appointmentService.deleteWorkingSlot(id, principal != null ? principal.getId() : null);
         return ResponseEntity.ok(ResponseUtil.success(TraceIdUtil.getOrCreateTraceId(), null));
+    }
+
+    // Bulk operations for easier management
+    @PostMapping("/working-slots/bulk")
+    @PreAuthorize("hasAnyRole('ADMIN','STAFF')")
+    public ResponseEntity<CommonResponse<List<WorkingSlotResponse>>> createBulkWorkingSlots(
+            @Valid @RequestBody BulkWorkingSlotRequest request,
+            @AuthenticationPrincipal CustomUserDetails principal
+    ) {
+        List<WorkingSlotResponse> data = appointmentService.createBulkWorkingSlots(
+                request, principal != null ? principal.getId() : null);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ResponseUtil.success(TraceIdUtil.getOrCreateTraceId(), data));
+    }
+
+    @PostMapping("/working-slots/{staffId}/reset")
+    @PreAuthorize("hasAnyRole('ADMIN','STAFF')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public ResponseEntity<CommonResponse<Void>> resetToDefaultWorkingHours(
+            @PathVariable Long staffId,
+            @AuthenticationPrincipal CustomUserDetails principal
+    ) {
+        appointmentService.resetToDefaultWorkingHours(staffId, principal != null ? principal.getId() : null);
+        return ResponseEntity.ok(ResponseUtil.success(TraceIdUtil.getOrCreateTraceId(), null));
+    }
+
+    @GetMapping("/working-slots/{staffId}/hours")
+    @PreAuthorize("hasAnyRole('ADMIN','STAFF','TAILOR')")
+    public ResponseEntity<CommonResponse<WorkingHoursResponse>> getWorkingHours(@PathVariable Long staffId) {
+        WorkingHoursResponse data = appointmentService.getWorkingHours(staffId);
+        return ResponseEntity.ok(ResponseUtil.success(TraceIdUtil.getOrCreateTraceId(), data));
+    }
+
+    // Đóng cửa theo ngày/tuần/tháng
+    @PostMapping("/working-slots/close-dates")
+    @PreAuthorize("hasAnyRole('ADMIN','STAFF')")
+    public ResponseEntity<CommonResponse<List<WorkingSlotResponse>>> closeDates(
+            @Valid @RequestBody CloseDateRequest request,
+            @AuthenticationPrincipal CustomUserDetails principal
+    ) {
+        List<WorkingSlotResponse> data = appointmentService.closeDates(
+                request, principal != null ? principal.getId() : null);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ResponseUtil.success(TraceIdUtil.getOrCreateTraceId(), data));
     }
 }
 

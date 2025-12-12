@@ -15,7 +15,7 @@ public class AppointmentRequest {
     @NotNull(message = "Customer ID is required")
     private Long customerId;
 
-    private Long tailorId;
+    private Long staffId;
 
     @NotNull(message = "Type is required")
     private AppointmentType type;
@@ -45,12 +45,12 @@ public class AppointmentRequest {
         this.customerId = customerId;
     }
 
-    public Long getTailorId() {
-        return tailorId;
+    public Long getStaffId() {
+        return staffId;
     }
 
-    public void setTailorId(Long tailorId) {
-        this.tailorId = tailorId;
+    public void setStaffId(Long staffId) {
+        this.staffId = staffId;
     }
 
     public AppointmentType getType() {

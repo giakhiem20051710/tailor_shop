@@ -27,8 +27,8 @@ public class AppointmentEntity {
     private UserEntity customer;
 
     @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "tailor_id")
-    private UserEntity tailor;
+    @JoinColumn(name = "staff_id")
+    private UserEntity staff;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
@@ -78,12 +78,12 @@ public class AppointmentEntity {
         this.customer = customer;
     }
 
-    public UserEntity getTailor() {
-        return tailor;
+    public UserEntity getStaff() {
+        return staff;
     }
 
-    public void setTailor(UserEntity tailor) {
-        this.tailor = tailor;
+    public void setStaff(UserEntity staff) {
+        this.staff = staff;
     }
 
     public AppointmentType getType() {
