@@ -51,8 +51,8 @@ jwt:
 
 aws:
   s3:
-    bucket: your-bucket-name
-    region: ap-southeast-1
-    access-key: YOUR_ACCESS_KEY
-    secret-key: YOUR_SECRET_KEY
-    base-url: https://your-bucket-name.s3.ap-southeast-1.amazonaws.com
+    bucket: 
+    region: 
+    access-key: 
+    secret-key: 
+    base-url: 

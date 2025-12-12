@@ -5,14 +5,15 @@ import jakarta.validation.constraints.NotNull;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.List;
 
-public class WorkingSlotRequest {
+public class BulkWorkingSlotRequest {
 
     @NotNull(message = "Staff ID is required")
     private Long staffId;
 
-    @NotNull(message = "Day of week is required")
-    private DayOfWeek dayOfWeek;
+    @NotNull(message = "Days of week are required")
+    private List<DayOfWeek> daysOfWeek;
 
     @NotNull(message = "Start time is required")
     private LocalTime startTime;
@@ -34,12 +35,12 @@ public class WorkingSlotRequest {
         this.staffId = staffId;
     }
 
-    public DayOfWeek getDayOfWeek() {
-        return dayOfWeek;
+    public List<DayOfWeek> getDaysOfWeek() {
+        return daysOfWeek;
     }
 
-    public void setDayOfWeek(DayOfWeek dayOfWeek) {
-        this.dayOfWeek = dayOfWeek;
+    public void setDaysOfWeek(List<DayOfWeek> daysOfWeek) {
+        this.daysOfWeek = daysOfWeek;
     }
 
     public LocalTime getStartTime() {

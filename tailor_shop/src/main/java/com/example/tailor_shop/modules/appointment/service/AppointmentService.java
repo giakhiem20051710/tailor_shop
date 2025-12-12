@@ -11,7 +11,7 @@ import java.util.List;
 
 public interface AppointmentService {
 
-    Page<AppointmentResponse> list(Long tailorId, Long customerId, LocalDate date,
+    Page<AppointmentResponse> list(Long staffId, Long customerId, LocalDate date,
                                     AppointmentStatus status, AppointmentType type,
                                     Long currentUserId, boolean isCustomer, Pageable pageable);
 
@@ -25,12 +25,12 @@ public interface AppointmentService {
 
     void delete(Long id, Long currentUserId);
 
-    List<AppointmentResponse> getSchedule(Long tailorId, LocalDate date, AppointmentType type);
+    List<AppointmentResponse> getSchedule(Long staffId, LocalDate date, AppointmentType type);
 
-    List<AvailableSlotResponse> getAvailableSlots(Long tailorId, LocalDate date, Integer durationMinutes);
+    List<AvailableSlotResponse> getAvailableSlots(Long staffId, LocalDate date, Integer durationMinutes);
 
     // Working Slots
-    Page<WorkingSlotResponse> listWorkingSlots(Long tailorId, LocalDate date, Pageable pageable);
+    Page<WorkingSlotResponse> listWorkingSlots(Long staffId, LocalDate date, Pageable pageable);
 
     Page<WorkingSlotResponse> listAllWorkingSlots(LocalDate date, Pageable pageable);
 
@@ -41,5 +41,15 @@ public interface AppointmentService {
     WorkingSlotResponse updateWorkingSlot(Long id, WorkingSlotRequest request, Long currentUserId);
 
     void deleteWorkingSlot(Long id, Long currentUserId);
+
+    // Bulk operations for easier management
+    List<WorkingSlotResponse> createBulkWorkingSlots(BulkWorkingSlotRequest request, Long currentUserId);
+
+    void resetToDefaultWorkingHours(Long staffId, Long currentUserId);
+
+    WorkingHoursResponse getWorkingHours(Long staffId);
+
+    // Đóng cửa theo ngày/tuần/tháng
+    List<WorkingSlotResponse> closeDates(CloseDateRequest request, Long currentUserId);
 }
 

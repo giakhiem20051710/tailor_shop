@@ -13,7 +13,7 @@ public class AppointmentResponse {
     private Long orderId;
     private String orderCode;
     private Party customer;
-    private Party tailor;
+    private Party staff;
     private AppointmentType type;
     private LocalDate appointmentDate;
     private LocalTime appointmentTime;
@@ -107,12 +107,12 @@ public class AppointmentResponse {
         this.customer = customer;
     }
 
-    public Party getTailor() {
-        return tailor;
+    public Party getStaff() {
+        return staff;
     }
 
-    public void setTailor(Party tailor) {
-        this.tailor = tailor;
+    public void setStaff(Party staff) {
+        this.staff = staff;
     }
 
     public AppointmentType getType() {

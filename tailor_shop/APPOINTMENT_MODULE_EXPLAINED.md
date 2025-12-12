@@ -1,3 +1,264 @@
+# Appointment Module - Giải thích chi tiết (phi kỹ thuật, đã refactor `staffId`)
+
+## 📋 Appointment là gì?
+Hệ thống đặt lịch giữa **khách hàng** và **nhân viên phục vụ (staff)** của cửa hàng may:
+- Đặt lịch đo/thử/nhận/giao hàng.
+- Quản lý giờ làm của nhân viên, tránh trùng lịch.
+- Tự động chặn ngày nghỉ, giờ nghỉ, và các ngày đóng cửa đặc biệt.
+
+---
+
+## 🎯 Tính năng chính
+
+### 1) Quản lý lịch hẹn (Appointments)
+- Lịch hẹn gắn với **order** và **customer**.
+- Có thể gán **staff** (nhân viên) ngay hoặc để trống rồi gán sau.
+- Loại lịch hẹn: `fitting` (đo/thử), `pickup` (nhận hàng), `delivery` (giao hàng).
+- Trạng thái: `scheduled`, `completed`, `cancelled`.
+
+### 2) Quản lý khung giờ làm việc (Working Slots)
+- **Chỉ dùng `staffId`** (đã bỏ hoàn toàn `tailorId`).
+- Nếu KHÔNG cấu hình, dùng giờ mặc định: **07:00-23:00, Thứ 2–Thứ 7; Chủ nhật nghỉ**.
+- Có thể cấu hình: giờ bắt đầu/kết thúc, giờ nghỉ trưa, hiệu lực từ ngày/đến ngày.
+- Đóng cửa đặc biệt: tạo slot `isActive=false` qua API `close-dates` để chặn đặt lịch theo ngày/tuần/tháng (nghỉ lễ, sửa chữa).
+
+### 3) Xem lịch theo ngày (Schedule)
+- Lọc theo `staffId` và ngày, để xem nhân viên đó có những lịch gì.
+
+### 4) Xem slots còn trống (Available Slots)
+- Tính từ working slots của staff, trừ giờ nghỉ và giờ đã được đặt lịch.
+- Nếu không có working slot tùy chỉnh → fallback giờ mặc định.
+
+---
+
+## 🔐 Quyền (RBAC)
+- **Admin**: xem/tạo/sửa/xóa lịch hẹn; quản lý working slots của mọi staff; reset giờ mặc định; đóng ngày.
+- **Staff**: xem/tạo/sửa/xóa lịch hẹn; quản lý working slots của chính mình; đóng ngày của mình.
+- **Tailor**: chỉ mang tính tham khảo trong lịch hẹn (không sở hữu working slot); có thể được gán role phù hợp để thao tác.
+- **Customer**: xem lịch của mình; không tạo/sửa/xóa.
+
+---
+
+## 📝 Quy trình thực tế (ví dụ)
+
+### Tình huống 1: Đặt lịch đo quần áo
+1) Kiểm tra slots trống  
+```
+GET /api/v1/appointments/available-slots?staffId=2&date=2024-12-25
+```
+→ Xem giờ trống của staff 2 ngày 25/12.
+
+2) Tạo lịch hẹn  
+```json
+POST /api/v1/appointments
+{
+  "orderId": 1,
+  "customerId": 1,
+  "staffId": 2,
+  "type": "fitting",
+  "appointmentDate": "2024-12-25",
+  "appointmentTime": "09:00:00",
+  "notes": "Đo quần áo cho khách"
+}
+```
+
+3) Hệ thống kiểm tra:
+- Ngày >= hôm nay; không rơi vào ngày đóng cửa.
+- Giờ trong khung làm việc (hoặc mặc định 07:00-23:00 nếu chưa cấu hình).
+- Không trùng giờ với lịch khác của staff.
+
+### Tình huống 2: Staff thiết lập giờ làm / nghỉ lễ
+1) Tạo working slot tùy chỉnh  
+```json
+POST /api/v1/appointments/working-slots
+{
+  "staffId": 2,
+  "dayOfWeek": "MONDAY",
+  "startTime": "08:00:00",
+  "endTime": "17:00:00",
+  "breakStartTime": "12:00:00",
+  "breakEndTime": "13:00:00",
+  "isActive": true
+}
+```
+
+2) Đóng ngày (nghỉ lễ)  
+```json
+POST /api/v1/appointments/working-slots/close-dates
+{
+  "staffId": 2,
+  "weekStart": "2025-04-28",
+  "weekEnd": "2025-05-04",
+  "reason": "Nghỉ lễ 30/4 - 1/5"
+}
+```
+
+3) Nếu không tạo working slot, hệ thống tự dùng giờ mặc định 07:00-23:00 (Thứ 2–Thứ 7).
+
+---
+
+## ⚠️ Quy tắc quan trọng
+- **Không trùng lịch**: Cùng staff, cùng ngày, cùng giờ → bị chặn.
+- **Giờ làm việc**: Chỉ đặt trong working slot; nếu không có slot → dùng giờ mặc định; Chủ nhật nghỉ.
+- **Giờ nghỉ**: Không đặt trong break.
+- **Ngày đóng cửa**: close-dates trả về available-slots rỗng và chặn tạo lịch.
+- **Ngày hợp lệ**: Không đặt quá khứ.
+- **Quyền xem**: Customer chỉ xem lịch của mình; Admin/Staff xem tất cả; Tailor xem lịch được gán.
+
+---
+
+## 🔍 API chính (đã đổi sang `staffId`)
+
+### Appointments
+- `GET /api/v1/appointments?staffId&customerId&date&status&type`
+- `GET /api/v1/appointments/{id}`
+- `POST /api/v1/appointments`
+  - Body: `orderId` (bắt buộc), `customerId` (bắt buộc), `staffId` (tùy chọn), `type`, `appointmentDate`, `appointmentTime`, `notes`
+- `PUT /api/v1/appointments/{id}` (sửa thông tin)
+- `PATCH /api/v1/appointments/{id}/status`
+- `DELETE /api/v1/appointments/{id}` (soft delete)
+- `GET /api/v1/appointments/schedule?staffId&date&type`
+- `GET /api/v1/appointments/available-slots?staffId&date&duration`
+
+### Working Slots
+- `GET /api/v1/appointments/working-slots?staffId` (staffId tùy chọn; bỏ trống = tất cả)
+- `GET /api/v1/appointments/working-slots/{id}`
+- `POST /api/v1/appointments/working-slots`
+- `PUT /api/v1/appointments/working-slots/{id}`
+- `DELETE /api/v1/appointments/working-slots/{id}`
+- `POST /api/v1/appointments/working-slots/bulk`
+- `POST /api/v1/appointments/working-slots/{staffId}/reset` (xóa slot tùy chỉnh, về giờ mặc định)
+- `GET /api/v1/appointments/working-slots/{staffId}/hours` (xem giờ đang áp dụng)
+- `POST /api/v1/appointments/working-slots/close-dates` (tạo slot isActive=false để đóng cửa)
+
+---
+
+## 🧪 Test cases nhanh
+
+### Case 1: Tạo lịch hẹn thành công
+```json
+POST /api/v1/appointments
+{
+  "orderId": 1,
+  "customerId": 1,
+  "staffId": 2,
+  "type": "fitting",
+  "appointmentDate": "2024-12-25",
+  "appointmentTime": "09:00:00"
+}
+```
+→ ✅ Thành công.
+
+### Case 2: Trùng giờ
+```json
+POST /api/v1/appointments
+{
+  "orderId": 2,
+  "customerId": 2,
+  "staffId": 2,
+  "type": "fitting",
+  "appointmentDate": "2024-12-25",
+  "appointmentTime": "09:00:00"
+}
+```
+→ ❌ 400: "Appointment time conflicts with existing appointment".
+
+### Case 3: Ngoài giờ làm việc tùy chỉnh
+Đặt lúc 07:00 trong khi slot 08:00-17:00.  
+→ ❌ 400: "Appointment time is outside staff custom working hours".
+
+### Case 4: Customer tự tạo
+Customer gọi `POST /appointments` → ❌ 403 Access Denied.
+
+---
+
+## 📊 Cấu trúc dữ liệu (response mẫu)
+
+### Appointment Response
+```json
+{
+  "id": 1,
+  "orderId": 1,
+  "orderCode": "ORD-2024-001",
+  "customer": {
+    "id": 1,
+    "name": "Nguyễn Văn A",
+    "phone": "0912345678",
+    "role": "customer"
+  },
+  "staff": {
+    "id": 2,
+    "name": "Nguyễn Thị B",
+    "phone": "0911111111",
+    "role": "staff"
+  },
+  "type": "fitting",
+  "appointmentDate": "2024-12-25",
+  "appointmentTime": "09:00:00",
+  "status": "scheduled",
+  "notes": "Đo quần áo cho khách hàng",
+  "createdAt": "2024-12-20T10:00:00Z",
+  "updatedAt": "2024-12-20T10:00:00Z"
+}
+```
+
+### Working Slot Response
+```json
+{
+  "id": 1,
+  "staff": {
+    "id": 2,
+    "name": "Nguyễn Thị B"
+  },
+  "dayOfWeek": "MONDAY",
+  "startTime": "08:00:00",
+  "endTime": "17:00:00",
+  "breakStartTime": "12:00:00",
+  "breakEndTime": "13:00:00",
+  "isActive": true,
+  "effectiveFrom": "2024-12-01",
+  "effectiveTo": "2024-12-31",
+  "createdAt": "2024-12-01T08:00:00Z",
+  "updatedAt": "2024-12-01T08:00:00Z"
+}
+```
+
+### Available Slot Response
+```json
+[
+  { "startTime": "08:00:00", "endTime": "08:30:00", "available": true },
+  { "startTime": "08:30:00", "endTime": "09:00:00", "available": true },
+  { "startTime": "09:00:00", "endTime": "09:30:00", "available": false }
+]
+```
+
+---
+
+## 💡 Tips & Best Practices
+- Admin/Staff: luôn kiểm tra available-slots trước khi tạo; cập nhật trạng thái ngay sau khi hoàn thành; reset về mặc định nếu cấu hình sai.
+- Staff: thiết lập working slots đầy đủ; đóng ngày nghỉ qua close-dates.
+- Customer: xem lịch của mình; báo sớm nếu cần hủy.
+
+---
+
+## 🔗 Liên kết module
+- **Order**: mỗi appointment gắn với một order.
+- **User**: dùng `customer` và `staff` (không còn `tailorId`).
+- **Measurement**: có thể tạo measurement khi tạo order; appointment tham chiếu order đó.
+
+---
+
+## ❓ FAQ
+- **Khách có tự đặt?** Không, chỉ Admin/Staff (Tailor nếu được cấp role phù hợp).
+- **Một staff có nhiều lịch cùng giờ?** Không, bị chặn conflict.
+- **Không cấu hình working slot thì sao?** Hệ thống dùng giờ mặc định 07:00-23:00 (Thứ 2–Thứ 7), Chủ nhật nghỉ.
+- **Có thể có nhiều working slots một ngày?** Có, dùng `effectiveFrom/To` để thay đổi theo giai đoạn.
+
+---
+
+## 📞 Hỗ trợ
+Admin: admin@tailorshop.com  
+Support: support@tailorshop.com
 # Appointment Module - Giải Thích Chi Tiết Cho Người Dùng
 
 ## 📋 Module Appointment Là Gì?
@@ -42,17 +303,20 @@ Khách hàng Nguyễn Văn A đặt lịch:
 Khung giờ làm việc định nghĩa thời gian mà nhân viên hoặc thợ may có sẵn để phục vụ khách hàng. **Lưu ý**: Trong hệ thống, working slots được quản lý theo tailor, nhưng thực tế **nhân viên (staff) mới là người trực tiếp phục vụ khách hàng** tại cửa hàng (đo quần áo, giao hàng, v.v.). Thợ may chủ yếu làm việc may, có thể được assign trong appointment để tư vấn kỹ thuật hoặc theo dõi đơn hàng.
 
 #### Thông tin trong khung giờ làm việc:
-- **Ngày trong tuần**: Thứ 2, Thứ 3, ..., Chủ nhật
-- **Giờ bắt đầu**: 8:00
-- **Giờ kết thúc**: 17:00
-- **Giờ nghỉ**: 12:00 - 13:00 (nghỉ trưa)
+- **Ngày trong tuần**: Thứ 2, Thứ 3, ..., Thứ 7 (Chủ nhật nghỉ mặc định)
+- **Giờ mặc định** (fallback khi KHÔNG cấu hình working slot): 07:00 - 23:00, Thứ 2 → Thứ 7
+- **Giờ bắt đầu/kết thúc tuỳ chỉnh**: Có thể rút ngắn/điều chỉnh bằng working slot
+- **Giờ nghỉ**: 12:00 - 13:00 (nghỉ trưa) hoặc tuỳ chỉnh
 - **Hiệu lực**: Từ ngày nào đến ngày nào (có thể để trống nếu áp dụng mãi mãi)
+- **Đóng cửa đặc biệt**: Tạo working slot với `isActive = false` thông qua API `/working-slots/close-dates` để chặn đặt lịch theo ngày/tuần/tháng (nghỉ lễ, sự cố, sửa chữa).
 
 #### Ví dụ thực tế:
 ```
-Nhân viên/Thợ may có khung giờ làm việc:
-- Thứ 2 đến Thứ 6: 8:00 - 17:00 (nghỉ trưa 12:00 - 13:00)
-- Thứ 7: 8:00 - 12:00 (nửa ngày)
+Mặc định (không cấu hình): 07:00 - 23:00 từ Thứ 2 đến Thứ 7, Chủ nhật nghỉ.
+
+Tuỳ chỉnh bằng working slot:
+- Thứ 2 đến Thứ 6: 08:00 - 17:00 (nghỉ trưa 12:00 - 13:00)
+- Thứ 7: 08:00 - 12:00 (nửa ngày)
 - Chủ nhật: Nghỉ
 
 Lưu ý: Trong hệ thống, working slots được quản lý theo tailor, nhưng thực tế nhân viên (staff) mới là người trực tiếp phục vụ khách hàng tại cửa hàng.
@@ -154,7 +418,8 @@ POST /api/v1/appointments
 
 **Bước 3: Hệ thống kiểm tra**
 - ✅ Ngày hẹn phải >= hôm nay
-- ✅ Giờ hẹn phải trong khung giờ làm việc của thợ may
+- ✅ Không được rơi vào ngày đóng cửa (close-dates)
+- ✅ Giờ hẹn phải trong khung giờ làm việc của thợ may (nếu không có khung giờ tuỳ chỉnh, hệ thống dùng mặc định 07:00 - 23:00, Thứ 2 → Thứ 7; Chủ nhật nghỉ)
 - ✅ Giờ hẹn không được trùng với lịch hẹn khác
 
 **Bước 4: Lịch hẹn được tạo thành công**
@@ -175,9 +440,9 @@ PATCH /api/v1/appointments/1/status
 **Bước 2: Lịch hẹn được đánh dấu hoàn thành**
 - Slot đó trở thành trống cho các lịch hẹn khác (nếu cần)
 
-### **Tình huống 3: Thợ may thiết lập lịch làm việc**
+### **Tình huống 3: Thợ may thiết lập lịch làm việc / nghỉ lễ**
 
-**Bước 1: Thợ may tạo khung giờ làm việc**
+**Bước 1: (Tuỳ chọn) Thợ may tạo khung giờ làm việc ngắn hơn mặc định**
 ```
 POST /api/v1/appointments/working-slots
 {
@@ -191,12 +456,24 @@ POST /api/v1/appointments/working-slots
 }
 ```
 
-**Bước 2: Lặp lại cho các ngày khác**
-- Tạo working slot cho Thứ 2, Thứ 3, ..., Chủ nhật
+**Bước 2: Lặp lại cho các ngày cần rút ngắn/tuỳ chỉnh**  
+(Nếu không tạo working slot, hệ thống tự dùng giờ mặc định 07:00 - 23:00 từ Thứ 2 → Thứ 7; Chủ nhật nghỉ)
 
-**Bước 3: Hệ thống sử dụng working slots**
-- Khi khách hàng đặt lịch, hệ thống chỉ cho phép đặt trong khung giờ làm việc
-- Available slots chỉ hiển thị các giờ trong working slots
+**Bước 3: Đóng cửa ngày/tuần/tháng (nghỉ lễ, sửa chữa)**
+```
+POST /api/v1/appointments/working-slots/close-dates
+{
+  "tailorId": null,              // null = đóng cửa toàn bộ tiệm
+  "weekStart": "2025-04-28",
+  "weekEnd": "2025-05-04",
+  "reason": "Nghỉ lễ 30/4 - 1/5"
+}
+```
+
+**Bước 4: Hệ thống sử dụng working slots**
+- Nếu có working slot tuỳ chỉnh: chỉ cho phép đặt trong slot đó
+- Nếu không có working slot tuỳ chỉnh: dùng giờ mặc định 07:00 - 23:00 (Thứ 2 → Thứ 7)
+- Nếu ngày được đánh dấu đóng cửa: không cho đặt lịch, available-slots trả về rỗng
 
 ---
 
@@ -207,8 +484,10 @@ POST /api/v1/appointments/working-slots
 - ✅ Hệ thống tự động kiểm tra và từ chối nếu trùng
 
 ### **2. Kiểm Tra Khung Giờ Làm Việc**
-- ❌ Không thể đặt lịch ngoài khung giờ làm việc của thợ may
+- ❌ Không thể đặt lịch ngoài khung giờ làm việc của thợ may (nếu có working slot tuỳ chỉnh)
+- ✅ Nếu không có working slot tuỳ chỉnh: dùng giờ mặc định 07:00 - 23:00 từ Thứ 2 → Thứ 7; Chủ nhật nghỉ
 - ❌ Không thể đặt lịch trong giờ nghỉ (break time)
+- ❌ Không thể đặt lịch vào ngày đóng cửa (close-dates)
 - ✅ Hệ thống tự động kiểm tra và từ chối nếu không hợp lệ
 
 ### **3. Kiểm Tra Ngày Hẹn**
@@ -349,6 +628,8 @@ GET /api/v1/appointments/available-slots?tailorId=2&date=2024-12-25&duration=30
   }
 ]
 ```
+- Nếu ngày đóng cửa (close-dates): trả về danh sách rỗng
+- Nếu không có working slot tuỳ chỉnh: dùng giờ mặc định 07:00 - 23:00 (Thứ 2 → Thứ 7; Chủ nhật nghỉ)
 
 ### **Working Slots APIs**
 
@@ -356,7 +637,7 @@ GET /api/v1/appointments/available-slots?tailorId=2&date=2024-12-25&duration=30
 ```
 GET /api/v1/appointments/working-slots?tailorId=2
 ```
-**Mục đích**: Xem tất cả khung giờ làm việc của một thợ may
+**Mục đích**: Xem tất cả khung giờ làm việc của một thợ may (tailorId tùy chọn; bỏ trống để xem tất cả)
 
 #### 2. Xem Chi Tiết Khung Giờ Làm Việc
 ```
@@ -400,6 +681,30 @@ PUT /api/v1/appointments/working-slots/{id}
 DELETE /api/v1/appointments/working-slots/{id}
 ```
 **Mục đích**: Xóa khung giờ làm việc
+
+#### 6. Tạo nhiều khung giờ một lần
+```
+POST /api/v1/appointments/working-slots/bulk
+```
+**Mục đích**: Tạo nhanh nhiều working slot theo template lặp
+
+#### 7. Reset về giờ mặc định (07:00 - 23:00, Thứ 2 → Thứ 7)
+```
+POST /api/v1/appointments/working-slots/{tailorId}/reset
+```
+**Mục đích**: Xoá working slot tuỳ chỉnh và quay về giờ mặc định
+
+#### 8. Xem giờ làm việc hiện tại (custom hoặc mặc định)
+```
+GET /api/v1/appointments/working-slots/{tailorId}/hours
+```
+**Mục đích**: Biết hiện tại tailor/staff đang áp dụng giờ nào
+
+#### 9. Đóng cửa theo ngày/tuần/tháng (nghỉ lễ, sự cố)
+```
+POST /api/v1/appointments/working-slots/close-dates
+```
+**Mục đích**: Chặn đặt lịch trong các ngày cụ thể (tạo working slot isActive=false)
 
 ---
 

@@ -19,8 +19,8 @@ public class WorkingSlotEntity {
     private Long id;
 
     @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "tailor_id", nullable = false)
-    private UserEntity tailor;
+    @JoinColumn(name = "staff_id", nullable = false)
+    private UserEntity staff;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "day_of_week", nullable = false, length = 10)
@@ -59,12 +59,12 @@ public class WorkingSlotEntity {
         return id;
     }
 
-    public UserEntity getTailor() {
-        return tailor;
+    public UserEntity getStaff() {
+        return staff;
     }
 
-    public void setTailor(UserEntity tailor) {
-        this.tailor = tailor;
+    public void setStaff(UserEntity staff) {
+        this.staff = staff;
     }
 
     public DayOfWeek getDayOfWeek() {
