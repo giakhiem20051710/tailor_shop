@@ -367,3 +367,369 @@ module/
 - [ ] No wildcard imports, imports organized
 - [ ] Lines broken logically for readability
 
+## CI/CD Standard
+
+### Branching Strategy
+- **Primary Strategy**: GitHub Flow (trunk-based with feature branches)
+  - `main`: Production-ready code (protected branch)
+  - `develop`: Integration branch for features (optional, can use main directly)
+  - `feature/*`: Feature branches (e.g., `feature/billing-module`, `feature/user-auth`)
+  - `hotfix/*`: Critical production fixes
+  - `release/*`: Release preparation branches
+- **Alternative**: GitFlow for complex release cycles (if needed)
+- Branch naming: `{type}/{short-description}` (lowercase, hyphens)
+
+### Pull Request Rules
+- **Required Reviews**: Minimum 1 approval from senior/lead developer
+- **PR Title**: Clear, descriptive (e.g., "feat: Add billing module with invoice management")
+- **PR Description**: Must include:
+  - What: Summary of changes
+  - Why: Business reason/requirement
+  - How: Technical approach (if complex)
+  - Testing: How it was tested
+  - Breaking Changes: If any, clearly documented
+- **PR Checklist**:
+  - [ ] Code follows `.cursorrules` standards
+  - [ ] Unit tests added/updated (coverage ≥ 70%)
+  - [ ] Integration tests pass
+  - [ ] Documentation updated (if needed)
+  - [ ] No linter errors
+  - [ ] Migration files included (if schema changes)
+- **Merge Strategy**: Squash and merge (clean history) or Rebase and merge
+- **Auto-close Issues**: Use keywords: `fixes #123`, `closes #456` in PR description
+
+### Build Pipeline
+- **Trigger**: On every push to `feature/*`, `develop`, `main`
+- **Stages**:
+  1. **Checkout**: Clone repository
+  2. **Lint**: Code quality checks (Checkstyle, PMD, SpotBugs)
+  3. **Unit Tests**: `mvn test` (must pass, coverage report)
+  4. **Integration Tests**: `mvn verify` (if applicable)
+  5. **Build**: `mvn clean package -DskipTests` (tests already run)
+  6. **SonarQube**: Code analysis and quality gates
+  7. **Docker Build**: Build Docker image (tag with commit SHA)
+  8. **Security Scan**: Dependency vulnerability scan (OWASP, Snyk)
+- **Artifacts**: JAR file, Docker image, test reports, coverage reports
+- **Failure Handling**: Block merge if any stage fails
+- **Cache Strategy**: Cache Maven dependencies (`~/.m2/repository`)
+
+### Deployment Pipeline
+- **Environments**: `dev` → `staging` → `production`
+- **Deployment Strategy**:
+  - **Blue-Green Deployment**: Zero-downtime deployments
+    - Deploy new version to "green" environment
+    - Run health checks and smoke tests
+    - Switch traffic from "blue" to "green"
+    - Keep "blue" running for quick rollback
+  - **Canary Deployment**: For high-risk changes (gradual rollout: 10% → 50% → 100%)
+- **Automated Steps**:
+  1. **Pre-deployment**:
+     - Run database migrations (Flyway) automatically
+     - Backup database (production only)
+     - Validate configuration
+  2. **Deployment**:
+     - Deploy to target environment
+     - Health check endpoint: `/actuator/health`
+     - Smoke tests (critical endpoints)
+  3. **Post-deployment**:
+     - S3 CloudFront cache invalidation (if static assets changed)
+     - Monitor error rates and response times
+     - Rollback trigger if metrics exceed thresholds
+- **Rollback Strategy**:
+  - Automatic rollback if health check fails within 5 minutes
+  - Manual rollback via CI/CD pipeline (one-click)
+  - Database migration rollback: Use Flyway `undo` scripts (if configured)
+- **Migration Safety**:
+  - Flyway migrations run automatically before deployment
+  - Backward-compatible migrations only (no breaking changes in production)
+  - Test migrations in staging first
+  - Use `baselineOnMigrate` for existing databases
+
+## Caching Layer
+
+### Redis Caching Strategy
+- **Use Cases**:
+  - User sessions (JWT refresh tokens)
+  - Frequently accessed data (user profiles, roles, permissions)
+  - API response caching (expensive queries, external API calls)
+  - Rate limiting counters
+  - Distributed locks
+- **Cache Keys Pattern**: `{module}:{entity}:{id}` (e.g., `user:profile:123`, `order:detail:456`)
+- **TTL Strategy**:
+  - Short-lived (5-15 min): Frequently changing data (user sessions)
+  - Medium-lived (1-6 hours): Semi-static data (user profiles, roles)
+  - Long-lived (24 hours): Rarely changing data (reference data, configurations)
+  - No TTL: Truly static data (with manual invalidation)
+- **Cache-Aside Pattern** (Lazy Loading):
+  ```java
+  1. Check cache
+  2. If miss → Load from DB
+  3. Store in cache
+  4. Return data
+  ```
+- **Write-Through Pattern**: For critical data (write to DB and cache simultaneously)
+
+### Cache Invalidation Rules
+- **Time-Based**: TTL expiration (automatic)
+- **Event-Based**: Invalidate on entity updates/deletes
+  - Update: Invalidate specific key (`user:profile:123`)
+  - Delete: Invalidate key and related keys (e.g., user's orders)
+  - Bulk Update: Invalidate pattern (`user:profile:*`)
+- **Manual Invalidation**: Admin endpoints for cache clearing (with authentication)
+- **Cache Warming**: Pre-load critical data on application startup (optional)
+- **Invalidation Strategy**:
+  - **Immediate**: For user-facing data (user profile, orders)
+  - **Lazy**: For background data (statistics, reports)
+  - **Pattern-Based**: Invalidate all keys matching pattern (use `KEYS` or `SCAN` carefully)
+
+### Local Caching vs Distributed Caching
+- **Local Caching (Caffeine)**:
+  - Use for: Application-level cache (in-memory, single instance)
+  - Pros: Fast access, no network overhead
+  - Cons: Not shared across instances, memory limited
+  - Use cases: Frequently accessed constants, configuration, small datasets
+- **Distributed Caching (Redis)**:
+  - Use for: Shared cache across multiple instances
+  - Pros: Shared state, scalable, persistent
+  - Cons: Network latency, requires Redis infrastructure
+  - Use cases: User sessions, shared data, rate limiting
+- **Hybrid Approach**: 
+  - L1 Cache (Local): Hot data, very frequent access
+  - L2 Cache (Redis): Warm data, shared across instances
+  - Fallback: Local → Redis → Database
+
+### Cache Implementation Guidelines
+- Use Spring Cache abstraction (`@Cacheable`, `@CacheEvict`, `@CachePut`)
+- Configure cache manager: `RedisCacheManager` for distributed, `CaffeineCacheManager` for local
+- Always handle cache failures gracefully (fallback to DB)
+- Monitor cache hit/miss rates
+- Set appropriate cache size limits (prevent OOM)
+- Use cache versioning for schema changes (e.g., `user:profile:v2:123`)
+
+## Performance Best Practices
+
+### N+1 Query Detection & Prevention
+- **Problem**: Fetching related entities in loops causes multiple queries
+- **Detection**:
+  - Enable Hibernate SQL logging: `spring.jpa.show-sql=true` (dev only)
+  - Use `@Query` with `JOIN FETCH` for eager loading
+  - Monitor query count in logs
+- **Solutions**:
+  - **Eager Fetching**: Use `@EntityGraph` or `JOIN FETCH` in queries
+  - **Batch Fetching**: Configure `hibernate.jdbc.batch_size` and `@BatchSize`
+  - **DTO Projection**: Select only needed fields (avoid loading full entities)
+  - **Pagination**: Always paginate large result sets
+- **Example**:
+  ```java
+  // Bad: N+1 queries
+  List<OrderEntity> orders = orderRepository.findAll();
+  orders.forEach(order -> order.getItems().size()); // N queries
+  
+  // Good: Single query with JOIN FETCH
+  @Query("SELECT o FROM OrderEntity o JOIN FETCH o.items WHERE o.customer.id = :customerId")
+  List<OrderEntity> findByCustomerWithItems(@Param("customerId") Long customerId);
+  ```
+
+### Batch Insert/Update
+- **Batch Inserts**: Use `JpaRepository.saveAll()` with batch configuration
+- **Configuration** (`application.yml`):
+  ```yaml
+  spring.jpa.properties.hibernate.jdbc.batch_size: 50
+  spring.jpa.properties.hibernate.order_inserts: true
+  spring.jpa.properties.hibernate.order_updates: true
+  spring.jpa.properties.hibernate.jdbc.batch_versioned_data: true
+  ```
+- **Best Practices**:
+  - Batch size: 20-50 (adjust based on entity size)
+  - Use `@Transactional` for batch operations
+  - Flush and clear session periodically for large batches
+  - Consider bulk operations for massive updates (`@Modifying @Query`)
+
+### Query Optimization
+- **Indexes**: Add indexes on:
+  - Foreign keys
+  - Frequently queried columns (status, date ranges, customer_id)
+  - Composite indexes for multi-column queries
+- **Query Hints**: Use `@QueryHints` for query optimization
+- **Avoid SELECT N+1**: Use `JOIN FETCH` or `@EntityGraph`
+- **Pagination**: Always use `Pageable` for large datasets (default: 20 items)
+- **Projection**: Use DTO projections instead of loading full entities
+- **Query Tuning**:
+  - Use `EXPLAIN` to analyze query plans
+  - Avoid `SELECT *` (select only needed columns)
+  - Use `LIMIT` in native queries
+  - Avoid functions in WHERE clause (prevents index usage)
+
+### Profiling Tools
+- **Java Flight Recorder (JFR)**:
+  - Enable in production: `-XX:+FlightRecorder -XX:StartFlightRecording`
+  - Analyze: CPU usage, memory allocation, method profiling
+  - Use for: Performance bottlenecks, memory leaks
+- **Micrometer Metrics**:
+  - Expose metrics: `/actuator/metrics`
+  - Key metrics: HTTP request duration, database query time, cache hit/miss
+  - Integration: Prometheus, Grafana
+- **Spring Boot Actuator**:
+  - Health checks: `/actuator/health`
+  - Metrics: `/actuator/metrics`
+  - Thread dump: `/actuator/threaddump`
+  - Heap dump: `/actuator/heapdump` (production: secure endpoint)
+
+### Connection Pool Tuning (HikariCP)
+- **Configuration** (`application.yml`):
+  ```yaml
+  spring.datasource.hikari:
+    maximum-pool-size: 20          # Max connections (adjust based on DB capacity)
+    minimum-idle: 5                 # Min idle connections
+    connection-timeout: 30000       # 30 seconds
+    idle-timeout: 600000            # 10 minutes
+    max-lifetime: 1800000           # 30 minutes
+    leak-detection-threshold: 60000 # 60 seconds (detect connection leaks)
+  ```
+- **Best Practices**:
+  - `maximum-pool-size`: Start with 10, increase based on load (max: DB max_connections / app instances)
+  - `minimum-idle`: Keep some connections warm (faster response)
+  - Monitor: Connection pool metrics via Actuator
+  - Connection leaks: Enable `leak-detection-threshold` in dev/test
+- **Monitoring**: Track active/idle connections, wait time, timeout errors
+
+## Monitoring & Observability
+
+### Prometheus Metrics
+- **Integration**: Spring Boot Actuator + Micrometer Prometheus
+- **Endpoint**: `/actuator/prometheus` (scraped by Prometheus)
+- **Key Metrics to Expose**:
+  - HTTP requests: `http_server_requests_seconds` (duration, status, endpoint)
+  - Database queries: `jdbc_connections_active`, `jdbc_query_execution_seconds`
+  - Cache: `cache_gets_total`, `cache_puts_total`, `cache_evictions_total`
+  - JVM: `jvm_memory_used_bytes`, `jvm_gc_pause_seconds`, `jvm_threads_live`
+  - Business metrics: Custom counters/gauges (orders created, payments processed)
+- **Custom Metrics**: Use `MeterRegistry` to create business-specific metrics
+- **Labels**: Add meaningful labels (endpoint, status, method) for filtering
+
+### Grafana Dashboards
+- **Dashboard Categories**:
+  1. **Application Health**: Request rate, error rate, response time (p50, p95, p99)
+  2. **Database**: Query performance, connection pool, slow queries
+  3. **JVM**: Memory usage, GC pauses, thread count
+  4. **Cache**: Hit/miss ratio, eviction rate, size
+  5. **Business Metrics**: Orders, payments, users (custom dashboards)
+- **Alerting Rules**: Configure in Grafana or Prometheus Alertmanager
+- **Refresh Rate**: 30 seconds (real-time monitoring)
+
+### Log Aggregation (ELK/OpenSearch)
+- **Stack**: Elasticsearch/OpenSearch + Logstash/Fluentd + Kibana
+- **Log Shipping**: 
+  - Application logs → Filebeat → Elasticsearch
+  - Or: Direct to OpenSearch via REST API
+- **Log Structure**:
+  - JSON format (structured logging)
+  - Include: timestamp, level, traceId, service, message, context
+  - Example: `{"timestamp":"2024-01-01T10:00:00Z","level":"INFO","traceId":"abc123","service":"tailor-shop","message":"Order created","orderId":123}`
+- **Indexing Strategy**:
+  - Daily indices: `logs-tailor-shop-2024-01-01`
+  - Retention: 30 days (production), 7 days (dev)
+  - Index templates for consistent mapping
+- **Search & Analysis**: Use Kibana for log search, filtering, visualization
+
+### Alerting Rules
+- **Critical Alerts** (P0 - Immediate):
+  - Application down (health check fails)
+  - Error rate > 5% for 5 minutes
+  - Database connection pool exhausted
+  - Memory usage > 90%
+- **Warning Alerts** (P1 - Within 1 hour):
+  - Response time p95 > 2 seconds
+  - Cache hit rate < 70%
+  - Disk usage > 80%
+  - Failed deployment
+- **Info Alerts** (P2 - Daily summary):
+  - High request volume (unusual spike)
+  - Slow query detected (> 1 second)
+- **Alert Channels**: Email, Slack, PagerDuty (for P0)
+- **Alert Rules**: Define in Prometheus Alertmanager or Grafana
+
+### Distributed Tracing
+- **Tool**: OpenTelemetry or Zipkin (optional, for microservices)
+- **Trace Context**: Propagate `traceId` in HTTP headers
+- **Span Tags**: Add business context (userId, orderId) to spans
+
+## Deployment Architecture
+
+### Cloud Architecture (AWS)
+- **VPC (Virtual Private Cloud)**:
+  - Public subnets: Application Load Balancer (ALB)
+  - Private subnets: Application servers (EC2/ECS/EKS)
+  - Database subnets: RDS MySQL (isolated, no internet access)
+  - NAT Gateway: For outbound internet access from private subnets
+- **Application Load Balancer (ALB)**:
+  - Health checks: `/actuator/health` (every 30 seconds)
+  - SSL/TLS termination: ACM certificates
+  - Routing: Path-based or host-based (if multiple services)
+  - Target groups: EC2 instances or ECS tasks
+- **Auto Scaling Group (ASG)**:
+  - Min instances: 2 (high availability)
+  - Max instances: 10 (scale based on load)
+  - Scaling policies:
+    - CPU utilization > 70%: Scale out
+    - CPU utilization < 30%: Scale in
+    - Request count: Scale based on ALB request count
+  - Health check: ELB health check (replace unhealthy instances)
+
+### S3 + CloudFront Caching
+- **S3 Buckets**:
+  - `tailor-shop-uploads`: User-uploaded files (private, signed URLs)
+  - `tailor-shop-static`: Static assets (public, CloudFront origin)
+- **CloudFront Distribution**:
+  - Origin: S3 bucket for static assets
+  - Caching:
+    - Static assets (images, CSS, JS): TTL 1 year (with versioning)
+    - API responses: TTL 0 (no cache, or short TTL with cache headers)
+  - Behaviors:
+    - `/static/*`: Cache for 1 year
+    - `/api/*`: No cache (or 5 minutes with `Cache-Control` headers)
+  - Invalidation: Automatic on deployment (via CI/CD) or manual
+- **CDN Best Practices**:
+  - Use versioned filenames for static assets (`app-v1.2.3.js`)
+  - Set appropriate `Cache-Control` headers
+  - Enable compression (gzip/brotli)
+
+### Scaling Patterns
+- **Horizontal Scaling**:
+  - Stateless application: Scale out by adding instances
+  - Load balancer distributes traffic
+  - Session management: Use Redis (not sticky sessions)
+- **Vertical Scaling**:
+  - Increase instance size (CPU, memory) for compute-intensive tasks
+  - Use for: Database, cache servers
+- **Auto-Scaling Triggers**:
+  - CPU-based: Scale when CPU > 70%
+  - Memory-based: Scale when memory > 80%
+  - Request-based: Scale when request rate > threshold
+  - Custom metrics: Scale based on queue depth, error rate
+- **Scaling Strategy**:
+  - **Predictive**: Scale before peak hours (scheduled scaling)
+  - **Reactive**: Scale based on current metrics (auto-scaling)
+  - **Cost Optimization**: Scale down during off-peak hours
+
+### Infrastructure as Code (IaC)
+- **Tool**: Terraform or AWS CDK
+- **Resources to Define**:
+  - VPC, subnets, security groups
+  - ALB, target groups, auto-scaling groups
+  - RDS instances, ElastiCache (Redis)
+  - S3 buckets, CloudFront distributions
+  - IAM roles and policies
+- **Benefits**: Version control, reproducibility, disaster recovery
+
+### Disaster Recovery & Backup
+- **Database Backups**:
+  - Automated daily backups (RDS automated backups)
+  - Retention: 30 days
+  - Cross-region replication (optional, for critical data)
+- **Application Backups**:
+  - Configuration files in version control
+  - Docker images in ECR (Elastic Container Registry)
+- **Recovery Time Objective (RTO)**: < 1 hour
+- **Recovery Point Objective (RPO)**: < 15 minutes (last backup)
+
