@@ -11,7 +11,14 @@ import com.example.tailor_shop.modules.promotion.dto.ApplyPromoCodeResponse;
 import com.example.tailor_shop.modules.promotion.dto.PromotionFilterRequest;
 import com.example.tailor_shop.modules.promotion.dto.PromotionRequest;
 import com.example.tailor_shop.modules.promotion.dto.PromotionResponse;
+import com.example.tailor_shop.modules.promotion.dto.PromotionSuggestionRequest;
+import com.example.tailor_shop.modules.promotion.dto.PromotionSuggestionResponse;
 import com.example.tailor_shop.modules.promotion.dto.PromotionUsageResponse;
+import com.example.tailor_shop.modules.promotion.event.PromotionActivatedEvent;
+import com.example.tailor_shop.modules.promotion.event.PromotionAppliedEvent;
+import com.example.tailor_shop.modules.promotion.event.PromotionDeactivatedEvent;
+import com.example.tailor_shop.modules.promotion.event.PromotionExpiredEvent;
+import com.example.tailor_shop.modules.promotion.event.PromotionUsageLimitReachedEvent;
 import com.example.tailor_shop.modules.promotion.repository.PromotionRepository;
 import com.example.tailor_shop.modules.promotion.repository.PromotionUsageRepository;
 import com.example.tailor_shop.modules.promotion.service.PromotionService;
@@ -21,6 +28,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -29,6 +37,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -42,6 +51,7 @@ public class PromotionServiceImpl implements PromotionService {
     private final PromotionUsageRepository promotionUsageRepository;
     private final UserRepository userRepository;
     private final ObjectMapper objectMapper;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Override
     @Transactional(readOnly = true)
@@ -60,7 +70,17 @@ public class PromotionServiceImpl implements PromotionService {
     @Override
     @Transactional(readOnly = true)
     public Page<PromotionResponse> listActivePublic(Pageable pageable, Long currentUserId) {
-        Page<PromotionEntity> page = promotionRepository.findActivePublicPromotions(LocalDate.now(), pageable);
+        // Create Pageable with priority DESC, createdAt DESC sorting
+        org.springframework.data.domain.Sort sort = org.springframework.data.domain.Sort.by(
+                org.springframework.data.domain.Sort.Order.desc("priority"),
+                org.springframework.data.domain.Sort.Order.desc("createdAt")
+        );
+        org.springframework.data.domain.Pageable sortedPageable = org.springframework.data.domain.PageRequest.of(
+                pageable.getPageNumber(),
+                pageable.getPageSize(),
+                sort
+        );
+        Page<PromotionEntity> page = promotionRepository.findActivePublicPromotions(LocalDate.now(), sortedPageable);
         return page.map(entity -> toResponse(entity, currentUserId));
     }
 
@@ -68,7 +88,7 @@ public class PromotionServiceImpl implements PromotionService {
     @Transactional(readOnly = true)
     public PromotionResponse detail(Long id, Long currentUserId) {
         PromotionEntity entity = promotionRepository.findById(id)
-                .filter(p -> !p.getIsDeleted())
+                .filter(p -> Boolean.FALSE.equals(p.getIsDeleted()))
                 .orElseThrow(() -> new NotFoundException("Promotion not found"));
         return toResponse(entity, currentUserId);
     }
@@ -76,7 +96,10 @@ public class PromotionServiceImpl implements PromotionService {
     @Override
     @Transactional(readOnly = true)
     public PromotionResponse detailByCode(String code, Long currentUserId) {
-        PromotionEntity entity = promotionRepository.findByCodeAndIsDeletedFalse(code)
+        if (code == null || code.trim().isEmpty()) {
+            throw new BadRequestException("Promotion code is required");
+        }
+        PromotionEntity entity = promotionRepository.findByCodeAndIsDeletedFalse(code.toUpperCase())
                 .orElseThrow(() -> new NotFoundException("Promotion not found"));
         return toResponse(entity, currentUserId);
     }
@@ -129,7 +152,7 @@ public class PromotionServiceImpl implements PromotionService {
     @Transactional
     public PromotionResponse update(Long id, PromotionRequest request) {
         PromotionEntity entity = promotionRepository.findById(id)
-                .filter(p -> !p.getIsDeleted())
+                .filter(p -> Boolean.FALSE.equals(p.getIsDeleted()))
                 .orElseThrow(() -> new NotFoundException("Promotion not found"));
 
         if (!entity.getCode().equalsIgnoreCase(request.getCode()) &&
@@ -175,58 +198,137 @@ public class PromotionServiceImpl implements PromotionService {
     @Override
     @Transactional
     public void delete(Long id) {
-        PromotionEntity entity = promotionRepository.findById(id)
-                .filter(p -> !p.getIsDeleted())
-                .orElseThrow(() -> new NotFoundException("Promotion not found"));
-        entity.setIsDeleted(true);
-        promotionRepository.save(entity);
+        try {
+            PromotionEntity entity = promotionRepository.findById(id)
+                    .filter(p -> Boolean.FALSE.equals(p.getIsDeleted()))
+                    .orElseThrow(() -> new NotFoundException("Promotion not found"));
+            entity.setIsDeleted(true);
+            promotionRepository.save(entity);
+            log.info("[TraceId: {}] Promotion {} deleted successfully", 
+                    com.example.tailor_shop.common.TraceIdUtil.getTraceId(), id);
+        } catch (NotFoundException e) {
+            throw e; // Re-throw business exceptions
+        } catch (Exception e) {
+            log.error("[TraceId: {}] Error deleting promotion {}: {}", 
+                    com.example.tailor_shop.common.TraceIdUtil.getTraceId(), id, e.getMessage(), e);
+            throw new BadRequestException("Failed to delete promotion: " + e.getMessage());
+        }
     }
 
     @Override
     @Transactional
     public void activate(Long id) {
-        PromotionEntity entity = promotionRepository.findById(id)
-                .filter(p -> !p.getIsDeleted())
-                .orElseThrow(() -> new NotFoundException("Promotion not found"));
+        try {
+            PromotionEntity entity = promotionRepository.findById(id)
+                    .filter(p -> Boolean.FALSE.equals(p.getIsDeleted()))
+                    .orElseThrow(() -> new NotFoundException("Promotion not found"));
 
-        if (entity.getStatus() == PromotionStatus.ACTIVE) {
-            throw new BadRequestException("Promotion is already active");
+            if (PromotionStatus.ACTIVE.equals(entity.getStatus())) {
+                throw new BadRequestException("Promotion is already active");
+            }
+
+            // Validate dates if they exist
+            LocalDate startDate = entity.getStartDate();
+            LocalDate endDate = entity.getEndDate();
+            if (startDate != null && endDate != null) {
+                LocalDate today = LocalDate.now();
+                if (today.isBefore(startDate)) {
+                    throw new BadRequestException("Cannot activate promotion before start date: " + startDate);
+                }
+                if (today.isAfter(endDate)) {
+                    throw new BadRequestException("Cannot activate promotion after end date: " + endDate);
+                }
+            }
+
+            entity.setStatus(PromotionStatus.ACTIVE);
+            promotionRepository.save(entity);
+            
+            // Publish event
+            PromotionActivatedEvent event = PromotionActivatedEvent.builder()
+                    .promotionId(entity.getId())
+                    .code(entity.getCode())
+                    .name(entity.getName())
+                    .startDate(entity.getStartDate())
+                    .endDate(entity.getEndDate())
+                    .activatedAt(OffsetDateTime.now())
+                    .activatedBy(null) // TODO: Get from security context if needed
+                    .build();
+            eventPublisher.publishEvent(event);
+            
+            log.info("[TraceId: {}] Promotion {} activated successfully", 
+                    com.example.tailor_shop.common.TraceIdUtil.getTraceId(), id);
+        } catch (BadRequestException | NotFoundException e) {
+            throw e; // Re-throw business exceptions
+        } catch (Exception e) {
+            log.error("[TraceId: {}] Error activating promotion {}: {}", 
+                    com.example.tailor_shop.common.TraceIdUtil.getTraceId(), id, e.getMessage(), e);
+            throw new BadRequestException("Failed to activate promotion: " + e.getMessage());
         }
-
-        validatePromotionDates(entity);
-        entity.setStatus(PromotionStatus.ACTIVE);
-        promotionRepository.save(entity);
     }
 
     @Override
     @Transactional
     public void deactivate(Long id) {
-        PromotionEntity entity = promotionRepository.findById(id)
-                .filter(p -> !p.getIsDeleted())
-                .orElseThrow(() -> new NotFoundException("Promotion not found"));
+        try {
+            PromotionEntity entity = promotionRepository.findById(id)
+                    .filter(p -> Boolean.FALSE.equals(p.getIsDeleted()))
+                    .orElseThrow(() -> new NotFoundException("Promotion not found"));
 
-        if (entity.getStatus() == PromotionStatus.INACTIVE) {
-            throw new BadRequestException("Promotion is already inactive");
+            if (PromotionStatus.INACTIVE.equals(entity.getStatus())) {
+                throw new BadRequestException("Promotion is already inactive");
+            }
+
+            if (PromotionStatus.CANCELLED.equals(entity.getStatus())) {
+                throw new BadRequestException("Cannot deactivate a cancelled promotion");
+            }
+
+            entity.setStatus(PromotionStatus.INACTIVE);
+            promotionRepository.save(entity);
+            
+            // Publish event
+            PromotionDeactivatedEvent event = PromotionDeactivatedEvent.builder()
+                    .promotionId(entity.getId())
+                    .code(entity.getCode())
+                    .name(entity.getName())
+                    .deactivatedAt(OffsetDateTime.now())
+                    .deactivatedBy(null) // TODO: Get from security context if needed
+                    .build();
+            eventPublisher.publishEvent(event);
+            
+            log.info("[TraceId: {}] Promotion {} deactivated successfully", 
+                    com.example.tailor_shop.common.TraceIdUtil.getTraceId(), id);
+        } catch (BadRequestException | NotFoundException e) {
+            throw e; // Re-throw business exceptions
+        } catch (Exception e) {
+            log.error("[TraceId: {}] Error deactivating promotion {}: {}", 
+                    com.example.tailor_shop.common.TraceIdUtil.getTraceId(), id, e.getMessage(), e);
+            throw new BadRequestException("Failed to deactivate promotion: " + e.getMessage());
         }
-
-        entity.setStatus(PromotionStatus.INACTIVE);
-        promotionRepository.save(entity);
     }
 
     @Override
     @Transactional(readOnly = true)
     public ApplyPromoCodeResponse applyPromoCode(ApplyPromoCodeRequest request, Long userId) {
-        PromotionEntity promotion = promotionRepository.findByCodeAndIsDeletedFalse(request.getCode())
+        if (request == null || request.getCode() == null || request.getCode().trim().isEmpty()) {
+            throw new BadRequestException("Promotion code is required");
+        }
+
+        PromotionEntity promotion = promotionRepository.findByCodeAndIsDeletedFalse(request.getCode().toUpperCase().trim())
                 .orElseThrow(() -> new NotFoundException("Promotion code not found"));
 
         // Validate promotion status
-        if (promotion.getStatus() != PromotionStatus.ACTIVE) {
+        if (!PromotionStatus.ACTIVE.equals(promotion.getStatus())) {
             throw new BadRequestException("Promotion is not active");
         }
 
         LocalDate today = LocalDate.now();
-        if (today.isBefore(promotion.getStartDate()) || today.isAfter(promotion.getEndDate())) {
-            throw new BadRequestException("Promotion is not valid for current date");
+        LocalDate startDate = promotion.getStartDate();
+        LocalDate endDate = promotion.getEndDate();
+        if (startDate != null && today.isBefore(startDate)) {
+            throw new BadRequestException("Promotion is not valid yet. Start date: " + startDate);
+        }
+        if (endDate != null && today.isAfter(endDate)) {
+            throw new BadRequestException("Promotion has expired. End date: " + endDate);
         }
 
         // Validate minimum order value
@@ -372,9 +474,15 @@ public class PromotionServiceImpl implements PromotionService {
     }
 
     private void validatePromotionDates(PromotionEntity entity) {
+        if (entity.getStartDate() == null || entity.getEndDate() == null) {
+            return; // Skip validation if dates are null
+        }
         LocalDate today = LocalDate.now();
-        if (today.isBefore(entity.getStartDate()) || today.isAfter(entity.getEndDate())) {
-            throw new BadRequestException("Promotion dates are not valid for activation");
+        if (today.isBefore(entity.getStartDate())) {
+            throw new BadRequestException("Cannot activate promotion before start date: " + entity.getStartDate());
+        }
+        if (today.isAfter(entity.getEndDate())) {
+            throw new BadRequestException("Cannot activate promotion after end date: " + entity.getEndDate());
         }
     }
 
@@ -483,6 +591,121 @@ public class PromotionServiceImpl implements PromotionService {
             log.error("Error converting JSON to list", e);
             return new ArrayList<>();
         }
+    }
+
+    // Shopee-like features
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<PromotionSuggestionResponse> getSuggestions(PromotionSuggestionRequest request, Long userId) {
+        LocalDate today = LocalDate.now();
+        org.springframework.data.domain.Sort sort = org.springframework.data.domain.Sort.by(
+                org.springframework.data.domain.Sort.Order.desc("priority"),
+                org.springframework.data.domain.Sort.Order.desc("createdAt")
+        );
+        org.springframework.data.domain.PageRequest pageable = org.springframework.data.domain.PageRequest.of(0, 50, sort);
+        Page<PromotionEntity> activePromotions = promotionRepository.findActivePublicPromotions(today, pageable);
+
+        List<PromotionSuggestionResponse> suggestions = new ArrayList<>();
+
+        for (PromotionEntity promotion : activePromotions.getContent()) {
+            // Check if applicable
+            if (!isApplicable(promotion, request.getProductIds(), request.getCategoryIds())) {
+                continue;
+            }
+
+            // Check minimum order value
+            if (promotion.getMinOrderValue() != null &&
+                    request.getOrderAmount().compareTo(promotion.getMinOrderValue()) < 0) {
+                continue;
+            }
+
+            // Check eligibility for user
+            boolean isEligible = true;
+            if (userId != null) {
+                isEligible = isEligibleForUser(promotion, userId);
+            }
+
+            // Calculate discount
+            BigDecimal discountAmount = calculateDiscount(promotion, request.getOrderAmount());
+            BigDecimal finalAmount = request.getOrderAmount().subtract(discountAmount);
+
+            // Only add if discount > 0
+            if (discountAmount.compareTo(BigDecimal.ZERO) > 0) {
+                suggestions.add(PromotionSuggestionResponse.builder()
+                        .promotionId(promotion.getId())
+                        .code(promotion.getCode())
+                        .name(promotion.getName())
+                        .type(promotion.getType())
+                        .originalAmount(request.getOrderAmount())
+                        .discountAmount(discountAmount)
+                        .finalAmount(finalAmount)
+                        .message(String.format("Giảm %sđ", formatCurrency(discountAmount)))
+                        .isEligible(isEligible)
+                        .priority(promotion.getPriority())
+                        .build());
+            }
+        }
+
+        // Sort by discount amount (descending), then by priority (descending)
+        suggestions.sort((a, b) -> {
+            int discountCompare = b.getDiscountAmount().compareTo(a.getDiscountAmount());
+            if (discountCompare != 0) {
+                return discountCompare;
+            }
+            return Integer.compare(
+                    b.getPriority() != null ? b.getPriority() : 0,
+                    a.getPriority() != null ? a.getPriority() : 0
+            );
+        });
+
+        return suggestions;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<PromotionSuggestionResponse> getAvailableForCart(PromotionSuggestionRequest request, Long userId) {
+        // Same as getSuggestions, but only return eligible ones
+        List<PromotionSuggestionResponse> allSuggestions = getSuggestions(request, userId);
+        return allSuggestions.stream()
+                .filter(PromotionSuggestionResponse::getIsEligible)
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public ApplyPromoCodeResponse autoApplyBestPromo(PromotionSuggestionRequest request, Long userId) {
+        List<PromotionSuggestionResponse> suggestions = getAvailableForCart(request, userId);
+
+        if (suggestions.isEmpty()) {
+            throw new NotFoundException("No applicable promotion found");
+        }
+
+        // Get the best one (first in sorted list = highest discount)
+        PromotionSuggestionResponse best = suggestions.get(0);
+
+        // Validate usage limits before returning
+        PromotionEntity promotion = promotionRepository.findById(best.getPromotionId())
+                .orElseThrow(() -> new NotFoundException("Promotion not found"));
+
+        if (userId != null) {
+            validateUsageLimits(promotion, userId);
+        }
+
+        return ApplyPromoCodeResponse.builder()
+                .promotionId(best.getPromotionId())
+                .code(best.getCode())
+                .name(best.getName())
+                .type(best.getType())
+                .originalAmount(best.getOriginalAmount())
+                .discountAmount(best.getDiscountAmount())
+                .finalAmount(best.getFinalAmount())
+                .message(String.format("Đã tự động áp dụng mã %s, giảm %sđ", best.getCode(), formatCurrency(best.getDiscountAmount())))
+                .build();
+    }
+
+    private String formatCurrency(BigDecimal amount) {
+        return String.format("%,d", amount.longValue());
     }
 }
 
