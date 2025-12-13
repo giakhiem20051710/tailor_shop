@@ -9,6 +9,8 @@ import com.example.tailor_shop.modules.promotion.dto.ApplyPromoCodeResponse;
 import com.example.tailor_shop.modules.promotion.dto.PromotionFilterRequest;
 import com.example.tailor_shop.modules.promotion.dto.PromotionRequest;
 import com.example.tailor_shop.modules.promotion.dto.PromotionResponse;
+import com.example.tailor_shop.modules.promotion.dto.PromotionSuggestionRequest;
+import com.example.tailor_shop.modules.promotion.dto.PromotionSuggestionResponse;
 import com.example.tailor_shop.modules.promotion.dto.PromotionUsageResponse;
 import com.example.tailor_shop.modules.promotion.service.PromotionService;
 import jakarta.validation.Valid;
@@ -31,6 +33,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/v1/promotions")
 @RequiredArgsConstructor
@@ -51,7 +55,7 @@ public class PromotionController {
 
     @GetMapping("/active")
     public ResponseEntity<CommonResponse<Page<PromotionResponse>>> listActivePublic(
-            @PageableDefault(size = 20, sort = "priority,desc") Pageable pageable,
+            @PageableDefault(size = 20) Pageable pageable,
             @AuthenticationPrincipal CustomUserDetails principal
     ) {
         Long currentUserId = principal != null ? principal.getId() : null;
@@ -152,6 +156,39 @@ public class PromotionController {
     ) {
         Long userId = principal != null ? principal.getId() : null;
         Page<PromotionUsageResponse> data = promotionService.listMyUsages(userId, pageable);
+        return ResponseEntity.ok(ResponseUtil.success(TraceIdUtil.getOrCreateTraceId(), data));
+    }
+
+    // Shopee-like features
+
+    @GetMapping("/suggestions")
+    public ResponseEntity<CommonResponse<List<PromotionSuggestionResponse>>> getSuggestions(
+            @Valid PromotionSuggestionRequest request,
+            @AuthenticationPrincipal CustomUserDetails principal
+    ) {
+        Long userId = principal != null ? principal.getId() : null;
+        List<PromotionSuggestionResponse> data = promotionService.getSuggestions(request, userId);
+        return ResponseEntity.ok(ResponseUtil.success(TraceIdUtil.getOrCreateTraceId(), data));
+    }
+
+    @GetMapping("/available-for-cart")
+    public ResponseEntity<CommonResponse<List<PromotionSuggestionResponse>>> getAvailableForCart(
+            @Valid PromotionSuggestionRequest request,
+            @AuthenticationPrincipal CustomUserDetails principal
+    ) {
+        Long userId = principal != null ? principal.getId() : null;
+        List<PromotionSuggestionResponse> data = promotionService.getAvailableForCart(request, userId);
+        return ResponseEntity.ok(ResponseUtil.success(TraceIdUtil.getOrCreateTraceId(), data));
+    }
+
+    @PostMapping("/auto-apply")
+    @PreAuthorize("hasAnyRole('CUSTOMER')")
+    public ResponseEntity<CommonResponse<ApplyPromoCodeResponse>> autoApplyBestPromo(
+            @Valid @RequestBody PromotionSuggestionRequest request,
+            @AuthenticationPrincipal CustomUserDetails principal
+    ) {
+        Long userId = principal != null ? principal.getId() : null;
+        ApplyPromoCodeResponse data = promotionService.autoApplyBestPromo(request, userId);
         return ResponseEntity.ok(ResponseUtil.success(TraceIdUtil.getOrCreateTraceId(), data));
     }
 }

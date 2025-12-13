@@ -32,8 +32,7 @@ public interface PromotionRepository extends JpaRepository<PromotionEntity, Long
             "AND p.status = 'ACTIVE' " +
             "AND p.isPublic = true " +
             "AND p.startDate <= :date " +
-            "AND p.endDate >= :date " +
-            "ORDER BY p.priority DESC, p.createdAt DESC")
+            "AND p.endDate >= :date")
     Page<PromotionEntity> findActivePublicPromotions(@Param("date") LocalDate date, Pageable pageable);
 
     @Query("SELECT COUNT(pu) FROM PromotionUsageEntity pu WHERE pu.promotion.id = :promotionId")

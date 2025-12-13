@@ -5,9 +5,13 @@ import com.example.tailor_shop.modules.promotion.dto.ApplyPromoCodeResponse;
 import com.example.tailor_shop.modules.promotion.dto.PromotionFilterRequest;
 import com.example.tailor_shop.modules.promotion.dto.PromotionRequest;
 import com.example.tailor_shop.modules.promotion.dto.PromotionResponse;
+import com.example.tailor_shop.modules.promotion.dto.PromotionSuggestionRequest;
+import com.example.tailor_shop.modules.promotion.dto.PromotionSuggestionResponse;
 import com.example.tailor_shop.modules.promotion.dto.PromotionUsageResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+
+import java.util.List;
 
 public interface PromotionService {
 
@@ -34,5 +38,12 @@ public interface PromotionService {
     Page<PromotionUsageResponse> listUsages(Long promotionId, Long userId, Pageable pageable);
 
     Page<PromotionUsageResponse> listMyUsages(Long userId, Pageable pageable);
+
+    // Shopee-like features
+    List<PromotionSuggestionResponse> getSuggestions(PromotionSuggestionRequest request, Long userId);
+
+    List<PromotionSuggestionResponse> getAvailableForCart(PromotionSuggestionRequest request, Long userId);
+
+    ApplyPromoCodeResponse autoApplyBestPromo(PromotionSuggestionRequest request, Long userId);
 }
 
