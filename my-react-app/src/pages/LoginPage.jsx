@@ -1,34 +1,33 @@
 import { useState, useEffect } from "react";
-import { useNavigate, useLocation, Link } from "react-router-dom";
-import { getUsersByRole, initializeDefaultUsers, ROLES } from "../utils/authStorage.js";
-import usePageMeta from "../hooks/usePageMeta";
-import { validators, validateForm } from "../utils/validation.js";
+import { useNavigate, useLocation } from "react-router-dom";
+import { Scissors, Mail, Lock, Eye, EyeOff, User, Phone } from "lucide-react";
+import { authService, userService } from "../services";
 import { showSuccess, showError } from "../components/NotificationToast.jsx";
+import usePageMeta from "../hooks/usePageMeta";
 import { events } from "../utils/analytics.js";
 
 export default function LoginPage() {
-  const [formData, setFormData] = useState({
-    username: "",
-    password: "",
-    rememberMe: false,
-  });
-  const [errors, setErrors] = useState({});
-  const [isLoading, setIsLoading] = useState(false);
+  const [authMode, setAuthMode] = useState("login");
   const [showPassword, setShowPassword] = useState(false);
+  const [formData, setFormData] = useState({
+    email: "",
+    password: "",
+    fullName: "",
+    phone: "",
+    rememberMe: false,
+    acceptTerms: false,
+  });
+  const [isLoading, setIsLoading] = useState(false);
+  const [errors, setErrors] = useState({});
   const navigate = useNavigate();
   const location = useLocation();
 
   usePageMeta({
-    title: "Đăng nhập | My Hiền Tailor",
-    description: "Đăng nhập vào hệ thống My Hiền Tailor để quản lý đơn hàng, xem lịch hẹn và theo dõi đơn hàng của bạn.",
+    title: authMode === "login" ? "Đăng nhập | My Hiền Tailor" : "Đăng ký | My Hiền Tailor",
+    description: "Đăng nhập/Đăng ký để quản lý đơn hàng và hồ sơ của bạn.",
   });
 
-  // Initialize default users on mount
-  useEffect(() => {
-    initializeDefaultUsers();
-  }, []);
-
-  // Check for success message from reset password
+  // Check for success message (reset password, etc.)
   useEffect(() => {
     if (location.state?.message) {
       showSuccess(location.state.message);
@@ -36,346 +35,419 @@ export default function LoginPage() {
     }
   }, [location]);
 
-  // Load remembered credentials
-  useEffect(() => {
-    const remembered = localStorage.getItem("rememberedCredentials");
-    if (remembered) {
-      try {
-        const creds = JSON.parse(remembered);
-        setFormData((prev) => ({
-          ...prev,
-          username: creds.username || "",
-          rememberMe: true,
-        }));
-      } catch (e) {
-        // Ignore
-      }
-    }
-  }, []);
-
-  const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: type === "checkbox" ? checked : value,
-    }));
-    
-    // Clear error when user types
-    if (errors[name]) {
-      setErrors((prev) => ({ ...prev, [name]: null }));
+  const updateFormData = (field, value) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+    if (errors[field]) {
+      setErrors((prev) => ({ ...prev, [field]: null }));
     }
   };
 
   const validate = () => {
-    const rules = {
-      username: [validators.required],
-      password: [validators.required, validators.minLength(3)],
+    const currentErrors = {};
+
+    const requireField = (field, label) => {
+      if (!formData[field] || !formData[field].toString().trim()) {
+        currentErrors[field] = `${label} không được để trống`;
+      }
     };
 
-    const { errors: validationErrors, isValid } = validateForm(formData, rules);
-    setErrors(validationErrors);
-    return isValid;
+    if (authMode === "login") {
+      requireField("email", "Email / Số điện thoại");
+      requireField("password", "Mật khẩu");
+    } else {
+      requireField("fullName", "Họ và tên");
+      requireField("email", "Email");
+      requireField("phone", "Số điện thoại");
+      requireField("password", "Mật khẩu");
+      if (!formData.acceptTerms) {
+        currentErrors.acceptTerms = "Bạn cần đồng ý điều khoản";
+      }
+    }
+
+    setErrors(currentErrors);
+    return Object.keys(currentErrors).length === 0;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setErrors({});
-
-    if (!validate()) {
-      return;
-    }
+    if (!validate()) return;
 
     setIsLoading(true);
+    try {
+      if (authMode === "login") {
+        const response = await authService.login({
+          phoneOrEmail: formData.email.trim(),
+          password: formData.password,
+        });
 
-    // Simulate API call
-    setTimeout(() => {
-      let foundUser = null;
-      let userRole = null;
+        const responseData = response?.data ?? response?.responseData ?? response;
+        const isSuccess =
+          response?.success === true ||
+          response?.responseStatus?.responseCode === "200" ||
+          !!responseData?.accessToken ||
+          !!responseData?.token;
 
-      // Check registered users
-      const registeredUsers = JSON.parse(localStorage.getItem("registeredUsers") || "[]");
-      foundUser = registeredUsers.find(
-        (u) => u.username === formData.username && u.password === formData.password
-      );
+        if (isSuccess && responseData) {
+          const token = responseData.token ?? responseData.accessToken;
 
-      // If not found, check role-based users
-      if (!foundUser) {
-        const roles = [ROLES.ADMIN, ROLES.STAFF, ROLES.TAILOR, ROLES.CUSTOMER];
-        for (const role of roles) {
-          const users = getUsersByRole(role);
-          const user = users.find(
-            (u) => u.username === formData.username && u.password === formData.password
-          );
-          if (user) {
-            foundUser = user;
-            userRole = role;
-            break;
+          // Store token if returned in responseData
+          if (token) {
+            localStorage.setItem("token", token);
           }
-        }
-      } else {
-        userRole = foundUser.role || null;
-      }
 
-      // Demo: Also accept any credentials for demo purposes
-      if (foundUser || (formData.username && formData.password)) {
-        const userData = foundUser || {
-          username: formData.username,
-          role: userRole || ROLES.CUSTOMER,
-          name: formData.username,
-        };
+          const profileResponse = await userService.getProfile();
+          const userData = profileResponse.data ?? profileResponse;
+          if (formData.rememberMe) {
+            localStorage.setItem(
+              "rememberedCredentials",
+              JSON.stringify({ phoneOrEmail: formData.email })
+            );
+          } else {
+            localStorage.removeItem("rememberedCredentials");
+          }
+          localStorage.setItem("userData", JSON.stringify(userData));
+          localStorage.setItem("isAuthenticated", "true");
+          events.LOGIN("standard");
 
-        const normalizedRole = userData.role ? userData.role.toLowerCase() : userData.role;
-        
-        // Store authentication
-        localStorage.setItem("isAuthenticated", "true");
-        localStorage.setItem("userRole", normalizedRole);
-        localStorage.setItem("username", userData.username);
-        localStorage.setItem("userData", JSON.stringify(userData));
-
-        // Remember credentials if checked
-        if (formData.rememberMe) {
-          localStorage.setItem("rememberedCredentials", JSON.stringify({
-            username: formData.username,
-          }));
+          const role = userData.role?.toLowerCase() || "customer";
+          const displayName = userData?.name || userData?.fullName || "bạn";
+          const dashboardRoutes = {
+            admin: "/dashboard",
+            staff: "/dashboard",
+            tailor: "/tailor/dashboard",
+            customer: "/customer/dashboard",
+          };
+          const targetRoute = dashboardRoutes[role] || "/customer/dashboard";
+          showSuccess(`Xin chào, ${displayName}!`);
+          navigate(targetRoute, { replace: true });
         } else {
-          localStorage.removeItem("rememberedCredentials");
+          showError("Tên đăng nhập hoặc mật khẩu không đúng");
         }
-
-        // Track login event
-        events.LOGIN("standard");
-
-        // Navigate to appropriate dashboard
-        const dashboardRoutes = {
-          [ROLES.ADMIN]: "/dashboard",
-          [ROLES.STAFF]: "/dashboard",
-          [ROLES.TAILOR]: "/tailor/dashboard",
-          [ROLES.CUSTOMER]: "/customer/dashboard",
-        };
-        const targetRoute = dashboardRoutes[userData.role] || dashboardRoutes[normalizedRole] || "/dashboard";
-        
-        showSuccess("Đăng nhập thành công!");
-        navigate(targetRoute, { replace: true });
       } else {
-        setErrors({ password: "Tên đăng nhập hoặc mật khẩu không đúng" });
-        showError("Tên đăng nhập hoặc mật khẩu không đúng");
+        // Register flow (best-effort; backend DTO may vary)
+        const registerPayload = {
+          name: formData.fullName.trim(),
+          email: formData.email.trim(),
+          phone: formData.phone.trim(),
+          password: formData.password,
+        };
+        await authService.register(registerPayload);
+        showSuccess("Đăng ký thành công! Vui lòng đăng nhập.");
+        setAuthMode("login");
       }
+    } catch (error) {
+      console.error(`${authMode} error:`, error);
+      showError(error.message || "Đã xảy ra lỗi, vui lòng thử lại.");
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
 
+  const FeatureItem = ({ number, title, description }) => (
+    <div className="flex gap-4 items-start">
+      <div className="text-amber-500 text-sm shrink-0 bg-amber-500/10 w-10 h-10 rounded-lg flex items-center justify-center">
+        {number}
+      </div>
+      <div>
+        <h3 className="text-white mb-1">{title}</h3>
+        <p className="text-slate-400 text-sm">{description}</p>
+      </div>
+    </div>
+  );
+
+  const TrustBadge = ({ number, label }) => (
+    <div className="bg-white rounded-xl p-3 border border-slate-100">
+      <div className="text-amber-600">{number}</div>
+      <div className="text-xs text-slate-500 mt-1">{label}</div>
+    </div>
+  );
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-rose-50 flex items-center justify-center p-4 py-12">
-      <div className="w-full max-w-md">
-        {/* Logo & Branding */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-[#1B4332] to-[#2D5A47] rounded-2xl shadow-lg mb-4">
-            <span className="text-3xl font-bold text-white">MH</span>
-          </div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            My Hiền Tailor
-          </h1>
-          <p className="text-gray-600 text-sm">Fashion Design Studio</p>
+    <div className="min-h-screen bg-slate-50 flex">
+      {/* Left Side - Branding */}
+      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 relative overflow-hidden">
+        <div className="absolute inset-0">
+          <img
+            src="https://images.unsplash.com/photo-1718184021018-d2158af6b321?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080"
+            alt="Luxury tailor fabric"
+            className="w-full h-full object-cover opacity-30"
+          />
+          <div className="absolute inset-0 bg-gradient-to-br from-slate-900/90 via-slate-800/80 to-slate-900/90" />
         </div>
 
-        {/* Login Card */}
-        <div className="bg-white rounded-3xl shadow-2xl p-8 border border-gray-100">
-          <div className="mb-6">
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Đăng nhập</h2>
-            <p className="text-sm text-gray-600">
-              Chào mừng bạn trở lại! Vui lòng đăng nhập để tiếp tục.
-            </p>
+        <div className="relative z-10 flex flex-col justify-between p-12 text-white w-full">
+          <div>
+            <div className="flex items-center gap-3 mb-8">
+              <div className="w-12 h-12 bg-amber-500 rounded-lg flex items-center justify-center">
+                <Scissors className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h1 className="text-white">ELEGANCE TAILOR</h1>
+                <p className="text-amber-400 text-sm">Bespoke Tailoring Studio</p>
+              </div>
+            </div>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-5">
-            {/* Username Field */}
+          <div className="space-y-8">
             <div>
-              <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-2">
-                Tên đăng nhập hoặc Email
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                  </svg>
-                </div>
-                <input
-                  id="username"
-                  name="username"
-                  type="text"
-                  value={formData.username}
-                  onChange={handleChange}
-                  className={`block w-full pl-10 pr-3 py-3 border rounded-xl focus:ring-2 focus:ring-[#1B4332] focus:border-[#1B4332] transition ${
-                    errors.username ? "border-red-300" : "border-gray-300"
-                  }`}
-                  placeholder="Nhập tên đăng nhập hoặc email"
-                  autoComplete="username"
-                  aria-invalid={!!errors.username}
-                  aria-describedby={errors.username ? "username-error" : undefined}
-                />
-              </div>
-              {errors.username && (
-                <p id="username-error" className="mt-1 text-sm text-red-600" role="alert">
-                  {errors.username}
-                </p>
-              )}
+              <h2 className="text-white mb-4">Nghệ Thuật May Đo</h2>
+              <p className="text-slate-300 text-lg leading-relaxed max-w-md">
+                Nơi mỗi đường kim mũi chỉ là một tác phẩm nghệ thuật.
+                Chúng tôi tạo nên phong cách riêng biệt cho bạn.
+              </p>
             </div>
 
-            {/* Password Field */}
+            <div className="space-y-4">
+              <FeatureItem number="01" title="Đo lường chính xác" description="Hệ thống đo 50+ số đo cơ thể" />
+              <FeatureItem number="02" title="Vải cao cấp" description="Nhập khẩu từ Italy, Anh Quốc" />
+              <FeatureItem number="03" title="Thợ may lành nghề" description="Kinh nghiệm 20+ năm trong nghề" />
+            </div>
+          </div>
+
+          <div className="text-slate-400 text-sm">
+            <p>&copy; 2025 Elegance Tailor. Crafted with precision.</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Right Side - Form */}
+      <div className="flex-1 flex items-center justify-center p-6 lg:p-12">
+        <div className="w-full max-w-md">
+          <div className="lg:hidden flex items-center gap-3 mb-8">
+            <div className="w-12 h-12 bg-amber-500 rounded-lg flex items-center justify-center">
+              <Scissors className="w-6 h-6 text-white" />
+            </div>
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
-                Mật khẩu
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                  </svg>
-                </div>
-                <input
-                  id="password"
-                  name="password"
-                  type={showPassword ? "text" : "password"}
-                  value={formData.password}
-                  onChange={handleChange}
-                  className={`block w-full pl-10 pr-10 py-3 border rounded-xl focus:ring-2 focus:ring-[#1B4332] focus:border-[#1B4332] transition ${
-                    errors.password ? "border-red-300" : "border-gray-300"
-                  }`}
-                  placeholder="Nhập mật khẩu"
-                  autoComplete="current-password"
-                  aria-invalid={!!errors.password}
-                  aria-describedby={errors.password ? "password-error" : undefined}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
-                  aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
-                >
-                  {showPassword ? (
-                    <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.29 3.29m0 0L3 3m3.29 3.29L3 3" />
-                    </svg>
-                  ) : (
-                    <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                    </svg>
-                  )}
-                </button>
-              </div>
-              {errors.password && (
-                <p id="password-error" className="mt-1 text-sm text-red-600" role="alert">
-                  {errors.password}
-                </p>
-              )}
+              <h2 className="text-slate-900">ELEGANCE TAILOR</h2>
+              <p className="text-amber-600 text-sm">Bespoke Tailoring Studio</p>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-2xl shadow-xl border border-slate-100 p-8 lg:p-10">
+            <div className="mb-8">
+              <h2 className="text-slate-900 mb-2">
+                {authMode === "login" ? "Chào Mừng Trở Lại" : "Tạo Tài Khoản"}
+              </h2>
+              <p className="text-slate-500">
+                {authMode === "login"
+                  ? "Đăng nhập để quản lý đơn hàng và hồ sơ của bạn"
+                  : "Bắt đầu hành trình may đo cao cấp cùng chúng tôi"}
+              </p>
             </div>
 
-            {/* Remember Me & Forgot Password */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <input
-                  id="remember-me"
-                  name="rememberMe"
-                  type="checkbox"
-                  checked={formData.rememberMe}
-                  onChange={handleChange}
-                  className="h-4 w-4 text-[#1B4332] focus:ring-[#1B4332] border-gray-300 rounded"
-                />
-                <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-700">
-                  Ghi nhớ đăng nhập
+            <form onSubmit={handleSubmit} className="space-y-5">
+              {authMode === "register" && (
+                <div>
+                  <label htmlFor="fullName" className="block text-sm text-slate-700 mb-2">
+                    Họ và Tên
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                      <User className="h-5 w-5 text-slate-400" />
+                    </div>
+                    <input
+                      id="fullName"
+                      type="text"
+                      value={formData.fullName}
+                      onChange={(e) => updateFormData("fullName", e.target.value)}
+                      className="block w-full pl-11 pr-4 py-3.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all outline-none bg-slate-50 hover:bg-white"
+                      placeholder="Nguyễn Văn A"
+                    />
+                    {errors.fullName && <p className="mt-1 text-sm text-red-600">{errors.fullName}</p>}
+                  </div>
+                </div>
+              )}
+
+              <div>
+                <label htmlFor="email" className="block text-sm text-slate-700 mb-2">
+                  Email hoặc Số điện thoại
                 </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    <Mail className="h-5 w-5 text-slate-400" />
+                  </div>
+                  <input
+                    id="email"
+                    type="text"
+                    value={formData.email}
+                    onChange={(e) => updateFormData("email", e.target.value)}
+                    className="block w-full pl-11 pr-4 py-3.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all outline-none bg-slate-50 hover:bg-white"
+                    placeholder="email@example.com hoặc 0912345678"
+                    autoComplete="username"
+                  />
+                  {errors.email && <p className="mt-1 text-sm text-red-600">{errors.email}</p>}
+                </div>
               </div>
-              <Link
-                to="/forgot-password"
-                className="text-sm font-medium text-[#1B4332] hover:text-[#14532d] transition"
+
+              {authMode === "register" && (
+                <div>
+                  <label htmlFor="phone" className="block text-sm text-slate-700 mb-2">
+                    Số Điện Thoại
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                      <Phone className="h-5 w-5 text-slate-400" />
+                    </div>
+                    <input
+                      id="phone"
+                      type="tel"
+                      value={formData.phone}
+                      onChange={(e) => updateFormData("phone", e.target.value)}
+                      className="block w-full pl-11 pr-4 py-3.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all outline-none bg-slate-50 hover:bg-white"
+                      placeholder="0912 345 678"
+                    />
+                    {errors.phone && <p className="mt-1 text-sm text-red-600">{errors.phone}</p>}
+                  </div>
+                </div>
+              )}
+
+              <div>
+                <label htmlFor="password" className="block text-sm text-slate-700 mb-2">
+                  Mật Khẩu
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    <Lock className="h-5 w-5 text-slate-400" />
+                  </div>
+                  <input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    value={formData.password}
+                    onChange={(e) => updateFormData("password", e.target.value)}
+                    className="block w-full pl-11 pr-12 py-3.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all outline-none bg-slate-50 hover:bg-white"
+                    placeholder="••••••••"
+                    autoComplete="current-password"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute inset-y-0 right-0 pr-4 flex items-center"
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-5 w-5 text-slate-400 hover:text-slate-600 transition-colors" />
+                    ) : (
+                      <Eye className="h-5 w-5 text-slate-400 hover:text-slate-600 transition-colors" />
+                    )}
+                  </button>
+                  {errors.password && <p className="mt-1 text-sm text-red-600">{errors.password}</p>}
+                </div>
+              </div>
+
+              {authMode === "login" && (
+                <div className="flex items-center justify-between pt-1">
+                  <label className="flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      className="w-4 h-4 text-amber-600 border-slate-300 rounded focus:ring-amber-500 cursor-pointer"
+                      checked={formData.rememberMe}
+                      onChange={(e) => updateFormData("rememberMe", e.target.checked)}
+                    />
+                    <span className="ml-2 text-sm text-slate-600">Ghi nhớ đăng nhập</span>
+                  </label>
+                  <a href="/forgot-password" className="text-sm text-amber-600 hover:text-amber-700 transition-colors">
+                    Quên mật khẩu?
+                  </a>
+                </div>
+              )}
+
+              {authMode === "register" && (
+                <div className="pt-1">
+                  <label className="flex items-start cursor-pointer">
+                    <input
+                      type="checkbox"
+                      className="w-4 h-4 text-amber-600 border-slate-300 rounded focus:ring-amber-500 cursor-pointer mt-0.5"
+                      checked={formData.acceptTerms}
+                      onChange={(e) => updateFormData("acceptTerms", e.target.checked)}
+                    />
+                    <span className="ml-2 text-sm text-slate-600">
+                      Tôi đồng ý với{" "}
+                      <a href="#" className="text-amber-600 hover:text-amber-700">
+                        Điều khoản dịch vụ
+                      </a>{" "}
+                      và{" "}
+                      <a href="#" className="text-amber-600 hover:text-amber-700">
+                        Chính sách bảo mật
+                      </a>
+                    </span>
+                  </label>
+                  {errors.acceptTerms && <p className="mt-1 text-sm text-red-600">{errors.acceptTerms}</p>}
+                </div>
+              )}
+
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="w-full bg-gradient-to-r from-amber-600 to-amber-700 text-white py-3.5 rounded-xl hover:from-amber-700 hover:to-amber-800 transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed mt-6"
               >
-                Quên mật khẩu?
-              </Link>
+                {isLoading ? (
+                  <span className="flex items-center justify-center">
+                    <svg className="animate-spin h-5 w-5 mr-3" viewBox="0 0 24 24">
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                        fill="none"
+                      />
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      />
+                    </svg>
+                    Đang xử lý...
+                  </span>
+                ) : authMode === "login" ? (
+                  "Đăng Nhập"
+                ) : (
+                  "Tạo Tài Khoản"
+                )}
+              </button>
+            </form>
+
+            <div className="my-8 flex items-center">
+              <div className="flex-1 border-t border-slate-200"></div>
+              <span className="px-4 text-sm text-slate-400">hoặc</span>
+              <div className="flex-1 border-t border-slate-200"></div>
             </div>
 
-            {/* Submit Button */}
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="w-full bg-gradient-to-r from-[#1B4332] to-[#2D5A47] text-white py-3 px-4 rounded-xl font-semibold hover:from-[#14532d] hover:to-[#1B4332] transition-all duration-200 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-            >
-              {isLoading ? (
-                <>
-                  <svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  <span>Đang đăng nhập...</span>
-                </>
-              ) : (
-                <>
-                  <span>Đăng nhập</span>
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                  </svg>
-                </>
-              )}
-            </button>
-          </form>
-
-          {/* Divider */}
-          <div className="my-6 flex items-center">
-            <div className="flex-1 border-t border-gray-200"></div>
-            <span className="px-4 text-sm text-gray-500">hoặc</span>
-            <div className="flex-1 border-t border-gray-200"></div>
+            <div className="text-center">
+              <p className="text-sm text-slate-600">
+                {authMode === "login" ? (
+                  <>
+                    Chưa có tài khoản?{" "}
+                    <button
+                      type="button"
+                      onClick={() => setAuthMode("register")}
+                      className="text-amber-600 hover:text-amber-700 transition-colors"
+                    >
+                      Đăng ký ngay
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    Đã có tài khoản?{" "}
+                    <button
+                      type="button"
+                      onClick={() => setAuthMode("login")}
+                      className="text-amber-600 hover:text-amber-700 transition-colors"
+                    >
+                      Đăng nhập
+                    </button>
+                  </>
+                )}
+              </p>
+            </div>
           </div>
 
-          {/* Register Link */}
-          <div className="text-center">
-            <p className="text-sm text-gray-600">
-              Chưa có tài khoản?{" "}
-              <Link
-                to="/register"
-                className="font-semibold text-[#1B4332] hover:text-[#14532d] transition"
-              >
-                Đăng ký ngay
-              </Link>
-            </p>
+          <div className="mt-8 grid grid-cols-3 gap-4 text-center">
+            <TrustBadge number="20+" label="Năm kinh nghiệm" />
+            <TrustBadge number="5000+" label="Khách hàng" />
+            <TrustBadge number="100%" label="Hài lòng" />
           </div>
         </div>
-
-        {/* Quick Login Options */}
-        <div className="mt-6 bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
-          <p className="text-xs font-semibold text-gray-700 mb-3 text-center">
-            Đăng nhập nhanh theo vai trò
-          </p>
-          <div className="grid grid-cols-2 gap-2">
-            <Link
-              to="/login/admin"
-              className="px-3 py-2 text-xs font-medium bg-red-50 text-red-700 rounded-lg hover:bg-red-100 transition text-center"
-            >
-              🔐 Admin
-            </Link>
-            <Link
-              to="/login/staff"
-              className="px-3 py-2 text-xs font-medium bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition text-center"
-            >
-              👔 Nhân viên
-            </Link>
-            <Link
-              to="/login/tailor"
-              className="px-3 py-2 text-xs font-medium bg-purple-50 text-purple-700 rounded-lg hover:bg-purple-100 transition text-center"
-            >
-              ✂️ Thợ may
-            </Link>
-            <Link
-              to="/login/customer"
-              className="px-3 py-2 text-xs font-medium bg-green-50 text-green-700 rounded-lg hover:bg-green-100 transition text-center"
-            >
-              👤 Khách hàng
-            </Link>
-          </div>
-        </div>
-
-        {/* Footer */}
-        <p className="text-center text-xs text-gray-500 mt-6">
-          © 2025 My Hiền Tailor. Bản quyền thuộc về bạn.
-        </p>
       </div>
     </div>
   );

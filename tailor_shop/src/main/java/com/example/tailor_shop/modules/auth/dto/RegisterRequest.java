@@ -8,10 +8,6 @@ import jakarta.validation.constraints.Size;
 
 public class RegisterRequest {
     @NotBlank
-    @Size(min = 3, max = 100)
-    private String username;
-
-    @NotBlank
     @Email
     private String email;
 
@@ -29,14 +25,6 @@ public class RegisterRequest {
 
     @Pattern(regexp = "^(customer|staff|tailor)$", message = "Role must be one of: customer, staff, tailor")
     private String role;
-
-    public String getUsername() {
-        return username;
-    }
-
-    public void setUsername(String username) {
-        this.username = username;
-    }
 
     public String getEmail() {
         return email;

@@ -84,9 +84,6 @@ public class AuthServiceImpl implements AuthService {
     @Override
     @Transactional
     public void register(RegisterRequest request) {
-        if (userRepository.existsByUsername(request.getUsername())) {
-            throw new BadRequestException("Username already exists");
-        }
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new BadRequestException("Email already exists");
         }
@@ -106,7 +103,9 @@ public class AuthServiceImpl implements AuthService {
                 .orElseThrow(() -> new NotFoundException("Role " + roleCode + " not found"));
 
         UserEntity user = new UserEntity();
-        user.setUsername(request.getUsername());
+        // Dùng email làm username lưu DB để đáp ứng ràng buộc not-null/unique,
+        // đồng thời vẫn cho phép login bằng phone/email qua CustomUserDetailsService.
+        user.setUsername(request.getEmail().toLowerCase());
         user.setEmail(request.getEmail());
         user.setPhone(request.getPhone());
         user.setName(request.getName());

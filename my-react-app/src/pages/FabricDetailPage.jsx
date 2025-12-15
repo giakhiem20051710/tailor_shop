@@ -120,7 +120,6 @@ export default function FabricDetailPage() {
   }, [reviews, fabric.rating]);
 
   const sortedReviews = useMemo(() => {
-    });
     const sorted = [...reviews];
     let result;
     switch (sortBy) {
@@ -721,8 +720,7 @@ export default function FabricDetailPage() {
                                 )}
                               </div>
                             </div>
-                            );
-                          });
+                          ));
                         })()}
                       </div>
                     </div>

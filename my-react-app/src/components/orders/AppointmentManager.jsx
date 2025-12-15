@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { updateOrder } from "../../utils/orderStorage";
+import { orderService } from "../../services";
 
 export default function AppointmentManager({ order, onUpdate }) {
   const [isEditing, setIsEditing] = useState(false);
@@ -9,14 +9,28 @@ export default function AppointmentManager({ order, onUpdate }) {
     appointmentTime: order?.appointmentTime || "",
   });
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!order) return;
-    
-    const updated = updateOrder(order.id, formData);
-    if (updated && onUpdate) {
-      onUpdate(updated);
+    try {
+      // Backend chưa có API riêng cho lịch hẹn; tạm patch status để tránh dùng storage
+      await orderService.updateStatus(order.id, {
+        appointmentType: formData.appointmentType,
+        appointmentDate: formData.appointmentDate,
+        appointmentTime: formData.appointmentTime,
+      });
+      if (onUpdate) {
+        onUpdate({
+          ...order,
+          appointmentType: formData.appointmentType,
+          appointmentDate: formData.appointmentDate,
+          appointmentTime: formData.appointmentTime,
+        });
+      }
+    } catch (error) {
+      console.error("Error updating appointment info:", error);
+    } finally {
+      setIsEditing(false);
     }
-    setIsEditing(false);
   };
 
   const getAppointmentTypeLabel = (type) => {

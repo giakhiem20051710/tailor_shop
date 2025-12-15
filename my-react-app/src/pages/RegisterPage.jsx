@@ -1,8 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import RegisterHeader from "../components/register/RegisterHeader.jsx";
 import RegisterForm from "../components/register/RegisterForm.jsx";
 import usePageMeta from "../hooks/usePageMeta";
+import { authService, userService } from "../services";
+import { showSuccess, showError } from "../components/NotificationToast.jsx";
 
 export default function RegisterPage() {
   const [error, setError] = useState("");
@@ -19,52 +21,29 @@ export default function RegisterPage() {
 
   const handleSubmit = async (formData) => {
     setError("");
-
     setIsLoading(true);
 
-    // Simulate API call for registration
-    setTimeout(() => {
-      // Check if username already exists (demo - in production, check from API)
-      const existingUsers = JSON.parse(localStorage.getItem("registeredUsers") || "[]");
-      const usernameExists = existingUsers.some(
-        (user) => user.username === formData.username
-      );
-      const emailExists = existingUsers.some(
-        (user) => user.email === formData.email
-      );
-
-      if (usernameExists) {
-        setError("Tên đăng nhập đã được sử dụng");
-        setIsLoading(false);
-        return;
-      }
-
-      if (emailExists) {
-        setError("Email đã được sử dụng");
-        setIsLoading(false);
-        return;
-      }
-
-      // Save new user to localStorage (demo)
-      const newUser = {
+    try {
+      // Call backend API
+      await authService.register({
         username: formData.username,
         email: formData.email,
         phone: formData.phone,
-        password: formData.password, // In production, this should be hashed
-        createdAt: new Date().toISOString(),
-      };
+        password: formData.password,
+        name: formData.name || formData.username,
+        // ... other fields if needed
+      });
 
-      existingUsers.push(newUser);
-      localStorage.setItem("registeredUsers", JSON.stringify(existingUsers));
-
-      // Auto login after registration
-      localStorage.setItem("isAuthenticated", "true");
-      localStorage.setItem("username", formData.username);
-
-      // Navigate to dashboard
-      navigate("/dashboard", { replace: true });
+      showSuccess("Đăng ký thành công! Vui lòng đăng nhập.");
+      navigate("/login", { replace: true });
+    } catch (error) {
+      console.error("Registration error:", error);
+      const errorMessage = error.message || "Đăng ký thất bại. Vui lòng thử lại.";
+      setError(errorMessage);
+      showError(errorMessage);
+    } finally {
       setIsLoading(false);
-    }, 1500);
+    }
   };
 
   return (

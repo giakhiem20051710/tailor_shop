@@ -31,17 +31,26 @@ public interface ReviewRepository extends JpaRepository<ReviewEntity, Long> {
     /**
      * Search reviews với filter
      */
-    @Query("SELECT r FROM ReviewEntity r WHERE r.isDeleted = false " +
+    @Query("SELECT r FROM ReviewEntity r " +
+            "WHERE r.isDeleted = false " +
             "AND (:type IS NULL OR r.type = :type) " +
             "AND (:productId IS NULL OR r.product.id = :productId) " +
             "AND (:orderId IS NULL OR r.order.id = :orderId) " +
             "AND (:userId IS NULL OR r.user.id = :userId) " +
             "AND (:rating IS NULL OR r.rating = :rating) " +
             "AND (:status IS NULL OR r.status = :status) " +
-            "AND (:hasImages IS NULL OR (SELECT COUNT(ri) FROM ReviewImageEntity ri WHERE ri.review.id = r.id AND ri.isDeleted = false) > 0 = :hasImages) " +
-            "AND (:hasReply IS NULL OR (r.replyText IS NOT NULL) = :hasReply) " +
+            "AND (:hasImages IS NULL OR :hasImages = true OR :hasImages = false) " +
+            "AND ( " +
+            "     :hasReply IS NULL " +
+            "     OR (:hasReply = true AND r.replyText IS NOT NULL) " +
+            "     OR (:hasReply = false AND r.replyText IS NULL) " +
+            ") " +
             "AND (:isVerifiedPurchase IS NULL OR r.isVerifiedPurchase = :isVerifiedPurchase) " +
-            "AND (:keyword IS NULL OR r.title LIKE %:keyword% OR r.comment LIKE %:keyword%)")
+            "AND ( " +
+            "     :keyword IS NULL " +
+            "     OR LOWER(r.title) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
+            "     OR LOWER(r.comment) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
+            ")")
     Page<ReviewEntity> searchReviews(
             @Param("type") ReviewType type,
             @Param("productId") Long productId,

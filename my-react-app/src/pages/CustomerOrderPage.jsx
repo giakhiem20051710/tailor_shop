@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import Header from "../components/Header.jsx";
-import { addOrder } from "../utils/orderStorage";
+import { orderService } from "../services";
 import { isAuthenticated, getCurrentUserRole, getCurrentUser, ROLES } from "../utils/authStorage";
 import { saveCustomerMeasurements } from "../utils/customerMeasurementsStorage";
 import {
@@ -114,21 +114,24 @@ const CustomerOrderPage = () => {
     setCurrentStep(currentStep - 1);
   };
 
-  const handleSubmit = (e) => {
+  const toNumber = (value) => {
+    if (value === null || value === undefined) return null;
+    const num = Number(String(value).replace(/,/g, ""));
+    return Number.isNaN(num) ? null : num;
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Nếu chưa ở bước 3 mà form bị submit (ví dụ nhấn Enter), chuyển người dùng tới bước nhập số đo
     if (currentStep < 3) {
       setCurrentStep(3);
       return;
     }
 
-    // Validate bước 3: yêu cầu phải nhập ít nhất một số đo
     const measurementValues = Object.values(formData.measurements || {});
     const hasAnyMeasurement = measurementValues.some(
       (value) => value !== null && value !== undefined && String(value).trim() !== ""
     );
-
     if (!hasAnyMeasurement) {
       alert("Vui lòng nhập ít nhất một số đo trước khi gửi đơn.");
       return;
@@ -149,6 +152,20 @@ const CustomerOrderPage = () => {
       }
     }
 
+    // Parse numeric fields
+    const parsedBudget = toNumber(formData.budget) || 0;
+    // Map measurement to backend expected keys (numbers)
+    const measurement = {
+      chest: toNumber(formData.measurements.chest),
+      waist: toNumber(formData.measurements.waist),
+      hip: toNumber(formData.measurements.hips || formData.measurements.hip),
+      shoulder: toNumber(formData.measurements.shoulder),
+      sleeve: toNumber(formData.measurements.sleeve || formData.measurements.sleeveLength),
+      height: toNumber(formData.measurements.height),
+      weight: toNumber(formData.measurements.weight),
+      note: formData.description || formData.notes || "",
+    };
+
     const newOrder = {
       name: formData.name,
       phone: formData.phone,
@@ -157,57 +174,69 @@ const CustomerOrderPage = () => {
       productName: formData.productName,
       productType: formData.productType,
       description: formData.description,
-      budget: formData.budget,
+      budget: parsedBudget,
       dueDate: formData.dueDate,
       notes: formData.notes,
-      measurements: formData.measurements,
+      measurements: measurement,
       appointmentType: formData.appointmentType,
       appointmentTime: formData.appointmentTime,
       appointmentDate,
       promoCode: formData.promoCode,
       receive: new Date().toISOString().split("T")[0],
       due: formData.dueDate || "",
-      total: formData.budget ? parseInt(formData.budget.replace(/,/g, "")) : 0,
-      status: "Mới",
+      total: parsedBudget,
+      status: "NEW",
       sampleImages: null,
-      customerId: currentUser?.username,
+      customerId: currentUser?.id || currentUser?.userId,
       createdAt: new Date().toISOString(),
       referralCode: referralMeta ? referralMeta.profile.code : referralInput || undefined,
       referrerId: referralMeta?.customerId,
       referralStatus: referralMeta ? "pending" : undefined,
     };
 
-    const createdOrder = addOrder(newOrder);
+    try {
+      const response = await orderService.create(newOrder);
+      const responseData = response?.data ?? response?.responseData ?? response;
+      const isSuccess =
+        response?.success === true ||
+        response?.responseStatus?.responseCode === "200" ||
+        !!responseData?.id;
 
-    if (referralMeta) {
-      recordReferralOnOrderCreated({
-        code: referralMeta.profile.code,
-        orderId: createdOrder.id,
-        referredName: formData.name,
-      });
-      setReferralVoucher(WELCOME_VOUCHER_CODE);
-    } else {
-      setReferralVoucher("");
-    }
-    
-    // Auto-save measurements to customer history
-    if (currentUser && formData.measurements) {
-      const customerId = currentUser.username || currentUser.phone;
-      const measurementsToSave = {
-        ...formData.measurements,
-        // Map field names to match storage format
-        hip: formData.measurements.hips || formData.measurements.hip,
-        sleeveLength: formData.measurements.sleeve || formData.measurements.sleeveLength,
-        orderId: createdOrder.id,
-      };
-      saveCustomerMeasurements(customerId, measurementsToSave);
-    }
-    
-    setShowSuccess(true);
+      if (isSuccess) {
+        // Save measurements locally for history
+        if (referralMeta) {
+          recordReferralOnOrderCreated({
+            code: referralMeta.profile.code,
+            orderId: responseData.id || responseData.orderId,
+            referredName: formData.name,
+          });
+          setReferralVoucher(WELCOME_VOUCHER_CODE);
+        } else {
+          setReferralVoucher("");
+        }
 
-    setTimeout(() => {
-      navigate("/customer/dashboard");
-    }, 2000);
+        if (currentUser && formData.measurements) {
+          const customerId = currentUser.id || currentUser.userId || currentUser.username || currentUser.phone;
+          const measurementsToSave = {
+            ...formData.measurements,
+            hip: formData.measurements.hips || formData.measurements.hip,
+            sleeveLength: formData.measurements.sleeve || formData.measurements.sleeveLength,
+            orderId: responseData.id || responseData.orderId,
+          };
+          saveCustomerMeasurements(customerId, measurementsToSave);
+        }
+
+        setShowSuccess(true);
+        setTimeout(() => {
+          navigate("/customer/dashboard");
+        }, 2000);
+      } else {
+        alert("Đặt đơn không thành công. Vui lòng thử lại.");
+      }
+    } catch (error) {
+      console.error("Error creating order:", error);
+      alert("Đặt đơn không thành công. Vui lòng thử lại.");
+    }
   };
 
   // Nếu đang kiểm tra auth, hiển thị loading

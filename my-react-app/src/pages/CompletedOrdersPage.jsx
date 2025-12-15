@@ -1,7 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { getOrders } from "../utils/orderStorage";
-import { getUsersByRole, ROLES } from "../utils/authStorage";
+import { orderService, userService } from "../services";
 import StatusBadge from "../components/StatusBadge";
 
 export default function CompletedOrdersPage() {
@@ -14,12 +13,36 @@ export default function CompletedOrdersPage() {
   const [dateTo, setDateTo] = useState("");
 
   useEffect(() => {
-    const allOrders = getOrders();
-    setOrders(allOrders);
-    
-    const tailorUsers = getUsersByRole(ROLES.TAILOR);
-    setTailors(tailorUsers);
+    loadData();
   }, []);
+
+  const loadData = async () => {
+    try {
+      // Load completed orders from BE
+      const response = await orderService.list({ status: "COMPLETED", page: 0, size: 500 });
+      const responseData = response?.data ?? response?.responseData ?? response;
+      const isSuccess =
+        response?.success === true ||
+        response?.responseStatus?.responseCode === "200" ||
+        !!responseData?.content;
+      if (isSuccess && responseData) {
+        setOrders(responseData.content || responseData.items || []);
+      }
+
+      // Load tailors
+      const tailorsRes = await userService.listTailors({ page: 0, size: 200 });
+      const tailorsData = tailorsRes?.data ?? tailorsRes?.responseData ?? tailorsRes;
+      const tailorsOk =
+        tailorsRes?.success === true ||
+        tailorsRes?.responseStatus?.responseCode === "200" ||
+        !!tailorsData?.content;
+      if (tailorsOk && tailorsData) {
+        setTailors(tailorsData.content || tailorsData.items || []);
+      }
+    } catch (error) {
+      console.error("Error loading completed orders:", error);
+    }
+  };
 
   // Filter completed orders
   const completedOrders = useMemo(() => {

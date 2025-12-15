@@ -1,7 +1,5 @@
 import { useState, useEffect } from "react";
-import { getOrders } from "../utils/orderStorage.js";
-import { getAppointments } from "../utils/appointmentStorage.js";
-import { getWorkingSlots } from "../utils/workingSlotStorage.js";
+import { orderService, appointmentService } from "../services";
 
 const OrderTracking = ({ orderId, customerId }) => {
   const [order, setOrder] = useState(null);
@@ -9,31 +7,34 @@ const OrderTracking = ({ orderId, customerId }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (orderId) {
-      const orders = getOrders();
-      const foundOrder = orders.find((o) => o.id === orderId);
-      setOrder(foundOrder || null);
-    } else if (customerId) {
-      const orders = getOrders();
-      const customerOrders = orders.filter((o) => o.customerId === customerId);
-      if (customerOrders.length > 0) {
-        setOrder(customerOrders[0]); // Get latest order
+    const loadTracking = async () => {
+      try {
+        if (orderId) {
+          const res = await orderService.getDetail(orderId);
+          const data = res?.data ?? res?.responseData ?? res;
+          setOrder(data || null);
+        } else if (customerId) {
+          const res = await orderService.list({ customerId, page: 0, size: 10 });
+          const data = res?.data ?? res?.responseData ?? res;
+          const content = data?.content || data?.items || [];
+          if (content.length > 0) {
+            setOrder(content[0]);
+          }
+        }
+
+        if (orderId || customerId) {
+          const aptRes = await appointmentService.list({ orderId, customerId, page: 0, size: 50 });
+          const aptData = aptRes?.data ?? aptRes?.responseData ?? aptRes;
+          setAppointments(aptData?.content || aptData?.items || []);
+        }
+      } catch (error) {
+        console.error("Error loading order tracking:", error);
+      } finally {
+        setLoading(false);
       }
-    }
+    };
 
-    // Get related appointments
-    if (orderId || customerId) {
-      const allAppointments = getAppointments();
-      const relatedAppointments = allAppointments.filter(
-        (apt) =>
-          apt.orderId === orderId ||
-          apt.customerId === customerId ||
-          (order && apt.orderId === order.id)
-      );
-      setAppointments(relatedAppointments);
-    }
-
-    setLoading(false);
+    loadTracking();
   }, [orderId, customerId]);
 
   if (loading) {

@@ -1,0 +1,511 @@
+{
+	"info": {
+		"_postman_id": "fabric-management-collection",
+		"name": "Fabric Management",
+		"description": "Postman collection for Fabric Management module",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Public Endpoints",
+			"item": [
+				{
+					"name": "List Fabrics",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/fabrics?page=0&size=20&sort=displayOrder,asc",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "fabrics"],
+							"query": [
+								{"key": "page", "value": "0"},
+								{"key": "size", "value": "20"},
+								{"key": "sort", "value": "displayOrder,asc"},
+								{"key": "category", "value": "COTTON", "disabled": true},
+								{"key": "color", "value": "White", "disabled": true},
+								{"key": "pattern", "value": "SOLID", "disabled": true},
+								{"key": "isAvailable", "value": "true", "disabled": true},
+								{"key": "isFeatured", "value": "false", "disabled": true},
+								{"key": "minPrice", "value": "30000", "disabled": true},
+								{"key": "maxPrice", "value": "100000", "disabled": true},
+								{"key": "keyword", "value": "cotton", "disabled": true}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Fabric Detail by ID",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    const response = pm.response.json();",
+									"    if (response.data && response.data.id) {",
+									"        pm.collectionVariables.set('fabricId', response.data.id);",
+									"    }",
+									"}"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/fabrics/{{fabricId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "fabrics", "{{fabricId}}"]
+						}
+					}
+				},
+				{
+					"name": "Get Fabric Detail by Code",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/fabrics/code/FAB-001",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "fabrics", "code", "FAB-001"]
+						}
+					}
+				},
+				{
+					"name": "Get Fabric Detail by Slug",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/fabrics/slug/cotton-fabric-premium",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "fabrics", "slug", "cotton-fabric-premium"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Admin/Staff Endpoints",
+			"item": [
+				{
+					"name": "Create Fabric",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    const response = pm.response.json();",
+									"    if (response.data && response.data.id) {",
+									"        pm.collectionVariables.set('fabricId', response.data.id);",
+									"    }",
+									"}"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminToken}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"code\": \"FAB-001\",\n    \"name\": \"Cotton Fabric Premium\",\n    \"slug\": \"cotton-fabric-premium\",\n    \"description\": \"High quality cotton fabric, perfect for shirts and dresses\",\n    \"category\": \"COTTON\",\n    \"material\": \"100% Cotton\",\n    \"color\": \"White\",\n    \"pattern\": \"SOLID\",\n    \"width\": 150.00,\n    \"weight\": 200.00,\n    \"pricePerMeter\": 50000.00,\n    \"image\": \"https://s3.amazonaws.com/fabric1.jpg\",\n    \"gallery\": [\n        \"https://s3.amazonaws.com/fabric1-1.jpg\",\n        \"https://s3.amazonaws.com/fabric1-2.jpg\"\n    ],\n    \"origin\": \"Vietnam\",\n    \"careInstructions\": \"Machine wash cold, tumble dry low\",\n    \"isAvailable\": true,\n    \"isFeatured\": false,\n    \"displayOrder\": 0\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/fabrics",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "fabrics"]
+						}
+					}
+				},
+				{
+					"name": "Update Fabric",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminToken}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"code\": \"FAB-001\",\n    \"name\": \"Cotton Fabric Premium (Updated)\",\n    \"description\": \"Updated description\",\n    \"category\": \"COTTON\",\n    \"pricePerMeter\": 55000.00,\n    \"isFeatured\": true\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/fabrics/{{fabricId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "fabrics", "{{fabricId}}"]
+						}
+					}
+				},
+				{
+					"name": "Delete Fabric",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/fabrics/{{fabricId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "fabrics", "{{fabricId}}"]
+						}
+					}
+				},
+				{
+					"name": "Get Inventory",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/fabrics/{{fabricId}}/inventory?page=0&size=20",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "fabrics", "{{fabricId}}", "inventory"],
+							"query": [
+								{"key": "page", "value": "0"},
+								{"key": "size", "value": "20"}
+							]
+						}
+					}
+				},
+				{
+					"name": "Update Inventory",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminToken}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"location\": \"Warehouse A\",\n    \"quantity\": 1000.00,\n    \"reservedQuantity\": 0.00,\n    \"minStockLevel\": 100.00,\n    \"maxStockLevel\": 2000.00,\n    \"unit\": \"METER\",\n    \"notes\": \"Main warehouse stock\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/fabrics/{{fabricId}}/inventory",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "fabrics", "{{fabricId}}", "inventory"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Customer Endpoints",
+			"item": [
+				{
+					"name": "Create Hold Request",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    const response = pm.response.json();",
+									"    if (response.data && response.data.id) {",
+									"        pm.collectionVariables.set('holdRequestId', response.data.id);",
+									"    }",
+									"}"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{customerToken}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"fabricId\": {{fabricId}},\n    \"type\": \"HOLD\",\n    \"quantity\": 5.00,\n    \"expiryDate\": \"2024-01-20\",\n    \"notes\": \"Please hold this fabric for me\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/fabrics/hold-requests",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "fabrics", "hold-requests"]
+						}
+					}
+				},
+				{
+					"name": "Create Visit Request",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{customerToken}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"fabricId\": {{fabricId}},\n    \"type\": \"VISIT\",\n    \"requestedDate\": \"2024-01-18\",\n    \"requestedTime\": \"14:00:00\",\n    \"notes\": \"I want to see this fabric in person\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/fabrics/hold-requests",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "fabrics", "hold-requests"]
+						}
+					}
+				},
+				{
+					"name": "List Own Hold Requests",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{customerToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/fabrics/hold-requests?page=0&size=20&sort=createdAt,desc",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "fabrics", "hold-requests"],
+							"query": [
+								{"key": "page", "value": "0"},
+								{"key": "size", "value": "20"},
+								{"key": "sort", "value": "createdAt,desc"},
+								{"key": "fabricId", "value": "{{fabricId}}", "disabled": true}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Hold Request Detail",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{customerToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/fabrics/hold-requests/{{holdRequestId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "fabrics", "hold-requests", "{{holdRequestId}}"]
+						}
+					}
+				},
+				{
+					"name": "Cancel Hold Request",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{customerToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/fabrics/hold-requests/{{holdRequestId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "fabrics", "hold-requests", "{{holdRequestId}}"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Staff/Admin - Hold Requests",
+			"item": [
+				{
+					"name": "List All Hold Requests",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{staffToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/fabrics/hold-requests?page=0&size=20&sort=createdAt,desc",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "fabrics", "hold-requests"],
+							"query": [
+								{"key": "page", "value": "0"},
+								{"key": "size", "value": "20"},
+								{"key": "sort", "value": "createdAt,desc"},
+								{"key": "fabricId", "value": "{{fabricId}}", "disabled": true},
+								{"key": "userId", "value": "", "disabled": true},
+								{"key": "status", "value": "PENDING", "disabled": true}
+							]
+						}
+					}
+				},
+				{
+					"name": "Approve Hold Request",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{staffToken}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"status\": \"APPROVED\",\n    \"staffNotes\": \"Approved, fabric will be held until expiry date\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/fabrics/hold-requests/{{holdRequestId}}/status",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "fabrics", "hold-requests", "{{holdRequestId}}", "status"]
+						}
+					}
+				},
+				{
+					"name": "Reject Hold Request",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{staffToken}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"status\": \"REJECTED\",\n    \"staffNotes\": \"Insufficient stock available\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/fabrics/hold-requests/{{holdRequestId}}/status",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "fabrics", "hold-requests", "{{holdRequestId}}", "status"]
+						}
+					}
+				},
+				{
+					"name": "Complete Hold Request",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{staffToken}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"status\": \"COMPLETED\",\n    \"staffNotes\": \"Customer picked up the fabric\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/fabrics/hold-requests/{{holdRequestId}}/status",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "fabrics", "hold-requests", "{{holdRequestId}}", "status"]
+						}
+					}
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:8080",
+			"type": "string"
+		},
+		{
+			"key": "adminToken",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "staffToken",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "customerToken",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "fabricId",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "holdRequestId",
+			"value": "",
+			"type": "string"
+		}
+	]
+}
+
