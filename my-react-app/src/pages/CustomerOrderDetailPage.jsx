@@ -1,8 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
-import { getOrderById } from "../utils/orderStorage";
-import { getCurrentUser } from "../utils/authStorage";
-import { getReviewByOrderId } from "../utils/reviewStorage";
+import { orderService, userService, authService } from "../services";
 import Header from "../components/Header.jsx";
 import StatusBadge from "../components/StatusBadge";
 
@@ -13,7 +11,6 @@ const CustomerOrderDetailPage = () => {
   const [order, setOrder] = useState(null);
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [review, setReview] = useState(null);
   const [showImageLightbox, setShowImageLightbox] = useState(null);
 
   useEffect(() => {
@@ -21,39 +18,64 @@ const CustomerOrderDetailPage = () => {
     setOrder(null);
     setLoading(true);
     
-    const loadOrder = () => {
-      const currentUser = getCurrentUser();
-      setUser(currentUser);
+    const loadOrder = async () => {
+      try {
+        if (!authService.isAuthenticated()) {
+          navigate("/login", { replace: true });
+          return;
+        }
 
-      if (id) {
-        const orderData = getOrderById(id);
-        
-        // Verify this order belongs to the current customer
-        if (orderData) {
-          const isCustomerOrder = 
-            orderData.phone === currentUser?.phone ||
-            orderData.name === currentUser?.name ||
-            orderData.customerId === currentUser?.username;
-          
+        const profileResponse = await userService.getProfile();
+        const currentUser = profileResponse?.data ?? profileResponse;
+        setUser(currentUser);
+
+        if (id) {
+          const orderResponse = await orderService.getDetail(id);
+          const orderData = orderResponse?.data ?? orderResponse;
+
+          if (!orderData) {
+            navigate("/customer/dashboard", { replace: true });
+            return;
+          }
+
+          const orderCustomerId =
+            orderData.customerId ||
+            orderData.customer?.id ||
+            orderData.customerId;
+
+          const orderPhone =
+            orderData.phone ||
+            orderData.customerPhone ||
+            orderData.customer?.phone;
+
+          const orderName =
+            orderData.name ||
+            orderData.customerName ||
+            orderData.customer?.name;
+
+          const currentUserId = currentUser?.id || currentUser?.userId;
+
+          const isCustomerOrder =
+            (currentUserId && orderCustomerId && currentUserId === orderCustomerId) ||
+            (orderPhone && currentUser?.phone && orderPhone === currentUser.phone) ||
+            (orderName && currentUser?.name && orderName === currentUser.name) ||
+            !orderCustomerId; // fallback to allow view if no customer binding
+
           if (isCustomerOrder) {
             setOrder(orderData);
-            // Load review if exists
-            const existingReview = getReviewByOrderId(id);
-            setReview(existingReview);
-            setLoading(false);
           } else {
-            // Redirect if order doesn't belong to customer
             navigate("/customer/dashboard", { replace: true });
+            return;
           }
-        } else {
-          navigate("/customer/dashboard", { replace: true });
         }
-      } else {
+      } catch (error) {
+        console.error("Error loading order detail:", error);
+        navigate("/customer/dashboard", { replace: true });
+      } finally {
         setLoading(false);
       }
     };
 
-    // Load immediately
     loadOrder();
   }, [id, navigate, location.pathname]);
 

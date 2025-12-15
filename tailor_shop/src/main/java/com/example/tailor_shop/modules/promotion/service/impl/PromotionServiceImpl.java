@@ -665,7 +665,6 @@ public class PromotionServiceImpl implements PromotionService {
     @Override
     @Transactional(readOnly = true)
     public List<PromotionSuggestionResponse> getAvailableForCart(PromotionSuggestionRequest request, Long userId) {
-        // Same as getSuggestions, but only return eligible ones
         List<PromotionSuggestionResponse> allSuggestions = getSuggestions(request, userId);
         return allSuggestions.stream()
                 .filter(PromotionSuggestionResponse::getIsEligible)

@@ -1,18 +1,22 @@
 import { useState } from "react";
-import { updateOrder } from "../../utils/orderStorage";
+import { orderService } from "../../services";
 
 export default function CorrectionNotes({ order, onUpdate }) {
   const [isEditing, setIsEditing] = useState(false);
   const [note, setNote] = useState(order?.correctionNotes || "");
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!order) return;
-    
-    const updated = updateOrder(order.id, { correctionNotes: note });
-    if (updated && onUpdate) {
-      onUpdate(updated);
+    try {
+      await orderService.updateStatus(order.id, { correctionNotes: note });
+      if (onUpdate) {
+        onUpdate({ ...order, correctionNotes: note });
+      }
+    } catch (error) {
+      console.error("Error saving correction notes:", error);
+    } finally {
+      setIsEditing(false);
     }
-    setIsEditing(false);
   };
 
   if (!isEditing) {

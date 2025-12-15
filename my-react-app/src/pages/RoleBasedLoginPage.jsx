@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation, useParams, Link } from "react-router-dom";
-import { authenticateUser, initializeDefaultUsers, ROLES } from "../utils/authStorage.js";
+import { authService, userService } from "../services";
 import usePageMeta from "../hooks/usePageMeta";
 import { validators, validateForm } from "../utils/validation.js";
 import { showSuccess, showError } from "../components/NotificationToast.jsx";
@@ -11,7 +11,7 @@ export default function RoleBasedLoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const [formData, setFormData] = useState({
-    username: "",
+    phoneOrEmail: "",
     password: "",
     rememberMe: false,
   });
@@ -19,18 +19,15 @@ export default function RoleBasedLoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
-  // Initialize default users on mount
-  useEffect(() => {
-    initializeDefaultUsers();
-  }, []);
+  // No need to initialize default users - using backend API
 
   const normalizeRole = () => {
     const roleFromUrl = (role || "").toLowerCase();
-    const allowedRoles = Object.values(ROLES);
+    const allowedRoles = ["admin", "staff", "tailor", "customer"];
     if (allowedRoles.includes(roleFromUrl)) {
       return roleFromUrl;
     }
-    return ROLES.CUSTOMER;
+    return "customer";
   };
 
   const effectiveRole = normalizeRole();
@@ -115,7 +112,7 @@ export default function RoleBasedLoginPage() {
 
   const validate = () => {
     const rules = {
-      username: [validators.required],
+      phoneOrEmail: [validators.required],
       password: [validators.required, validators.minLength(3)],
     };
 
@@ -144,32 +141,61 @@ export default function RoleBasedLoginPage() {
 
     setIsLoading(true);
 
-    setTimeout(() => {
-      const user = authenticateUser(effectiveRole, formData.username, formData.password);
+    try {
+      // Call backend API
+      const response = await authService.login({
+        phoneOrEmail: formData.phoneOrEmail?.trim(),
+        password: formData.password,
+      });
 
-      if (user) {
-        const finalRole = (user.role || effectiveRole || ROLES.CUSTOMER).toLowerCase();
-        
+      const responseData = response?.data ?? response?.responseData ?? response;
+      const isSuccess =
+        response?.success === true ||
+        response?.responseStatus?.responseCode === "200" ||
+        !!responseData?.accessToken ||
+        !!responseData?.token;
+
+      if (isSuccess && responseData) {
+        const token = responseData.token ?? responseData.accessToken;
+        if (token) {
+          localStorage.setItem("token", token);
+        }
+
+        // Get user profile to determine role
+        const profileResponse = await userService.getProfile();
+        const userData = profileResponse.data ?? profileResponse;
+        const displayName = userData?.name || userData?.fullName || "bạn";
+        const finalRole = (userData.role || effectiveRole || "customer").toLowerCase();
+
         // Remember credentials if checked
         if (formData.rememberMe) {
           localStorage.setItem("rememberedCredentials", JSON.stringify({
-            username: formData.username,
+            phoneOrEmail: formData.phoneOrEmail,
           }));
         } else {
           localStorage.removeItem("rememberedCredentials");
         }
 
+        // Store user data for UI
+        localStorage.setItem("userData", JSON.stringify(userData));
+        localStorage.setItem("isAuthenticated", "true");
+
         // Track login event
         events.LOGIN(effectiveRole);
 
-        showSuccess("Đăng nhập thành công!");
+        showSuccess(`Xin chào, ${displayName}!`);
         navigate(getDashboardRoute(finalRole), { replace: true });
       } else {
         setErrors({ password: "Tên đăng nhập hoặc mật khẩu không đúng" });
         showError("Tên đăng nhập hoặc mật khẩu không đúng");
       }
+    } catch (error) {
+      console.error("Login error:", error);
+      setErrors({ password: error.message || "Đăng nhập thất bại. Vui lòng thử lại." });
+      showError(error.message || "Đăng nhập thất bại. Vui lòng thử lại.");
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
 
   return (
@@ -191,8 +217,8 @@ export default function RoleBasedLoginPage() {
           <form onSubmit={handleSubmit} className="space-y-5">
             {/* Username Field */}
             <div>
-              <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-2">
-                Tên đăng nhập
+                <label htmlFor="phoneOrEmail" className="block text-sm font-medium text-gray-700 mb-2">
+                Số điện thoại hoặc Email
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -201,23 +227,23 @@ export default function RoleBasedLoginPage() {
                   </svg>
                 </div>
                 <input
-                  id="username"
-                  name="username"
+                  id="phoneOrEmail"
+                  name="phoneOrEmail"
                   type="text"
-                  value={formData.username}
+                  value={formData.phoneOrEmail}
                   onChange={handleChange}
                   className={`block w-full pl-10 pr-3 py-3 border rounded-xl focus:ring-2 focus:ring-[#1B4332] focus:border-[#1B4332] transition ${
                     errors.username ? "border-red-300" : "border-gray-300"
                   }`}
-                  placeholder="Nhập tên đăng nhập"
+                  placeholder="Nhập số điện thoại hoặc email"
                   autoComplete="username"
-                  aria-invalid={!!errors.username}
-                  aria-describedby={errors.username ? "username-error" : undefined}
+                  aria-invalid={!!errors.phoneOrEmail}
+                  aria-describedby={errors.phoneOrEmail ? "phoneOrEmail-error" : undefined}
           />
         </div>
-              {errors.username && (
-                <p id="username-error" className="mt-1 text-sm text-red-600" role="alert">
-                  {errors.username}
+              {errors.phoneOrEmail && (
+                <p id="phoneOrEmail-error" className="mt-1 text-sm text-red-600" role="alert">
+                  {errors.phoneOrEmail}
                 </p>
               )}
             </div>
@@ -323,7 +349,7 @@ export default function RoleBasedLoginPage() {
         {/* Back Button */}
           <div className="mt-6 text-center">
             <Link
-              to="/login-selection"
+              to="/login"
               className="text-sm text-gray-600 hover:text-gray-800 transition flex items-center justify-center gap-1"
           >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

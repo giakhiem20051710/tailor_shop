@@ -1,7 +1,6 @@
 import { useNavigate, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { getFabricCart } from "../utils/fabricCartStorage.js";
-import { isAuthenticated, getCurrentUser } from "../utils/authStorage.js";
+import { authService, cartService, userService } from "../services";
 
 const Header = ({ currentPage = "" }) => {
   const navigate = useNavigate();
@@ -15,21 +14,62 @@ const Header = ({ currentPage = "" }) => {
   const [showMobileMenu, setShowMobileMenu] = useState(false);
 
   useEffect(() => {
-    const updateCartCount = () => {
-      const cart = getFabricCart();
-      setCartCount(cart.length);
+    const updateCartCount = async () => {
+      try {
+        if (authService.isAuthenticated()) {
+          const response = await cartService.getCart();
+          const responseData = response?.data ?? response?.responseData ?? response;
+          const isSuccess =
+            response?.success === true ||
+            response?.responseStatus?.responseCode === "200" ||
+            !!responseData?.items ||
+            Array.isArray(responseData);
+          if (isSuccess && responseData) {
+            const items = responseData.items || responseData;
+            setCartCount(items?.length || 0);
+          } else {
+            setCartCount(0);
+          }
+        } else {
+          setCartCount(0);
+        }
+      } catch (error) {
+        console.error("Error fetching cart:", error);
+        setCartCount(0);
+      }
     };
     updateCartCount();
-    const interval = setInterval(updateCartCount, 1000);
+    const interval = setInterval(updateCartCount, 5000); // Update every 5 seconds
     return () => clearInterval(interval);
   }, []);
 
   useEffect(() => {
-    if (isAuthenticated()) {
-      setCurrentUser(getCurrentUser());
-    } else {
-      setCurrentUser(null);
-    }
+    const loadUser = async () => {
+      try {
+        if (authService.isAuthenticated()) {
+          const response = await userService.getProfile();
+          const responseData = response?.data ?? response?.responseData ?? response;
+          const isSuccess =
+            response?.success === true ||
+            response?.responseStatus?.responseCode === "200" ||
+            !!responseData?.email ||
+            !!responseData?.name ||
+            !!responseData?.fullName;
+          if (isSuccess && responseData) {
+            setCurrentUser(responseData);
+            localStorage.setItem("userData", JSON.stringify(responseData));
+          } else {
+            setCurrentUser(null);
+          }
+        } else {
+          setCurrentUser(null);
+        }
+      } catch (error) {
+        console.error("Error loading user:", error);
+        setCurrentUser(null);
+      }
+    };
+    loadUser();
   }, []);
 
   useEffect(() => {
@@ -68,15 +108,14 @@ const Header = ({ currentPage = "" }) => {
 
   const handleLoginClick = (e) => {
     e.preventDefault();
-    navigate("/login-selection");
+    navigate("/login");
   };
 
   const handleLogoutClick = (e) => {
     e.preventDefault();
-    localStorage.removeItem("isAuthenticated");
-    localStorage.removeItem("userRole");
-    localStorage.removeItem("username");
+    authService.logout();
     localStorage.removeItem("userData");
+    localStorage.removeItem("isAuthenticated");
     setCurrentUser(null);
     navigate("/", { replace: true });
   };

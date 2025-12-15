@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { getUsersByRole, ROLES } from "../../utils/authStorage";
-import { updateOrder } from "../../utils/orderStorage";
+import { userService, orderService } from "../../services";
+import { ROLES, getCurrentUser } from "../../utils/authStorage";
 
 export default function TailorAssignment({ order, onUpdate }) {
   const [tailors, setTailors] = useState([]);
@@ -8,18 +8,36 @@ export default function TailorAssignment({ order, onUpdate }) {
   const [isEditing, setIsEditing] = useState(false);
 
   useEffect(() => {
-    const tailorUsers = getUsersByRole(ROLES.TAILOR);
-    setTailors(tailorUsers);
+    const loadTailors = async () => {
+      try {
+        const res = await userService.listTailors({ page: 0, size: 200 });
+        const data = res?.data ?? res?.responseData ?? res;
+        const ok =
+          res?.success === true ||
+          res?.responseStatus?.responseCode === "200" ||
+          !!data?.content;
+        if (ok && data) {
+          setTailors(data.content || data.items || []);
+        }
+      } catch (error) {
+        console.error("Error loading tailors:", error);
+      }
+    };
+    loadTailors();
   }, []);
 
-  const handleAssign = () => {
+  const handleAssign = async () => {
     if (!order) return;
-    
-    const updated = updateOrder(order.id, { assignedTailor: selectedTailor });
-    if (updated && onUpdate) {
-      onUpdate(updated);
+    try {
+      await orderService.updateStatus(order.id, { assignedTailor: selectedTailor });
+      if (onUpdate) {
+        onUpdate({ ...order, assignedTailor: selectedTailor });
+      }
+    } catch (error) {
+      console.error("Error assigning tailor:", error);
+    } finally {
+      setIsEditing(false);
     }
-    setIsEditing(false);
   };
 
   const getTailorName = (tailorId) => {

@@ -2,12 +2,13 @@ package com.example.tailor_shop.modules.product.service.impl;
 
 import com.example.tailor_shop.config.exception.BadRequestException;
 import com.example.tailor_shop.config.exception.NotFoundException;
+import com.example.tailor_shop.modules.favorite.domain.FavoriteItemType;
+import com.example.tailor_shop.modules.favorite.repository.FavoriteRepository;
 import com.example.tailor_shop.modules.product.domain.ProductEntity;
 import com.example.tailor_shop.modules.product.dto.ProductDetailResponse;
 import com.example.tailor_shop.modules.product.dto.ProductFilterRequest;
 import com.example.tailor_shop.modules.product.dto.ProductListItemResponse;
 import com.example.tailor_shop.modules.product.dto.ProductRequest;
-import com.example.tailor_shop.modules.product.repository.FavoriteRepository;
 import com.example.tailor_shop.modules.product.repository.ProductRepository;
 import com.example.tailor_shop.modules.product.service.ProductService;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -53,15 +54,17 @@ public class ProductServiceImpl implements ProductService {
                 pageable
         );
 
-        Set<String> favoriteKeys = null;
+        // Get favorite product keys directly using new generic FavoriteRepository
+        final Set<String> favoriteKeys;
         if (currentUserId != null) {
-            favoriteKeys = favoriteRepository.findProductKeysByCustomerId(currentUserId)
-                    .stream()
-                    .collect(Collectors.toSet());
+            List<String> favoriteKeysList = favoriteRepository.findItemKeysByUserIdAndItemType(
+                    currentUserId, FavoriteItemType.PRODUCT);
+            favoriteKeys = favoriteKeysList.isEmpty() ? Set.of() : new java.util.HashSet<>(favoriteKeysList);
+        } else {
+            favoriteKeys = Set.of();
         }
 
-        final Set<String> finalFavoriteKeys = favoriteKeys;
-        return page.map(entity -> toListItemResponse(entity, finalFavoriteKeys));
+        return page.map(entity -> toListItemResponse(entity, favoriteKeys));
     }
 
     @Override
@@ -72,7 +75,13 @@ public class ProductServiceImpl implements ProductService {
 
         boolean isFavorite = false;
         if (currentUserId != null) {
-            isFavorite = favoriteRepository.existsByCustomerIdAndProductKey(currentUserId, key);
+            // Check if product is favorite using new generic FavoriteRepository
+            // Option 1: By itemKey (product key) - simpler and backward compatible
+            isFavorite = favoriteRepository.existsByUserIdAndItemKey(currentUserId, key);
+            
+            // Option 2: By itemType and itemId (alternative approach)
+            // isFavorite = favoriteRepository.existsByUserIdAndItemTypeAndItemId(
+            //         currentUserId, FavoriteItemType.PRODUCT, entity.getId());
         }
 
         List<ProductListItemResponse> relatedProducts = new ArrayList<>();

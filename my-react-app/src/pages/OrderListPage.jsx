@@ -3,37 +3,55 @@ import { useNavigate, useLocation } from "react-router-dom";
 import StatusBadge from "../components/StatusBadge";
 import ActionMenu from "../components/orders/ActionMenu";
 import DeleteConfirmModal from "../components/orders/DeleteConfirmModal";
-import {
-  getOrders,
-  saveOrders,
-  deleteOrder as deleteOrderFromStorage,
-  updateOrder as updateOrderInStorage,
-  initializeDefaultOrders,
-} from "../utils/orderStorage";
-import { getUsersByRole, ROLES } from "../utils/authStorage";
+import { orderService, userService } from "../services";
+import { showSuccess, showError } from "../components/NotificationToast.jsx";
 
 export default function OrderListPage() {
     const navigate = useNavigate();
     const location = useLocation();
     const [orders, setOrders] = useState([]);
+    const [loading, setLoading] = useState(true);
     const [deleteModal, setDeleteModal] = useState({ isOpen: false, order: null });
     const [tailors, setTailors] = useState([]);
 
     useEffect(() => {
-        const tailorUsers = getUsersByRole(ROLES.TAILOR);
-        setTailors(tailorUsers);
+        loadTailors();
     }, []);
 
-    // Function to reload orders
-    const reloadOrders = () => {
-        setOrders(getOrders());
+    useEffect(() => {
+        loadOrders();
+    }, [location]);
+
+    const loadTailors = async () => {
+        try {
+            const response = await userService.listTailors({ page: 0, size: 100 });
+            if (response.success && response.data) {
+                setTailors(response.data.content || []);
+            }
+        } catch (error) {
+            console.error("Error loading tailors:", error);
+        }
     };
 
-    // Load orders from localStorage on mount and when location changes
-    useEffect(() => {
-        initializeDefaultOrders();
-        reloadOrders();
-    }, [location]);
+    const loadOrders = async () => {
+        try {
+            setLoading(true);
+            const response = await orderService.list({ page: 0, size: 100 });
+            const responseData = response?.data ?? response?.responseData ?? response;
+            const isSuccess =
+                response?.success === true ||
+                response?.responseStatus?.responseCode === "200" ||
+                !!responseData?.content;
+            if (isSuccess && responseData) {
+                setOrders(responseData.content || responseData.items || []);
+            }
+        } catch (error) {
+            console.error("Error loading orders:", error);
+            showError("Không thể tải danh sách đơn hàng");
+        } finally {
+            setLoading(false);
+        }
+    };
 
     // FILTER STATES
     const [search, setSearch] = useState("");
@@ -78,35 +96,43 @@ export default function OrderListPage() {
     // Get tailor name
     const getTailorName = (tailorId) => {
         if (!tailorId) return "-";
-        const tailor = tailors.find(t => t.username === tailorId || t.id === tailorId);
-        return tailor ? tailor.name : tailorId;
+        const tailor = tailors.find(t => t.id === tailorId);
+        return tailor ? (tailor.name || tailor.username) : "-";
     };
 
     // Handle update status
-    const handleUpdateStatus = (orderId, newStatus) => {
-        const updateData = { status: newStatus };
-        // Lưu ngày hoàn thành khi đánh dấu là "Hoàn thành"
-        if (newStatus === "Hoàn thành") {
-            updateData.completedAt = new Date().toISOString();
-        }
-        const updated = updateOrderInStorage(orderId, updateData);
-        if (updated) {
-            setOrders(getOrders());
+    const handleUpdateStatus = async (orderId, newStatus) => {
+        try {
+            await orderService.updateStatus(orderId, { status: newStatus });
+            await loadOrders(); // Refresh
+            showSuccess("Cập nhật trạng thái thành công");
+        } catch (error) {
+            console.error("Error updating order status:", error);
+            showError("Không thể cập nhật trạng thái");
         }
     };
 
-    // Handle delete
+    // Handle delete (Note: Backend may not have delete endpoint, only cancel/void)
     const handleDeleteClick = (orderId) => {
         const order = orders.find((o) => o.id === orderId);
         setDeleteModal({ isOpen: true, order });
     };
 
-    const handleDeleteConfirm = () => {
+    const handleDeleteConfirm = async () => {
         if (deleteModal.order) {
-            const success = deleteOrderFromStorage(deleteModal.order.id);
-            if (success) {
-                setOrders(getOrders());
+            try {
+                // Try to cancel order instead of delete (if status allows)
+                if (deleteModal.order.status === 'NEW' || deleteModal.order.status === 'PENDING') {
+                    await orderService.updateStatus(deleteModal.order.id, { status: 'CANCELLED' });
+                    showSuccess("Đã hủy đơn hàng");
+                } else {
+                    showError("Không thể xóa đơn hàng đã được xử lý");
+                }
+                await loadOrders(); // Refresh
                 setDeleteModal({ isOpen: false, order: null });
+            } catch (error) {
+                console.error("Error deleting order:", error);
+                showError("Không thể xóa đơn hàng");
             }
         }
     };
@@ -215,31 +241,45 @@ export default function OrderListPage() {
                     </thead>
 
                     <tbody>
-                        {paginatedData.map((row, i) => (
-                            <tr key={i} className="border-b hover:bg-gray-50">
-                                <td className="p-3">{row.id}</td>
-                                <td className="p-3">{row.name}</td>
-                                <td className="p-3">{row.phone}</td>
-                                <td className="p-3">
-                                    <span className="text-sm text-gray-600">
-                                        {getTailorName(row.assignedTailor)}
-                                    </span>
-                                </td>
-                                <td className="p-3">{row.receive}</td>
-                                <td className="p-3">{row.due}</td>
-                                <td className="p-3">
-                                    <StatusBadge luxury status={row.status} />
-                                </td>
-                                <td className="p-3">{formatCurrency(row.total)}</td>
-                                <td className="p-3">
-                                    <ActionMenu
-                                        order={row}
-                                        onUpdateStatus={handleUpdateStatus}
-                                        onDelete={handleDeleteClick}
-                                    />
+                        {loading ? (
+                            <tr>
+                                <td colSpan={9} className="p-8 text-center text-gray-500">
+                                    Đang tải dữ liệu...
                                 </td>
                             </tr>
-                        ))}
+                        ) : paginatedData.length === 0 ? (
+                            <tr>
+                                <td colSpan={9} className="p-8 text-center text-gray-500">
+                                    Không có đơn hàng nào
+                                </td>
+                            </tr>
+                        ) : (
+                            paginatedData.map((row, i) => (
+                                <tr key={row.id || i} className="border-b hover:bg-gray-50">
+                                    <td className="p-3">{row.code || row.id}</td>
+                                    <td className="p-3">{row.customerName || row.customer?.name || "-"}</td>
+                                    <td className="p-3">{row.customerPhone || row.customer?.phone || "-"}</td>
+                                    <td className="p-3">
+                                        <span className="text-sm text-gray-600">
+                                            {getTailorName(row.assignedTailorId || row.tailorId)}
+                                        </span>
+                                    </td>
+                                    <td className="p-3">{row.appointmentDate || row.receiveDate || "-"}</td>
+                                    <td className="p-3">{row.dueDate || row.due || "-"}</td>
+                                    <td className="p-3">
+                                        <StatusBadge luxury status={row.status} />
+                                    </td>
+                                    <td className="p-3">{formatCurrency(row.totalAmount || row.total)}</td>
+                                    <td className="p-3">
+                                        <ActionMenu
+                                            order={row}
+                                            onUpdateStatus={handleUpdateStatus}
+                                            onDelete={handleDeleteClick}
+                                        />
+                                    </td>
+                                </tr>
+                            ))
+                        )}
                     </tbody>
                 </table>
 

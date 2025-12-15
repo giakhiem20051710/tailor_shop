@@ -170,7 +170,7 @@ const HomePage = () => {
             <button onClick={() => handleNavigation("/support")}>Hỗ trợ</button>
           </nav>
           <div className="brand-hero__cta">
-            <button className="ghost-btn" onClick={() => handleNavigation("/login-selection")}>
+            <button className="ghost-btn" onClick={() => handleNavigation("/login")}>
               Đăng nhập
             </button>
             <button className="filled-btn" onClick={() => (window.location.href = "/orders/new")}>

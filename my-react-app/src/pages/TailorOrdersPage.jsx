@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { getOrders, updateOrder } from "../utils/orderStorage";
-import { getUsersByRole, ROLES, getCurrentUser } from "../utils/authStorage";
+import { orderService, userService } from "../services";
+import { getCurrentUserRole, getCurrentUser, ROLES } from "../utils/authStorage";
 import StatusBadge from "../components/StatusBadge";
 
 export default function TailorOrdersPage() {
@@ -13,29 +13,53 @@ export default function TailorOrdersPage() {
   const [statusFilter, setStatusFilter] = useState("Tất cả");
 
   useEffect(() => {
-    const allOrders = getOrders();
-    setOrders(allOrders);
-    
-    const tailorUsers = getUsersByRole(ROLES.TAILOR);
-    setTailors(tailorUsers);
-
-    // If tailorId is provided, set it
-    if (tailorId) {
-      setSelectedTailor(tailorId);
-    } else {
-      // If current user is a tailor, show their orders
-      const currentUser = getCurrentUser();
-      if (currentUser?.role === ROLES.TAILOR) {
-        setSelectedTailor(currentUser.username);
-      }
-    }
+    loadData();
   }, [tailorId]);
+
+  const loadData = async () => {
+    try {
+      // Load tailors
+      const tailorsRes = await userService.listTailors({ page: 0, size: 200 });
+      const tailorsData = tailorsRes?.data ?? tailorsRes?.responseData ?? tailorsRes;
+      const tailorsOk =
+        tailorsRes?.success === true ||
+        tailorsRes?.responseStatus?.responseCode === "200" ||
+        !!tailorsData?.content;
+      if (tailorsOk && tailorsData) {
+        setTailors(tailorsData.content || tailorsData.items || []);
+      }
+
+      // Determine default tailor
+      if (tailorId) {
+        setSelectedTailor(tailorId);
+      } else {
+        const currentUser = getCurrentUser();
+        if (currentUser?.role === ROLES.TAILOR) {
+          setSelectedTailor(currentUser.username || currentUser.id);
+        }
+      }
+
+      // Load orders
+      const currentTailor = tailorId || getCurrentUser()?.username || getCurrentUser()?.id;
+      const response = await orderService.list({ assignedTailor: currentTailor, page: 0, size: 500 });
+      const responseData = response?.data ?? response?.responseData ?? response;
+      const isSuccess =
+        response?.success === true ||
+        response?.responseStatus?.responseCode === "200" ||
+        !!responseData?.content;
+      if (isSuccess && responseData) {
+        setOrders(responseData.content || responseData.items || []);
+      }
+    } catch (error) {
+      console.error("Error loading tailor orders:", error);
+    }
+  };
 
   // Filter orders by selected tailor
   const filteredOrders = useMemo(() => {
     let filtered = orders.filter(order => {
       if (!selectedTailor) return false;
-      return order.assignedTailor === selectedTailor;
+      return order.assignedTailor === selectedTailor || order.assignedTailor === Number(selectedTailor);
     });
 
     // Apply status filter
@@ -58,15 +82,12 @@ export default function TailorOrdersPage() {
     return tailor ? tailor.name : tailorId;
   };
 
-  const handleStatusUpdate = (orderId, newStatus) => {
-    const updateData = { status: newStatus };
-    // Lưu ngày hoàn thành khi đánh dấu là "Hoàn thành"
-    if (newStatus === "Hoàn thành") {
-      updateData.completedAt = new Date().toISOString();
-    }
-    const updated = updateOrder(orderId, updateData);
-    if (updated) {
-      setOrders(getOrders());
+  const handleStatusUpdate = async (orderId, newStatus) => {
+    try {
+      await orderService.updateStatus(orderId, { status: newStatus });
+      await loadData();
+    } catch (error) {
+      console.error("Error updating order status:", error);
     }
   };
 

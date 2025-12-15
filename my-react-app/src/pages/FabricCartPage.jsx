@@ -2,18 +2,15 @@ import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import Header from "../components/Header.jsx";
 import usePageMeta from "../hooks/usePageMeta.jsx";
-import {
-  getFabricCart,
-  removeFromFabricCart,
-  updateFabricCartQuantity,
-  getFabricCartTotal,
-  clearFabricCart,
-} from "../utils/fabricCartStorage.js";
+import { cartService, authService } from "../services";
+import { showError, showSuccess } from "../components/NotificationToast.jsx";
 
 export default function FabricCartPage() {
   const navigate = useNavigate();
   const location = useLocation();
+  const [cart, setCart] = useState(null);
   const [cartItems, setCartItems] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [selectedItems, setSelectedItems] = useState(new Set());
   const [promoCode, setPromoCode] = useState("");
   const [discount, setDiscount] = useState(0);
@@ -25,73 +22,105 @@ export default function FabricCartPage() {
   });
 
   useEffect(() => {
-    const cart = getFabricCart();
-    setCartItems(cart);
-    
-    // Kiểm tra nếu có sản phẩm vừa thêm từ "Mua ngay"
-    const justAddedKey = location.state?.justAdded;
-    if (justAddedKey) {
-      // Chỉ tick chọn sản phẩm vừa thêm
-      setSelectedItems(new Set([justAddedKey]));
-      // Xóa state để lần sau vào trang sẽ không bị ảnh hưởng
-      window.history.replaceState({}, document.title);
+    if (authService.isAuthenticated()) {
+      loadCart();
     } else {
-      // Nếu không có sản phẩm vừa thêm, tự động chọn tất cả
-      setSelectedItems(new Set(cart.map((item) => item.key)));
+      setLoading(false);
     }
-  }, [location.state]);
+  }, []);
 
-  const formatPrice = (price) => {
-    return new Intl.NumberFormat("vi-VN").format(price) + " ₫";
+  useEffect(() => {
+    if (cart?.items) {
+      setCartItems(cart.items);
+      // Kiểm tra nếu có sản phẩm vừa thêm từ "Mua ngay"
+      const justAddedKey = location.state?.justAdded;
+      if (justAddedKey) {
+        setSelectedItems(new Set([justAddedKey]));
+        window.history.replaceState({}, document.title);
+      } else {
+        // Tự động chọn tất cả
+        setSelectedItems(new Set(cart.items.map((item) => item.id)));
+      }
+    }
+  }, [cart, location.state]);
+
+  const loadCart = async () => {
+    try {
+      setLoading(true);
+      const response = await cartService.getCart();
+      if (response.success && response.data) {
+        setCart(response.data);
+        setCartItems(response.data.items || []);
+      }
+    } catch (error) {
+      console.error("Error loading cart:", error);
+      showError("Không thể tải giỏ hàng");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const getPriceValue = (priceStr) => {
-    const match = priceStr?.match(/[\d.]+/);
-    if (match) {
-      return parseInt(match[0].replace(/\./g, ""), 10);
+  const formatPrice = (price) => {
+    if (typeof price === 'number') {
+      return new Intl.NumberFormat("vi-VN").format(price) + " ₫";
     }
-    return 0;
+    return price || "0 ₫";
   };
 
   const handleSelectAll = (checked) => {
     if (checked) {
-      setSelectedItems(new Set(cartItems.map((item) => item.key)));
+      setSelectedItems(new Set(cartItems.map((item) => item.id)));
     } else {
       setSelectedItems(new Set());
     }
   };
 
-  const handleSelectItem = (key, checked) => {
+  const handleSelectItem = (id, checked) => {
     const newSelected = new Set(selectedItems);
     if (checked) {
-      newSelected.add(key);
+      newSelected.add(id);
     } else {
-      newSelected.delete(key);
+      newSelected.delete(id);
     }
     setSelectedItems(newSelected);
   };
 
-  const handleRemoveItem = (key) => {
-    removeFromFabricCart(key);
-    const updated = getFabricCart();
-    setCartItems(updated);
-    const newSelected = new Set(selectedItems);
-    newSelected.delete(key);
-    setSelectedItems(newSelected);
+  const handleRemoveItem = async (id) => {
+    try {
+      await cartService.removeFromCart(id);
+      await loadCart(); // Refresh
+      const newSelected = new Set(selectedItems);
+      newSelected.delete(id);
+      setSelectedItems(newSelected);
+      showSuccess("Đã xóa sản phẩm khỏi giỏ hàng");
+    } catch (error) {
+      console.error("Error removing item:", error);
+      showError("Không thể xóa sản phẩm");
+    }
   };
 
-  const handleQuantityChange = (key, newQuantity) => {
-    updateFabricCartQuantity(key, newQuantity);
-    const updated = getFabricCart();
-    setCartItems(updated);
+  const handleQuantityChange = async (id, newQuantity) => {
+    try {
+      await cartService.updateCartItem(id, newQuantity);
+      await loadCart(); // Refresh
+    } catch (error) {
+      console.error("Error updating quantity:", error);
+      showError("Không thể cập nhật số lượng");
+    }
   };
 
   const selectedItemsList = cartItems.filter((item) =>
-    selectedItems.has(item.key)
+    selectedItems.has(item.id)
   );
 
   const subtotal = selectedItemsList.reduce((sum, item) => {
-    return sum + getPriceValue(item.price) * (item.quantity || 1);
+    const price = typeof item.itemPrice === 'number' 
+      ? item.itemPrice 
+      : (typeof item.itemPrice === 'string' 
+          ? parseFloat(item.itemPrice.replace(/[^\d]/g, '')) || 0 
+          : 0);
+    const quantity = parseFloat(item.quantity) || 1;
+    return sum + price * quantity;
   }, 0);
 
   const totalDiscount = discount;
@@ -103,12 +132,13 @@ export default function FabricCartPage() {
 
   const handleConfirmOrder = () => {
     if (selectedItemsList.length === 0) {
-      alert("Vui lòng chọn ít nhất một sản phẩm");
+      showError("Vui lòng chọn ít nhất một sản phẩm");
       return;
     }
     // Chuyển đến trang checkout với các sản phẩm đã chọn
     navigate("/checkout", {
       state: {
+        cartItemIds: selectedItemsList.map(item => item.id),
         items: selectedItemsList,
         total: finalTotal,
         discount: totalDiscount,
@@ -116,6 +146,46 @@ export default function FabricCartPage() {
       },
     });
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#F5F3EF] text-[#1F2933] body-font antialiased">
+        <Header currentPage="/cart" />
+        <main className="pt-[170px] md:pt-[190px] pb-16">
+          <div className="max-w-7xl mx-auto px-5 lg:px-8 text-center py-20">
+            <p className="text-[#6B7280]">Đang tải giỏ hàng...</p>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  if (!authService.isAuthenticated()) {
+    return (
+      <div className="min-h-screen bg-[#F5F3EF] text-[#1F2933] body-font antialiased">
+        <Header currentPage="/cart" />
+        <main className="pt-[170px] md:pt-[190px] pb-16">
+          <div className="max-w-7xl mx-auto px-5 lg:px-8">
+            <div className="bg-white rounded-lg border border-[#E5E7EB] p-10 text-center">
+              <p className="text-4xl mb-4">🔒</p>
+              <h2 className="text-[20px] font-semibold text-[#111827] mb-2">
+                Vui lòng đăng nhập
+              </h2>
+              <p className="text-[13px] text-[#6B7280] mb-4">
+                Bạn cần đăng nhập để xem giỏ hàng.
+              </p>
+              <button
+                onClick={() => navigate("/login")}
+                className="px-6 py-3 rounded-full bg-[#1B4332] text-white text-[13px] font-medium hover:bg-[#14532d]"
+              >
+                Đăng nhập ngay
+              </button>
+            </div>
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#F5F3EF] text-[#1F2933] body-font antialiased">
@@ -169,13 +239,17 @@ export default function FabricCartPage() {
                     </div>
                   ) : (
                     cartItems.map((item) => {
-                      const isSelected = selectedItems.has(item.key);
-                      const priceValue = getPriceValue(item.price);
-                      const originalPrice = Math.round(priceValue * 1.5); // Giả định giá gốc cao hơn 50%
+                      const isSelected = selectedItems.has(item.id);
+                      const priceValue = typeof item.itemPrice === 'number' 
+                        ? item.itemPrice 
+                        : (typeof item.itemPrice === 'string' 
+                            ? parseFloat(item.itemPrice.replace(/[^\d]/g, '')) || 0 
+                            : 0);
+                      const quantity = parseFloat(item.quantity) || 1;
 
                       return (
                         <div
-                          key={item.key}
+                          key={item.id}
                           className="flex gap-4 pb-4 border-b border-[#E5E7EB] last:border-b-0"
                         >
                           {/* Checkbox */}
@@ -184,7 +258,7 @@ export default function FabricCartPage() {
                               type="checkbox"
                               checked={isSelected}
                               onChange={(e) =>
-                                handleSelectItem(item.key, e.target.checked)
+                                handleSelectItem(item.id, e.target.checked)
                               }
                               className="w-5 h-5 rounded border-[#D1D5DB] text-[#F97316] focus:ring-[#F97316] mt-1"
                             />
@@ -193,8 +267,8 @@ export default function FabricCartPage() {
                           {/* Product Image */}
                           <div className="w-20 h-20 rounded-lg overflow-hidden flex-shrink-0">
                             <img
-                              src={item.image}
-                              alt={item.name}
+                              src={item.itemImage || "https://via.placeholder.com/400"}
+                              alt={item.itemName || "Sản phẩm"}
                               className="w-full h-full object-cover"
                             />
                           </div>
@@ -202,19 +276,16 @@ export default function FabricCartPage() {
                           {/* Product Info */}
                           <div className="flex-1 min-w-0">
                             <h3 className="text-[14px] font-medium text-[#111827] mb-2 line-clamp-2">
-                              {item.name}
+                              {item.itemName || "Sản phẩm"}
                             </h3>
                             <div className="mb-2">
-                              <select className="text-[12px] border border-[#E5E7EB] rounded px-2 py-1">
-                                <option>Màu: Mặc định</option>
-                              </select>
+                              <span className="text-[12px] text-[#6B7280]">
+                                Loại: {item.itemType}
+                              </span>
                             </div>
                             <div className="flex items-center gap-2 mb-2">
                               <span className="text-[16px] font-semibold text-[#F97316]">
                                 {formatPrice(priceValue)}
-                              </span>
-                              <span className="text-[13px] text-[#9CA3AF] line-through">
-                                {formatPrice(originalPrice)}
                               </span>
                             </div>
 
@@ -223,8 +294,8 @@ export default function FabricCartPage() {
                               <button
                                 onClick={() =>
                                   handleQuantityChange(
-                                    item.key,
-                                    Math.max(1, (item.quantity || 1) - 1)
+                                    item.id,
+                                    Math.max(0.1, quantity - 0.1)
                                   )
                                 }
                                 className="w-8 h-8 border border-[#E5E7EB] rounded flex items-center justify-center hover:bg-[#F9FAFB] transition-colors"
@@ -233,21 +304,23 @@ export default function FabricCartPage() {
                               </button>
                               <input
                                 type="number"
-                                min={1}
-                                value={item.quantity || 1}
+                                min={0.1}
+                                step={0.1}
+                                value={quantity}
                                 onChange={(e) =>
                                   handleQuantityChange(
-                                    item.key,
-                                    Math.max(1, parseInt(e.target.value || "1", 10))
+                                    item.id,
+                                    Math.max(0.1, parseFloat(e.target.value || "1"))
                                   )
                                 }
-                                className="w-12 text-center border border-[#E5E7EB] rounded py-1 text-[13px] outline-none"
+                                className="w-16 text-center border border-[#E5E7EB] rounded py-1 text-[13px] outline-none"
                               />
+                              <span className="text-[12px] text-[#6B7280]">m</span>
                               <button
                                 onClick={() =>
                                   handleQuantityChange(
-                                    item.key,
-                                    (item.quantity || 1) + 1
+                                    item.id,
+                                    quantity + 0.1
                                   )
                                 }
                                 className="w-8 h-8 border border-[#E5E7EB] rounded flex items-center justify-center hover:bg-[#F9FAFB] transition-colors"
@@ -259,7 +332,7 @@ export default function FabricCartPage() {
 
                           {/* Remove Button */}
                           <button
-                            onClick={() => handleRemoveItem(item.key)}
+                            onClick={() => handleRemoveItem(item.id)}
                             className="w-8 h-8 flex items-center justify-center hover:bg-[#F9FAFB] rounded transition-colors flex-shrink-0"
                           >
                             <svg

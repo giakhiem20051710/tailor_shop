@@ -6,7 +6,7 @@ import SampleImagesDisplay from "../components/orders/SampleImagesDisplay";
 import TailorAssignment from "../components/orders/TailorAssignment";
 import AppointmentManager from "../components/orders/AppointmentManager";
 import CorrectionNotes from "../components/orders/CorrectionNotes";
-import { getOrderById } from "../utils/orderStorage";
+import { orderService } from "../services";
 import { getCurrentUserRole, ROLES } from "../utils/authStorage";
 
 export default function OrderDetailPage() {
@@ -17,15 +17,25 @@ export default function OrderDetailPage() {
   const userRole = getCurrentUserRole();
   const isCustomer = userRole === ROLES.CUSTOMER;
 
-  const loadOrder = () => {
-    const orderData = getOrderById(id);
-    if (orderData) {
-      setOrder(orderData);
-    } else {
-      // Order not found, redirect to list
+  const loadOrder = async () => {
+    try {
+      const response = await orderService.getDetail(id);
+      const responseData = response?.data ?? response?.responseData ?? response;
+      const isSuccess =
+        response?.success === true ||
+        response?.responseStatus?.responseCode === "200" ||
+        !!responseData?.id;
+      if (isSuccess && responseData) {
+        setOrder(responseData);
+      } else {
+        navigate("/orders");
+      }
+    } catch (error) {
+      console.error("Error loading order detail:", error);
       navigate("/orders");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   useEffect(() => {
