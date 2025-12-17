@@ -107,17 +107,39 @@ export default function LoginPage() {
           }
           localStorage.setItem("userData", JSON.stringify(userData));
           localStorage.setItem("isAuthenticated", "true");
+
+          // Hỗ trợ nhiều kiểu dữ liệu role trả về từ BE:
+          // - roleCode: "admin" | "staff" | "customer" (ưu tiên)
+          // - role là string: "admin", "staff", "customer"
+          // - role là object: { code: "admin", name: "Quản trị" }
+          const rawRole =
+            userData.roleCode ||
+            (userData.role && userData.role.code) ||
+            userData.role ||
+            "customer";
+          const normalizedRole = String(rawRole).toLowerCase();
+          const username =
+            userData.username || userData.email || userData.phone || userData.fullName;
+          localStorage.setItem("userRole", normalizedRole);
+          if (username) {
+            localStorage.setItem("username", username);
+          }
           events.LOGIN("standard");
 
-          const role = userData.role?.toLowerCase() || "customer";
+          const role = normalizedRole;
           const displayName = userData?.name || userData?.fullName || "bạn";
+
+          // Điều hướng theo role:
+          // - admin / staff: vào Admin Dashboard
+          // - tailor: vào Tailor Dashboard
+          // - customer: về trang chủ khách hàng (không phải admin dashboard)
           const dashboardRoutes = {
             admin: "/dashboard",
             staff: "/dashboard",
             tailor: "/tailor/dashboard",
-            customer: "/customer/dashboard",
+            customer: "/customer-home",
           };
-          const targetRoute = dashboardRoutes[role] || "/customer/dashboard";
+          const targetRoute = dashboardRoutes[role] || "/customer-home";
           showSuccess(`Xin chào, ${displayName}!`);
           navigate(targetRoute, { replace: true });
         } else {

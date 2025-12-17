@@ -3,6 +3,7 @@ package com.example.tailor_shop.modules.order.service;
 import com.example.tailor_shop.modules.order.domain.OrderStatus;
 import com.example.tailor_shop.modules.order.dto.OrderResquest;
 import com.example.tailor_shop.modules.order.dto.OrderResponse;
+import com.example.tailor_shop.modules.order.dto.OrderWizardRequest;
 import com.example.tailor_shop.modules.order.dto.UpdateOrderStatusRequest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -31,4 +32,6 @@ public interface OrderService {
     OrderResponse tracking(Long id, Long currentUserId, boolean isCustomer);
 
     OrderResponse uploadAttachment(Long id, org.springframework.web.multipart.MultipartFile file, Long currentUserId);
+
+    OrderResponse createWizard(OrderWizardRequest request);
 }

@@ -19,6 +19,7 @@ const DashboardPage = lazy(() => import("./pages/DashboardPage.jsx"));
 const OrderListPage = lazy(() => import("./pages/OrderListPage.jsx"));
 const OrderFormPage = lazy(() => import("./pages/OrderFormPage.jsx"));
 const OrderDetailPage = lazy(() => import("./pages/OrderDetailPage.jsx"));
+const OrderQuotePage = lazy(() => import("./pages/OrderQuotePage.jsx"));
 
 const CustomerListPage = lazy(() => import("./pages/CustomerListPage.jsx"));
 const TailorListPage = lazy(() => import("./pages/TailorListPage.jsx"));
@@ -145,6 +146,7 @@ export default function App() {
           <Route path="/orders" element={<OrderListPage />} />
           <Route path="/orders/new" element={<OrderFormPage />} />
           <Route path="/orders/edit/:id" element={<OrderFormPage />} />
+          <Route path="/orders/:id/quote" element={<OrderQuotePage />} />
           <Route path="/orders/:id" element={<OrderDetailPage />} />
           <Route path="/customers" element={<CustomerListPage />} />
           <Route path="/tailors" element={<TailorListPage />} />

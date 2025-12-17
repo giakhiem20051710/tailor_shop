@@ -8,6 +8,7 @@ import {
   getReferralByCode,
   recordReferralOnOrderCreated,
 } from "../utils/referralStorage.js";
+import { addAppointment } from "../utils/appointmentStorage.js";
 import usePageMeta from "../hooks/usePageMeta";
 
 const WELCOME_VOUCHER_CODE = "FRIEND-10";
@@ -33,13 +34,18 @@ const CustomerOrderPage = () => {
     measurements: {
       height: "",
       weight: "",
+      neck: "",
       chest: "",
       waist: "",
       hips: "",
+      bicep: "",
       shoulder: "",
       sleeve: "",
       pantsLength: "",
       shirtLength: "",
+      thigh: "",
+      crotch: "",
+      ankle: "",
     },
     appointmentType: "pickup", // pickup hoặc delivery
     appointmentTime: "",
@@ -52,6 +58,7 @@ const CustomerOrderPage = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [referralError, setReferralError] = useState("");
   const [referralVoucher, setReferralVoucher] = useState("");
+  const [hintModal, setHintModal] = useState(null); // { title, content }
 
   usePageMeta({
     title: "Form đặt may theo số đo | Đặt lịch tư vấn My Hiền Tailor",
@@ -73,6 +80,21 @@ const CustomerOrderPage = () => {
 
     checkAuth();
   }, []);
+
+  // Prefill thông tin liên hệ từ profile sau khi đăng nhập
+  useEffect(() => {
+    if (!isLoggedIn) return;
+    const currentUser = getCurrentUser();
+    if (!currentUser) return;
+
+    setFormData((prev) => ({
+      ...prev,
+      name: prev.name || currentUser.name || currentUser.fullName || "",
+      phone: prev.phone || currentUser.phone || "",
+      email: prev.email || currentUser.email || "",
+      address: prev.address || currentUser.address || "",
+    }));
+  }, [isLoggedIn]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -120,6 +142,47 @@ const CustomerOrderPage = () => {
     return Number.isNaN(num) ? null : num;
   };
 
+  // Simple product type helpers to show relevant fields
+  const productTypeText = (formData.productType || formData.productName || "").toLowerCase();
+  const isShirt = /áo|shirt|sơ mi|vest/.test(productTypeText);
+  const isPant = /quần|pant|trouser|jean/.test(productTypeText);
+
+  const measurementHints = {
+    height: "Đứng thẳng lưng, không đi giày, đo từ gót đến đỉnh đầu.",
+    weight: "Cân trên cân điện tử, không mang nhiều đồ.",
+    chest: "Quấn thước qua điểm nở nhất của ngực, thở bình thường.",
+    waist: "Đo ngang rốn (eo thật). Với quần có thể đo thêm vị trí đeo thắt lưng thấp.",
+    hip: "Đo qua điểm nở nhất của mông.",
+    shoulder: "Đo ngang lưng từ mỏm vai trái sang mỏm vai phải.",
+    sleeve: "Đo từ đỉnh vai xuống qua khuỷu đến xương cổ tay.",
+    bicep: "Đo vòng qua điểm to nhất của bắp tay.",
+    neck: "Quấn thước quanh gốc cổ, chừa 1 ngón tay để thoải mái.",
+    shirtLength: "Đo từ đỉnh vai xuống vị trí mong muốn (thường qua mông).",
+    thigh: "Đo vòng qua điểm to nhất của đùi.",
+    crotch: "Đo từ cạp quần phía trước qua đáy lên cạp sau.",
+    ankle: "Đo vòng ống tại gấu (cổ chân) hoặc độ rộng mong muốn.",
+    pantsLength: "Đo từ cạp đến gấu theo chiều dài mong muốn.",
+  };
+
+  const renderLabelWithHint = (label, hintKey) => (
+    <div className="flex items-center gap-2">
+      <span>{label}</span>
+      {hintKey && (
+        <span
+          className="text-xs text-[#1B4332] bg-[#E6F4EA] rounded-full px-2 py-0.5 cursor-help"
+          onClick={() =>
+            setHintModal({
+              title: label,
+              content: measurementHints[hintKey] || "Hướng dẫn đang được cập nhật.",
+            })
+          }
+        >
+          ?
+        </span>
+      )}
+    </div>
+  );
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -161,41 +224,42 @@ const CustomerOrderPage = () => {
       hip: toNumber(formData.measurements.hips || formData.measurements.hip),
       shoulder: toNumber(formData.measurements.shoulder),
       sleeve: toNumber(formData.measurements.sleeve || formData.measurements.sleeveLength),
+      bicep: toNumber(formData.measurements.bicep),
       height: toNumber(formData.measurements.height),
       weight: toNumber(formData.measurements.weight),
+      neck: toNumber(formData.measurements.neck),
+      thigh: toNumber(formData.measurements.thigh),
+      crotch: toNumber(formData.measurements.crotch),
+      ankle: toNumber(formData.measurements.ankle),
+      shirtLength: toNumber(formData.measurements.shirtLength),
+      pantsLength: toNumber(formData.measurements.pantsLength),
       note: formData.description || formData.notes || "",
     };
 
-    const newOrder = {
+    const wizardOrder = {
+      customerId: currentUser?.id || currentUser?.userId,
+      contact: {
       name: formData.name,
       phone: formData.phone,
       email: formData.email,
       address: formData.address,
+      },
+      product: {
       productName: formData.productName,
       productType: formData.productType,
       description: formData.description,
       budget: parsedBudget,
-      dueDate: formData.dueDate,
+        dueDate: formData.dueDate || null,
       notes: formData.notes,
-      measurements: measurement,
       appointmentType: formData.appointmentType,
       appointmentTime: formData.appointmentTime,
-      appointmentDate,
       promoCode: formData.promoCode,
-      receive: new Date().toISOString().split("T")[0],
-      due: formData.dueDate || "",
-      total: parsedBudget,
-      status: "NEW",
-      sampleImages: null,
-      customerId: currentUser?.id || currentUser?.userId,
-      createdAt: new Date().toISOString(),
-      referralCode: referralMeta ? referralMeta.profile.code : referralInput || undefined,
-      referrerId: referralMeta?.customerId,
-      referralStatus: referralMeta ? "pending" : undefined,
+      },
+      measurement,
     };
 
     try {
-      const response = await orderService.create(newOrder);
+      const response = await orderService.createWizard(wizardOrder);
       const responseData = response?.data ?? response?.responseData ?? response;
       const isSuccess =
         response?.success === true ||
@@ -221,14 +285,47 @@ const CustomerOrderPage = () => {
             ...formData.measurements,
             hip: formData.measurements.hips || formData.measurements.hip,
             sleeveLength: formData.measurements.sleeve || formData.measurements.sleeveLength,
+            neck: formData.measurements.neck,
+            thigh: formData.measurements.thigh,
+            crotch: formData.measurements.crotch,
+            ankle: formData.measurements.ankle,
             orderId: responseData.id || responseData.orderId,
           };
           saveCustomerMeasurements(customerId, measurementsToSave);
         }
 
+        // Tự động tạo appointment nếu order có appointmentDate hoặc dueDate
+        const appointmentDate = responseData.appointmentDate || responseData.dueDate || formData.dueDate;
+        if (appointmentDate && currentUser) {
+          const customerId = currentUser.id || currentUser.userId || currentUser.username || currentUser.phone;
+          const orderId = responseData.id || responseData.orderId;
+          
+          // Xác định loại appointment dựa trên appointmentType hoặc mặc định là "measure"
+          const appointmentType = formData.appointmentType || "measure";
+          
+          // Tạo appointment với thông tin từ order
+          try {
+            addAppointment({
+              customerId: customerId,
+              orderId: orderId,
+              slotId: null, // Sẽ được gán sau khi có slot cụ thể
+              type: appointmentType, // "consult", "measure", "fitting", "pickup"
+              status: "pending",
+              appointmentDate: appointmentDate, // Lưu ngày hẹn từ order
+              appointmentTime: formData.appointmentTime || null, // Thời gian nếu có
+            });
+            console.log("Đã tạo appointment tự động cho order:", orderId);
+          } catch (error) {
+            console.error("Lỗi khi tạo appointment:", error);
+            // Không block flow nếu tạo appointment lỗi
+          }
+        }
+
         setShowSuccess(true);
         setTimeout(() => {
-          navigate("/customer/dashboard");
+          navigate("/customer/dashboard", { 
+            state: { orderCreated: true, orderId: responseData.id } 
+          });
         }, 2000);
       } else {
         alert("Đặt đơn không thành công. Vui lòng thử lại.");
@@ -327,6 +424,33 @@ const CustomerOrderPage = () => {
             <p className="text-xs text-[#9CA3AF]">
               Hệ thống sẽ tự động chuyển bạn về trang quản lý đơn hàng sau giây lát...
             </p>
+          </div>
+        </div>
+      )}
+
+      {/* Hint modal */}
+      {hintModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-lg font-semibold text-[#111827]">{hintModal.title}</h3>
+              <button
+                onClick={() => setHintModal(null)}
+                className="text-[#6B7280] hover:text-[#111827]"
+                aria-label="Đóng"
+              >
+                ✕
+              </button>
+            </div>
+            <p className="text-sm text-[#374151] leading-relaxed">{hintModal.content}</p>
+            <div className="mt-4 text-right">
+              <button
+                onClick={() => setHintModal(null)}
+                className="px-4 py-2 text-sm font-medium bg-[#1B4332] text-white rounded-lg hover:bg-[#14532d] transition"
+              >
+                Đã hiểu
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -611,13 +735,13 @@ const CustomerOrderPage = () => {
                 </h2>
                 <p className="text-sm text-[#6B7280] mb-6">
                   Nếu bạn đã có số đo, vui lòng điền vào. Nếu chưa, chúng tôi
-                  sẽ đo khi bạn đến tiệm.
+                  sẽ đo khi bạn đến tiệm. Nhấn vào dấu ? để xem hướng dẫn nhanh.
                 </p>
 
                 <div className="grid md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-[#374151] mb-2">
-                      Chiều cao (cm)
+                      {renderLabelWithHint("Chiều cao (cm)", "height")}
                     </label>
                     <input
                       type="number"
@@ -630,7 +754,7 @@ const CustomerOrderPage = () => {
 
                   <div>
                     <label className="block text-sm font-medium text-[#374151] mb-2">
-                      Cân nặng (kg)
+                      {renderLabelWithHint("Cân nặng (kg)", "weight")}
                     </label>
                     <input
                       type="number"
@@ -643,7 +767,7 @@ const CustomerOrderPage = () => {
 
                   <div>
                     <label className="block text-sm font-medium text-[#374151] mb-2">
-                      Vòng ngực (cm)
+                      {renderLabelWithHint("Vòng ngực (cm)", "chest")}
                     </label>
                     <input
                       type="number"
@@ -656,7 +780,7 @@ const CustomerOrderPage = () => {
 
                   <div>
                     <label className="block text-sm font-medium text-[#374151] mb-2">
-                      Vòng eo (cm)
+                      {renderLabelWithHint("Vòng eo (cm)", "waist")}
                     </label>
                     <input
                       type="number"
@@ -669,7 +793,7 @@ const CustomerOrderPage = () => {
 
                   <div>
                     <label className="block text-sm font-medium text-[#374151] mb-2">
-                      Vòng mông (cm)
+                      {renderLabelWithHint("Vòng mông (cm)", "hip")}
                     </label>
                     <input
                       type="number"
@@ -680,9 +804,10 @@ const CustomerOrderPage = () => {
                     />
                   </div>
 
+                  {(!isPant || isShirt) && (
                   <div>
                     <label className="block text-sm font-medium text-[#374151] mb-2">
-                      Vai (cm)
+                      {renderLabelWithHint("Vai (cm)", "shoulder")}
                     </label>
                     <input
                       type="number"
@@ -692,10 +817,12 @@ const CustomerOrderPage = () => {
                       className="w-full px-4 py-2.5 border border-[#E5E7EB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B4332] focus:border-transparent"
                     />
                   </div>
+                  )}
 
+                  {(!isPant || isShirt) && (
                   <div>
                     <label className="block text-sm font-medium text-[#374151] mb-2">
-                      Tay áo (cm)
+                      {renderLabelWithHint("Tay áo (cm)", "sleeve")}
                     </label>
                     <input
                       type="number"
@@ -705,10 +832,42 @@ const CustomerOrderPage = () => {
                       className="w-full px-4 py-2.5 border border-[#E5E7EB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B4332] focus:border-transparent"
                     />
                   </div>
+                  )}
 
+                  {(!isPant || isShirt) && (
                   <div>
                     <label className="block text-sm font-medium text-[#374151] mb-2">
-                      Dài áo (cm)
+                      {renderLabelWithHint("Bắp tay (cm)", "bicep")}
+                    </label>
+                    <input
+                      type="number"
+                      name="measurements.bicep"
+                      value={formData.measurements.bicep}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-2.5 border border-[#E5E7EB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B4332] focus:border-transparent"
+                    />
+                  </div>
+                  )}
+
+                  {(!isPant || isShirt) && (
+                  <div>
+                    <label className="block text-sm font-medium text-[#374151] mb-2">
+                      {renderLabelWithHint("Vòng cổ (cm)", "neck")}
+                    </label>
+                    <input
+                      type="number"
+                      name="measurements.neck"
+                      value={formData.measurements.neck}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-2.5 border border-[#E5E7EB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B4332] focus:border-transparent"
+                    />
+                  </div>
+                  )}
+
+                  {(!isPant || isShirt) && (
+                  <div>
+                    <label className="block text-sm font-medium text-[#374151] mb-2">
+                      {renderLabelWithHint("Dài áo (cm)", "shirtLength")}
                     </label>
                     <input
                       type="number"
@@ -718,10 +877,57 @@ const CustomerOrderPage = () => {
                       className="w-full px-4 py-2.5 border border-[#E5E7EB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B4332] focus:border-transparent"
                     />
                   </div>
+                  )}
 
+                  {(isPant || !isShirt) && (
                   <div>
                     <label className="block text-sm font-medium text-[#374151] mb-2">
-                      Dài quần (cm)
+                      {renderLabelWithHint("Đùi (cm)", "thigh")}
+                    </label>
+                    <input
+                      type="number"
+                      name="measurements.thigh"
+                      value={formData.measurements.thigh}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-2.5 border border-[#E5E7EB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B4332] focus:border-transparent"
+                    />
+                  </div>
+                  )}
+
+                  {(isPant || !isShirt) && (
+                  <div>
+                    <label className="block text-sm font-medium text-[#374151] mb-2">
+                      {renderLabelWithHint("Hạ đáy (cm)", "crotch")}
+                    </label>
+                    <input
+                      type="number"
+                      name="measurements.crotch"
+                      value={formData.measurements.crotch}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-2.5 border border-[#E5E7EB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B4332] focus:border-transparent"
+                    />
+                  </div>
+                  )}
+
+                  {(isPant || !isShirt) && (
+                  <div>
+                    <label className="block text-sm font-medium text-[#374151] mb-2">
+                      {renderLabelWithHint("Ống quần (cm)", "ankle")}
+                    </label>
+                    <input
+                      type="number"
+                      name="measurements.ankle"
+                      value={formData.measurements.ankle}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-2.5 border border-[#E5E7EB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B4332] focus:border-transparent"
+                    />
+                  </div>
+                  )}
+
+                  {(isPant || !isShirt) && (
+                  <div>
+                    <label className="block text-sm font-medium text-[#374151] mb-2">
+                      {renderLabelWithHint("Dài quần (cm)", "pantsLength")}
                     </label>
                     <input
                       type="number"
@@ -731,6 +937,7 @@ const CustomerOrderPage = () => {
                       className="w-full px-4 py-2.5 border border-[#E5E7EB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B4332] focus:border-transparent"
                     />
                   </div>
+                  )}
                 </div>
 
                 <div className="mt-6 p-4 bg-[#F9FAFB] rounded-lg">

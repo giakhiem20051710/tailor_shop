@@ -41,6 +41,15 @@ class OrderService {
   }
 
   /**
+   * Create order via 3-step wizard (FE giữ state, submit 1 lần)
+   * @param {Object} wizardData - {contact, product, measurement, customerId?, tailorId?}
+   * @returns {Promise<Object>} Created order
+   */
+  async createWizard(wizardData) {
+    return httpClient.post(API_ENDPOINTS.ORDER.CREATE_WIZARD, wizardData);
+  }
+
+  /**
    * Create order with files
    * @param {Object} orderData - Order data
    * @param {File[]} files - Attachment files

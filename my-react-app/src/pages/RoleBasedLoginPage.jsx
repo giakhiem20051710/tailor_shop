@@ -126,9 +126,9 @@ export default function RoleBasedLoginPage() {
       admin: "/dashboard",
       staff: "/dashboard",
       tailor: "/tailor/dashboard",
-      customer: "/customer/dashboard",
+      customer: "/customer-home",
     };
-    return routes[userRole] || "/dashboard";
+    return routes[userRole] || "/customer-home";
   };
 
   const handleSubmit = async (e) => {
@@ -165,7 +165,18 @@ export default function RoleBasedLoginPage() {
         const profileResponse = await userService.getProfile();
         const userData = profileResponse.data ?? profileResponse;
         const displayName = userData?.name || userData?.fullName || "bạn";
-        const finalRole = (userData.role || effectiveRole || "customer").toLowerCase();
+
+        // Chuẩn hóa role giống LoginPage:
+        // - roleCode: "admin" | "staff" | "customer"
+        // - role là string: "admin", "staff", "customer"
+        // - role là object: { code: "admin", name: "Quản trị" }
+        const rawRole =
+          userData.roleCode ||
+          (userData.role && userData.role.code) ||
+          userData.role ||
+          effectiveRole ||
+          "customer";
+        const finalRole = String(rawRole).toLowerCase();
 
         // Remember credentials if checked
         if (formData.rememberMe) {
@@ -179,6 +190,7 @@ export default function RoleBasedLoginPage() {
         // Store user data for UI
         localStorage.setItem("userData", JSON.stringify(userData));
         localStorage.setItem("isAuthenticated", "true");
+        localStorage.setItem("userRole", finalRole);
 
         // Track login event
         events.LOGIN(effectiveRole);
