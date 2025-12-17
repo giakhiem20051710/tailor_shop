@@ -32,8 +32,11 @@ public class OrderEntity {
     @JoinColumn(name = "tailor_id")
     private UserEntity tailor;
 
-    @Column(precision = 14, scale = 2, nullable = false)
+    @Column(name = "total", precision = 14, scale = 2, nullable = false)
     private BigDecimal total = BigDecimal.ZERO;
+
+    @Column(name = "expected_budget", precision = 14, scale = 2)
+    private BigDecimal expectedBudget;
 
     @Column(name = "deposit_amount", precision = 14, scale = 2)
     private BigDecimal depositAmount = BigDecimal.ZERO;
@@ -101,6 +104,14 @@ public class OrderEntity {
 
     public void setTotal(BigDecimal total) {
         this.total = total;
+    }
+
+    public BigDecimal getExpectedBudget() {
+        return expectedBudget;
+    }
+
+    public void setExpectedBudget(BigDecimal expectedBudget) {
+        this.expectedBudget = expectedBudget;
     }
 
     public BigDecimal getDepositAmount() {

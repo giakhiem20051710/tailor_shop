@@ -41,6 +41,7 @@ export const API_ENDPOINTS = {
     LIST: '/orders',
     DETAIL: (id) => `/orders/${id}`,
     CREATE: '/orders',
+    CREATE_WIZARD: '/orders/wizard',
     UPDATE_STATUS: (id) => `/orders/${id}/status`,
     TRACKING: (id) => `/orders/${id}/tracking`,
     UPLOAD_ATTACHMENT: (id) => `/orders/${id}/attachments`,

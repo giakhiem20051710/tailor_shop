@@ -4,9 +4,11 @@ import com.example.tailor_shop.common.CommonResponse;
 import com.example.tailor_shop.common.ResponseUtil;
 import com.example.tailor_shop.common.TraceIdUtil;
 import com.example.tailor_shop.config.security.CustomUserDetails;
+import com.example.tailor_shop.config.exception.BadRequestException;
 import com.example.tailor_shop.modules.order.domain.OrderStatus;
 import com.example.tailor_shop.modules.order.dto.OrderResquest;
 import com.example.tailor_shop.modules.order.dto.OrderResponse;
+import com.example.tailor_shop.modules.order.dto.OrderWizardRequest;
 import com.example.tailor_shop.modules.order.dto.UpdateOrderStatusRequest;
 import com.example.tailor_shop.modules.order.service.OrderService;
 import jakarta.validation.Valid;
@@ -32,7 +34,7 @@ public class OrderController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('ADMIN','STAFF')")
+    @PreAuthorize("hasAnyRole('ADMIN','STAFF','CUSTOMER')")
     public ResponseEntity<CommonResponse<Page<OrderResponse>>> list(
             @RequestParam(value = "status", required = false) OrderStatus status,
             @RequestParam(value = "customerId", required = false) Long customerId,
@@ -42,16 +44,35 @@ public class OrderController {
             @RequestParam(value = "appointmentDate", required = false) java.time.LocalDate appointmentDate,
             @RequestParam(value = "dueDate", required = false) java.time.LocalDate dueDate,
             @RequestParam(value = "search", required = false) String search,
-            @PageableDefault(size = 20, sort = "updatedAt") Pageable pageable
+            @PageableDefault(size = 20, sort = "updatedAt") Pageable pageable,
+            @AuthenticationPrincipal CustomUserDetails principal
     ) {
+        // Nếu là CUSTOMER, chỉ cho phép xem đơn của chính họ
+        if (principal != null && principal.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_CUSTOMER"))) {
+            customerId = principal.getId();
+        }
         Page<OrderResponse> data = orderService.list(status, customerId, tailorId, fromDate, toDate, appointmentDate, dueDate, search, pageable);
         return ResponseEntity.ok(ResponseUtil.success(TraceIdUtil.getOrCreateTraceId(), data));
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN','STAFF','TAILOR')")
-    public ResponseEntity<CommonResponse<OrderResponse>> detail(@PathVariable Long id) {
+    @PreAuthorize("hasAnyRole('ADMIN','STAFF','TAILOR','CUSTOMER')")
+    public ResponseEntity<CommonResponse<OrderResponse>> detail(
+            @PathVariable Long id,
+            @AuthenticationPrincipal CustomUserDetails principal
+    ) {
         OrderResponse data = orderService.detail(id);
+        
+        // Nếu là CUSTOMER, chỉ cho phép xem đơn của chính họ
+        if (principal != null && principal.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_CUSTOMER"))) {
+            // Kiểm tra quyền truy cập
+            if (data.getCustomer() == null || !data.getCustomer().getId().equals(principal.getId())) {
+                throw new BadRequestException("Access denied");
+            }
+        }
+        
         return ResponseEntity.ok(ResponseUtil.success(TraceIdUtil.getOrCreateTraceId(), data));
     }
 
@@ -71,6 +92,25 @@ public class OrderController {
             @AuthenticationPrincipal CustomUserDetails principal
     ) {
         OrderResponse data = orderService.create(request, files != null ? files : java.util.Collections.emptyList());
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ResponseUtil.success(TraceIdUtil.getOrCreateTraceId(), data));
+    }
+
+    @PostMapping("/wizard")
+    @PreAuthorize("hasAnyRole('ADMIN','STAFF','TAILOR','CUSTOMER')")
+    public ResponseEntity<CommonResponse<OrderResponse>> createWizard(
+            @Valid @RequestBody OrderWizardRequest request,
+            @AuthenticationPrincipal CustomUserDetails principal
+    ) {
+        if (principal != null && principal.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_CUSTOMER"))) {
+            if (request.getCustomerId() != null && !request.getCustomerId().equals(principal.getId())) {
+                throw new BadRequestException("Access denied");
+            }
+            request.setCustomerId(principal.getId());
+        }
+
+        OrderResponse data = orderService.createWizard(request);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ResponseUtil.success(TraceIdUtil.getOrCreateTraceId(), data));
     }

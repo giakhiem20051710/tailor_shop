@@ -13,6 +13,7 @@ public class OrderResponse {
     private String code;
     private OrderStatus status;
     private BigDecimal total;
+    private BigDecimal expectedBudget;
     private BigDecimal depositAmount;
     private String note;
     private Party customer;
@@ -23,6 +24,7 @@ public class OrderResponse {
     private Instant createdAt;
     private Instant updatedAt;
     private List<Item> items;
+    private Measurement measurement;
     private List<Timeline> timeline;
     private List<Payment> payments;
     private List<Attachment> attachments;
@@ -57,6 +59,14 @@ public class OrderResponse {
 
     public void setTotal(BigDecimal total) {
         this.total = total;
+    }
+
+    public BigDecimal getExpectedBudget() {
+        return expectedBudget;
+    }
+
+    public void setExpectedBudget(BigDecimal expectedBudget) {
+        this.expectedBudget = expectedBudget;
     }
 
     public BigDecimal getDepositAmount() {
@@ -163,6 +173,14 @@ public class OrderResponse {
         this.attachments = attachments;
     }
 
+    public Measurement getMeasurement() {
+        return measurement;
+    }
+
+    public void setMeasurement(Measurement measurement) {
+        this.measurement = measurement;
+    }
+
     public static class Party {
         private Long id;
         private String name;
@@ -255,6 +273,153 @@ public class OrderResponse {
 
         public void setProductName(String productName) {
             this.productName = productName;
+        }
+    }
+
+    public static class Measurement {
+        private Double height;
+        private Double weight;
+        private Double neck;
+        private Double chest;
+        private Double waist;
+        private Double hip;
+        private Double shoulder;
+        private Double sleeve;
+        private Double bicep;
+        private Double thigh;
+        private Double crotch;
+        private Double ankle;
+        private Double shirtLength;
+        private Double pantsLength;
+        private String fitPreference;
+        private String note;
+
+        public Double getHeight() {
+            return height;
+        }
+
+        public void setHeight(Double height) {
+            this.height = height;
+        }
+
+        public Double getWeight() {
+            return weight;
+        }
+
+        public void setWeight(Double weight) {
+            this.weight = weight;
+        }
+
+        public Double getNeck() {
+            return neck;
+        }
+
+        public void setNeck(Double neck) {
+            this.neck = neck;
+        }
+
+        public Double getChest() {
+            return chest;
+        }
+
+        public void setChest(Double chest) {
+            this.chest = chest;
+        }
+
+        public Double getWaist() {
+            return waist;
+        }
+
+        public void setWaist(Double waist) {
+            this.waist = waist;
+        }
+
+        public Double getHip() {
+            return hip;
+        }
+
+        public void setHip(Double hip) {
+            this.hip = hip;
+        }
+
+        public Double getShoulder() {
+            return shoulder;
+        }
+
+        public void setShoulder(Double shoulder) {
+            this.shoulder = shoulder;
+        }
+
+        public Double getSleeve() {
+            return sleeve;
+        }
+
+        public void setSleeve(Double sleeve) {
+            this.sleeve = sleeve;
+        }
+
+        public Double getBicep() {
+            return bicep;
+        }
+
+        public void setBicep(Double bicep) {
+            this.bicep = bicep;
+        }
+
+        public Double getThigh() {
+            return thigh;
+        }
+
+        public void setThigh(Double thigh) {
+            this.thigh = thigh;
+        }
+
+        public Double getCrotch() {
+            return crotch;
+        }
+
+        public void setCrotch(Double crotch) {
+            this.crotch = crotch;
+        }
+
+        public Double getAnkle() {
+            return ankle;
+        }
+
+        public void setAnkle(Double ankle) {
+            this.ankle = ankle;
+        }
+
+        public Double getShirtLength() {
+            return shirtLength;
+        }
+
+        public void setShirtLength(Double shirtLength) {
+            this.shirtLength = shirtLength;
+        }
+
+        public Double getPantsLength() {
+            return pantsLength;
+        }
+
+        public void setPantsLength(Double pantsLength) {
+            this.pantsLength = pantsLength;
+        }
+
+        public String getFitPreference() {
+            return fitPreference;
+        }
+
+        public void setFitPreference(String fitPreference) {
+            this.fitPreference = fitPreference;
+        }
+
+        public String getNote() {
+            return note;
+        }
+
+        public void setNote(String note) {
+            this.note = note;
         }
     }
 

@@ -8,10 +8,17 @@ export default function ProtectedRoute({ requiredRole = null }) {
   const currentUser = getCurrentUser();
 
   // If role is missing but userData exists, try to recover role from userData
-  if (!userRole && currentUser?.role) {
-    const normalizedRole = currentUser.role.toLowerCase();
-    localStorage.setItem("userRole", normalizedRole);
-    userRole = normalizedRole;
+  if (!userRole && currentUser) {
+    const rawRole =
+      currentUser.roleCode ||
+      (currentUser.role && currentUser.role.code) ||
+      currentUser.role ||
+      null;
+    if (rawRole) {
+      const normalizedRole = String(rawRole).toLowerCase();
+      localStorage.setItem("userRole", normalizedRole);
+      userRole = normalizedRole;
+    }
   }
 
   // Normalize roles for comparison
@@ -32,9 +39,9 @@ export default function ProtectedRoute({ requiredRole = null }) {
         admin: "/dashboard",
         staff: "/dashboard",
         tailor: "/tailor/dashboard",
-        customer: "/customer/dashboard",
+        customer: "/customer-home",
       };
-      return routes[normalizedUserRole] || "/dashboard";
+      return routes[normalizedUserRole] || "/customer-home";
     };
 
     // Get role display name

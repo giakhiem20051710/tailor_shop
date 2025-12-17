@@ -1,7 +1,8 @@
 import { useState, useEffect, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { getOrders, updateOrder } from "../utils/orderStorage";
 import { getCurrentUser, getUsersByRole, ROLES } from "../utils/authStorage";
+import { orderService, appointmentService } from "../services";
 import { saveCustomerMeasurements } from "../utils/customerMeasurementsStorage";
 import {
   getLoyaltyProfile,
@@ -21,6 +22,7 @@ import usePageMeta from "../hooks/usePageMeta";
 
 export default function CustomerDashboardPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [orders, setOrders] = useState([]);
   const [user, setUser] = useState(null);
   const [activeTab, setActiveTab] = useState("orders"); // orders | appointments | profile
@@ -33,6 +35,7 @@ export default function CustomerDashboardPage() {
   const [customerAppointments, setCustomerAppointments] = useState([]);
   const [slotMap, setSlotMap] = useState({});
   const [tailors, setTailors] = useState([]);
+  const [loadingOrders, setLoadingOrders] = useState(false);
 
   usePageMeta({
     title: "Dashboard khách hàng My Hiền Tailor | Theo dõi đơn may đo",
@@ -42,47 +45,217 @@ export default function CustomerDashboardPage() {
       "https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=1200&auto=format&fit=crop&q=80",
   });
 
+  // Load orders from BE API
+  const loadOrdersFromAPI = async (customerId) => {
+    try {
+      setLoadingOrders(true);
+      const response = await orderService.list({ customerId }, { page: 0, size: 100 });
+      const responseData = response?.data ?? response?.responseData ?? response;
+      const ordersList = responseData?.content ?? responseData?.data ?? [];
+      
+      // Map BE OrderResponse to FE format
+      const mappedOrders = ordersList.map((order) => {
+        const totalAmount = order.total && Number(order.total) > 0 
+          ? Number(order.total) 
+          : (order.expectedBudget ? Number(order.expectedBudget) : 0);
+        
+        // Ngày đặt: ưu tiên createdAt từ BE, nếu không có thì fallback sang appointmentDate / dueDate
+        const rawCreatedAt = order.createdAt || order.appointmentDate || order.dueDate || null;
+        const createdAtDate = rawCreatedAt
+          ? (typeof rawCreatedAt === "string"
+              ? new Date(rawCreatedAt)
+              : new Date(rawCreatedAt))
+          : null;
+        
+        const dueDateValue = order.dueDate 
+          ? (typeof order.dueDate === 'string' 
+              ? order.dueDate 
+              : order.dueDate.toString())
+          : null;
+        
+        const appointmentDateValue = order.appointmentDate
+          ? (typeof order.appointmentDate === 'string'
+              ? order.appointmentDate
+              : order.appointmentDate.toString())
+          : null;
+
+        return {
+          id: order.id,
+          code: order.code || `ORD-${order.id}`,
+          status: mapOrderStatus(order.status),
+          statusRaw: order.status, // Keep raw status for comparison
+          total: totalAmount,
+          expectedBudget: order.expectedBudget ? Number(order.expectedBudget) : null,
+          receive: createdAtDate ? createdAtDate.toISOString().split("T")[0] : null,
+          due: dueDateValue || appointmentDateValue || null,
+          appointmentDate: appointmentDateValue,
+          appointmentTime: null, // TODO: map from timeline or separate field
+          productName: order.items && order.items.length > 0 && order.items[0].productName
+            ? order.items[0].productName
+            : (order.note ? extractProductNameFromNote(order.note) : "Sản phẩm may đo"),
+          productType: order.items && order.items.length > 0 && order.items[0].productType
+            ? order.items[0].productType
+            : extractProductTypeFromNote(order.note),
+          description: order.note || "",
+          notes: order.note || "",
+          customerId: order.customer?.id || customerId,
+          name: order.customer?.name || user?.name,
+          phone: order.customerPhone || order.customer?.phone || user?.phone,
+          email: user?.email,
+          address: null,
+          measurement: order.measurement ? mapMeasurementFromBE(order.measurement) : null,
+          isFabricOrder: false,
+          sampleImages: order.attachments?.map(a => a.url) || [],
+          createdAt: order.createdAt,
+          updatedAt: order.updatedAt,
+          depositAmount: order.depositAmount ? Number(order.depositAmount) : 0,
+        };
+      });
+      
+      setOrders(mappedOrders);
+      
+      // Auto-save measurements from orders
+      if (customerId) {
+        mappedOrders.forEach((order) => {
+          if (order.measurement && Object.keys(order.measurement).length > 0) {
+            const normalizedMeasurements = {
+              ...order.measurement,
+              hip: order.measurement.hip || order.measurement.hips,
+              sleeveLength: order.measurement.sleeveLength || order.measurement.sleeve,
+              orderId: order.id,
+            };
+            Object.keys(normalizedMeasurements).forEach(key => {
+              if (normalizedMeasurements[key] === undefined || normalizedMeasurements[key] === null) {
+                delete normalizedMeasurements[key];
+              }
+            });
+            saveCustomerMeasurements(customerId, normalizedMeasurements);
+          }
+        });
+      }
+    } catch (error) {
+      console.error("Error loading orders from API:", error);
+      // Fallback to localStorage
+      const allOrders = getOrders() || [];
+      const customerOrders = allOrders.filter(
+        (order) =>
+          order.phone === user?.phone || 
+          order.name === user?.name ||
+          order.customerId === customerId
+      );
+      setOrders(customerOrders);
+    } finally {
+      setLoadingOrders(false);
+    }
+  };
+
+  const mapOrderStatus = (status) => {
+    if (!status) return "Mới";
+    const statusMap = {
+      "DRAFT": "Mới",
+      "WAITING_FOR_QUOTE": "Chờ báo giá",
+      "CONFIRMED": "Đã xác nhận",
+      "IN_PROGRESS": "Đang may",
+      "FITTING": "Thử đồ",
+      "COMPLETED": "Hoàn thành",
+      "CANCELLED": "Hủy",
+    };
+    return statusMap[status] || status;
+  };
+
+  const mapMeasurementFromBE = (measurement) => {
+    if (!measurement) return null;
+    return {
+      height: measurement.height,
+      weight: measurement.weight,
+      neck: measurement.neck,
+      chest: measurement.chest,
+      waist: measurement.waist,
+      hip: measurement.hip,
+      shoulder: measurement.shoulder,
+      sleeve: measurement.sleeve,
+      bicep: measurement.bicep,
+      thigh: measurement.thigh,
+      crotch: measurement.crotch,
+      ankle: measurement.ankle,
+      shirtLength: measurement.shirtLength,
+      pantsLength: measurement.pantsLength,
+      sleeveLength: measurement.sleeve,
+      hips: measurement.hip,
+    };
+  };
+
+  const extractProductNameFromNote = (note) => {
+    if (!note) return "Sản phẩm may đo";
+    // Try multiple patterns
+    const patterns = [
+      /Product:\s*([^.,\n]*)/i,
+      /Sản phẩm[:\s]+([^.,\n]*)/i,
+      /Product[:\s]+([^.,\n]*)/i,
+    ];
+    for (const pattern of patterns) {
+      const match = note.match(pattern);
+      if (match && match[1] && match[1].trim()) {
+        return match[1].trim();
+      }
+    }
+    return "Sản phẩm may đo";
+  };
+
+  const extractProductTypeFromNote = (note) => {
+    if (!note) return null;
+    // Try multiple patterns
+    const patterns = [
+      /Type:\s*([^.,\n]*)/i,
+      /Loại[:\s]+([^.,\n]*)/i,
+      /Phân loại[:\s]+([^.,\n]*)/i,
+    ];
+    for (const pattern of patterns) {
+      const match = note.match(pattern);
+      if (match && match[1] && match[1].trim()) {
+        return match[1].trim();
+      }
+    }
+    return null;
+  };
+
   useEffect(() => {
     const currentUser = getCurrentUser();
     setUser(currentUser);
 
     if (currentUser) {
-      const allOrders = getOrders() || [];
-      const customerOrders = allOrders.filter(
-        (order) =>
-          order.phone === currentUser.phone || 
-          order.name === currentUser.name ||
-          order.customerId === currentUser.username
-      );
-      setOrders(customerOrders);
-
-      // Auto-save measurements from orders
-      customerOrders.forEach((order) => {
-        if (order.measurements && Object.keys(order.measurements).length > 0) {
-          const customerId = currentUser.username || currentUser.phone;
-          // Normalize measurement keys
-          const normalizedMeasurements = {
-            ...order.measurements,
-            // Map alternative keys to standard keys
-            hip: order.measurements.hip || order.measurements.hips,
-            sleeveLength: order.measurements.sleeveLength || order.measurements.sleeve,
-            orderId: order.id,
-          };
-          // Remove undefined values
-          Object.keys(normalizedMeasurements).forEach(key => {
-            if (normalizedMeasurements[key] === undefined || normalizedMeasurements[key] === null) {
-              delete normalizedMeasurements[key];
-            }
-          });
-          saveCustomerMeasurements(customerId, normalizedMeasurements);
-        }
-      });
+      const customerId = currentUser.id || currentUser.userId;
+      if (customerId) {
+        loadOrdersFromAPI(customerId);
+      } else {
+        // Fallback to localStorage if no customerId
+        const allOrders = getOrders() || [];
+        const customerOrders = allOrders.filter(
+          (order) =>
+            order.phone === currentUser.phone || 
+            order.name === currentUser.name ||
+            order.customerId === currentUser.username
+        );
+        setOrders(customerOrders);
+      }
     }
 
     // load tailors for displaying
     const tailorUsers = getUsersByRole(ROLES.TAILOR);
     setTailors(tailorUsers);
   }, []);
+
+  // Reload orders when navigating from order creation
+  useEffect(() => {
+    if (location.state?.orderCreated && user) {
+      const customerId = user.id || user.userId;
+      if (customerId) {
+        loadOrdersFromAPI(customerId);
+      }
+      // Clear state to avoid reloading on every render
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state, user]);
 
   const formatCurrency = (amount) => {
     if (!amount) return "0 đ";
@@ -114,20 +287,29 @@ const parseAmount = (value) => {
   const customerAppointmentsDisplay = useMemo(() => {
     return customerAppointments
       .map((a) => {
-        const slot = slotMap[a.slotId];
-        if (!slot) return null;
-        const tailor =
-          tailors.find(
-            (t) => t.username === slot.tailorId || t.id === slot.tailorId
-          ) || {};
+        const slot = a.slotId ? slotMap[a.slotId] : null;
+        
+        // Nếu có slotId nhưng không tìm thấy slot, bỏ qua
+        if (a.slotId && !slot) return null;
+        
+        // Nếu không có slotId nhưng có appointmentDate, vẫn hiển thị
+        if (!slot && !a.appointmentDate) return null;
+        
+        const tailor = slot
+          ? tailors.find(
+              (t) => t.username === slot.tailorId || t.id === slot.tailorId
+            ) || {}
+          : {};
+        
         return {
           id: a.id,
           type: a.type,
           status: a.status,
-          date: slot.date,
-          time: `${slot.startTime}–${slot.endTime}`,
+          date: slot ? slot.date : (a.appointmentDate || ""),
+          time: slot ? `${slot.startTime}–${slot.endTime}` : (a.appointmentTime || "—"),
           tailorName: tailor.name || "Thợ may",
           location: "123 Nguyễn Thị Minh Khai, Q.1, TP.HCM",
+          orderId: a.orderId, // Lưu orderId để link với order
         };
       })
       .filter(Boolean);
@@ -157,7 +339,10 @@ const parseAmount = (value) => {
     // Nếu có receive thì sort theo receive, không thì sort theo id
     const sorted = [...orders].sort((a, b) => {
       if (a.receive && b.receive) return b.receive.localeCompare(a.receive);
-      return (b.id || "").localeCompare(a.id || "");
+      // Convert id to string for comparison
+      const aId = String(a.id || "");
+      const bId = String(b.id || "");
+      return bId.localeCompare(aId);
     });
     return sorted[0];
   }, [orders]);
@@ -165,8 +350,8 @@ const parseAmount = (value) => {
   // Thống kê
   const stats = {
     totalOrders: orders.length,
-    inProgress: orders.filter((o) => o.status === "Đang may").length,
-    completed: orders.filter((o) => o.status === "Hoàn thành").length,
+    inProgress: orders.filter((o) => o.status === "Đang may" || o.status === "IN_PROGRESS").length,
+    completed: orders.filter((o) => o.status === "Hoàn thành" || o.status === "COMPLETED").length,
     upcoming: upcomingAppointments.length,
   };
 
@@ -287,16 +472,64 @@ const parseAmount = (value) => {
 
   // Load appointments + slots for customer view
   useEffect(() => {
-    if (!customerId) return;
-    const apps = getAppointments().filter(
-      (a) => a.customerId === customerId && a.status !== "cancelled"
-    );
+    if (!customerId || !user?.id) return;
+    
+    const loadAppointments = async () => {
+      try {
+        // Load appointments từ backend API
+        const response = await appointmentService.list({ 
+          customerId: user.id 
+        }, { page: 0, size: 100 });
+        
+        const responseData = response?.data ?? response?.responseData ?? response;
+        const appointmentsFromBE = responseData?.content || responseData?.items || [];
+        
+        // Map appointments từ backend sang format FE
+        const mappedAppointments = appointmentsFromBE.map((appt) => ({
+          id: appt.id,
+          customerId: appt.customer?.id || user.id,
+          orderId: appt.order?.id || null,
+          slotId: null, // Backend appointments không có slotId, dùng appointmentDate/appointmentTime
+          type: appt.type || "fitting",
+          status: appt.status || "pending",
+          appointmentDate: appt.appointmentDate || null,
+          appointmentTime: appt.appointmentTime || null,
+          notes: appt.notes || null,
+        }));
+        
+        // Kết hợp với appointments từ localStorage (fallback cho appointments cũ)
+        const localApps = getAppointments().filter(
+          (a) => a.customerId === customerId && a.status !== "cancelled"
+        );
+        
+        // Merge và loại bỏ duplicates (ưu tiên BE)
+        const allAppointments = [...mappedAppointments];
+        localApps.forEach((localApp) => {
+          const exists = allAppointments.some((beApp) => beApp.id === localApp.id);
+          if (!exists) {
+            allAppointments.push(localApp);
+          }
+        });
+        
+        setCustomerAppointments(allAppointments);
+      } catch (error) {
+        console.error("Error loading appointments from backend:", error);
+        // Fallback to localStorage nếu API lỗi
+        const apps = getAppointments().filter(
+          (a) => a.customerId === customerId && a.status !== "cancelled"
+        );
+        setCustomerAppointments(apps);
+      }
+    };
+    
+    loadAppointments();
+    
+    // Load slots từ localStorage (vẫn dùng local cho working slots)
     const slots = getWorkingSlots();
     const map = Object.fromEntries(slots.map((s) => [s.id, s]));
     setSlotMap(map);
-    setCustomerAppointments(apps);
     setAvailableSlots(slots); // keep slots for booking modal reuse
-  }, [customerId]);
+  }, [customerId, user?.id]);
 
   const openBooking = () => {
     setShowBooking(true);
@@ -836,6 +1069,7 @@ const parseAmount = (value) => {
                 orders={orders}
                 formatCurrency={formatCurrency}
                 navigate={navigate}
+                loadingOrders={loadingOrders}
               />
             )}
 
@@ -952,7 +1186,7 @@ function TabPill({ active, onClick, children }) {
   );
 }
 
-function OrdersTab({ orders, formatCurrency, navigate }) {
+function OrdersTab({ orders, formatCurrency, navigate, loadingOrders }) {
   const [orderType, setOrderType] = useState("tailoring"); // "tailoring" | "fabric"
   
   // Tách đơn hàng thành 2 loại
@@ -1014,14 +1248,16 @@ function OrdersTab({ orders, formatCurrency, navigate }) {
 
               {/* Order Status - Shopee Style với màu chuyên nghiệp */}
               <div className={`px-4 py-3 border-b flex items-center justify-between ${
-                order.status === "Hoàn thành" 
+                order.status === "Hoàn thành" || order.statusRaw === "COMPLETED"
                   ? "bg-gradient-to-r from-emerald-50 to-teal-50 border-emerald-200"
-                  : order.status === "Đang may"
+                  : order.status === "Đang may" || order.statusRaw === "IN_PROGRESS"
                   ? "bg-gradient-to-r from-amber-50 to-yellow-50 border-amber-200"
+                  : order.status === "Chờ báo giá" || order.statusRaw === "WAITING_FOR_QUOTE"
+                  ? "bg-gradient-to-r from-blue-50 to-cyan-50 border-blue-200"
                   : "bg-gradient-to-r from-slate-50 to-blue-50 border-slate-200"
               }`}>
                 <div className="flex items-center gap-2">
-                  {order.status === "Hoàn thành" ? (
+                  {order.status === "Hoàn thành" || order.statusRaw === "COMPLETED" ? (
                     <>
                       <div className="w-8 h-8 rounded-full bg-emerald-600 flex items-center justify-center shadow-sm">
                         <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1030,7 +1266,7 @@ function OrdersTab({ orders, formatCurrency, navigate }) {
                       </div>
                       <span className="text-sm font-semibold text-emerald-700">Giao hàng thành công</span>
                     </>
-                  ) : order.status === "Đang may" ? (
+                  ) : order.status === "Đang may" || order.statusRaw === "IN_PROGRESS" ? (
                     <>
                       <div className="w-8 h-8 rounded-full bg-amber-600 flex items-center justify-center shadow-sm">
                         <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1038,6 +1274,15 @@ function OrdersTab({ orders, formatCurrency, navigate }) {
                         </svg>
                       </div>
                       <span className="text-sm font-semibold text-amber-700">Đang được may</span>
+                    </>
+                  ) : order.status === "Chờ báo giá" || order.statusRaw === "WAITING_FOR_QUOTE" ? (
+                    <>
+                      <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center shadow-sm">
+                        <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                      </div>
+                      <span className="text-sm font-semibold text-blue-700">Chờ báo giá</span>
                     </>
                   ) : (
                     <>
@@ -1107,9 +1352,24 @@ function OrdersTab({ orders, formatCurrency, navigate }) {
                     
                     {/* Price */}
                     <div className="flex items-center gap-2">
-                      <span className="text-base font-semibold text-red-600">
-                        {formatCurrency(order.total)}
-                      </span>
+                      {order.total > 0 ? (
+                        <span className="text-base font-semibold text-red-600">
+                          {formatCurrency(order.total)}
+                        </span>
+                      ) : order.expectedBudget ? (
+                        <div className="flex flex-col">
+                          <span className="text-xs text-gray-500 line-through">
+                            Dự kiến: {formatCurrency(order.expectedBudget)}
+                          </span>
+                          <span className="text-sm font-semibold text-amber-600">
+                            Đang chờ báo giá
+                          </span>
+                        </div>
+                      ) : (
+                        <span className="text-sm font-semibold text-amber-600">
+                          Đang chờ báo giá
+                        </span>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -1129,20 +1389,51 @@ function OrdersTab({ orders, formatCurrency, navigate }) {
                   <div className="flex flex-col">
                     <span className="text-gray-500 text-[10px] mb-1">Ngày đặt:</span>
                     <span className="font-medium text-gray-900">
-                      {order.receive ? new Date(order.receive).toLocaleDateString("vi-VN") : "—"}
+                      {order.receive 
+                        ? (typeof order.receive === 'string' 
+                            ? new Date(order.receive).toLocaleDateString("vi-VN")
+                            : new Date(order.receive).toLocaleDateString("vi-VN"))
+                        : (order.createdAt 
+                            ? (typeof order.createdAt === 'string'
+                                ? new Date(order.createdAt).toLocaleDateString("vi-VN")
+                                : new Date(order.createdAt).toLocaleDateString("vi-VN"))
+                            : "—")}
                     </span>
                   </div>
                   <div className="flex flex-col">
                     <span className="text-gray-500 text-[10px] mb-1">Ngày hẹn:</span>
                     <span className="font-medium text-gray-900">
-                      {order.due ? new Date(order.due).toLocaleDateString("vi-VN") : "—"}
+                      {order.due 
+                        ? (typeof order.due === 'string'
+                            ? new Date(order.due).toLocaleDateString("vi-VN")
+                            : new Date(order.due).toLocaleDateString("vi-VN"))
+                        : (order.appointmentDate
+                            ? (typeof order.appointmentDate === 'string'
+                                ? new Date(order.appointmentDate).toLocaleDateString("vi-VN")
+                                : new Date(order.appointmentDate).toLocaleDateString("vi-VN"))
+                            : "—")}
                     </span>
                   </div>
                   <div className="flex flex-col">
                     <span className="text-gray-500 text-[10px] mb-1">Tổng tiền:</span>
-                    <span className="font-bold text-lg text-red-600">
-                      {formatCurrency(order.total)}
-                    </span>
+                    {order.total > 0 ? (
+                      <span className="font-bold text-lg text-red-600">
+                        {formatCurrency(order.total)}
+                      </span>
+                    ) : order.expectedBudget ? (
+                      <div className="flex flex-col">
+                        <span className="text-xs text-gray-500 line-through">
+                          {formatCurrency(order.expectedBudget)}
+                        </span>
+                        <span className="text-sm font-semibold text-amber-600">
+                          Chờ báo giá
+                        </span>
+                      </div>
+                    ) : (
+                      <span className="text-sm font-semibold text-amber-600">
+                        Chờ báo giá
+                      </span>
+                    )}
                   </div>
                 </div>
 
@@ -1226,8 +1517,13 @@ function OrdersTab({ orders, formatCurrency, navigate }) {
         </button>
       </div>
 
-      {/* Empty state */}
-      {currentOrders.length === 0 ? (
+      {/* Loading state */}
+      {loadingOrders ? (
+        <div className="py-12 text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#1B4332] mx-auto mb-4"></div>
+          <p className="text-gray-500">Đang tải đơn hàng...</p>
+        </div>
+      ) : currentOrders.length === 0 ? (
         <div className="py-12 text-center bg-gray-50 rounded-lg border border-gray-200">
           <svg
             className="w-16 h-16 mx-auto text-gray-400 mb-4"

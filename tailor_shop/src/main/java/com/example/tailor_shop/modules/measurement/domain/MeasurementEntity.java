@@ -37,9 +37,15 @@ public class MeasurementEntity {
     private Double hip;
     private Double shoulder;
     private Double sleeve;
+    private Double bicep;
     private Double inseam;
     private Double outseam;
     private Double neck;
+    private Double thigh;
+    private Double crotch;
+    private Double ankle;
+    private Double shirtLength;
+    private Double pantsLength;
     private Double height;
     private Double weight;
 
@@ -141,6 +147,14 @@ public class MeasurementEntity {
         this.sleeve = sleeve;
     }
 
+    public Double getBicep() {
+        return bicep;
+    }
+
+    public void setBicep(Double bicep) {
+        this.bicep = bicep;
+    }
+
     public Double getInseam() {
         return inseam;
     }
@@ -163,6 +177,46 @@ public class MeasurementEntity {
 
     public void setNeck(Double neck) {
         this.neck = neck;
+    }
+
+    public Double getThigh() {
+        return thigh;
+    }
+
+    public void setThigh(Double thigh) {
+        this.thigh = thigh;
+    }
+
+    public Double getCrotch() {
+        return crotch;
+    }
+
+    public void setCrotch(Double crotch) {
+        this.crotch = crotch;
+    }
+
+    public Double getAnkle() {
+        return ankle;
+    }
+
+    public void setAnkle(Double ankle) {
+        this.ankle = ankle;
+    }
+
+    public Double getShirtLength() {
+        return shirtLength;
+    }
+
+    public void setShirtLength(Double shirtLength) {
+        this.shirtLength = shirtLength;
+    }
+
+    public Double getPantsLength() {
+        return pantsLength;
+    }
+
+    public void setPantsLength(Double pantsLength) {
+        this.pantsLength = pantsLength;
     }
 
     public Double getHeight() {

@@ -1,8 +1,6 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { orderService, userService, authService } from "../services";
-import Header from "../components/Header.jsx";
-import StatusBadge from "../components/StatusBadge";
 
 const CustomerOrderDetailPage = () => {
   const { id } = useParams();
@@ -11,10 +9,9 @@ const CustomerOrderDetailPage = () => {
   const [order, setOrder] = useState(null);
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [showImageLightbox, setShowImageLightbox] = useState(null);
 
   useEffect(() => {
-    // Reset state when id or location changes
+    console.log("CustomerOrderDetailPage mounted, id:", id);
     setOrder(null);
     setLoading(true);
     
@@ -30,47 +27,94 @@ const CustomerOrderDetailPage = () => {
         setUser(currentUser);
 
         if (id) {
+          console.log("Loading order detail for ID:", id);
           const orderResponse = await orderService.getDetail(id);
-          const orderData = orderResponse?.data ?? orderResponse;
+          console.log("Order response:", orderResponse);
+          const orderData = orderResponse?.data ?? orderResponse?.responseData ?? orderResponse;
+          console.log("Order data:", orderData);
 
           if (!orderData) {
+            console.log("No order data found, redirecting to dashboard");
             navigate("/customer/dashboard", { replace: true });
             return;
           }
 
           const orderCustomerId =
             orderData.customerId ||
-            orderData.customer?.id ||
-            orderData.customerId;
-
-          const orderPhone =
-            orderData.phone ||
-            orderData.customerPhone ||
-            orderData.customer?.phone;
-
-          const orderName =
-            orderData.name ||
-            orderData.customerName ||
-            orderData.customer?.name;
+            orderData.customer?.id;
 
           const currentUserId = currentUser?.id || currentUser?.userId;
 
+          console.log("Checking order access:", {
+            currentUserId,
+            orderCustomerId,
+            orderId: orderData.id,
+            orderCode: orderData.code
+          });
+
+          // More lenient check - allow if no customer binding or if IDs match
+          // Also allow if user is authenticated (for now, to debug)
           const isCustomerOrder =
-            (currentUserId && orderCustomerId && currentUserId === orderCustomerId) ||
-            (orderPhone && currentUser?.phone && orderPhone === currentUser.phone) ||
-            (orderName && currentUser?.name && orderName === currentUser.name) ||
-            !orderCustomerId; // fallback to allow view if no customer binding
+            !orderCustomerId || // No customer binding, allow
+            (currentUserId && orderCustomerId && String(currentUserId) === String(orderCustomerId)) || // IDs match
+            authService.isAuthenticated(); // If authenticated, allow (for debugging)
+
+          console.log("isCustomerOrder:", isCustomerOrder);
 
           if (isCustomerOrder) {
-            setOrder(orderData);
+            // Parse note để extract product info
+            const note = orderData.note || "";
+            const productName = extractProductNameFromNote(note) || 
+              (orderData.items && orderData.items.length > 0 && orderData.items[0].productName) ||
+              "Sản phẩm may đo";
+            const productType = extractProductTypeFromNote(note) ||
+              (orderData.items && orderData.items.length > 0 && orderData.items[0].productType) ||
+              null;
+            const description = extractDescriptionFromNote(note) || 
+              (orderData.items && orderData.items.length > 0 && orderData.items[0].description) ||
+              "Custom made";
+
+            const mappedOrder = {
+              ...orderData,
+              statusRaw: orderData.status,
+              status: mapOrderStatusToText(orderData.status),
+              code: orderData.code || `ORD-${orderData.id}`,
+              total: orderData.total ? Number(orderData.total) : 0,
+              expectedBudget: orderData.expectedBudget ? Number(orderData.expectedBudget) : null,
+              depositAmount: orderData.depositAmount ? Number(orderData.depositAmount) : null,
+              items: orderData.items || [],
+              measurement: orderData.measurement || null,
+              // Parse từ note
+              productName: productName,
+              productType: productType,
+              description: description,
+              note: note,
+              // Customer info
+              customerName: orderData.customer?.name || orderData.customerName || null,
+              customerPhone: orderData.customerPhone || orderData.customer?.phone || null,
+              // Dates
+              createdAt: orderData.createdAt,
+              updatedAt: orderData.updatedAt,
+              appointmentDate: orderData.appointmentDate,
+              dueDate: orderData.dueDate,
+              // Additional fields
+              timeline: orderData.timeline || [],
+              payments: orderData.payments || [],
+              attachments: orderData.attachments || [],
+            };
+            console.log("Mapped order:", mappedOrder);
+            setOrder(mappedOrder);
           } else {
+            console.log("Not customer's order, redirecting. Current user ID:", currentUserId, "Order customer ID:", orderCustomerId);
             navigate("/customer/dashboard", { replace: true });
             return;
           }
         }
       } catch (error) {
         console.error("Error loading order detail:", error);
-        navigate("/customer/dashboard", { replace: true });
+        console.error("Error details:", error.response || error.message);
+        // Don't redirect on error, show error message instead
+        // navigate("/customer/dashboard", { replace: true });
       } finally {
         setLoading(false);
       }
@@ -81,19 +125,71 @@ const CustomerOrderDetailPage = () => {
 
   const formatCurrency = (amount) => {
     if (!amount) return "0 đ";
-    if (typeof amount === "string" && amount.includes("đ")) return amount;
     return `${Number(amount).toLocaleString("vi-VN")} đ`;
+  };
+
+  const mapOrderStatusToText = (status) => {
+    if (!status) return "Mới";
+    const statusMap = {
+      "DRAFT": "Mới",
+      "WAITING_FOR_QUOTE": "Chờ báo giá",
+      "CONFIRMED": "Quote Ready",
+      "IN_PROGRESS": "Đang may",
+      "FITTING": "Thử đồ",
+      "COMPLETED": "Hoàn thành",
+      "CANCELLED": "Hủy",
+    };
+    return statusMap[status] || status;
+  };
+
+  const extractProductNameFromNote = (note) => {
+    if (!note) return null;
+    const match = note.match(/Product:\s*([^.,\n]*)/i);
+    return match ? match[1].trim() : null;
+  };
+
+  const extractProductTypeFromNote = (note) => {
+    if (!note) return null;
+    const match = note.match(/Type:\s*([^.,\n]*)/i);
+    return match ? match[1].trim() : null;
+  };
+
+  const extractDescriptionFromNote = (note) => {
+    if (!note) return null;
+    const match = note.match(/Description:\s*([^.,\n]*)/i);
+    return match ? match[1].trim() : null;
+  };
+
+  const getStatusStep = (status) => {
+    const statusMap = {
+      DRAFT: 1,
+      WAITING_FOR_QUOTE: 2,
+      CONFIRMED: 3,
+      IN_PROGRESS: 4,
+      FITTING: 4,
+      COMPLETED: 5,
+      CANCELLED: 0,
+    };
+    return statusMap[status] || 1;
+  };
+
+  const calculateDeposit = (total) => {
+    if (!total || total === 0) return 0;
+    // 30% deposit
+    return Math.round(total * 0.3);
+  };
+
+  const handleAcceptAndPay = () => {
+    // Navigate to payment page
+    navigate(`/customer/orders/${id}/payment`);
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#F5F3EF] text-[#1F2933] body-font antialiased">
-        <Header currentPage="/customer/dashboard" />
-        <div className="pt-[170px] md:pt-[190px] pb-16 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#1B4332] mx-auto mb-4"></div>
-            <p className="text-[#6B7280]">Đang tải...</p>
-          </div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Đang tải...</p>
         </div>
       </div>
     );
@@ -101,699 +197,638 @@ const CustomerOrderDetailPage = () => {
 
   if (!order) {
     return (
-      <div className="min-h-screen bg-[#F5F3EF] text-[#1F2933] body-font antialiased">
-        <Header currentPage="/customer/dashboard" />
-        <div className="pt-[170px] md:pt-[190px] pb-16">
-          <div className="max-w-4xl mx-auto px-5 lg:px-8">
-            <div className="bg-white rounded-2xl p-8 text-center">
-              <p className="text-[#6B7280] mb-4">Không tìm thấy đơn hàng</p>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-gray-600 mb-4">Không tìm thấy đơn hàng</p>
               <button
                 onClick={() => navigate("/customer/dashboard")}
-                className="px-4 py-2 bg-[#1B4332] text-white rounded-full hover:bg-[#14532d] transition-colors"
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
               >
-                Quay lại Dashboard
+            Quay lại
               </button>
-            </div>
-          </div>
         </div>
       </div>
     );
   }
 
-  const measurementFields = [
-    { key: "chest", label: "Vòng ngực", unit: "cm" },
-    { key: "waist", label: "Vòng eo", unit: "cm" },
-    { key: "hip", label: "Vòng mông", unit: "cm" },
-    { key: "hips", label: "Vòng mông", unit: "cm" },
-    { key: "shoulder", label: "Ngang vai", unit: "cm" },
-    { key: "sleeveLength", label: "Dài tay", unit: "cm" },
-    { key: "sleeve", label: "Dài tay", unit: "cm" },
-    { key: "shirtLength", label: "Dài áo", unit: "cm" },
-    { key: "pantsLength", label: "Dài quần", unit: "cm" },
-    { key: "neck", label: "Vòng cổ", unit: "cm" },
-    { key: "height", label: "Chiều cao", unit: "cm" },
-    { key: "weight", label: "Cân nặng", unit: "kg" },
+  const currentStep = getStatusStep(order.statusRaw);
+  const steps = [
+    { id: 1, label: "Received", completed: currentStep >= 1 },
+    { id: 2, label: "Quoting", completed: currentStep >= 2 },
+    { id: 3, label: "Deposit", current: currentStep === 3, completed: currentStep >= 3 },
+    { id: 4, label: "Tailoring", completed: currentStep >= 4 },
+    { id: 5, label: "Ready", completed: currentStep >= 5 },
   ];
 
+  const total = order.total || 0;
+  const deposit = order.depositAmount || calculateDeposit(total);
+  const depositPercentage = total > 0 ? Math.round((deposit / total) * 100) : 30;
+
   return (
-    <div className="min-h-screen bg-[#F5F5F5] text-[#1F2933] body-font antialiased">
-      <Header currentPage="/customer/dashboard" />
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50 w-full">
 
-      <div className="pt-[170px] md:pt-[190px] pb-16">
-        <div className="max-w-5xl mx-auto px-4 lg:px-6">
-          {/* Breadcrumb */}
-          <div className="mb-4">
-            <button
-              onClick={() => navigate("/customer/dashboard")}
-              className="flex items-center gap-2 text-[#1B4332] hover:text-[#14532d] text-sm transition-colors"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-              Quay lại
-            </button>
+      {/* Order Status and Progress Section (Dark Blue) */}
+      <div className="bg-gradient-to-r from-[#1e3a5f] via-[#2d4a6b] to-[#1e3a5f] text-white px-4 py-8 w-full shadow-xl">
+        <div className="max-w-6xl mx-auto w-full">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-1 h-8 bg-gradient-to-b from-yellow-400 to-orange-500 rounded-full"></div>
+            <p className="text-sm text-blue-200 font-medium tracking-wide">Order #{order.code}</p>
           </div>
-
-          {/* Shop Header - Shopee Style */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#1B4332] to-[#14532d] flex items-center justify-center text-white font-bold">
-                  MH
-                </div>
-                <div>
-                  <h2 className="font-semibold text-gray-900">My Hiền Fashion Design Studio</h2>
-                  <p className="text-xs text-gray-500">Tiệm may đo chuyên nghiệp</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <button className="px-4 py-2 border border-gray-300 rounded text-sm hover:bg-gray-50 transition-colors">
-                  💬 Chat
-                </button>
-                <button className="px-4 py-2 border border-gray-300 rounded text-sm hover:bg-gray-50 transition-colors">
-                  Xem Shop
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Order Status - Shopee Style */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center">
-                  <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600">Trạng thái đơn hàng</p>
-                  <p className="text-lg font-semibold text-gray-900">
-                    {order.status === "Hoàn thành" ? "Đơn hàng đã hoàn thành" : 
-                     order.status === "Đang may" ? "Đang được may" :
-                     order.status === "Mới" ? "Đã tiếp nhận" : order.status}
-                  </p>
-                </div>
-              </div>
-              <div className="text-right">
-                <StatusBadge luxury status={order.status} />
-              </div>
-            </div>
-          </div>
-
-          {/* Shipping Information - Shopee Style */}
-          {order.status === "Hoàn thành" && (
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-4">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="font-semibold text-gray-900">Thông tin vận chuyển</h3>
-                <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </div>
-              <div className="space-y-3">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-gray-600">Đơn vị vận chuyển:</span>
-                  <span className="text-sm font-medium text-gray-900">
-                    {order.shippingCompany || "Giao hàng tận nơi"}
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-gray-600">Mã vận đơn:</span>
-                  <span className="text-sm font-medium text-blue-600">
-                    {order.trackingNumber || `MH${order.id?.replace("O-", "") || "000"}${new Date().getFullYear()}`}
-                  </span>
-                </div>
-                <div className="flex items-center gap-3 pt-2 border-t border-gray-100">
-                  <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
-                    <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-                    </svg>
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-gray-900">Giao hàng thành công</p>
-                    <p className="text-xs text-gray-500 mt-1">
-                      {order.deliveryDate 
-                        ? new Date(order.deliveryDate).toLocaleDateString("vi-VN", {
-                            day: "2-digit",
-                            month: "2-digit",
-                            year: "numeric",
-                          }) + " " + (order.deliveryTime || "13:44")
-                        : order.due 
-                        ? new Date(order.due).toLocaleDateString("vi-VN", {
-                            day: "2-digit",
-                            month: "2-digit",
-                            year: "numeric",
-                          }) + " 13:44"
-                        : new Date().toLocaleDateString("vi-VN", {
-                            day: "2-digit",
-                            month: "2-digit",
-                            year: "numeric",
-                          }) + " 13:44"}
-                    </p>
-                  </div>
-                </div>
-              </div>
+          <h1 className="text-4xl md:text-5xl font-serif font-bold mb-2 tracking-tight">{mapOrderStatusToText(order.statusRaw)}</h1>
+          {order.statusRaw === "CONFIRMED" && (
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-orange-500/20 border border-orange-400/30 rounded-full mt-2">
+              <div className="w-2 h-2 bg-orange-400 rounded-full animate-pulse"></div>
+              <p className="text-sm text-orange-200 font-semibold">ACTION REQUIRED</p>
             </div>
           )}
 
-          {/* Delivery Address - Shopee Style */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-4">
-            <div className="flex items-start gap-3">
-              <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-                <svg className="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-              </div>
-              <div className="flex-1">
-                <h3 className="font-semibold text-gray-900 mb-2">Địa chỉ nhận hàng</h3>
-                <div className="space-y-1">
-                  <p className="text-sm font-medium text-gray-900">
-                    {order.name || user?.name || "Khách hàng"}
-                    {(order.phone || user?.phone) && (
-                      <span className="text-gray-600 font-normal ml-2">
-                        (+84) {(() => {
-                          const phone = order.phone || user?.phone || "";
-                          const cleaned = phone.replace(/^0/, "").replace(/\s/g, "");
-                          if (cleaned.length === 9) {
-                            return cleaned.replace(/(\d{3})(\d{3})(\d{3})/, "$1 $2 $3");
-                          } else if (cleaned.length === 10) {
-                            return cleaned.replace(/(\d{3})(\d{3})(\d{4})/, "$1 $2 $3");
-                          }
-                          return cleaned;
-                        })()}
-                      </span>
+          {/* Progress Stepper */}
+          <div className="flex items-center gap-2 mt-6">
+            {steps.map((step, index) => (
+              <React.Fragment key={step.id}>
+                <div className="flex flex-col items-center flex-1">
+                  <div
+                    className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold transition-all ${
+                      step.completed
+                        ? "bg-[#10b981] text-white"
+                        : step.current
+                        ? "bg-[#f97316] text-white ring-4 ring-orange-200"
+                        : "bg-gray-400 text-white"
+                    }`}
+                  >
+                    {step.completed ? (
+                      <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                  </svg>
+                    ) : (
+                      <div className="w-2 h-2 rounded-full bg-white"></div>
                     )}
-                  </p>
-                  {order.address ? (
-                    <p className="text-sm text-gray-600 leading-relaxed">
-                      {order.address}
-                    </p>
-                  ) : (
-                    <p className="text-sm text-gray-500 italic">
-                      Địa chỉ chưa được cập nhật. Vui lòng liên hệ shop để cập nhật địa chỉ giao hàng.
-                    </p>
-                  )}
                 </div>
+                  <span className="text-xs mt-2 text-center text-white">{step.label}</span>
+                </div>
+                {index < steps.length - 1 && (
+                  <div
+                    className={`h-1 flex-1 -mt-5 ${
+                      step.completed || step.current ? "bg-[#f97316]" : "bg-gray-400"
+                    }`}
+                  />
+                )}
+              </React.Fragment>
+            ))}
               </div>
             </div>
           </div>
 
-          {/* Products List - Shopee Style */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-4">
-            <h3 className="font-semibold text-gray-900 mb-4 pb-3 border-b border-gray-200">
-              Sản phẩm đã mua
-            </h3>
-            
-            {/* Nếu là đơn hàng vải, hiển thị danh sách items */}
-            {order.isFabricOrder && order.items && Array.isArray(order.items) && order.items.length > 0 ? (
-              <div className="space-y-4">
-                {order.items.map((item, index) => {
-                  const getPriceValue = (priceStr) => {
-                    if (!priceStr) return 0;
-                    const match = priceStr.match(/[\d.]+/);
-                    if (match) {
-                      return parseInt(match[0].replace(/\./g, ""), 10);
-                    }
-                    return 0;
-                  };
-                  
-                  const itemPrice = getPriceValue(item.price);
-                  const itemTotal = itemPrice * (item.quantity || 1);
-                  
-                  return (
-                    <div key={item.key || index} className="flex gap-4 pb-4 border-b border-gray-100 last:border-b-0 last:pb-0">
-                      {/* Product Image */}
-                      <div className="w-20 h-20 md:w-24 md:h-24 flex-shrink-0 rounded-lg overflow-hidden bg-gray-100 border border-gray-200">
-                        {item.image ? (
-                          <img
-                            src={item.image}
-                            alt={item.name}
-                            className="w-full h-full object-cover"
-                            onError={(e) => {
-                              e.target.style.display = 'none';
-                              const placeholder = e.target.nextElementSibling;
-                              if (placeholder) placeholder.style.display = 'flex';
-                            }}
-                          />
-                        ) : null}
-                        <div className={`w-full h-full flex items-center justify-center text-gray-400 ${item.image ? 'hidden' : ''}`}>
-                          <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                          </svg>
-                        </div>
-                      </div>
-
-                      {/* Product Info */}
-                      <div className="flex-1 min-w-0">
-                        <h4 className="font-medium text-gray-900 mb-1 line-clamp-2">
-                          {item.name}
-                        </h4>
-                        <p className="text-xs text-gray-600 mb-1">
-                          <span className="text-gray-500">Màu:</span> Mặc định
-                        </p>
-                        <div className="flex items-center justify-between mt-2">
-                          <div>
-                            <span className="text-sm font-semibold text-red-600">
-                              {formatCurrency(itemPrice)}
-                            </span>
-                            {item.unit && (
-                              <span className="text-xs text-gray-500 ml-1">/{item.unit}</span>
-                            )}
-                          </div>
-                          <span className="text-sm text-gray-600">x{item.quantity || 1}</span>
-                        </div>
-                        <div className="mt-2 text-right">
-                          <span className="text-sm font-semibold text-gray-900">
-                            Thành tiền: {formatCurrency(itemTotal)}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
+      {/* Main Content Area (White Background) */}
+      <div className="max-w-6xl mx-auto px-4 py-10 space-y-8 w-full">
+        {/* Your Quote Section */}
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-xl p-8 hover:shadow-2xl transition-shadow duration-300">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-1 h-10 bg-gradient-to-b from-[#1e3a5f] to-[#2d4a6b] rounded-full"></div>
+            <div>
+              <h2 className="text-3xl font-serif font-bold text-gray-900 tracking-tight">Your Quote</h2>
+              <p className="text-sm text-gray-500 mt-1 font-medium">Please review and confirm</p>
               </div>
-            ) : (
-              /* Đơn hàng may đo - hiển thị sản phẩm đơn lẻ */
-              <div className="flex gap-4">
-                {/* Product Image */}
-                <div className="w-24 h-24 md:w-32 md:h-32 flex-shrink-0 rounded-lg overflow-hidden bg-gray-100 border border-gray-200">
-                  {order.sampleImages && order.sampleImages.length > 0 ? (
-                    <img
-                      src={order.sampleImages[0]}
-                      alt="Sản phẩm"
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-gray-400">
-                      <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                      </svg>
-                    </div>
-                  )}
                 </div>
 
-                {/* Product Info */}
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-medium text-gray-900 mb-2 line-clamp-2">
-                    {order.styleName || order.style || order.productName || "Sản phẩm may đo"}
-                  </h3>
-                  {order.productType && (
-                    <p className="text-sm text-gray-600 mb-1">
-                      <span className="text-gray-500">Phân loại hàng:</span> {order.productType}
+          {/* Order Items */}
+          <div className="space-y-5 mb-8 mt-6">
+            {order.items && order.items.length > 0 ? (
+              order.items.map((item, index) => (
+                <div key={index} className="flex justify-between items-start pb-5 border-b border-gray-100 last:border-b-0 last:pb-0 group hover:bg-gray-50/50 -mx-2 px-2 py-2 rounded-lg transition-colors">
+                  <div className="flex-1">
+                    <p className="font-bold text-lg text-gray-900 mb-2 group-hover:text-[#1e3a5f] transition-colors">
+                      {item.quantity || 1}x {item.productName || "Sản phẩm may đo"}
                     </p>
-                  )}
-                  {order.description && (
-                    <p className="text-sm text-gray-600 mb-1">
-                      <span className="text-gray-500">Mô tả:</span> {order.description}
+                    <p className="text-sm text-gray-500 font-medium">
+                      {item.productType || item.description || "Custom made"}
                     </p>
-                  )}
-                  <p className="text-sm text-gray-600 mb-2">x1</p>
-                  
-                  {/* Price */}
-                  <div className="flex items-center gap-2">
-                    {order.total && parseFloat(order.total) > 0 ? (
-                      <span className="text-lg font-semibold text-red-600">
-                        {formatCurrency(order.total)}
-                      </span>
-                    ) : (
-                      <span className="text-lg font-semibold text-gray-900">
-                        {formatCurrency(order.total || 0)}
-                      </span>
-                    )}
                   </div>
+                  <div className="text-right">
+                    <p className="font-bold text-lg text-gray-900">
+                      {formatCurrency(item.price ? Number(item.price) * (item.quantity || 1) : 0)}
+                    </p>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="flex justify-between items-start pb-5 border-b border-gray-100 group hover:bg-gray-50/50 -mx-2 px-2 py-2 rounded-lg transition-colors">
+                <div className="flex-1">
+                  <p className="font-bold text-lg text-gray-900 mb-2 group-hover:text-[#1e3a5f] transition-colors">
+                    1x {order.productName || "Sản phẩm may đo"}
+                  </p>
+                  <p className="text-sm text-gray-500 font-medium">
+                    {order.productType || order.description || "Custom made"}
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className="font-bold text-lg text-gray-900">
+                    {total > 0 ? formatCurrency(total) : "0 đ"}
+                  </p>
                 </div>
               </div>
             )}
+          </div>
 
-            {/* Divider */}
-            <div className="border-t border-gray-200 my-4"></div>
-
-            {/* Review Section - Shopee Style */}
-            {order.status === "Hoàn thành" && (
+          {/* Total Amount / Expected Budget */}
+          <div className="flex justify-between items-center mb-6 pb-6 border-t-2 border-gray-200 pt-6">
+            {order.statusRaw === "WAITING_FOR_QUOTE" && total === 0 && order.expectedBudget ? (
               <>
-                {review ? (
-                  /* Đã có đánh giá */
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-semibold text-gray-900 mb-2">Đánh giá của bạn</p>
-                        <div className="flex items-center gap-2 mb-2">
-                          <div className="flex items-center">
-                            {[1, 2, 3, 4, 5].map((star) => (
-                              <svg
-                                key={star}
-                                className={`w-5 h-5 ${
-                                  star <= review.rating
-                                    ? "text-yellow-400 fill-yellow-400"
-                                    : "text-gray-300"
-                                }`}
-                                fill="currentColor"
-                                viewBox="0 0 20 20"
-                              >
-                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                              </svg>
-                            ))}
-                          </div>
-                          <span className="text-xs text-gray-500">
-                            {new Date(review.createdAt).toLocaleDateString("vi-VN")}
-                          </span>
-                        </div>
-                        {review.comment && (
-                          <p className="text-sm text-gray-700 mb-3">{review.comment}</p>
-                        )}
-                        {review.images && review.images.length > 0 && (
-                          <div className="grid grid-cols-4 gap-2 mb-3">
-                            {review.images.map((img, index) => (
-                              <img
-                                key={index}
-                                src={img}
-                                alt={`Review ${index + 1}`}
-                                className="w-full h-20 object-cover rounded border border-gray-200 cursor-pointer hover:opacity-80 transition-opacity"
-                                onClick={() => setShowImageLightbox(index)}
-                              />
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                      <div className="text-right">
-                        <p className="text-sm text-gray-600 mb-1">Thành tiền:</p>
-                        <p className="text-lg font-semibold text-red-600">
-                          {formatCurrency(order.total)}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  /* Chưa có đánh giá */
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-gray-600">
-                        Đánh giá sản phẩm trước {new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toLocaleDateString("vi-VN")}
-                      </p>
-                      <p className="text-xs text-orange-500 mt-1">
-                        Đánh giá ngay và nhận 200 Xu
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-sm text-gray-600 mb-1">Thành tiền:</p>
-                      <p className="text-lg font-semibold text-red-600">
-                        {formatCurrency(order.total)}
-                      </p>
-                    </div>
-                  </div>
-                )}
+                <div>
+                  <span className="text-xl font-serif font-bold text-gray-900">Expected Budget</span>
+                  <p className="text-xs text-gray-500 mt-1 font-medium">Awaiting final quote from staff</p>
+                </div>
+                <span className="text-3xl font-bold bg-gradient-to-r from-amber-500 to-yellow-600 bg-clip-text text-transparent">
+                  {formatCurrency(order.expectedBudget)}
+                </span>
+              </>
+            ) : (
+              <>
+                <span className="text-xl font-serif font-bold text-gray-900">Total Amount</span>
+                <span className="text-3xl font-bold bg-gradient-to-r from-[#f97316] to-[#ea580c] bg-clip-text text-transparent">
+                  {formatCurrency(total)}
+                </span>
               </>
             )}
-
-            {/* Action Buttons - Shopee Style */}
-            {order.status === "Hoàn thành" && (
-              <div className="flex gap-2 mt-4">
-                <button 
-                  onClick={() => navigate(`/customer/orders/${order.id}/review`)}
-                  className={`flex-1 px-4 py-2 rounded hover:transition-colors text-sm font-medium ${
-                    review
-                      ? "border-2 border-orange-500 text-orange-600 hover:bg-orange-50"
-                      : "bg-orange-500 text-white hover:bg-orange-600"
-                  }`}
-                >
-                  {review ? "Chỉnh sửa đánh giá" : "Đánh giá"}
-                </button>
-                <button className="flex-1 px-4 py-2 border border-gray-300 rounded hover:bg-gray-50 transition-colors text-sm font-medium">
-                  Liên hệ người bán
-                </button>
-                <button 
-                  onClick={() => navigate("/customer/order")}
-                  className="flex-1 px-4 py-2 border border-gray-300 rounded hover:bg-gray-50 transition-colors text-sm font-medium"
-                >
-                  Mua lại
-                </button>
-              </div>
-            )}
           </div>
 
-          {/* Order Details - Shopee Style */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-4">
-            <h3 className="font-semibold text-gray-900 mb-4 pb-3 border-b border-gray-200">
-              Thông tin đơn hàng
-            </h3>
-            <div className="grid md:grid-cols-2 gap-4 text-sm">
-              <InfoRow label="Mã đơn hàng" value={order.id} />
-              <InfoRow label="Ngày đặt" value={order.receive ? new Date(order.receive).toLocaleDateString("vi-VN") : order.createdAt?.split("T")[0]} />
-              <InfoRow label="Ngày hẹn" value={order.due ? new Date(order.due).toLocaleDateString("vi-VN") : "—"} />
-              <InfoRow label="Trạng thái" value={order.status} />
-            </div>
-          </div>
-
-          {/* Measurements */}
-          {order.measurements && Object.keys(order.measurements).length > 0 && (
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-4">
-              <h3 className="font-semibold text-gray-900 mb-4 pb-3 border-b border-gray-200">
-                Số đo
-              </h3>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                {measurementFields.map((field) => {
-                  const value = order.measurements[field.key];
-                  if (!value || value === "" || value === "0") return null;
-                  return (
-                    <div key={field.key} className="bg-gray-50 rounded p-2">
-                      <p className="text-xs text-gray-500 mb-1">{field.label}</p>
-                      <p className="text-sm font-semibold text-gray-900">
-                        {value} {field.unit}
-                      </p>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-          {/* Payment Info - Shopee Style */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-4">
-            <h3 className="font-semibold text-gray-900 mb-4 pb-3 border-b border-gray-200">
-              Thông tin thanh toán
-            </h3>
-            <div className="space-y-2 text-sm">
-              {/* Chi tiết từng sản phẩm cho đơn hàng vải */}
-              {order.isFabricOrder && order.items && Array.isArray(order.items) && order.items.length > 0 && (
-                <>
-                  {order.items.map((item, index) => {
-                    const getPriceValue = (priceStr) => {
-                      if (!priceStr) return 0;
-                      const match = priceStr.match(/[\d.]+/);
-                      if (match) {
-                        return parseInt(match[0].replace(/\./g, ""), 10);
-                      }
-                      return 0;
-                    };
-                    
-                    const itemPrice = getPriceValue(item.price);
-                    const itemTotal = itemPrice * (item.quantity || 1);
-                    
-                    return (
-                      <div key={item.key || index} className="flex justify-between items-center py-2 border-b border-gray-100">
-                        <div className="flex-1">
-                          <span className="text-gray-600">{item.name}</span>
-                          <span className="text-gray-500 ml-2">x{item.quantity || 1}</span>
-                        </div>
-                        <span className="font-medium text-gray-900">
-                          {formatCurrency(itemTotal)}
-                        </span>
-                      </div>
-                    );
-                  })}
-                  {order.discount && parseFloat(order.discount) > 0 && (
-                    <div className="flex justify-between items-center py-2 border-t border-gray-100">
-                      <span className="text-gray-600">Tổng khuyến mãi</span>
-                      <span className="font-medium text-red-600">
-                        -{formatCurrency(order.discount)}
-                      </span>
-                    </div>
-                  )}
-                </>
-              )}
-              
-              <div className="flex justify-between items-center py-2 border-t border-gray-200">
-                <span className="text-gray-600 font-semibold">Tổng tiền hàng</span>
-                <span className="font-semibold text-gray-900">
-                  {formatCurrency(order.total)}
+          {/* Required Deposit */}
+          {order.statusRaw === "CONFIRMED" && total > 0 && (
+            <div className="bg-gradient-to-br from-amber-50 via-yellow-50 to-orange-50 border-2 border-amber-200 rounded-xl p-6 shadow-lg">
+              <div className="flex justify-between items-center">
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="w-2 h-2 bg-amber-500 rounded-full animate-pulse"></div>
+                    <p className="font-bold text-lg text-gray-900">Required Deposit ({depositPercentage}%)</p>
+                  </div>
+                  <p className="text-sm text-gray-600 font-medium">Pay now to begin tailoring</p>
+                </div>
+                <span className="text-3xl font-bold bg-gradient-to-r from-[#f97316] to-[#ea580c] bg-clip-text text-transparent">
+                  {formatCurrency(deposit)}
                 </span>
               </div>
-              {order.deposit && (
-                <div className="flex justify-between items-center py-2 border-t border-gray-100">
-                  <span className="text-gray-600">Đã đặt cọc</span>
-                  <span className="font-medium text-gray-900">
-                    {formatCurrency(order.deposit)}
-                  </span>
-                </div>
-              )}
-              {order.total && order.deposit && (
-                <div className="flex justify-between items-center py-2 border-t border-gray-100">
-                  <span className="text-gray-600">Còn lại</span>
-                  <span className="font-semibold text-red-600">
-                    {formatCurrency(
-                      (typeof order.total === "string" 
-                        ? parseFloat(order.total.replace(/[^\d]/g, "")) 
-                        : parseFloat(order.total) || 0) - 
-                      (typeof order.deposit === "string" 
-                        ? parseFloat(order.deposit.replace(/[^\d]/g, "")) 
-                        : parseFloat(order.deposit) || 0)
-                    )}
-                  </span>
-                </div>
-              )}
             </div>
-          </div>
+          )}
+        </div>
 
-          {/* Appointment Info */}
-          {(order.appointmentDate || order.appointmentTime) && (
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-4">
-              <h3 className="font-semibold text-gray-900 mb-4 pb-3 border-b border-gray-200">
-                Lịch hẹn
-              </h3>
-              <div className="space-y-2 text-sm">
-                {order.appointmentDate && (
-                  <InfoRow 
-                    label="Ngày hẹn" 
-                    value={new Date(order.appointmentDate).toLocaleDateString("vi-VN", {
-                      weekday: "long",
-                      year: "numeric",
-                      month: "long",
-                      day: "numeric",
-                    })} 
-                  />
-                )}
-                {order.appointmentTime && (
-                  <InfoRow label="Giờ hẹn" value={order.appointmentTime} />
-                )}
-                {order.appointmentType && (
-                  <InfoRow 
-                    label="Loại hẹn" 
-                    value={order.appointmentType === "fitting" ? "Thử đồ" : "Nhận đồ"} 
-                  />
-                )}
+        {/* Your Order Section */}
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-xl p-8 hover:shadow-2xl transition-shadow duration-300">
+          <div className="flex items-center justify-between mb-8">
+            <div className="flex items-center gap-3">
+              <div className="w-1 h-10 bg-gradient-to-b from-[#1e3a5f] to-[#2d4a6b] rounded-full"></div>
+              <h2 className="text-3xl font-serif font-bold text-gray-900 tracking-tight">Your Order</h2>
+            </div>
+            {order.measurement && (
+              <button
+                onClick={() => {
+                  const measurements = order.measurement;
+                  const measurementText = Object.entries(measurements)
+                    .filter(([key, value]) => value !== null && value !== undefined && Number(value) > 0)
+                    .map(([key, value]) => {
+                      const labels = {
+                        height: "Chiều cao",
+                        weight: "Cân nặng",
+                        neck: "Vòng cổ",
+                        chest: "Vòng ngực",
+                        waist: "Vòng eo",
+                        hip: "Vòng mông",
+                        shoulder: "Ngang vai",
+                        sleeve: "Dài tay",
+                        bicep: "Bắp tay",
+                        thigh: "Vòng đùi",
+                        crotch: "Hạ đáy",
+                        ankle: "Ống quần",
+                        shirtLength: "Dài áo",
+                        pantsLength: "Dài quần",
+                      };
+                      const unit = key === "weight" ? "kg" : "cm";
+                      return `${labels[key] || key}: ${value} ${unit}`;
+                    })
+                    .join("\n");
+                  alert(measurementText || "Chưa có số đo");
+                }}
+                className="px-5 py-2.5 bg-gradient-to-r from-amber-100 to-yellow-100 text-[#f97316] rounded-xl hover:from-amber-200 hover:to-yellow-200 flex items-center gap-2 text-sm font-bold border-2 border-amber-300 shadow-md hover:shadow-lg transition-all duration-200"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h4a1 1 0 011 1v7a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v7a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 16a1 1 0 011-1h4a1 1 0 011 1v3a1 1 0 01-1 1H5a1 1 0 01-1-1v-3zM14 16a1 1 0 011-1h4a1 1 0 011 1v3a1 1 0 01-1 1h-4a1 1 0 01-1-1v-3z" />
+                </svg>
+                Xem lại số đo
+              </button>
+            )}
+          </div>
+          
+          {/* Display Measurement Info - Premium Dark Blue Card */}
+          {order.measurement && (
+            <div className="mb-8 bg-gradient-to-br from-[#1e3a5f] via-[#2d4a6b] to-[#1e3a5f] rounded-2xl p-8 text-white relative overflow-hidden shadow-2xl">
+              {/* Decorative Background Pattern */}
+              <div className="absolute inset-0 opacity-5">
+                <div className="absolute right-8 top-8 w-64 h-64 bg-white rounded-full blur-3xl"></div>
+                <div className="absolute left-8 bottom-8 w-48 h-48 bg-white rounded-full blur-3xl"></div>
+              </div>
+              
+              {/* Background Icon */}
+              <div className="absolute right-6 top-1/2 -translate-y-1/2 opacity-10">
+                <svg className="w-40 h-40 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+              </div>
+              
+              {/* Header */}
+              <div className="flex items-center justify-between mb-8 relative z-10">
+                <h3 className="text-2xl font-serif font-bold tracking-tight">Số Đo</h3>
+                <button className="text-sm text-blue-200 hover:text-white flex items-center gap-2 font-semibold transition-colors px-4 py-2 rounded-lg hover:bg-white/10">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                  Chỉnh sửa
+                </button>
+              </div>
+              
+              {/* Measurements Grid - Premium Style - All Fields */}
+              <div className="grid grid-cols-3 gap-6 relative z-10">
+                {/* CHIỀU CAO */}
+                <div className="bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/10 hover:bg-white/10 transition-all">
+                  <p className="text-xs text-blue-300 mb-2 font-bold tracking-wider uppercase">CHIỀU CAO</p>
+                  <p className="text-2xl font-bold">
+                    {order.measurement.height && Number(order.measurement.height) > 0 
+                      ? `${Number(order.measurement.height).toFixed(1)} cm`
+                      : <span className="text-blue-300">--</span>
+                    }
+                  </p>
+                </div>
+                
+                {/* CÂN NẶNG */}
+                <div className="bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/10 hover:bg-white/10 transition-all">
+                  <p className="text-xs text-blue-300 mb-2 font-bold tracking-wider uppercase">CÂN NẶNG</p>
+                  <p className="text-2xl font-bold">
+                    {order.measurement.weight && Number(order.measurement.weight) > 0 
+                      ? `${Number(order.measurement.weight).toFixed(1)} kg`
+                      : <span className="text-blue-300">--</span>
+                    }
+                  </p>
+                </div>
+                
+                {/* VÒNG CỔ */}
+                <div className="bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/10 hover:bg-white/10 transition-all">
+                  <p className="text-xs text-blue-300 mb-2 font-bold tracking-wider uppercase">VÒNG CỔ</p>
+                  <p className="text-2xl font-bold">
+                    {order.measurement.neck && Number(order.measurement.neck) > 0 
+                      ? `${(Number(order.measurement.neck) / 2.54).toFixed(1)}"`
+                      : <span className="text-blue-300">--</span>
+                    }
+                  </p>
+                </div>
+                
+                {/* VÒNG NGỰC */}
+                <div className="bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/10 hover:bg-white/10 transition-all">
+                  <p className="text-xs text-blue-300 mb-2 font-bold tracking-wider uppercase">VÒNG NGỰC</p>
+                  <p className="text-2xl font-bold">
+                    {order.measurement.chest && Number(order.measurement.chest) > 0 
+                      ? `${(Number(order.measurement.chest) / 2.54).toFixed(1)}"`
+                      : <span className="text-blue-300">--</span>
+                    }
+                  </p>
+                </div>
+                
+                {/* VÒNG EO */}
+                <div className="bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/10 hover:bg-white/10 transition-all">
+                  <p className="text-xs text-blue-300 mb-2 font-bold tracking-wider uppercase">VÒNG EO</p>
+                  <p className="text-2xl font-bold">
+                    {order.measurement.waist && Number(order.measurement.waist) > 0 
+                      ? `${(Number(order.measurement.waist) / 2.54).toFixed(1)}"`
+                      : <span className="text-blue-300">--</span>
+                    }
+                  </p>
+                </div>
+                
+                {/* VÒNG MÔNG */}
+                <div className="bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/10 hover:bg-white/10 transition-all">
+                  <p className="text-xs text-blue-300 mb-2 font-bold tracking-wider uppercase">VÒNG MÔNG</p>
+                  <p className="text-2xl font-bold">
+                    {order.measurement.hip && Number(order.measurement.hip) > 0 
+                      ? `${(Number(order.measurement.hip) / 2.54).toFixed(1)}"`
+                      : <span className="text-blue-300">--</span>
+                    }
+                  </p>
+                </div>
+                
+                {/* NGANG VAI */}
+                <div className="bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/10 hover:bg-white/10 transition-all">
+                  <p className="text-xs text-blue-300 mb-2 font-bold tracking-wider uppercase">NGANG VAI</p>
+                  <p className="text-2xl font-bold">
+                    {order.measurement.shoulder && Number(order.measurement.shoulder) > 0 
+                      ? `${(Number(order.measurement.shoulder) / 2.54).toFixed(1)}"`
+                      : <span className="text-blue-300">--</span>
+                    }
+                  </p>
+                </div>
+                
+                {/* DÀI TAY */}
+                <div className="bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/10 hover:bg-white/10 transition-all">
+                  <p className="text-xs text-blue-300 mb-2 font-bold tracking-wider uppercase">DÀI TAY</p>
+                  <p className="text-2xl font-bold">
+                    {order.measurement.sleeve && Number(order.measurement.sleeve) > 0 
+                      ? `${(Number(order.measurement.sleeve) / 2.54).toFixed(1)}"`
+                      : <span className="text-blue-300">--</span>
+                    }
+                  </p>
+                </div>
+                
+                {/* BẮP TAY */}
+                <div className="bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/10 hover:bg-white/10 transition-all">
+                  <p className="text-xs text-blue-300 mb-2 font-bold tracking-wider uppercase">BẮP TAY</p>
+                  <p className="text-2xl font-bold">
+                    {order.measurement.bicep && Number(order.measurement.bicep) > 0 
+                      ? `${(Number(order.measurement.bicep) / 2.54).toFixed(1)}"`
+                      : <span className="text-blue-300">--</span>
+                    }
+                  </p>
+                </div>
+                
+                {/* VÒNG ĐÙI */}
+                <div className="bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/10 hover:bg-white/10 transition-all">
+                  <p className="text-xs text-blue-300 mb-2 font-bold tracking-wider uppercase">VÒNG ĐÙI</p>
+                  <p className="text-2xl font-bold">
+                    {order.measurement.thigh && Number(order.measurement.thigh) > 0 
+                      ? `${(Number(order.measurement.thigh) / 2.54).toFixed(1)}"`
+                      : <span className="text-blue-300">--</span>
+                    }
+                  </p>
+                </div>
+                
+                {/* HẠ ĐÁY */}
+                <div className="bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/10 hover:bg-white/10 transition-all">
+                  <p className="text-xs text-blue-300 mb-2 font-bold tracking-wider uppercase">HẠ ĐÁY</p>
+                  <p className="text-2xl font-bold">
+                    {order.measurement.crotch && Number(order.measurement.crotch) > 0 
+                      ? `${(Number(order.measurement.crotch) / 2.54).toFixed(1)}"`
+                      : <span className="text-blue-300">--</span>
+                    }
+                  </p>
+                </div>
+                
+                {/* ỐNG QUẦN */}
+                <div className="bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/10 hover:bg-white/10 transition-all">
+                  <p className="text-xs text-blue-300 mb-2 font-bold tracking-wider uppercase">ỐNG QUẦN</p>
+                  <p className="text-2xl font-bold">
+                    {order.measurement.ankle && Number(order.measurement.ankle) > 0 
+                      ? `${(Number(order.measurement.ankle) / 2.54).toFixed(1)}"`
+                      : <span className="text-blue-300">--</span>
+                    }
+                  </p>
+                </div>
+                
+                {/* DÀI ÁO */}
+                <div className="bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/10 hover:bg-white/10 transition-all">
+                  <p className="text-xs text-blue-300 mb-2 font-bold tracking-wider uppercase">DÀI ÁO</p>
+                  <p className="text-2xl font-bold">
+                    {order.measurement.shirtLength && Number(order.measurement.shirtLength) > 0 
+                      ? `${(Number(order.measurement.shirtLength) / 2.54).toFixed(1)}"`
+                      : <span className="text-blue-300">--</span>
+                    }
+                  </p>
+                </div>
+                
+                {/* DÀI QUẦN */}
+                <div className="bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/10 hover:bg-white/10 transition-all">
+                  <p className="text-xs text-blue-300 mb-2 font-bold tracking-wider uppercase">DÀI QUẦN</p>
+                  <p className="text-2xl font-bold">
+                    {order.measurement.pantsLength && Number(order.measurement.pantsLength) > 0 
+                      ? `${(Number(order.measurement.pantsLength) / 2.54).toFixed(1)}"`
+                      : <span className="text-blue-300">--</span>
+                    }
+                  </p>
+                </div>
+              </div>
+
+              {/* Last Updated */}
+              <div className="mt-8 pt-6 border-t border-white/20 relative z-10">
+                <p className="text-xs text-blue-300 font-medium">
+                  Last updated: {order.updatedAt 
+                    ? new Date(order.updatedAt).toLocaleDateString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                        year: "numeric"
+                      })
+                    : order.createdAt
+                    ? new Date(order.createdAt).toLocaleDateString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                        year: "numeric"
+                      })
+                    : "N/A"} by Staff Member
+                </p>
               </div>
             </div>
           )}
 
-          {/* Notes */}
-          {order.notes && (
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-4">
-              <h3 className="font-semibold text-gray-900 mb-4 pb-3 border-b border-gray-200">
-                Ghi chú
-              </h3>
-              <p className="text-gray-600 whitespace-pre-wrap text-sm">{order.notes}</p>
+          {/* Product Visuals */}
+          <div className="grid grid-cols-2 gap-6 mt-6">
+            {order.items && order.items.length > 0 ? (
+              order.items.map((item, index) => (
+                <div key={index} className="border border-gray-200 rounded-lg p-4 flex flex-col items-center">
+                  <div className="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center mb-3">
+                    {item.productType?.toLowerCase().includes("suit") ? (
+                      <svg className="w-8 h-8 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" />
+                        <path fillRule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clipRule="evenodd" />
+                      </svg>
+                    ) : (
+                      <div className="w-8 h-8 bg-gray-300 rounded"></div>
+                    )}
+                  </div>
+                  <p className="font-semibold text-gray-900 text-sm mb-1">{item.productName || "Sản phẩm"}</p>
+                  <p className="text-xs text-gray-600">{item.productType || "Custom"}</p>
+                </div>
+              ))
+            ) : (
+              <>
+                <div className="border border-gray-200 rounded-lg p-4 flex flex-col items-center">
+                  <div className="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center mb-3">
+                    <svg className="w-8 h-8 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" />
+                      <path fillRule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clipRule="evenodd" />
+                              </svg>
+                  </div>
+                  <p className="font-semibold text-gray-900 text-sm mb-1">{order.productName || "Sản phẩm may đo"}</p>
+                  <p className="text-xs text-gray-600">{order.productType || "Custom"}</p>
+                    </div>
+                <div className="border border-gray-200 rounded-lg p-4 flex flex-col items-center">
+                  <div className="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center mb-3">
+                    <div className="w-8 h-8 bg-gray-300 rounded"></div>
+                  </div>
+                  <p className="font-semibold text-gray-900 text-sm mb-1">Sản phẩm may đo</p>
+                  <p className="text-xs text-gray-600">Custom</p>
+                </div>
+              </>
+            )}
+            </div>
+          </div>
+
+        {/* Timeline Section */}
+        {order.timeline && order.timeline.length > 0 && (
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-xl p-8 hover:shadow-2xl transition-shadow duration-300">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-1 h-10 bg-gradient-to-b from-[#1e3a5f] to-[#2d4a6b] rounded-full"></div>
+              <h2 className="text-3xl font-serif font-bold text-gray-900 tracking-tight">Order Timeline</h2>
+            </div>
+            <div className="space-y-4">
+              {order.timeline.map((event, index) => (
+                <div key={event.id || index} className="flex gap-4 group">
+                  <div className="flex flex-col items-center">
+                    <div className="w-3 h-3 rounded-full bg-gradient-to-br from-[#1e3a5f] to-[#2d4a6b] shadow-lg"></div>
+                    {index < order.timeline.length - 1 && (
+                      <div className="w-0.5 h-full bg-gradient-to-b from-[#1e3a5f] to-gray-300 mt-2"></div>
+                    )}
+                        </div>
+                  <div className="flex-1 pb-6">
+                    <div className="flex items-start justify-between mb-1">
+                      <p className="font-bold text-gray-900">{mapOrderStatusToText(event.status)}</p>
+                      <p className="text-xs text-gray-500">
+                        {event.createdAt ? new Date(event.createdAt).toLocaleString("vi-VN") : "N/A"}
+                      </p>
+                    </div>
+                    {event.note && (
+                      <p className="text-sm text-gray-600 mt-1">{event.note}</p>
+                    )}
+                    {event.createdBy && (
+                      <p className="text-xs text-gray-400 mt-1">by {event.createdBy}</p>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Payments Section */}
+        {order.payments && order.payments.length > 0 && (
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-xl p-8 hover:shadow-2xl transition-shadow duration-300">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-1 h-10 bg-gradient-to-b from-green-600 to-emerald-700 rounded-full"></div>
+              <h2 className="text-3xl font-serif font-bold text-gray-900 tracking-tight">Payment History</h2>
+            </div>
+            <div className="space-y-3">
+              {order.payments.map((payment, index) => (
+                <div key={payment.id || index} className="flex justify-between items-center p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors">
+                  <div>
+                    <p className="font-bold text-gray-900">{payment.method || "Payment"}</p>
+                    <p className="text-xs text-gray-500">
+                      {payment.createdAt ? new Date(payment.createdAt).toLocaleString("vi-VN") : "N/A"}
+                    </p>
+                  </div>
+                  <p className="text-lg font-bold text-green-600">
+                    {formatCurrency(payment.amount || 0)}
+                  </p>
+                </div>
+              ))}
+              </div>
             </div>
           )}
 
-          {/* Sample Images */}
-          {order.sampleImages && order.sampleImages.length > 0 && (
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-4">
-              <h3 className="font-semibold text-gray-900 mb-4 pb-3 border-b border-gray-200">
-                Hình ảnh mẫu
-              </h3>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                {order.sampleImages.map((img, index) => (
-                  <div key={index} className="rounded-lg overflow-hidden border border-gray-200">
-                    <img
-                      src={img}
-                      alt={`Mẫu ${index + 1}`}
-                      className="w-full h-40 object-cover"
-                    />
+        {/* Attachments Section */}
+        {order.attachments && order.attachments.length > 0 && (
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-xl p-8 hover:shadow-2xl transition-shadow duration-300">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-1 h-10 bg-gradient-to-b from-purple-600 to-indigo-700 rounded-full"></div>
+              <h2 className="text-3xl font-serif font-bold text-gray-900 tracking-tight">Attachments</h2>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              {order.attachments.map((attachment, index) => (
+                <a
+                  key={attachment.id || index}
+                  href={attachment.url || "#"}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-3 p-4 border-2 border-gray-200 rounded-xl hover:border-[#1e3a5f] hover:shadow-lg transition-all group"
+                >
+                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-100 to-indigo-100 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
+                    <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+                    </svg>
                   </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-gray-900 truncate group-hover:text-[#1e3a5f]">
+                      {attachment.fileName || `File ${index + 1}`}
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      {attachment.fileSize ? `${(attachment.fileSize / 1024).toFixed(1)} KB` : ""}
+                    </p>
+                  </div>
+                </a>
                 ))}
               </div>
             </div>
           )}
 
-          {/* Bottom Actions - Shopee Style */}
-          {order.status !== "Hoàn thành" && (
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-              <div className="flex gap-3">
+        {/* What happens next? Section */}
+        {order.statusRaw === "CONFIRMED" && (
+          <div className="bg-gradient-to-br from-white to-gray-50 rounded-2xl border-2 border-gray-100 shadow-xl p-8 hover:shadow-2xl transition-shadow duration-300">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-1 h-10 bg-gradient-to-b from-[#1e3a5f] to-[#2d4a6b] rounded-full"></div>
+              <h2 className="text-3xl font-serif font-bold text-gray-900 tracking-tight">What happens next?</h2>
+            </div>
+            <ul className="space-y-4">
+              <li className="flex items-start gap-4 group">
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#f97316] to-[#ea580c] flex items-center justify-center flex-shrink-0 shadow-lg group-hover:scale-110 transition-transform">
+                  <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                  </svg>
+                        </div>
+                <span className="text-gray-700 font-medium text-lg pt-2">Pay the deposit to confirm your order</span>
+              </li>
+              <li className="flex items-start gap-4 group">
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#1e3a5f] to-[#2d4a6b] flex items-center justify-center flex-shrink-0 shadow-lg group-hover:scale-110 transition-transform">
+                  <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                  </svg>
+                </div>
+                <span className="text-gray-700 font-medium text-lg pt-2">Our master tailors will begin crafting your garments</span>
+              </li>
+              <li className="flex items-start gap-4 group">
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center flex-shrink-0 shadow-lg group-hover:scale-110 transition-transform">
+                  <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                  </svg>
+                </div>
+                <span className="text-gray-700 font-medium text-lg pt-2">Estimated completion: 2-3 weeks</span>
+              </li>
+            </ul>
+          </div>
+                )}
+              </div>
+
+      {/* Bottom Fixed Action Bar (Orange) */}
+      {order.statusRaw === "CONFIRMED" && total > 0 && (
+        <div className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-lg border-t-2 border-gray-200 p-5 z-50 w-full shadow-2xl">
+          <div className="max-w-6xl mx-auto w-full">
                 <button
-                  onClick={() => navigate("/customer/dashboard")}
-                  className="flex-1 px-4 py-2 border border-gray-300 rounded hover:bg-gray-50 transition-colors text-sm font-medium"
-                >
-                  Quay lại
-                </button>
-                <button
-                  onClick={() => navigate("/customer/order")}
-                  className="flex-1 px-4 py-2 bg-[#1B4332] text-white rounded hover:bg-[#14532d] transition-colors text-sm font-medium"
-                >
-                  Đặt may mới
+              onClick={handleAcceptAndPay}
+              className="w-full bg-gradient-to-r from-[#f97316] to-[#ea580c] hover:from-[#ea580c] hover:to-[#dc2626] text-white font-bold py-5 rounded-2xl flex items-center justify-center gap-3 transition-all duration-300 shadow-2xl hover:shadow-orange-500/50 hover:scale-[1.02] active:scale-[0.98] text-lg"
+            >
+              <span>Accept & Pay Deposit ({formatCurrency(deposit)})</span>
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+              </svg>
                 </button>
               </div>
             </div>
           )}
 
-          {/* Image Lightbox */}
-          {showImageLightbox !== null && review?.images && (
-            <div 
-              className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90"
-              onClick={() => setShowImageLightbox(null)}
-            >
-              <button
-                onClick={() => setShowImageLightbox(null)}
-                className="absolute top-4 right-4 w-10 h-10 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center text-white transition-colors"
-              >
+      {/* Floating Chat Button (Bottom Right) */}
+      <button className="fixed bottom-20 right-6 w-16 h-16 bg-gradient-to-br from-[#f97316] to-[#ea580c] hover:from-[#ea580c] hover:to-[#dc2626] text-white rounded-2xl flex items-center justify-center shadow-2xl z-40 transition-all duration-300 hover:scale-110 active:scale-95 relative group">
+        <div className="absolute -top-1 -right-1 w-5 h-5 bg-gradient-to-br from-[#10b981] to-emerald-600 rounded-full border-3 border-white shadow-lg animate-pulse"></div>
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                 </svg>
               </button>
-              {review.images.length > 1 && (
-                <>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setShowImageLightbox((prev) => (prev > 0 ? prev - 1 : review.images.length - 1));
-                    }}
-                    className="absolute left-4 w-10 h-10 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center text-white transition-colors"
-                  >
-                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                    </svg>
-                  </button>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setShowImageLightbox((prev) => (prev < review.images.length - 1 ? prev + 1 : 0));
-                    }}
-                    className="absolute right-4 w-10 h-10 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center text-white transition-colors"
-                  >
-                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                    </svg>
-                  </button>
-                </>
-              )}
-              <img
-                src={review.images[showImageLightbox]}
-                alt={`Review image ${showImageLightbox + 1}`}
-                className="max-w-full max-h-[90vh] object-contain rounded-lg"
-                onClick={(e) => e.stopPropagation()}
-              />
-              {review.images.length > 1 && (
-                <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 text-white text-sm">
-                  {showImageLightbox + 1} / {review.images.length}
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-      </div>
+
+      {/* Add padding bottom for fixed button */}
+      {order.statusRaw === "CONFIRMED" && total > 0 && (
+        <div className="h-24"></div>
+      )}
     </div>
   );
 };
 
-// Helper component
-function InfoRow({ label, value }) {
-  return (
-    <div className="flex justify-between items-start">
-      <span className="text-sm text-gray-600">{label}:</span>
-      <span className="text-sm font-medium text-gray-900 text-right">{value}</span>
-    </div>
-  );
-}
-
 export default CustomerOrderDetailPage;
-

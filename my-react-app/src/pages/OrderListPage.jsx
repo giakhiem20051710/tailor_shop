@@ -66,11 +66,18 @@ export default function OrderListPage() {
     // FILTER LOGIC
     const filtered = useMemo(() => {
         return orders.filter((o) => {
-            // search (id, name, phone)
+            // search (id, name, phone, code)
+            const searchLower = search.toLowerCase();
+            const orderId = String(o.id || o.code || "");
+            const orderName = String(o.name || o.customerName || o.customer?.name || "");
+            const orderPhone = String(o.phone || o.customerPhone || o.customer?.phone || "");
+            const orderCode = String(o.code || "");
+            
             const matchSearch =
-                o.id.toLowerCase().includes(search.toLowerCase()) ||
-                o.name.toLowerCase().includes(search.toLowerCase()) ||
-                o.phone.includes(search);
+                orderId.toLowerCase().includes(searchLower) ||
+                orderCode.toLowerCase().includes(searchLower) ||
+                orderName.toLowerCase().includes(searchLower) ||
+                orderPhone.includes(search);
 
             // status filter
             const matchStatus =
