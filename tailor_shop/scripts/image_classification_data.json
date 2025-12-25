@@ -1,0 +1,106 @@
+{
+  "images": [
+    {
+      "fileName": "ao-so-mi-nam-1.jpg",
+      "description": "Áo sơ mi nam màu trắng",
+      "category": "template",
+      "type": "ao_so_mi",
+      "gender": "male",
+      "tags": ["casual", "white"]
+    },
+    {
+      "fileName": "quan-tay-nam-1.jpg",
+      "description": "Quần tây nam màu đen",
+      "category": "template",
+      "type": "quan_tay",
+      "gender": "male",
+      "tags": ["formal", "black"]
+    },
+    {
+      "fileName": "vest-nam-1.jpg",
+      "description": "Vest nam màu xanh navy",
+      "category": "template",
+      "type": "vest",
+      "gender": "male",
+      "tags": ["formal", "sophisticated"]
+    },
+    {
+      "fileName": "ao-dai-nu-1.jpg",
+      "description": "Áo dài nữ màu đỏ",
+      "category": "template",
+      "type": "ao_dai",
+      "gender": "female",
+      "tags": ["traditional", "vietnamese", "red"]
+    },
+    {
+      "fileName": "vay-dam-nu-1.jpg",
+      "description": "Đầm nữ màu hồng",
+      "category": "template",
+      "type": "vay_dam",
+      "gender": "female",
+      "tags": ["elegant", "feminine"]
+    },
+    {
+      "fileName": "ao-khoac-nu-1.jpg",
+      "description": "Áo khoác nữ màu be",
+      "category": "template",
+      "type": "ao_khoac",
+      "gender": "female",
+      "tags": ["casual", "warm"]
+    },
+    {
+      "fileName": "tweed-fabric-1.jpg",
+      "description": "Vải tweed màu be",
+      "category": "fabric",
+      "type": "unknown",
+      "gender": "unisex",
+      "tags": ["tweed", "textured", "classic"]
+    },
+    {
+      "fileName": "lace-fabric-1.jpg",
+      "description": "Vải lace màu trắng",
+      "category": "fabric",
+      "type": "unknown",
+      "gender": "unisex",
+      "tags": ["lace", "delicate", "feminine"]
+    },
+    {
+      "fileName": "gothic-style-1.jpg",
+      "description": "Phong cách gothic",
+      "category": "style",
+      "type": "unknown",
+      "gender": "unisex",
+      "tags": ["gothic", "dark", "alternative"]
+    },
+    {
+      "fileName": "vintage-style-1.jpg",
+      "description": "Phong cách vintage",
+      "category": "style",
+      "type": "unknown",
+      "gender": "unisex",
+      "tags": ["vintage", "retro", "classic"]
+    }
+  ],
+  "summary": {
+    "totalImages": 10,
+    "categoryCount": {
+      "template": 6,
+      "fabric": 2,
+      "style": 2
+    },
+    "typeCount": {
+      "ao_so_mi": 1,
+      "quan_tay": 1,
+      "vest": 1,
+      "ao_dai": 1,
+      "vay_dam": 1,
+      "ao_khoac": 1
+    },
+    "genderCount": {
+      "male": 3,
+      "female": 3,
+      "unisex": 4
+    }
+  }
+}
+

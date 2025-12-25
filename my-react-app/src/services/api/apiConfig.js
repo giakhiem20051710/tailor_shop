@@ -155,5 +155,32 @@ export const API_ENDPOINTS = {
     HISTORY: (id) => `/measurements/${id}/history`,
     LATEST: (id) => `/measurements/${id}/latest`,
   },
+  // Product Configuration (Mix & Match)
+  PRODUCT_CONFIGURATION: {
+    CREATE: '/product-configurations',
+    DETAIL: (id) => `/product-configurations/${id}`,
+    TEMPLATES: '/product-configurations/templates',
+    FABRICS_BY_TEMPLATE: (templateId) => `/product-configurations/templates/${templateId}/fabrics`,
+    STYLES_BY_TEMPLATE: (templateId) => `/product-configurations/templates/${templateId}/styles`,
+    CALCULATE_PRICE: '/product-configurations/calculate-price',
+  },
+  // Image Assets
+  IMAGE_ASSET: {
+    CREATE: '/image-assets',
+    UPLOAD: '/image-assets/upload',
+    DETAIL: (id) => `/image-assets/${id}`,
+    LIST: '/image-assets',
+    BY_CATEGORY: (category) => `/image-assets/category/${category}`,
+    BY_CATEGORY_AND_TYPE: (category, type) => `/image-assets/category/${category}/type/${type}`,
+    FILTER: '/image-assets/filter',
+    BY_TEMPLATE: (templateId) => `/image-assets/template/${templateId}`,
+  },
+  // Bulk Upload
+  BULK_UPLOAD: {
+    PRESIGNED_URLS: '/products/bulk-upload/presigned-urls',
+    SUBMIT: '/products/bulk-upload/submit',
+    JOB_STATUS: (jobId) => `/products/bulk-upload/jobs/${jobId}`,
+    CHECK_DUPLICATES: '/products/bulk-upload/check-duplicates',
+  },
 };
 

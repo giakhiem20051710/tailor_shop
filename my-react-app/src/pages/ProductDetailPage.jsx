@@ -1,4 +1,4 @@
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { useState, useEffect, useMemo } from "react";
 import Header from "../components/Header.jsx";
 import {
@@ -9,12 +9,25 @@ import {
 import { getCurrentUser } from "../utils/authStorage.js";
 import { getWorkingSlots, updateWorkingSlot } from "../utils/workingSlotStorage.js";
 import { addAppointment } from "../utils/appointmentStorage.js";
+import { productService } from "../services/index.js";
+import OptimizedImage from "../components/OptimizedImage.jsx";
 
 const ProductDetailPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
-
-  const product = location.state?.product || {
+  const { key: urlKey } = useParams();
+  
+  // Get product key from URL params or location state
+  const productKeyFromState = location.state?.product?.key || location.state?.product?.slug;
+  const productKey = urlKey || productKeyFromState || "product-detail";
+  
+  // State for product data from API
+  const [productData, setProductData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  
+  // Fallback product from location state
+  const fallbackProduct = location.state?.product || {
     name: "Sản phẩm may đo",
     desc: "Mô tả sản phẩm",
     price: "0 ₫",
@@ -23,21 +36,47 @@ const ProductDetailPage = () => {
       "https://images.unsplash.com/photo-1543076447-215ad9ba6923?w=900&auto=format&fit=crop&q=80",
     type: "newArrival",
   };
+  
+  // Use productData from API if available, otherwise use fallback
+  const product = productData || fallbackProduct;
 
   const [selectedImage, setSelectedImage] = useState(0);
-  const productKey =
-    product.key ||
-    product.slug ||
-    (product.name
-      ? product.name
-          .toString()
-          .toLowerCase()
-          .replace(/[^a-z0-9]+/g, "-")
-          .replace(/(^-|-$)/g, "")
-      : "product-detail");
   const [isFavoriteProduct, setIsFavoriteProduct] = useState(() =>
     isFavorite(productKey)
   );
+  
+  // Load product detail from API
+  useEffect(() => {
+    const loadProductDetail = async () => {
+      if (!productKey || productKey === "product-detail") {
+        setLoading(false);
+        return;
+      }
+      
+      try {
+        setLoading(true);
+        setError(null);
+        
+        const response = await productService.getDetail(productKey);
+        const data = productService.parseResponse(response);
+        
+        if (data) {
+          setProductData(data);
+          // Update favorite status if product is favorite from API
+          if (data.stats?.isFavorite !== undefined) {
+            setIsFavoriteProduct(data.stats.isFavorite);
+          }
+        }
+      } catch (err) {
+        console.error("Error loading product detail:", err);
+        setError(err.message || "Không thể tải chi tiết sản phẩm");
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    loadProductDetail();
+  }, [productKey]);
   const [showConsultationModal, setShowConsultationModal] = useState(false);
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedSlotId, setSelectedSlotId] = useState(null);
@@ -46,12 +85,44 @@ const ProductDetailPage = () => {
   const [bookingSuccess, setBookingSuccess] = useState(false);
 
   // ====== GALLERY ======
-  const productImages = [
-    product.image,
-    "https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?w=900&auto=format&fit=crop&q=80",
-    "https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=900&auto=format&fit=crop&q=80",
-    "https://images.unsplash.com/photo-1601925260368-ae2f83d34b08?w=900&auto=format&fit=crop&q=80",
-  ];
+  const productImages = useMemo(() => {
+    if (productData?.media) {
+      const images = [];
+      if (productData.media.thumbnail) {
+        images.push(productData.media.thumbnail);
+      }
+      if (productData.media.gallery && Array.isArray(productData.media.gallery)) {
+        images.push(...productData.media.gallery);
+      }
+      return images.length > 0 ? images : [product.image || fallbackProduct.image];
+    }
+    // Fallback: use product.image or mock images
+    return [
+      product.image || fallbackProduct.image,
+      "https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?w=900&auto=format&fit=crop&q=80",
+      "https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=900&auto=format&fit=crop&q=80",
+      "https://images.unsplash.com/photo-1601925260368-ae2f83d34b08?w=900&auto=format&fit=crop&q=80",
+    ];
+  }, [productData, product.image, fallbackProduct.image]);
+  
+  // Get price display
+  const priceDisplay = useMemo(() => {
+    if (productData?.pricing?.basePrice) {
+      return `${Number(productData.pricing.basePrice).toLocaleString("vi-VN")} ₫`;
+    }
+    if (productData?.pricing?.priceRange) {
+      return productData.pricing.priceRange;
+    }
+    return product.price || "Liên hệ";
+  }, [productData, product.price]);
+  
+  // Get tailoring specifications
+  const specs = productData?.specifications || {};
+  
+  // Get occasions, customer styles, care instructions
+  const occasions = productData?.occasions || [];
+  const customerStyles = productData?.customerStyles || [];
+  const careInstructions = productData?.careInstructions || [];
 
   const handleBackClick = () => {
     navigate(-1);
@@ -188,8 +259,32 @@ const ProductDetailPage = () => {
       {/* MAIN CONTENT */}
       <main className="pt-[170px] md:pt-[190px] pb-16">
         <div className="max-w-7xl mx-auto px-5 lg:px-8">
-          {/* Breadcrumb + Back */}
-          <div className="flex items-center justify-between gap-4 mb-6 text-[12px] text-[#6B7280]">
+          {/* Loading State */}
+          {loading && (
+            <div className="text-center py-12">
+              <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-[#1B4332]"></div>
+              <p className="mt-4 text-[#6B7280]">Đang tải chi tiết sản phẩm...</p>
+            </div>
+          )}
+          
+          {/* Error State */}
+          {error && !loading && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-center">
+              <p className="text-red-600 text-sm">{error}</p>
+              <button
+                onClick={() => navigate(-1)}
+                className="mt-2 text-red-600 hover:text-red-800 underline text-sm"
+              >
+                Quay lại
+              </button>
+            </div>
+          )}
+          
+          {/* Product Content */}
+          {!loading && !error && (
+            <>
+              {/* Breadcrumb + Back */}
+              <div className="flex items-center justify-between gap-4 mb-6 text-[12px] text-[#6B7280]">
             <button
               onClick={handleBackClick}
               className="flex items-center gap-2 hover:text-[#111827] transition-colors"
@@ -226,7 +321,7 @@ const ProductDetailPage = () => {
               <div className="text-right">
                 <p className="text-[12px] text-[#6B7280]">Giá tham khảo từ</p>
                 <p className="text-[24px] md:text-[26px] font-semibold text-[#1B4332]">
-                  {product.price}
+                  {priceDisplay}
                 </p>
                 <p className="text-[11px] text-[#9CA3AF]">
                   Giá có thể thay đổi theo chất liệu & chi tiết may
@@ -240,7 +335,7 @@ const ProductDetailPage = () => {
             {/* LEFT: HÌNH ẢNH */}
             <section className="space-y-4">
               <div className="relative rounded-3xl overflow-hidden bg-gray-200 aspect-[4/5] shadow-md">
-                <img
+                <OptimizedImage
                   src={productImages[selectedImage]}
                   alt={product.name}
                   className="w-full h-full object-cover"
@@ -263,7 +358,7 @@ const ProductDetailPage = () => {
                         : "border-transparent hover:border-[#D1D5DB]"
                     }`}
                   >
-                    <img
+                    <OptimizedImage
                       src={img}
                       alt={`${product.name} ${index + 1}`}
                       className="w-full h-full object-cover"
@@ -297,9 +392,18 @@ const ProductDetailPage = () => {
                 </p>
 
                 <div className="mt-4 grid grid-cols-3 gap-3 text-[11px] text-[#4B5563]">
-                  <InfoChip label="Thời gian may" value="7–14 ngày" />
-                  <InfoChip label="Số lần thử đồ" value="1–2 lần" />
-                  <InfoChip label="Bảo hành" value="Chỉnh sửa miễn phí 1 lần" />
+                  <InfoChip 
+                    label="Thời gian may" 
+                    value={specs.tailoringTime || "7–14 ngày"} 
+                  />
+                  <InfoChip 
+                    label="Số lần thử đồ" 
+                    value={specs.fittingCount || "1–2 lần"} 
+                  />
+                  <InfoChip 
+                    label="Bảo hành" 
+                    value={specs.warranty || "Chỉnh sửa miễn phí 1 lần"} 
+                  />
                 </div>
               </div>
 
@@ -309,20 +413,37 @@ const ProductDetailPage = () => {
                   Chi tiết may đo
                 </p>
                 <div className="grid grid-cols-2 gap-3 text-[12px] text-[#4B5563] mb-3">
-                  <DetailRow label="Form dáng" value="Ôm nhẹ, tôn eo" />
-                  <DetailRow label="Độ dài" value="Qua gối / maxi tùy chọn" />
+                  <DetailRow 
+                    label="Form dáng" 
+                    value={specs.silhouette || "Ôm nhẹ, tôn eo"} 
+                  />
+                  <DetailRow 
+                    label="Độ dài" 
+                    value={specs.length || "Qua gối / maxi tùy chọn"} 
+                  />
                   <DetailRow
                     label="Chất liệu gợi ý"
-                    value="Lụa, satin, crepe cao cấp"
+                    value={
+                      specs.materials && specs.materials.length > 0
+                        ? specs.materials.join(", ")
+                        : "Lụa, satin, crepe cao cấp"
+                    }
                   />
-                  <DetailRow label="Lót trong" value="Có, chống hằn & thoáng" />
+                  <DetailRow 
+                    label="Lót trong" 
+                    value={specs.lining || "Có, chống hằn & thoáng"} 
+                  />
                   <DetailRow
                     label="Màu sắc"
-                    value="Tùy chọn theo bảng màu tại tiệm"
+                    value={
+                      specs.colors && specs.colors.length > 0
+                        ? specs.colors.join(", ")
+                        : "Tùy chọn theo bảng màu tại tiệm"
+                    }
                   />
                   <DetailRow
                     label="Phụ kiện"
-                    value="Có thể phối thêm belt, hoa cài, khăn choàng"
+                    value={specs.accessories || "Có thể phối thêm belt, hoa cài, khăn choàng"}
                   />
                 </div>
 
@@ -341,31 +462,55 @@ const ProductDetailPage = () => {
                 <div className="grid md:grid-cols-2 gap-4 text-[12px] text-[#4B5563]">
                   <div>
                     <p className="font-medium mb-1">Dịp sử dụng</p>
-                    <ul className="list-disc list-inside space-y-1">
-                      <li>Cưới hỏi, lễ kỷ niệm, tiệc tối</li>
-                      <li>Chụp ảnh kỷ niệm, pre-wedding</li>
-                      <li>Sự kiện cần sự chỉn chu, thanh lịch</li>
-                    </ul>
+                    {occasions.length > 0 ? (
+                      <ul className="list-disc list-inside space-y-1">
+                        {occasions.map((occasion, idx) => (
+                          <li key={idx}>{occasion}</li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <ul className="list-disc list-inside space-y-1">
+                        <li>Cưới hỏi, lễ kỷ niệm, tiệc tối</li>
+                        <li>Chụp ảnh kỷ niệm, pre-wedding</li>
+                        <li>Sự kiện cần sự chỉn chu, thanh lịch</li>
+                      </ul>
+                    )}
                   </div>
                   <div>
                     <p className="font-medium mb-1">Phong cách khách hàng</p>
-                    <ul className="list-disc list-inside space-y-1">
-                      <li>Thích sự nữ tính, mềm mại nhưng không sến</li>
-                      <li>Muốn tôn dáng nhưng vẫn di chuyển thoải mái</li>
-                      <li>Cần trang phục “đẹp ngoài đời & đẹp trên hình”</li>
-                    </ul>
+                    {customerStyles.length > 0 ? (
+                      <ul className="list-disc list-inside space-y-1">
+                        {customerStyles.map((style, idx) => (
+                          <li key={idx}>{style}</li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <ul className="list-disc list-inside space-y-1">
+                        <li>Thích sự nữ tính, mềm mại nhưng không sến</li>
+                        <li>Muốn tôn dáng nhưng vẫn di chuyển thoải mái</li>
+                        <li>Cần trang phục "đẹp ngoài đời & đẹp trên hình"</li>
+                      </ul>
+                    )}
                   </div>
                 </div>
 
                 <div className="mt-4 pt-4 border-t border-[#E5E7EB] text-[12px] text-[#4B5563]">
                   <p className="font-medium mb-1">Gợi ý bảo quản</p>
-                  <ul className="list-disc list-inside space-y-1">
-                    <li>Ưu tiên giặt tay hoặc giặt chế độ nhẹ, nước lạnh.</li>
-                    <li>Không vắt xoắn mạnh, phơi nơi thoáng mát, tránh nắng gắt.</li>
-                    <li>
-                      Ủi ở nhiệt độ thấp, dùng khăn lót để bề mặt vải luôn mịn.
-                    </li>
-                  </ul>
+                  {careInstructions.length > 0 ? (
+                    <ul className="list-disc list-inside space-y-1">
+                      {careInstructions.map((instruction, idx) => (
+                        <li key={idx}>{instruction}</li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <ul className="list-disc list-inside space-y-1">
+                      <li>Ưu tiên giặt tay hoặc giặt chế độ nhẹ, nước lạnh.</li>
+                      <li>Không vắt xoắn mạnh, phơi nơi thoáng mát, tránh nắng gắt.</li>
+                      <li>
+                        Ủi ở nhiệt độ thấp, dùng khăn lót để bề mặt vải luôn mịn.
+                      </li>
+                    </ul>
+                  )}
                 </div>
               </div>
 
@@ -408,6 +553,8 @@ const ProductDetailPage = () => {
               </div>
             </section>
           </div>
+            </>
+          )}
         </div>
       </main>
 

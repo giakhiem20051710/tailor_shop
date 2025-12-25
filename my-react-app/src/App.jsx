@@ -43,6 +43,8 @@ const CustomerOrderDetailPage = lazy(() =>
 const ProductReviewPage = lazy(() => import("./pages/ProductReviewPage.jsx"));
 const ProductDetailPage = lazy(() => import("./pages/ProductDetailPage.jsx"));
 const ProductsPage = lazy(() => import("./pages/ProductsPage.jsx"));
+const CustomizeProductPage = lazy(() => import("./pages/CustomizeProductPage.jsx"));
+const ImageUploadPage = lazy(() => import("./pages/ImageUploadPage.jsx"));
 const CustomerOrderPage = lazy(() => import("./pages/CustomerOrderPage.jsx"));
 const PromotionsPage = lazy(() => import("./pages/PromotionsPage.jsx"));
 const SupportPage = lazy(() => import("./pages/SupportPage.jsx"));
@@ -96,6 +98,12 @@ export default function App() {
       
       {/* Product Detail Page */}
       <Route path="/product/:id?" element={<ProductDetailPage />} />
+      
+      {/* Customize Product Page */}
+      <Route path="/customize-product" element={<CustomizeProductPage />} />
+      
+      {/* Image Upload & Management Page */}
+      <Route path="/images" element={<ImageUploadPage />} />
       
       {/* Promotions Page */}
       <Route path="/promotions" element={<PromotionsPage />} />

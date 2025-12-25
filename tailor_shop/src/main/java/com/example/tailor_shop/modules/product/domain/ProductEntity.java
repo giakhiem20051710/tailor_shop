@@ -30,7 +30,7 @@ public class ProductEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "key", nullable = false, unique = true, length = 100)
+    @Column(name = "product_key", nullable = false, unique = true, length = 100)
     private String key;
 
     @Column(name = "name", nullable = false, length = 200)
@@ -66,7 +66,7 @@ public class ProductEntity {
     @Column(name = "budget", length = 50)
     private String budget;
 
-    @Column(name = "type", length = 50)
+    @Column(name = "product_type", length = 50)
     private String type;
 
     @Column(name = "rating", precision = 3, scale = 2)
