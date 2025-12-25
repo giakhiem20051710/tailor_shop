@@ -19,6 +19,9 @@ spring:
 
   flyway:
     enabled: false
+    locations: classpath:db.migration
+    baseline-on-migrate: true
+    validate-on-migrate: true
 
   mail:
     host: smtp.gmail.com
@@ -45,6 +48,14 @@ spring:
 server:
   port: 8083
 
+# Image Processing Configuration
+image-processing:
+  enabled: true                    # Bật/tắt xử lý ảnh chất lượng cao
+  target-width: 800                # Chiều rộng hiển thị (sẽ resize thành 1600px cho Retina)
+  target-height: 1200              # Chiều cao hiển thị (sẽ resize thành 2400px cho Retina)
+  smart-crop: true                 # Tự động cắt bỏ khoảng trống
+  convert-to-webp: false           # Chuyển đổi sang WebP (cần thư viện webp-imageio)
+
 jwt:
   secret: change-me-256-bit-secret-key-min-length-32-bytes!!!
   expiration: 86400000
@@ -56,3 +67,19 @@ aws:
     access-key: 
     secret-key: 
     base-url: 
+
+bulk-upload:
+  async:
+    core-pool-size: 5
+    max-pool-size: 10
+    queue-capacity: 500
+  ai-vision:
+    enabled: false # Set true để enable AI Vision
+    provider: openai # openai, aws-rekognition, google-vision
+    openai:
+      api-key: ${OPENAI_API_KEY:}
+      model: gpt-4-vision-preview
+    max-retries: 3
+  s3:
+    presigned-url-expiration-hours: 1
+    max-file-size-mb: 50

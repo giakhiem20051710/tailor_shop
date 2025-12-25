@@ -9,6 +9,7 @@ import {
   addFavorite,
   removeFavorite,
 } from "../utils/favoriteStorage.js";
+import { productConfigurationService, imageAssetService, productService } from "../services/index.js";
 
 const buildFavoriteLookup = () => {
   const favorites = getFavorites();
@@ -33,56 +34,8 @@ const getProductKey = (product) => {
   return undefined;
 };
 
-const femaleFashionImages = {
-  aoDaiRed:
-    "https://images.pexels.com/photos/1408221/pexels-photo-1408221.jpeg?auto=compress&cs=tinysrgb&w=1200",
-  aoDaiWhite:
-    "https://images.pexels.com/photos/2567372/pexels-photo-2567372.jpeg?auto=compress&cs=tinysrgb&w=1200",
-  aoDaiPastel:
-    "https://images.pexels.com/photos/229690/pexels-photo-229690.jpeg?auto=compress&cs=tinysrgb&w=1200",
-  aoDaiNavy:
-    "https://images.pexels.com/photos/6311683/pexels-photo-6311683.jpeg?auto=compress&cs=tinysrgb&w=1200",
-  glamRed:
-    "https://images.pexels.com/photos/3771811/pexels-photo-3771811.jpeg?auto=compress&cs=tinysrgb&w=1200",
-  glamPink:
-    "https://images.pexels.com/photos/1906810/pexels-photo-1906810.jpeg?auto=compress&cs=tinysrgb&w=1200",
-  glamGold:
-    "https://images.pexels.com/photos/6311679/pexels-photo-6311679.jpeg?auto=compress&cs=tinysrgb&w=1200",
-  emeraldDress:
-    "https://images.pexels.com/photos/6311677/pexels-photo-6311677.jpeg?auto=compress&cs=tinysrgb&w=1200",
-  lavenderDress:
-    "https://images.pexels.com/photos/6311678/pexels-photo-6311678.jpeg?auto=compress&cs=tinysrgb&w=1200",
-  pastelGreen:
-    "https://images.pexels.com/photos/6311673/pexels-photo-6311673.jpeg?auto=compress&cs=tinysrgb&w=1200",
-  modernVest:
-    "https://images.pexels.com/photos/6311697/pexels-photo-6311697.jpeg?auto=compress&cs=tinysrgb&w=1200",
-  whiteSuit:
-    "https://images.pexels.com/photos/6311702/pexels-photo-6311702.jpeg?auto=compress&cs=tinysrgb&w=1200",
-  officeDenim:
-    "https://images.pexels.com/photos/5704849/pexels-photo-5704849.jpeg?auto=compress&cs=tinysrgb&w=1200",
-  denimJacket:
-    "https://images.pexels.com/photos/2983463/pexels-photo-2983463.jpeg?auto=compress&cs=tinysrgb&w=1200",
-  tailorStudio:
-    "https://images.pexels.com/photos/6311651/pexels-photo-6311651.jpeg?auto=compress&cs=tinysrgb&w=1200",
-  beigeSuit:
-    "https://images.pexels.com/photos/6311696/pexels-photo-6311696.jpeg?auto=compress&cs=tinysrgb&w=1200",
-  showroomRack:
-    "https://images.pexels.com/photos/6311671/pexels-photo-6311671.jpeg?auto=compress&cs=tinysrgb&w=1200",
-  casualSet:
-    "https://images.pexels.com/photos/6311668/pexels-photo-6311668.jpeg?auto=compress&cs=tinysrgb&w=1200",
-  whiteShirt:
-    "https://images.pexels.com/photos/6311669/pexels-photo-6311669.jpeg?auto=compress&cs=tinysrgb&w=1200",
-  blackPants:
-    "https://images.pexels.com/photos/6311665/pexels-photo-6311665.jpeg?auto=compress&cs=tinysrgb&w=1200",
-  midiSkirt:
-    "https://images.pexels.com/photos/6311672/pexels-photo-6311672.jpeg?auto=compress&cs=tinysrgb&w=1200",
-  lightJacket:
-    "https://images.pexels.com/photos/6311660/pexels-photo-6311660.jpeg?auto=compress&cs=tinysrgb&w=1200",
-  casualRack:
-    "https://images.pexels.com/photos/6311670/pexels-photo-6311670.jpeg?auto=compress&cs=tinysrgb&w=1200",
-};
-
-const FALLBACK_PRODUCT_IMAGE = femaleFashionImages.aoDaiRed;
+// Fallback image khi không có ảnh từ backend
+const FALLBACK_PRODUCT_IMAGE = "https://via.placeholder.com/800x1000?text=No+Image";
 
 const ProductsPage = () => {
   const navigate = useNavigate();
@@ -90,6 +43,61 @@ const ProductsPage = () => {
   const [favoriteLookup, setFavoriteLookup] = useState(() =>
     buildFavoriteLookup()
   );
+  
+  // State cho data từ backend
+  const [templates, setTemplates] = useState([]);
+  const [imageAssets, setImageAssets] = useState([]);
+  const [backendProductsList, setBackendProductsList] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  // Load data từ backend
+  useEffect(() => {
+    loadBackendData();
+  }, []);
+
+  const loadBackendData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      // Load products từ API /products (ưu tiên)
+      try {
+        const productsResponse = await productService.list({}, { page: 0, size: 100 });
+        const productsData = productService.parseResponse(productsResponse);
+        const productsList = productsData?.content || productsData?.data || (Array.isArray(productsData) ? productsData : []);
+        setBackendProductsList(productsList);
+        console.log("✅ Loaded products from /products API:", productsList.length);
+      } catch (productsErr) {
+        console.warn("⚠️ Could not load products from /products API:", productsErr);
+        // Fallback: load templates nếu /products không có data
+        const templatesResponse = await productConfigurationService.getTemplates();
+        const templatesData = productConfigurationService.parseResponse(templatesResponse);
+        setTemplates(Array.isArray(templatesData) ? templatesData : []);
+        console.log("✅ Loaded templates (fallback):", templatesData.length);
+      }
+
+      // Load image assets từ backend (category = "template")
+      try {
+        const imagesResponse = await imageAssetService.filter({
+          category: "template",
+          page: 0,
+          size: 100, // Load nhiều ảnh
+        });
+        const imagesData = imageAssetService.parseResponse(imagesResponse);
+        const imagesList = imagesData?.content || imagesData?.data || (Array.isArray(imagesData) ? imagesData : []);
+        setImageAssets(imagesList);
+        console.log("✅ Loaded image assets:", imagesList.length);
+      } catch (imagesErr) {
+        console.warn("⚠️ Could not load image assets:", imagesErr);
+      }
+    } catch (err) {
+      console.error("❌ Error loading backend data:", err);
+      setError(err.message || "Không thể tải dữ liệu từ server");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Get search query from URL
   useEffect(() => {
@@ -100,376 +108,166 @@ const ProductsPage = () => {
     }
   }, [location.search]);
 
-  // ====== DATA GỐC ======
+  // ====== HANDLERS ======
   const handleImageError = (event) => {
     event.currentTarget.onerror = null;
     event.currentTarget.src = FALLBACK_PRODUCT_IMAGE;
   };
 
-  const collections = [
-    {
-      key: "wedding",
-      name: "Wedding Collection",
-      description: "Áo dài & vest cưới tối giản, dễ chụp hình, dễ di chuyển.",
-      image: femaleFashionImages.aoDaiRed,
-      price: "Từ 2.500.000 ₫",
-      tag: "Cưới hỏi",
-      occasion: "wedding",
-      category: "ao-dai",
-      budget: "mid",
-      type: "collection",
-    },
-    {
-      key: "office",
-      name: "Office Edit",
-      description: "Vest công sở & sơ mi may đo cho người đi làm mỗi ngày.",
-      image: femaleFashionImages.modernVest,
-      price: "Từ 1.800.000 ₫",
-      tag: "Công sở",
-      occasion: "office",
-      category: "vest",
-      budget: "mid",
-      type: "collection",
-    },
-    {
-      key: "evening",
-      name: "Evening Line",
-      description: "Đầm dạ hội, váy tiệc nhẹ nhàng nhưng vẫn nổi bật.",
-      image: femaleFashionImages.glamGold,
-      price: "Từ 3.200.000 ₫",
-      tag: "Dạ hội",
-      occasion: "party",
-      category: "dam",
-      budget: "high",
-      type: "collection",
-    },
-    {
-      key: "daily",
-      name: "Everyday Fit",
-      description: "Quần, váy, áo may đo mặc hằng ngày – ít nhăn, dễ phối.",
-      image: femaleFashionImages.casualSet,
-      price: "Từ 800.000 ₫",
-      tag: "Hằng ngày",
-      occasion: "daily",
-      category: "everyday",
-      budget: "low",
-      type: "collection",
-    },
-  ];
+  // Map products từ API /products thành format frontend
+  const mappedBackendProducts = useMemo(() => {
+    if (!backendProductsList || backendProductsList.length === 0) return [];
 
-  const newArrivals = [
-    {
-      key: "ao-dai-lua-kem",
-      name: "Áo dài lụa tông kem",
-      desc: "Form suông nhẹ, tay lửng, hợp chụp ảnh cưới & lễ hỏi.",
-      price: "2.750.000 ₫",
-      tag: "Áo dài",
-      image: femaleFashionImages.aoDaiPastel,
-      occasion: "wedding",
-      category: "ao-dai",
-      budget: "mid",
-      type: "newArrival",
-    },
-    {
-      key: "vest-nau-cafe",
-      name: "Vest nâu café slim-fit",
-      desc: "Vest 2 khuy, màu nâu trầm, hợp anh gầy hoặc trung bình.",
-      price: "3.150.000 ₫",
-      tag: "Vest công sở",
-      image: femaleFashionImages.whiteSuit,
-      occasion: "office",
-      category: "vest",
-      budget: "high",
-      type: "newArrival",
-    },
-    {
-      key: "dam-satin-co-vuong",
-      name: "Đầm satin cổ vuông",
-      desc: "Dáng midi, tôn vai & cổ, hợp đi tiệc hoặc dạ hội nhẹ.",
-      price: "2.280.000 ₫",
-      tag: "Đầm tiệc",
-      image: femaleFashionImages.glamRed,
-      occasion: "party",
-      category: "dam",
-      budget: "mid",
-      type: "newArrival",
-    },
-  ];
+    return backendProductsList.map((product, index) => {
+      // Lấy image từ product (có thể là imageUrl, image, baseImage, hoặc từ imageAssets)
+      let imageUrl = product.imageUrl || product.image || product.baseImage || FALLBACK_PRODUCT_IMAGE;
+      
+      // Nếu không có image, tìm trong imageAssets
+      if (!imageUrl || imageUrl === FALLBACK_PRODUCT_IMAGE) {
+        const matchingImage = imageAssets.find(img => 
+          img.productTemplateId === product.templateId || 
+          img.productTemplateId === product.id
+        );
+        if (matchingImage?.url) {
+          imageUrl = matchingImage.url;
+        }
+      }
 
-  // Thêm 100 sản phẩm với hình ảnh thật
-  const additionalProducts = [
-    // Áo dài - Wedding
-    {
-      key: "ao-dai-do-truyen-thong",
-      name: "Áo dài đỏ truyền thống",
-      desc: "Áo dài đỏ cổ điển, form chuẩn, phù hợp lễ cưới truyền thống.",
-      price: "3.200.000 ₫",
-      tag: "Áo dài",
-      image: femaleFashionImages.aoDaiRed,
-      occasion: "wedding",
-      category: "ao-dai",
-      budget: "high",
-      type: "collection",
-    },
-    {
-      key: "ao-dai-trang-hien-dai",
-      name: "Áo dài trắng hiện đại",
-      desc: "Thiết kế tối giản, form suông, hợp chụp ảnh cưới ngoài trời.",
-      price: "2.800.000 ₫",
-      tag: "Áo dài",
-      image: femaleFashionImages.aoDaiWhite,
-      occasion: "wedding",
-      category: "ao-dai",
-      budget: "mid",
-      type: "newArrival",
-    },
-    {
-      key: "ao-dai-xanh-navy",
-      name: "Áo dài xanh navy",
-      desc: "Màu xanh navy sang trọng, form ôm nhẹ, tôn dáng.",
-      price: "2.950.000 ₫",
-      tag: "Áo dài",
-      image: femaleFashionImages.aoDaiNavy,
-      occasion: "wedding",
-      category: "ao-dai",
-      budget: "mid",
-      type: "collection",
-    },
-    {
-      key: "ao-dai-hong-pastel",
-      name: "Áo dài hồng pastel",
-      desc: "Màu hồng pastel nhẹ nhàng, form suông, hợp lễ hỏi.",
-      price: "2.600.000 ₫",
-      tag: "Áo dài",
-      image: femaleFashionImages.aoDaiPastel,
-      occasion: "wedding",
-      category: "ao-dai",
-      budget: "mid",
-      type: "newArrival",
-    },
-    {
-      key: "ao-dai-vang-ong",
-      name: "Áo dài vàng ống",
-      desc: "Màu vàng ống truyền thống, form chuẩn, sang trọng.",
-      price: "3.100.000 ₫",
-      tag: "Áo dài",
-      image: femaleFashionImages.glamGold,
-      occasion: "wedding",
-      category: "ao-dai",
-      budget: "high",
-      type: "collection",
-    },
-    // Vest - Office
-    {
-      key: "vest-xam-chuot",
-      name: "Vest xám chuột",
-      desc: "Vest xám chuột 2 khuy, form slim-fit, chuyên nghiệp.",
-      price: "2.400.000 ₫",
-      tag: "Vest công sở",
-      image: femaleFashionImages.modernVest,
-      occasion: "office",
-      category: "vest",
-      budget: "mid",
-      type: "collection",
-    },
-    {
-      key: "vest-den-kinh-dien",
-      name: "Vest đen kinh điển",
-      desc: "Vest đen 2 khuy, form classic, phù hợp mọi dịp công sở.",
-      price: "2.500.000 ₫",
-      tag: "Vest công sở",
-      image: femaleFashionImages.tailorStudio,
-      occasion: "office",
-      category: "vest",
-      budget: "mid",
-      type: "collection",
-    },
-    {
-      key: "vest-xanh-royal",
-      name: "Vest xanh royal",
-      desc: "Vest xanh royal nổi bật, form modern, tự tin trong công việc.",
-      price: "2.850.000 ₫",
-      tag: "Vest công sở",
-      image: femaleFashionImages.beigeSuit,
-      occasion: "office",
-      category: "vest",
-      budget: "mid",
-      type: "newArrival",
-    },
-    {
-      key: "vest-xanh-la-cay",
-      name: "Vest xanh lá cây",
-      desc: "Vest xanh lá cây độc đáo, form slim, phong cách hiện đại.",
-      price: "2.700.000 ₫",
-      tag: "Vest công sở",
-      image: femaleFashionImages.officeDenim,
-      occasion: "office",
-      category: "vest",
-      budget: "mid",
-      type: "newArrival",
-    },
-    {
-      key: "vest-kem-beige",
-      name: "Vest kem beige",
-      desc: "Vest màu kem beige nhẹ nhàng, form relaxed, thoải mái.",
-      price: "2.350.000 ₫",
-      tag: "Vest công sở",
-      image: femaleFashionImages.whiteSuit,
-      occasion: "office",
-      category: "vest",
-      budget: "mid",
-      type: "collection",
-    },
-    // Đầm - Party
-    {
-      key: "dam-do-dam-hoi",
-      name: "Đầm đỏ dạ hội",
-      desc: "Đầm đỏ dạ hội dài, form body, nổi bật trên sân khấu.",
-      price: "3.500.000 ₫",
-      tag: "Đầm tiệc",
-      image: femaleFashionImages.glamRed,
-      occasion: "party",
-      category: "dam",
-      budget: "high",
-      type: "collection",
-    },
-    {
-      key: "dam-den-co-tim",
-      name: "Đầm đen cổ tim",
-      desc: "Đầm đen cổ tim, dáng midi, thanh lịch và quyến rũ.",
-      price: "2.900.000 ₫",
-      tag: "Đầm tiệc",
-      image: femaleFashionImages.glamPink,
-      occasion: "party",
-      category: "dam",
-      budget: "mid",
-      type: "collection",
-    },
-    {
-      key: "dam-xanh-ngoc",
-      name: "Đầm xanh ngọc",
-      desc: "Đầm xanh ngọc dáng A-line, nhẹ nhàng, hợp tiệc nhẹ.",
-      price: "2.650.000 ₫",
-      tag: "Đầm tiệc",
-      image: femaleFashionImages.emeraldDress,
-      occasion: "party",
-      category: "dam",
-      budget: "mid",
-      type: "newArrival",
-    },
-    {
-      key: "dam-tim-lavender",
-      name: "Đầm tím lavender",
-      desc: "Đầm tím lavender form suông, màu sắc dịu dàng.",
-      price: "2.550.000 ₫",
-      tag: "Đầm tiệc",
-      image: femaleFashionImages.lavenderDress,
-      occasion: "party",
-      category: "dam",
-      budget: "mid",
-      type: "newArrival",
-    },
-    {
-      key: "dam-hong-pha-le",
-      name: "Đầm hồng pha lê",
-      desc: "Đầm hồng pha lê lấp lánh, form body, sang trọng.",
-      price: "3.800.000 ₫",
-      tag: "Đầm tiệc",
-      image: femaleFashionImages.glamGold,
-      occasion: "party",
-      category: "dam",
-      budget: "high",
-      type: "collection",
-    },
-    // Everyday
-    {
-      key: "set-quan-ao-hang-ngay",
-      name: "Set quần áo hằng ngày",
-      desc: "Set quần áo thoải mái, dễ phối, mặc đi làm hoặc đi chơi.",
-      price: "1.200.000 ₫",
-      tag: "Set đồ",
-      image: femaleFashionImages.casualSet,
-      occasion: "daily",
-      category: "everyday",
-      budget: "low",
-      type: "collection",
-    },
-    {
-      key: "ao-so-mi-trang",
-      name: "Áo sơ mi trắng",
-      desc: "Áo sơ mi trắng form vừa, chất liệu cotton, dễ phối.",
-      price: "850.000 ₫",
-      tag: "Áo sơ mi",
-      image: femaleFashionImages.whiteShirt,
-      occasion: "daily",
-      category: "everyday",
-      budget: "low",
-      type: "newArrival",
-    },
-    {
-      key: "quan-tay-den",
-      name: "Quần tây đen",
-      desc: "Quần tây đen form slim, chất liệu tốt, không nhăn.",
-      price: "950.000 ₫",
-      tag: "Quần tây",
-      image: femaleFashionImages.blackPants,
-      occasion: "daily",
-      category: "everyday",
-      budget: "low",
-      type: "collection",
-    },
-    {
-      key: "chan-vay-den",
-      name: "Chân váy đen",
-      desc: "Chân váy đen dài đến gối, form A-line, dễ phối.",
-      price: "780.000 ₫",
-      tag: "Chân váy",
-      image: femaleFashionImages.midiSkirt,
-      occasion: "daily",
-      category: "everyday",
-      budget: "low",
-      type: "newArrival",
-    },
-    {
-      key: "ao-khoac-nhe",
-      name: "Áo khoác nhẹ",
-      desc: "Áo khoác nhẹ form oversize, chất liệu mềm, thoải mái.",
-      price: "1.100.000 ₫",
-      tag: "Áo khoác",
-      image: femaleFashionImages.lightJacket,
-      occasion: "daily",
-      category: "everyday",
-      budget: "low",
-      type: "collection",
-    },
-  ];
+      // Map category từ backend sang frontend
+      const categoryMap = {
+        "ao-dai": "ao-dai",
+        "ao_so_mi": "everyday",
+        "quan_tay": "everyday",
+        "vest": "vest",
+        "dam": "dam",
+        "vay_dam": "dam",
+      };
+      const productCategory = product.category || product.type || "";
+      const frontendCategory = categoryMap[productCategory] || categoryMap[productCategory?.toLowerCase()] || "everyday";
 
-  const designStyleProducts = useMemo(
-    () =>
-      getAdminStyles().map((style) => ({
-        key: `style-${style.id}`,
-        name: style.name,
-        desc:
-          "Mẫu thiết kế đang dùng tại tiệm – có thể chỉnh theo số đo và chất liệu bạn chọn.",
-        price: `${Number(style.price || 0).toLocaleString("vi-VN")} ₫`,
-        tag: style.category,
-        image: style.image,
-        occasion: "daily",
-        category: "style",
-        budget: "mid",
-        type: "style",
-      })),
-    []
-  );
+      // Map category sang occasion
+      const occasionMap = {
+        "ao-dai": "wedding",
+        "vest": "office",
+        "dam": "party",
+        "everyday": "daily",
+      };
+      const occasion = occasionMap[frontendCategory] || "daily";
 
+      // Map category sang budget (dựa trên price nếu có)
+      const priceValue = product.price || product.basePrice || product.finalPrice || 0;
+      const budget = priceValue > 3000000 
+        ? "high" 
+        : priceValue > 2000000 
+        ? "mid" 
+        : "low";
+
+      return {
+        key: product.key || product.slug || `product-${product.id}`,
+        name: product.name || product.title || "Sản phẩm",
+        desc: product.description || product.desc || "Sản phẩm may đo chất lượng cao",
+        price: priceValue 
+          ? `${Number(priceValue).toLocaleString("vi-VN")} ₫`
+          : "Liên hệ",
+        tag: product.category || product.type || product.tag || "Sản phẩm",
+        image: imageUrl,
+        occasion: occasion,
+        category: frontendCategory,
+        budget: budget,
+        type: product.type || "collection",
+        productId: product.id,
+        templateId: product.templateId,
+      };
+    });
+  }, [backendProductsList, imageAssets]);
+
+  // Map templates từ backend thành products (fallback nếu không có products)
+  const backendProducts = useMemo(() => {
+    // Ưu tiên dùng products từ API /products
+    if (mappedBackendProducts.length > 0) {
+      return mappedBackendProducts;
+    }
+
+    // Fallback: dùng templates nếu không có products
+    if (!templates || templates.length === 0) return [];
+
+    return templates.map((template, index) => {
+      // Ưu tiên: 1) template.baseImage, 2) image asset có productTemplateId match, 3) image asset có type match, 4) fallback
+      let imageUrl = template.baseImage || FALLBACK_PRODUCT_IMAGE;
+      
+      if (!template.baseImage && imageAssets.length > 0) {
+        // Tìm image asset có productTemplateId match
+        const exactMatch = imageAssets.find(img => img.productTemplateId === template.id);
+        if (exactMatch?.url) {
+          imageUrl = exactMatch.url;
+        } else {
+          // Tìm image asset có type/category match
+          const categoryMatch = imageAssets.find(img => {
+            if (!img.type || !template.category) return false;
+            const imgType = img.type.toLowerCase();
+            const templateCategory = template.category.toLowerCase();
+            return imgType.includes(templateCategory) || templateCategory.includes(imgType);
+          });
+          if (categoryMatch?.url) {
+            imageUrl = categoryMatch.url;
+          } else {
+            // Fallback: dùng image theo index để phân bổ đều
+            const fallbackImage = imageAssets[index % imageAssets.length];
+            if (fallbackImage?.url) {
+              imageUrl = fallbackImage.url;
+            }
+          }
+        }
+      }
+
+      // Map category từ backend sang frontend
+      const categoryMap = {
+        "ao-dai": "ao-dai",
+        "ao_so_mi": "everyday",
+        "quan_tay": "everyday",
+        "vest": "vest",
+        "dam": "dam",
+        "vay_dam": "dam",
+      };
+      const frontendCategory = categoryMap[template.category] || "everyday";
+
+      // Map category sang occasion
+      const occasionMap = {
+        "ao-dai": "wedding",
+        "vest": "office",
+        "dam": "party",
+        "everyday": "daily",
+      };
+      const occasion = occasionMap[frontendCategory] || "daily";
+
+      // Map category sang budget (dựa trên price nếu có)
+      const budget = template.basePrice && Number(template.basePrice) > 3000000 
+        ? "high" 
+        : template.basePrice && Number(template.basePrice) > 2000000 
+        ? "mid" 
+        : "low";
+
+      return {
+        key: template.slug || `template-${template.id}`,
+        name: template.name,
+        desc: template.description || "Sản phẩm may đo chất lượng cao",
+        price: template.basePrice 
+          ? `${Number(template.basePrice).toLocaleString("vi-VN")} ₫`
+          : "Liên hệ",
+        tag: template.category || "Sản phẩm",
+        image: imageUrl,
+        occasion: occasion,
+        category: frontendCategory,
+        budget: budget,
+        type: "collection",
+        templateId: template.id, // Lưu templateId để dùng sau
+      };
+    });
+  }, [templates, imageAssets, mappedBackendProducts]);
+
+  // Schema products cho SEO (chỉ dùng backend products)
   const schemaProducts = useMemo(() => {
-    const allProducts = [
-      ...collections,
-      ...newArrivals,
-      ...additionalProducts,
-      ...designStyleProducts,
-    ];
-    return allProducts.map((product) => ({
+    return backendProducts.map((product) => ({
       name: product.name,
       desc: product.desc || product.description,
       image: product.image,
@@ -477,7 +275,7 @@ const ProductsPage = () => {
       key: product.key,
       category: product.category || product.tag,
     }));
-  }, []);
+  }, [backendProducts]);
 
   usePageMeta({
     title: "Bộ sưu tập áo dài, vest, đầm may đo | My Hiền Tailor",
@@ -485,100 +283,10 @@ const ProductsPage = () => {
       "Khám phá áo dài cưới, vest công sở, đầm dạ hội và trang phục hằng ngày được may đo riêng cho bạn tại My Hiền Tailor.",
   });
 
-  // Tạo thêm sản phẩm để đủ 100 sản phẩm với hình ảnh thật theo concept nữ
-  const generateMoreProducts = () => {
-    const baseProducts = [
-      ...collections,
-      ...newArrivals,
-      ...additionalProducts,
-      ...designStyleProducts,
-    ];
-    const moreProducts = [];
-    
-    const images = Object.values(femaleFashionImages);
-    
-    const productNames = [
-      // Áo dài
-      "Áo dài lụa tơ tằm", "Áo dài nhung đỏ", "Áo dài gấm vàng", "Áo dài lụa xanh",
-      "Áo dài trắng tinh khôi", "Áo dài tím hoa cà", "Áo dài xanh lá", "Áo dài hồng phấn",
-      "Áo dài đỏ thắm", "Áo dài vàng chanh", "Áo dài xanh dương", "Áo dài nâu đất",
-      // Vest
-      "Vest xám đậm", "Vest xanh navy", "Vest nâu đất", "Vest xám nhạt",
-      "Vest đen classic", "Vest xanh rêu", "Vest beige", "Vest xanh mint",
-      "Vest nâu cappuccino", "Vest xám bạc", "Vest xanh than", "Vest kem",
-      // Đầm
-      "Đầm dạ hội đỏ", "Đầm tiệc đen", "Đầm xanh ngọc", "Đầm tím lavender",
-      "Đầm hồng phấn", "Đầm xanh navy", "Đầm trắng tinh khôi", "Đầm vàng chanh",
-      "Đầm đỏ thắm", "Đầm xanh lá", "Đầm tím than", "Đầm beige",
-      // Everyday
-      "Áo sơ mi trắng", "Áo sơ mi xanh", "Quần tây đen", "Chân váy xám",
-      "Set đồ công sở", "Áo khoác blazer", "Váy liền thân", "Quần ống rộng",
-      "Áo thun cổ tròn", "Quần short", "Áo cardigan", "Chân váy chữ A",
-    ];
-    
-    const descriptions = [
-      "Form suông nhẹ, tay lửng, hợp chụp ảnh cưới & lễ hỏi.",
-      "Vest 2 khuy, màu nâu trầm, hợp anh gầy hoặc trung bình.",
-      "Dáng midi, tôn vai & cổ, hợp đi tiệc hoặc dạ hội nhẹ.",
-      "Form ưu tiên sự thoải mái, ngồi lâu vẫn dễ chịu.",
-      "Đường cắt tôn dáng, che nhẹ khuyết điểm ở eo / bụng.",
-      "Chất vải ít nhăn, màu sắc và phom lên hình rất đẹp.",
-      "Thiết kế tối giản, form chuẩn, phù hợp mọi dịp.",
-      "Màu sắc sang trọng, chất liệu cao cấp, bền đẹp.",
-      "Form body ôm nhẹ, tôn dáng, lên hình đẹp.",
-      "Chất liệu mềm mại, thoáng mát, dễ chịu khi mặc.",
-    ];
-    
-    const tags = ["Áo dài", "Vest công sở", "Đầm tiệc", "Set đồ", "Áo sơ mi", "Quần tây", "Chân váy", "Áo khoác"];
-    const occasions = ["wedding", "office", "party", "daily"];
-    const categories = ["ao-dai", "vest", "dam", "everyday"];
-    const budgets = ["low", "mid", "high"];
-    const types = ["collection", "newArrival"];
-    const prices = [
-      "1.500.000 ₫", "1.800.000 ₫", "2.000.000 ₫", "2.200.000 ₫", "2.500.000 ₫",
-      "2.750.000 ₫", "3.000.000 ₫", "3.200.000 ₫", "3.500.000 ₫", "3.800.000 ₫", "4.000.000 ₫"
-    ];
-    
-    const currentCount = baseProducts.length;
-    const targetCount = 100;
-    
-    for (let i = currentCount; i < targetCount; i++) {
-      const occasion = occasions[Math.floor(Math.random() * occasions.length)];
-      const category = categories[Math.floor(Math.random() * categories.length)];
-      const budget = budgets[Math.floor(Math.random() * budgets.length)];
-      const type = types[Math.floor(Math.random() * types.length)];
-      const nameIndex = Math.floor(Math.random() * productNames.length);
-      const name = productNames[nameIndex] + (i > currentCount + 20 ? ` - Mẫu ${i - currentCount + 1}` : "");
-      const desc = descriptions[Math.floor(Math.random() * descriptions.length)];
-      const tag = tags[Math.floor(Math.random() * tags.length)];
-      const price = prices[Math.floor(Math.random() * prices.length)];
-      const imageIndex = i % images.length;
-      const image = images[imageIndex];
-      
-      moreProducts.push({
-        key: `product-${i + 1}`,
-        name,
-        desc,
-        price,
-        tag,
-        image,
-        occasion,
-        category,
-        budget,
-        type,
-      });
-    }
-    
-    return moreProducts;
-  };
-
-  const allProducts = [
-    ...collections,
-    ...newArrivals,
-    ...additionalProducts,
-    ...designStyleProducts,
-    ...generateMoreProducts(),
-  ];
+  // Chỉ dùng products từ backend
+  const allProducts = useMemo(() => {
+    return backendProducts;
+  }, [backendProducts]);
 
   // ====== FILTER STATE ======
   const [needFilter, setNeedFilter] = useState("all"); // all | wedding | office | party | daily
@@ -906,7 +614,29 @@ const ProductsPage = () => {
             </span>
           </div>
 
+          {/* LOADING STATE */}
+          {loading && (
+            <div className="text-center py-12">
+              <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-[#1B4332]"></div>
+              <p className="mt-4 text-[#6B7280]">Đang tải sản phẩm...</p>
+            </div>
+          )}
+
+          {/* ERROR STATE */}
+          {error && !loading && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-center">
+              <p className="text-red-600 text-sm">{error}</p>
+              <button
+                onClick={loadBackendData}
+                className="mt-2 text-red-600 hover:text-red-800 underline text-sm"
+              >
+                Thử lại
+              </button>
+            </div>
+          )}
+
           {/* GRID SẢN PHẨM */}
+          {!loading && (
           <section id="products-grid-section" className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-7">
             {paginatedProducts.map((product, index) => {
               const productKey = getProductKey(product) || `p-${index}`;
@@ -921,7 +651,7 @@ const ProductsPage = () => {
                 {/* IMAGE */}
                   <div className="relative h-56 md:h-60 w-full overflow-hidden">
                   <img
-                    src={product.image}
+                    src={product.image || FALLBACK_PRODUCT_IMAGE}
                     alt={product.name}
                     className="w-full h-full object-cover object-center transition-transform duration-500 group-hover:scale-105"
                     loading="lazy"
@@ -1027,6 +757,7 @@ const ProductsPage = () => {
               );
             })}
           </section>
+          )}
 
           {/* PHÂN TRANG */}
           {totalPages > 1 && (

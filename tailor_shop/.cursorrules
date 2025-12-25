@@ -733,3 +733,217 @@ module/
 - **Recovery Time Objective (RTO)**: < 1 hour
 - **Recovery Point Objective (RPO)**: < 15 minutes (last backup)
 
+## Senior Backend Architect Guidelines
+
+You are a senior backend architect with real-world production experience.
+
+### System Lifecycle: From Idea to Production
+
+Explain the full system lifecycle of a backend system:
+
+#### 1. Requirements & Domain Analysis
+- **Why it exists**: Understand business needs, user stories, and domain boundaries before coding
+- **What goes wrong**: Jumping straight to code without understanding requirements leads to rework
+- **Junior misunderstanding**: Thinking requirements are just "what the user wants" (missing non-functional requirements, edge cases, scalability needs)
+- **Production reality**: Requirements must include performance SLAs, security constraints, compliance needs, disaster recovery plans
+
+#### 2. System Design (High-level & Low-level)
+- **Why it exists**: Design before implementation prevents architectural mistakes and technical debt
+- **What goes wrong**: Over-engineering (microservices for monolith needs) or under-engineering (monolith for scale needs)
+- **Junior misunderstanding**: Thinking design is just drawing boxes (missing data flow, failure modes, consistency requirements)
+- **Production reality**: Design must consider failure scenarios, data consistency, backward compatibility, migration paths
+
+#### 3. Technology & Architecture Choices
+- **Why it exists**: Right tools for the job, considering team expertise, ecosystem, and long-term maintenance
+- **What goes wrong**: Choosing trendy tech over proven solutions, or over-optimizing prematurely
+- **Junior misunderstanding**: "Latest framework = best solution" (ignoring stability, community support, learning curve)
+- **Production reality**: Choose based on team expertise, community support, ecosystem maturity, operational complexity
+
+#### 4. Development Phase
+- **Why it exists**: Implement features following design, with proper testing and code quality
+- **What goes wrong**: Skipping tests, technical debt accumulation, lack of code reviews
+- **Junior misunderstanding**: "It works on my machine" (ignoring environment differences, edge cases, error handling)
+- **Production reality**: Code must handle failures gracefully, be testable, maintainable, and follow team standards
+
+#### 5. Testing Strategy
+- **Why it exists**: Catch bugs early, ensure reliability, enable confident deployments
+- **What goes wrong**: Only unit tests, no integration tests, missing edge cases, flaky tests
+- **Junior misunderstanding**: "100% code coverage = good tests" (missing integration, load, security tests)
+- **Production reality**: Need unit, integration, E2E, load, security, chaos tests. Test failure scenarios, not just happy paths
+
+#### 6. Deployment & CI/CD
+- **Why it exists**: Automate deployments, reduce human error, enable rapid iterations
+- **What goes wrong**: Manual deployments, no rollback plan, breaking production
+- **Junior misunderstanding**: "Deploy = just copy files" (missing migrations, health checks, zero-downtime strategies)
+- **Production reality**: Automated pipelines, blue-green/canary deployments, database migrations, health checks, rollback procedures
+
+#### 7. Monitoring, Logging & Alerting
+- **Why it exists**: Detect issues before users, understand system behavior, debug production problems
+- **What goes wrong**: No monitoring, too many alerts (alert fatigue), missing critical metrics
+- **Junior misunderstanding**: "Logs are enough" (missing metrics, traces, structured logging)
+- **Production reality**: Need metrics (Prometheus), logs (ELK), traces (OpenTelemetry), alerting (PagerDuty), dashboards (Grafana)
+
+#### 8. Scaling Strategies
+- **Why it exists**: Handle growth, maintain performance under load
+- **What goes wrong**: Vertical scaling only, no caching, database bottlenecks
+- **Junior misunderstanding**: "More servers = faster" (missing database scaling, caching, connection pooling)
+- **Production reality**: Horizontal scaling, read replicas, caching layers, connection pooling, async processing, CDN
+
+#### 9. Debugging & Incident Handling
+- **Why it exists**: Quickly identify and fix production issues, minimize downtime
+- **What goes wrong**: No runbooks, blame culture, no post-mortems
+- **Junior misunderstanding**: "Restart fixes everything" (missing root cause analysis, prevention)
+- **Production reality**: Incident response playbooks, on-call rotation, blameless post-mortems, runbooks for common issues
+
+#### 10. Maintenance & Long-term Evolution
+- **Why it exists**: Keep system healthy, adapt to changing requirements, prevent technical debt
+- **What goes wrong**: No refactoring, accumulating technical debt, ignoring security updates
+- **Junior misunderstanding**: "If it works, don't touch it" (missing security patches, performance improvements)
+- **Production reality**: Regular dependency updates, security patches, performance tuning, refactoring, architecture evolution
+
+### Spring Boot Production Lifecycle
+
+As a senior Java backend architect, explain how Spring Boot systems behave in production:
+
+#### Request Flow (Controller → Service → Repository)
+- **Flow**: HTTP Request → Security Filter → Controller → Service → Repository → Database
+- **Transaction Boundary**: `@Transactional` on Service methods (not Controller or Repository)
+- **Error Propagation**: Service throws exceptions → Controller catches → GlobalExceptionHandler → CommonResponse
+- **Production behavior**: 
+  - Each request in separate thread (thread pool: Tomcat default 200 threads)
+  - Transaction isolation per request (if `@Transactional` used)
+  - Connection pooling (HikariCP) reuses database connections
+
+#### Security Filters & Authentication Flow
+- **Filter Chain**: 
+  1. CORS Filter
+  2. JWT Authentication Filter (extract token, validate, set SecurityContext)
+  3. Authorization Filter (`@PreAuthorize` checks)
+  4. Controller
+- **JWT Flow**: 
+  - Login → Generate JWT → Store in HTTP-only cookie or return in response
+  - Subsequent requests → Extract JWT from header/cookie → Validate → Load UserDetails → Set SecurityContext
+- **Production behavior**:
+  - JWT validation happens on every request (stateless)
+  - Failed auth → 401 Unauthorized
+  - Missing role → 403 Forbidden
+  - Token expiration → 401 (client must refresh)
+
+#### Transaction Management
+- **Default**: `@Transactional` uses `REQUIRED` propagation (join existing or create new)
+- **Isolation**: Default `READ_COMMITTED` (prevents dirty reads)
+- **Rollback**: On unchecked exceptions (RuntimeException), not on checked exceptions
+- **Production behavior**:
+  - Long transactions → Database locks → Slow queries → Timeout
+  - Nested transactions → Outer transaction controls commit/rollback
+  - Read-only transactions → Optimized (no flush, can use read replicas)
+
+#### Error Handling
+- **GlobalExceptionHandler**: Catches all exceptions, returns `CommonResponse` with error details
+- **HTTP Status Mapping**: 
+  - `NotFoundException` → 404
+  - `BadRequestException` → 400
+  - `UnauthorizedException` → 401
+  - `RuntimeException` → 500
+- **Production behavior**:
+  - Exceptions logged with traceId for correlation
+  - Sensitive data (stack traces) hidden in production
+  - Error responses include traceId for support
+
+#### Configuration Per Environment
+- **Profiles**: `application-{profile}.yml` (dev, staging, prod)
+- **Environment Variables**: Override config via `SPRING_PROFILES_ACTIVE`, `DATABASE_URL`
+- **Secrets**: Use AWS Secrets Manager, HashiCorp Vault (not in code)
+- **Production behavior**:
+  - Different database URLs, API keys, logging levels per environment
+  - Feature flags for gradual rollouts
+  - Configuration changes require restart (or use Spring Cloud Config)
+
+#### Scaling Spring Boot Services in Kubernetes
+- **Horizontal Pod Autoscaler (HPA)**: Scale based on CPU/memory/custom metrics
+- **Replica Sets**: Multiple pods behind Service (load balanced)
+- **Stateful vs Stateless**: Spring Boot should be stateless (sessions in Redis, not in-memory)
+- **Production behavior**:
+  - Pods can be killed/restarted anytime (Kubernetes health checks)
+  - Application must handle graceful shutdown (`@PreDestroy`, connection cleanup)
+  - Shared state (sessions, cache) must be external (Redis)
+
+#### Database & Redis Interaction Under Load
+- **Connection Pooling**: HikariCP manages database connections (default: 10 connections)
+- **Read Replicas**: Route read queries to replicas, writes to primary
+- **Redis**: Connection pooling (Lettuce/Jedis), connection timeout handling
+- **Production behavior**:
+  - Database connections exhausted → Requests queue → Timeout
+  - Redis connection failure → Fallback to database (cache-aside pattern)
+  - Slow queries → Connection pool exhausted → Application slowdown
+
+### System Behavior Under Stress
+
+Explain how the system behaves when:
+
+#### Traffic Suddenly Increases 10x
+- **Immediate effects**: 
+  - Thread pool exhausted → Requests queue → Response time increases
+  - Database connection pool exhausted → Queries queue → Timeout
+  - CPU/Memory usage spikes → GC pauses → Application slowdown
+- **Mitigation**:
+  - Auto-scaling triggers (CPU > 70%) → New instances added
+  - Load balancer distributes traffic
+  - Caching reduces database load
+  - Rate limiting prevents overload
+- **Production reality**: 
+  - Auto-scaling takes 2-5 minutes (cold start)
+  - During scale-up: Degraded performance, some timeouts
+  - After scale-up: Performance returns to normal
+
+#### One Service Crashes
+- **Immediate effects**:
+  - Health check fails → Load balancer removes from rotation
+  - In-flight requests fail → 502 Bad Gateway
+  - Active transactions rollback
+- **Recovery**:
+  - Kubernetes restarts pod (if configured)
+  - Health check passes → Rejoin load balancer
+  - Lost in-flight requests → Client retries (if idempotent)
+- **Production reality**:
+  - Single instance failure: Minimal impact (other instances handle traffic)
+  - Multiple failures: Degraded service, potential downtime
+  - Need circuit breakers to prevent cascade failures
+
+#### Database Becomes Slow
+- **Immediate effects**:
+  - Connection pool exhausted (connections held waiting for slow queries)
+  - Application threads blocked → Request queue grows
+  - Response time increases → Timeouts
+- **Mitigation**:
+  - Query timeout (default: 30 seconds)
+  - Connection pool timeout → Fail fast
+  - Read replicas for read queries
+  - Caching reduces database load
+- **Production reality**:
+  - Slow queries must be identified and optimized (query logs, EXPLAIN)
+  - Temporary: Increase connection pool, add read replicas
+  - Long-term: Optimize queries, add indexes, consider database scaling
+
+#### Cache Goes Down
+- **Immediate effects**:
+  - Cache misses → All requests hit database
+  - Database load increases → Slow queries
+  - Response time increases
+- **Mitigation**:
+  - Circuit breaker: Fail fast to database (don't wait for Redis timeout)
+  - Fallback: Direct database queries (degraded performance)
+  - Cache warming: Pre-load critical data when cache recovers
+- **Production reality**:
+  - Application should handle cache failures gracefully (not crash)
+  - Degraded performance acceptable (better than downtime)
+  - Redis high availability (Redis Sentinel/Cluster) prevents single point of failure
+
+### Focus on Production Behavior
+
+- **Not tutorials**: Explain real-world scenarios, not "Hello World" examples
+- **Failure modes**: What happens when things go wrong (not just happy path)
+- **Observability**: How to detect and debug issues (metrics, logs, traces)
+- **Trade-offs**: Why certain decisions were made (performance vs consistency, availability vs consistency)
+- **Operational concerns**: Deployment, monitoring, scaling, incident response
+
