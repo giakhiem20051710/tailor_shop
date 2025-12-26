@@ -38,14 +38,14 @@ public class ProductServiceImpl implements ProductService {
     private final ProductRepository productRepository;
     private final FavoriteRepository favoriteRepository;
     private final ObjectMapper objectMapper;
+    private final com.example.tailor_shop.modules.product.repository.CategoryTemplateRepository categoryTemplateRepository;
 
     @Override
     @Transactional(readOnly = true)
     public Page<ProductListItemResponse> list(
             ProductFilterRequest filter,
             Pageable pageable,
-            Long currentUserId
-    ) {
+            Long currentUserId) {
         Page<ProductEntity> page = productRepository.search(
                 filter != null ? filter.getCategory() : null,
                 filter != null ? filter.getOccasion() : null,
@@ -55,8 +55,7 @@ public class ProductServiceImpl implements ProductService {
                 filter != null ? filter.getMinPrice() : null,
                 filter != null ? filter.getMaxPrice() : null,
                 filter != null ? filter.getMinRating() : null,
-                pageable
-        );
+                pageable);
 
         // Get favorite product keys directly using new generic FavoriteRepository
         final Set<String> favoriteKeys;
@@ -82,10 +81,10 @@ public class ProductServiceImpl implements ProductService {
             // Check if product is favorite using new generic FavoriteRepository
             // Option 1: By itemKey (product key) - simpler and backward compatible
             isFavorite = favoriteRepository.existsByUserIdAndItemKey(currentUserId, key);
-            
+
             // Option 2: By itemType and itemId (alternative approach)
             // isFavorite = favoriteRepository.existsByUserIdAndItemTypeAndItemId(
-            //         currentUserId, FavoriteItemType.PRODUCT, entity.getId());
+            // currentUserId, FavoriteItemType.PRODUCT, entity.getId());
         }
 
         List<ProductListItemResponse> relatedProducts = new ArrayList<>();
@@ -94,8 +93,7 @@ public class ProductServiceImpl implements ProductService {
             List<ProductEntity> related = productRepository.findRelatedProducts(
                     entity.getCategory(),
                     entity.getId(),
-                    relatedPageable
-            );
+                    relatedPageable);
             relatedProducts = related.stream()
                     .map(e -> toListItemResponse(e, null))
                     .collect(Collectors.toList());
@@ -127,6 +125,20 @@ public class ProductServiceImpl implements ProductService {
         entity.setType(request.getType());
         entity.setIsDeleted(false);
         entity.setSold(0);
+
+        // Set tailoring specifications
+        entity.setTailoringTime(request.getTailoringTime());
+        entity.setFittingCount(request.getFittingCount());
+        entity.setWarranty(request.getWarranty());
+        entity.setSilhouette(request.getSilhouette());
+        entity.setMaterials(convertListToJson(request.getMaterials()));
+        entity.setColors(convertListToJson(request.getColors()));
+        entity.setLengthInfo(request.getLengthInfo());
+        entity.setLining(request.getLining());
+        entity.setAccessories(request.getAccessories());
+        entity.setOccasions(convertListToJson(request.getOccasions()));
+        entity.setCustomerStyles(convertListToJson(request.getCustomerStyles()));
+        entity.setCareInstructions(convertListToJson(request.getCareInstructions()));
 
         if (entity.getSlug() != null && productRepository.existsBySlugAndIsDeletedFalse(entity.getSlug())) {
             entity.setSlug(entity.getSlug() + "-" + System.currentTimeMillis());
@@ -169,6 +181,20 @@ public class ProductServiceImpl implements ProductService {
         entity.setBudget(request.getBudget());
         entity.setType(request.getType());
 
+        // Update tailoring specifications
+        entity.setTailoringTime(request.getTailoringTime());
+        entity.setFittingCount(request.getFittingCount());
+        entity.setWarranty(request.getWarranty());
+        entity.setSilhouette(request.getSilhouette());
+        entity.setMaterials(convertListToJson(request.getMaterials()));
+        entity.setColors(convertListToJson(request.getColors()));
+        entity.setLengthInfo(request.getLengthInfo());
+        entity.setLining(request.getLining());
+        entity.setAccessories(request.getAccessories());
+        entity.setOccasions(convertListToJson(request.getOccasions()));
+        entity.setCustomerStyles(convertListToJson(request.getCustomerStyles()));
+        entity.setCareInstructions(convertListToJson(request.getCareInstructions()));
+
         ProductEntity saved = productRepository.save(entity);
         return toDetailResponse(saved, false, new ArrayList<>());
     }
@@ -185,9 +211,9 @@ public class ProductServiceImpl implements ProductService {
 
     private ProductListItemResponse toListItemResponse(
             ProductEntity entity,
-            Set<String> favoriteKeys
-    ) {
+            Set<String> favoriteKeys) {
         boolean isFavorite = favoriteKeys != null && favoriteKeys.contains(entity.getKey());
+        TailoringSpecDTO specs = getTailoringDetails(entity);
         return ProductListItemResponse.builder()
                 .id(entity.getId())
                 .key(entity.getKey())
@@ -202,50 +228,37 @@ public class ProductServiceImpl implements ProductService {
                 .rating(entity.getRating())
                 .sold(entity.getSold())
                 .isFavorite(isFavorite)
+                .specifications(specs)
                 .build();
     }
 
     private ProductDetailResponse toDetailResponse(
             ProductEntity entity,
             boolean isFavorite,
-            List<ProductListItemResponse> relatedProducts
-    ) {
+            List<ProductListItemResponse> relatedProducts) {
         List<String> gallery = convertGalleryFromString(entity.getGallery());
-        
-        // Map các thông tin chi tiết may đo dựa trên category và type
-        TailoringDetails details = getTailoringDetails(entity.getCategory(), entity.getType());
-        
+
         // Build nested DTOs
         MediaDTO media = MediaDTO.builder()
                 .thumbnail(entity.getImage())
                 .gallery(gallery)
                 .build();
-        
+
         PriceDTO pricing = PriceDTO.builder()
                 .basePrice(entity.getPrice())
                 .priceRange(entity.getPriceRange())
                 .budget(entity.getBudget())
                 .build();
-        
+
         StatsDTO stats = StatsDTO.builder()
                 .rating(entity.getRating())
                 .reviewCount(0)
                 .sold(entity.getSold())
                 .isFavorite(isFavorite)
                 .build();
-        
-        TailoringSpecDTO specifications = TailoringSpecDTO.builder()
-                .tailoringTime(details.tailoringTime)
-                .fittingCount(details.fittingCount)
-                .warranty(details.warranty)
-                .silhouette(details.silhouette)
-                .materials(details.materials)
-                .colors(details.colors)
-                .length(details.length)
-                .lining(details.lining)
-                .accessories(details.accessories)
-                .build();
-        
+
+        TailoringSpecDTO specifications = getTailoringDetails(entity);
+
         return ProductDetailResponse.builder()
                 .id(entity.getId())
                 .key(entity.getKey())
@@ -260,135 +273,72 @@ public class ProductServiceImpl implements ProductService {
                 .stats(stats)
                 .specifications(specifications)
                 .tags(null) // Can be extended later if needed
-                .occasions(details.occasions)
-                .customerStyles(details.customerStyles)
-                .careInstructions(details.careInstructions)
+                .occasions(specifications.getOccasions())
+                .customerStyles(specifications.getStyleRecommendations())
+                .careInstructions(specifications.getCareInstructions())
                 .relatedProducts(relatedProducts)
                 .createdAt(entity.getCreatedAt())
                 .updatedAt(entity.getUpdatedAt())
                 .build();
     }
 
-    // Helper class để lưu thông tin chi tiết may đo
-    private static class TailoringDetails {
-        String tailoringTime;
-        String fittingCount;
-        String warranty;
-        String silhouette; // Renamed from formDang
-        List<String> materials; // Changed from String to List<String>
-        List<String> colors; // Changed from String to List<String>
-        String length;
-        String lining;
-        String accessories;
-        List<String> occasions;
-        List<String> customerStyles;
-        List<String> careInstructions;
+    // Helper methods for fallback values
+    private String getOrDefault(String value, String defaultValue) {
+        return (value != null && !value.isEmpty()) ? value : defaultValue;
     }
 
-    // Lấy thông tin chi tiết may đo dựa trên category và type
-    private TailoringDetails getTailoringDetails(String category, String type) {
-        TailoringDetails details = new TailoringDetails();
-        
-        // Default values chung cho tất cả sản phẩm
-        details.tailoringTime = "7-14 ngày";
-        details.fittingCount = "1-2 lần";
-        details.warranty = "Chỉnh sửa miễn phí 1 lần";
-        details.lining = "Có, chống hằn & thoáng";
-        details.colors = List.of("Tùy chọn theo bảng màu tại tiệm");
-        details.accessories = "Có thể phối thêm belt, hoa cài, khăn choàng";
-        
-        // Care instructions chung
-        details.careInstructions = List.of(
-                "Ưu tiên giặt tay hoặc giặt chế độ nhẹ, nước lạnh.",
-                "Không vắt xoắn mạnh, phơi nơi thoáng mát, tránh nắng gắt.",
-                "Ủi ở nhiệt độ thấp, dùng khăn lót để bề mặt vải luôn mịn."
-        );
+    private List<String> getListOrDefault(String jsonValue, List<String> defaultValue) {
+        List<String> list = convertJsonToList(jsonValue);
+        return (list != null && !list.isEmpty()) ? list : defaultValue;
+    }
 
-        // Map theo category
-        if (category != null) {
-            switch (category.toLowerCase()) {
-                case "ao-dai":
-                case "áo dài":
-                    details.silhouette = "Ôm nhẹ, tôn eo";
-                    details.materials = List.of("Lụa", "Satin", "Crepe cao cấp");
-                    details.length = "Qua gối / maxi tùy chọn";
-                    details.colors = List.of("Đỏ", "Trắng", "Xanh navy", "Hồng pastel", "Vàng ống");
-                    details.occasions = List.of(
-                            "Cưới hỏi, lễ kỷ niệm, tiệc tối",
-                            "Chụp ảnh kỷ niệm, pre-wedding",
-                            "Sự kiện cần sự chỉn chu, thanh lịch"
-                    );
-                    details.customerStyles = List.of(
-                            "Thích sự nữ tính, mềm mại nhưng không sến",
-                            "Muốn tôn dáng nhưng vẫn di chuyển thoải mái",
-                            "Cần trang phục \"đẹp ngoài đời & đẹp trên hình\""
-                    );
-                    break;
-                    
-                case "vest":
-                case "suit":
-                    details.silhouette = "Slim-fit, classic hoặc relaxed tùy chọn";
-                    details.materials = List.of("Vải len cao cấp", "Cotton", "Linen");
-                    details.length = "Áo vest chuẩn dáng";
-                    details.colors = List.of("Đen", "Xám chuột", "Xanh navy", "Nâu café", "Beige");
-                    details.occasions = List.of(
-                            "Đi làm, gặp khách hàng",
-                            "Sự kiện công sở, hội nghị",
-                            "Tiệc tối trang trọng"
-                    );
-                    details.customerStyles = List.of(
-                            "Thích phong cách chuyên nghiệp, lịch sự",
-                            "Cần trang phục tự tin trong công việc",
-                            "Muốn tôn dáng nhưng vẫn thoải mái khi ngồi lâu"
-                    );
-                    break;
-                    
-                case "dam":
-                case "vay":
-                case "đầm":
-                case "váy":
-                    details.silhouette = "Body, A-line hoặc suông tùy chọn";
-                    details.materials = List.of("Satin", "Chiffon", "Lụa cao cấp");
-                    details.length = "Midi hoặc maxi tùy chọn";
-                    details.colors = List.of("Đỏ", "Đen", "Xanh ngọc", "Tím lavender", "Hồng pha lê");
-                    details.occasions = List.of(
-                            "Dạ hội, tiệc tối",
-                            "Sự kiện sang trọng",
-                            "Chụp ảnh nghệ thuật"
-                    );
-                    details.customerStyles = List.of(
-                            "Thích sự quyến rũ, nổi bật nhưng thanh lịch",
-                            "Muốn tôn dáng, lên hình đẹp",
-                            "Cần trang phục \"đẹp ngoài đời & đẹp trên hình\""
-                    );
-                    break;
-                    
-                default:
-                    // Default cho các category khác
-                    details.silhouette = "Tùy chọn theo dáng người";
-                    details.materials = List.of("Chất liệu cao cấp phù hợp");
-                    details.length = "Tùy chọn";
-                    details.colors = List.of("Tùy chọn theo bảng màu");
-                    details.occasions = List.of(
-                            "Nhiều dịp khác nhau",
-                            "Phù hợp với nhu cầu cá nhân"
-                    );
-                    details.customerStyles = List.of(
-                            "Thích sự thoải mái và phù hợp với dáng người",
-                            "Muốn trang phục chất lượng, bền đẹp"
-                    );
-            }
-        } else {
-            // Fallback nếu không có category
-            details.silhouette = "Tùy chọn theo dáng người";
-            details.materials = List.of("Chất liệu cao cấp phù hợp");
-            details.length = "Tùy chọn";
-            details.colors = List.of("Tùy chọn theo bảng màu");
-            details.occasions = List.of("Nhiều dịp khác nhau");
-            details.customerStyles = List.of("Phù hợp với nhu cầu cá nhân");
-        }
-        
-        return details;
+    private TailoringSpecDTO getTailoringDetails(ProductEntity entity) {
+        // 1. Try to get Category Template from DB
+        String categoryCode = normalizeCategory(entity.getCategory());
+        com.example.tailor_shop.modules.product.domain.CategoryTemplateEntity template = categoryTemplateRepository
+                .findByCategoryCode(categoryCode).orElse(null);
+
+        // 2. Prepare defaults from Template
+        String defaultTime = template != null ? template.getTailoringTime() : "7-14 ngày";
+        String defaultFitting = template != null ? template.getFittingCount() : "1-2 lần";
+        String defaultWarranty = template != null ? template.getWarranty() : "Chỉnh sửa miễn phí 1 lần";
+        String defaultSilhouette = template != null ? template.getSilhouette() : "Chuẩn Form";
+        List<String> defaultMaterials = template != null ? convertJsonToList(template.getMaterials())
+                : List.of("Đang cập nhật");
+        List<String> defaultColors = template != null ? convertJsonToList(template.getColors()) : List.of();
+        List<String> defaultOccasions = template != null ? convertJsonToList(template.getOccasions()) : List.of();
+        List<String> defaultCare = template != null ? convertJsonToList(template.getCareInstructions())
+                : List.of("Giặt khô");
+
+        // 3. Merge Entity values with Defaults
+        return TailoringSpecDTO.builder()
+                .tailoringTime(getOrDefault(entity.getTailoringTime(), defaultTime))
+                .fittingCount(getOrDefault(entity.getFittingCount(), defaultFitting))
+                .warranty(getOrDefault(entity.getWarranty(), defaultWarranty))
+                .materials(getListOrDefault(entity.getMaterials(), defaultMaterials))
+                .colors(getListOrDefault(entity.getColors(), defaultColors))
+                .silhouette(getOrDefault(entity.getSilhouette(), defaultSilhouette))
+                .length(getOrDefault(entity.getLengthInfo(), "Tùy chỉnh"))
+                .lining(getOrDefault(entity.getLining(), "Có"))
+                .occasions(getListOrDefault(entity.getOccasions(), defaultOccasions))
+                .fabricOrigin(entity.getMaterials() != null && entity.getMaterials().contains("Ý") ? "Ý" : "Việt Nam")
+                .accessories(getOrDefault(entity.getAccessories(), "Không"))
+                .styleRecommendations(getListOrDefault(entity.getCustomerStyles(), List.of()))
+                .careInstructions(getListOrDefault(entity.getCareInstructions(), defaultCare))
+                .build();
+    }
+
+    private String normalizeCategory(String category) {
+        if (category == null)
+            return "unknown";
+        String s = category.toLowerCase();
+        if (s.contains("vest"))
+            return "vest";
+        if (s.contains("áo dài") || s.contains("ao dai"))
+            return "ao_dai";
+        if (s.contains("váy") || s.contains("đầm"))
+            return "vay";
+        return "unknown";
     }
 
     private String generateSlug(String providedSlug, String name) {
@@ -422,11 +372,36 @@ public class ProductServiceImpl implements ProductService {
             return new ArrayList<>();
         }
         try {
-            return objectMapper.readValue(galleryJson, new TypeReference<List<String>>() {});
+            return objectMapper.readValue(galleryJson, new TypeReference<List<String>>() {
+            });
         } catch (Exception e) {
             log.error("Error converting gallery from JSON", e);
             return new ArrayList<>();
         }
     }
-}
 
+    private String convertListToJson(List<String> list) {
+        if (list == null || list.isEmpty()) {
+            return null;
+        }
+        try {
+            return objectMapper.writeValueAsString(list);
+        } catch (Exception e) {
+            log.error("Error converting list to JSON", e);
+            return null;
+        }
+    }
+
+    private List<String> convertJsonToList(String json) {
+        if (json == null || json.isEmpty()) {
+            return null;
+        }
+        try {
+            return objectMapper.readValue(json, new TypeReference<List<String>>() {
+            });
+        } catch (Exception e) {
+            log.error("Error converting JSON to list", e);
+            return null;
+        }
+    }
+}

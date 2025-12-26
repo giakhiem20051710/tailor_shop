@@ -35,18 +35,44 @@ self.addEventListener("activate", (event) => {
 
 // Fetch event - serve from cache, fallback to network
 self.addEventListener("fetch", (event) => {
+  const url = new URL(event.request.url);
+  
+  // Bỏ qua các request đến placeholder services và external images
+  if (url.hostname.includes('via.placeholder.com') || 
+      url.hostname.includes('placeholder.com')) {
+    // Không xử lý placeholder requests - để browser tự xử lý
+    return;
+  }
+  
+  // Bỏ qua data URI và blob URL
+  if (event.request.url.startsWith('data:') || event.request.url.startsWith('blob:')) {
+    return;
+  }
+  
   event.respondWith(
     caches.match(event.request).then((response) => {
       // Return cached version or fetch from network
-      return (
-        response ||
-        fetch(event.request).catch(() => {
-          // If both fail, return offline page for navigation requests
-          if (event.request.mode === "navigate") {
-            return caches.match("/offline.html");
-          }
-        })
-      );
+      if (response) {
+        return response;
+      }
+      
+      return fetch(event.request).then((networkResponse) => {
+        // Chỉ cache successful responses
+        if (networkResponse && networkResponse.status === 200) {
+          const responseToCache = networkResponse.clone();
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(event.request, responseToCache);
+          });
+        }
+        return networkResponse;
+      }).catch(() => {
+        // If both fail, return offline page for navigation requests
+        if (event.request.mode === "navigate") {
+          return caches.match("/offline.html");
+        }
+        // For other requests, return a simple error response
+        return new Response("Network error", { status: 408 });
+      });
     })
   );
 });

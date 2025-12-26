@@ -28,5 +28,10 @@ public class TailoringSpecDTO {
     private String length; // Length options (e.g., "Qua gối / maxi tùy chọn")
     private String lining; // Lining information (e.g., "Có, chống hằn & thoáng")
     private String accessories; // Accessories information (e.g., "Có thể phối thêm belt, hoa cài, khăn choàng")
-}
 
+    // Additional Details
+    private List<String> occasions; // Dịp sử dụng
+    private String fabricOrigin; // Xuất xứ vải (e.g., "Ý", "Việt Nam")
+    private List<String> styleRecommendations; // Gợi ý phong cách (mapped from customerStyles)
+    private List<String> careInstructions; // Hướng dẫn bảo quản
+}

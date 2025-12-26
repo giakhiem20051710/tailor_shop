@@ -11,6 +11,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -34,8 +35,7 @@ public class StyleController {
     @GetMapping
     public ResponseEntity<CommonResponse<Page<StyleResponse>>> list(
             @Valid StyleFilterRequest filter,
-            @PageableDefault(size = 20, sort = "createdAt,desc") Pageable pageable
-    ) {
+            @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
         Page<StyleResponse> data = styleService.list(filter, pageable);
         return ResponseEntity.ok(ResponseUtil.success(TraceIdUtil.getOrCreateTraceId(), data));
     }
@@ -49,8 +49,7 @@ public class StyleController {
     @PostMapping
     @PreAuthorize("hasAnyRole('ADMIN','STAFF')")
     public ResponseEntity<CommonResponse<StyleResponse>> create(
-            @Valid @RequestBody StyleRequest request
-    ) {
+            @Valid @RequestBody StyleRequest request) {
         StyleResponse data = styleService.create(request);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ResponseUtil.success(TraceIdUtil.getOrCreateTraceId(), data));
@@ -60,8 +59,7 @@ public class StyleController {
     @PreAuthorize("hasAnyRole('ADMIN','STAFF')")
     public ResponseEntity<CommonResponse<StyleResponse>> update(
             @PathVariable Long id,
-            @Valid @RequestBody StyleRequest request
-    ) {
+            @Valid @RequestBody StyleRequest request) {
         StyleResponse data = styleService.update(id, request);
         return ResponseEntity.ok(ResponseUtil.success(TraceIdUtil.getOrCreateTraceId(), data));
     }
@@ -73,4 +71,3 @@ public class StyleController {
         return ResponseEntity.ok(ResponseUtil.success(TraceIdUtil.getOrCreateTraceId(), null));
     }
 }
-

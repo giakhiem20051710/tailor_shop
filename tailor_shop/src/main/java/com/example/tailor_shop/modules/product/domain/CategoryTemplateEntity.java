@@ -14,73 +14,27 @@ import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
-import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 
 @Entity
-@Table(name = "products")
+@Table(name = "category_templates")
 @Getter
 @Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ProductEntity {
+public class CategoryTemplateEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "product_key", nullable = false, unique = true, length = 100)
-    private String key;
+    @Column(name = "category_code", nullable = false, unique = true, length = 100)
+    private String categoryCode; // e.g., "vest", "ao_dai"
 
-    @Column(name = "name", nullable = false, length = 200)
-    private String name;
+    @Column(name = "category_name", nullable = false, length = 200)
+    private String categoryName; // e.g., "Vest Nam", "Áo Dài"
 
-    @Column(name = "slug", length = 200)
-    private String slug;
-
-    @Column(name = "description", columnDefinition = "TEXT")
-    private String description;
-
-    @Column(name = "tag", length = 100)
-    private String tag;
-
-    @Column(name = "price", precision = 14, scale = 2)
-    private BigDecimal price;
-
-    @Column(name = "price_range", length = 100)
-    private String priceRange;
-
-    @Column(name = "image", length = 500)
-    private String image;
-
-    @Column(name = "gallery", columnDefinition = "JSON")
-    private String gallery;
-
-    @Column(name = "occasion", length = 80)
-    private String occasion;
-
-    @Column(name = "category", length = 80)
-    private String category;
-
-    @Column(name = "budget", length = 50)
-    private String budget;
-
-    @Column(name = "product_type", length = 50)
-    private String type;
-
-    @Column(name = "rating", precision = 3, scale = 2)
-    private BigDecimal rating;
-
-    @Column(name = "sold", nullable = false)
-    @Builder.Default
-    private Integer sold = 0;
-
-    @Column(name = "is_deleted", nullable = false)
-    @Builder.Default
-    private Boolean isDeleted = false;
-
-    // Tailoring specification fields
     @Column(name = "tailoring_time", length = 100)
     private String tailoringTime;
 

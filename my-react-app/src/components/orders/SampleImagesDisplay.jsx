@@ -43,8 +43,12 @@ export default function SampleImagesDisplay({ images }) {
               alt={`Ảnh mẫu ${index + 1}`}
               className="w-full h-48 object-cover rounded-lg border border-gray-200 hover:border-green-500 transition"
               onError={(e) => {
-                e.target.src =
-                  "https://via.placeholder.com/300x300?text=Ảnh+không+khả+dụng";
+                if (e.target.dataset.fallbackUsed === 'true') {
+                  e.target.style.display = 'none';
+                  return;
+                }
+                e.target.dataset.fallbackUsed = 'true';
+                e.target.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300' viewBox='0 0 300 300'%3E%3Crect fill='%23f3f4f6' width='300' height='300'/%3E%3Ctext x='50%25' y='50%25' font-family='Arial, sans-serif' font-size='16' fill='%239ca3af' text-anchor='middle' dominant-baseline='middle'%3EẢnh không khả dụng%3C/text%3E%3C/svg%3E";
               }}
             />
             <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 rounded-lg transition flex items-center justify-center">

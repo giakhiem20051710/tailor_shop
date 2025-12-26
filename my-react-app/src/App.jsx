@@ -25,7 +25,7 @@ const CustomerListPage = lazy(() => import("./pages/CustomerListPage.jsx"));
 const TailorListPage = lazy(() => import("./pages/TailorListPage.jsx"));
 const TailorOrdersPage = lazy(() => import("./pages/TailorOrdersPage.jsx"));
 const CompletedOrdersPage = lazy(() => import("./pages/CompletedOrdersPage.jsx"));
-const StyleListPage = lazy(() => import("./pages/StyleListPage.jsx"));
+const ProductManagerPage = lazy(() => import("./pages/ProductManagerPage.jsx"));
 const InvoicePage = lazy(() => import("./pages/InvoicePage.jsx"));
 const TransactionManagementPage = lazy(() =>
   import("./pages/TransactionManagementPage.jsx")
@@ -73,6 +73,7 @@ const Product3DPreviewPage = lazy(() =>
 );
 const VirtualTryOnPage = lazy(() => import("./pages/VirtualTryOnPage.jsx"));
 const TrendAnalysisPage = lazy(() => import("./pages/TrendAnalysisPage.jsx"));
+const CategoryTemplatePage = lazy(() => import("./pages/CategoryTemplatePage.jsx"));
 
 const Loader = () => (
   <div className="p-6 text-sm text-slate-500">Đang tải...</div>
@@ -83,100 +84,102 @@ export default function App() {
     <ErrorBoundary>
       <SkipToContentLink />
       <Suspense fallback={<Loader />}>
-      <Routes>
-      {/* Home Page - Root */}
-      <Route path="/" element={<HomePage />} />
-      
-      {/* About Page */}
-      <Route path="/about" element={<AboutPage />} />
-      
-      {/* Customer Home Page */}
-      <Route path="/customer-home" element={<CustomerHomePage />} />
-      
-      {/* Products Page */}
-      <Route path="/products" element={<ProductsPage />} />
-      
-      {/* Product Detail Page */}
-      <Route path="/product/:id?" element={<ProductDetailPage />} />
-      
-      {/* Customize Product Page */}
-      <Route path="/customize-product" element={<CustomizeProductPage />} />
-      
-      {/* Image Upload & Management Page */}
-      <Route path="/images" element={<ImageUploadPage />} />
-      
-      {/* Promotions Page */}
-      <Route path="/promotions" element={<PromotionsPage />} />
-      
-      {/* Fabrics Page */}
-      <Route path="/fabrics" element={<FabricsPage />} />
-      <Route path="/fabrics/:key" element={<FabricDetailPage />} />
-      <Route path="/cart" element={<FabricCartPage />} />
-      <Route path="/checkout" element={<FabricCheckoutPage />} />
-      <Route path="/payment/qr" element={<QRPaymentPage />} />
-      <Route path="/payment/cod" element={<CODPaymentPage />} />
-      <Route path="/payment/vnpay" element={<VNPayPaymentPage />} />
-      <Route path="/payment/international" element={<InternationalPaymentPage />} />
-      <Route path="/payment/mbbank" element={<MBBankPaymentPage />} />
-      <Route path="/payment/zalopay" element={<ZaloPayPaymentPage />} />
-      <Route path="/payment/momo" element={<MoMoPaymentPage />} />
-      
-      {/* Favorites Page */}
-      <Route path="/favorites" element={<FavoritesPage />} />
-      
-      {/* Support Page */}
-      <Route path="/support/:section?" element={<SupportPage />} />
-      
-      {/* Articles Page */}
-      <Route path="/articles" element={<ArticlesPage />} />
-      
-      {/* AI & AR Features */}
-      <Route path="/ai-style-suggestions" element={<AIStyleSuggestionsPage />} />
-      <Route path="/3d-preview/:productId?" element={<Product3DPreviewPage />} />
-      <Route path="/virtual-tryon" element={<VirtualTryOnPage />} />
-      <Route path="/trend-analysis" element={<TrendAnalysisPage />} />
-      
-      {/* Login Selection Page */}
-      <Route path="/login-selection" element={<LoginSelectionPage />} />
-      
-      {/* Role-based Login Pages */}
-      <Route path="/login/:role" element={<RoleBasedLoginPage />} />
-      
-      {/* Legacy Auth pages - for backward compatibility */}
-      <Route path="/login" element={<LoginPage />} />
-      <Route path="/register" element={<RegisterPage />} />
-      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-      <Route path="/reset-password" element={<ResetPasswordPage />} />
-      
-      {/* All routes are now accessible without authentication */}
-        <Route element={<Layout />}>
-          <Route path="/dashboard" element={<DashboardPage />} />
-          <Route path="/orders" element={<OrderListPage />} />
-          <Route path="/orders/new" element={<OrderFormPage />} />
-          <Route path="/orders/edit/:id" element={<OrderFormPage />} />
-          <Route path="/orders/:id/quote" element={<OrderQuotePage />} />
-          <Route path="/orders/:id" element={<OrderDetailPage />} />
-          <Route path="/customers" element={<CustomerListPage />} />
-          <Route path="/tailors" element={<TailorListPage />} />
-          <Route path="/tailors/orders/:tailorId?" element={<TailorOrdersPage />} />
-          <Route path="/tailors/completed" element={<CompletedOrdersPage />} />
-          <Route path="/schedule" element={<SchedulePage />} />
-          <Route path="/styles" element={<StyleListPage />} />
-          <Route path="/invoice" element={<InvoicePage />} />
-          <Route path="/transactions" element={<TransactionManagementPage />} />
-          <Route path="/fabric-requests" element={<FabricRequestsPage />} />
-          <Route path="/fabric-inventory" element={<FabricInventoryPage />} />
-          <Route path="/profile" element={<ProfilePage />} />
-          <Route path="/tailor/dashboard" element={<TailorOrdersPage />} />
-          <Route path="/tailor/schedule" element={<SchedulePage />} />
-      </Route>
-      
-      {/* Customer Dashboard - separate route without admin Layout */}
-        <Route path="/customer/dashboard" element={<CustomerDashboardPage />} />
-        <Route path="/customer/order" element={<CustomerOrderPage />} />
-        <Route path="/customer/orders/:id" element={<CustomerOrderDetailPage />} />
-        <Route path="/customer/orders/:orderId/review" element={<ProductReviewPage />} />
-      </Routes>
+        <Routes>
+          {/* Home Page - Root */}
+          <Route path="/" element={<HomePage />} />
+
+          {/* About Page */}
+          <Route path="/about" element={<AboutPage />} />
+
+          {/* Customer Home Page */}
+          <Route path="/customer-home" element={<CustomerHomePage />} />
+
+          {/* Products Page */}
+          <Route path="/products" element={<ProductsPage />} />
+
+          {/* Product Detail Page */}
+          <Route path="/product/:id?" element={<ProductDetailPage />} />
+
+          {/* Customize Product Page */}
+          <Route path="/customize-product" element={<CustomizeProductPage />} />
+
+          {/* Image Upload & Management Page */}
+          <Route path="/images" element={<ImageUploadPage />} />
+
+          {/* Promotions Page */}
+          <Route path="/promotions" element={<PromotionsPage />} />
+
+          {/* Fabrics Page */}
+          <Route path="/fabrics" element={<FabricsPage />} />
+          <Route path="/fabrics/:key" element={<FabricDetailPage />} />
+          <Route path="/cart" element={<FabricCartPage />} />
+          <Route path="/checkout" element={<FabricCheckoutPage />} />
+          <Route path="/payment/qr" element={<QRPaymentPage />} />
+          <Route path="/payment/cod" element={<CODPaymentPage />} />
+          <Route path="/payment/vnpay" element={<VNPayPaymentPage />} />
+          <Route path="/payment/international" element={<InternationalPaymentPage />} />
+          <Route path="/payment/mbbank" element={<MBBankPaymentPage />} />
+          <Route path="/payment/zalopay" element={<ZaloPayPaymentPage />} />
+          <Route path="/payment/momo" element={<MoMoPaymentPage />} />
+
+          {/* Favorites Page */}
+          <Route path="/favorites" element={<FavoritesPage />} />
+
+          {/* Support Page */}
+          <Route path="/support/:section?" element={<SupportPage />} />
+
+          {/* Articles Page */}
+          <Route path="/articles" element={<ArticlesPage />} />
+
+          {/* AI & AR Features */}
+          <Route path="/ai-style-suggestions" element={<AIStyleSuggestionsPage />} />
+          <Route path="/3d-preview/:productId?" element={<Product3DPreviewPage />} />
+          <Route path="/virtual-tryon" element={<VirtualTryOnPage />} />
+          <Route path="/trend-analysis" element={<TrendAnalysisPage />} />
+
+          {/* Login Selection Page */}
+          <Route path="/login-selection" element={<LoginSelectionPage />} />
+
+          {/* Role-based Login Pages */}
+          <Route path="/login/:role" element={<RoleBasedLoginPage />} />
+
+          {/* Legacy Auth pages - for backward compatibility */}
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
+
+          {/* All routes are now accessible without authentication */}
+          <Route element={<Layout />}>
+            <Route path="/dashboard" element={<DashboardPage />} />
+            <Route path="/orders" element={<OrderListPage />} />
+            <Route path="/orders/new" element={<OrderFormPage />} />
+            <Route path="/orders/edit/:id" element={<OrderFormPage />} />
+            <Route path="/orders/:id/quote" element={<OrderQuotePage />} />
+            <Route path="/orders/:id" element={<OrderDetailPage />} />
+            <Route path="/customers" element={<CustomerListPage />} />
+            <Route path="/tailors" element={<TailorListPage />} />
+            <Route path="/tailors/orders/:tailorId?" element={<TailorOrdersPage />} />
+            <Route path="/tailors/completed" element={<CompletedOrdersPage />} />
+            <Route path="/schedule" element={<SchedulePage />} />
+            <Route path="/styles" element={<ProductManagerPage />} />
+            <Route path="/admin/products" element={<ProductManagerPage />} />
+            <Route path="/invoice" element={<InvoicePage />} />
+            <Route path="/transactions" element={<TransactionManagementPage />} />
+            <Route path="/fabric-requests" element={<FabricRequestsPage />} />
+            <Route path="/fabric-inventory" element={<FabricInventoryPage />} />
+            <Route path="/profile" element={<ProfilePage />} />
+            <Route path="/tailor/dashboard" element={<TailorOrdersPage />} />
+            <Route path="/tailor/schedule" element={<SchedulePage />} />
+            <Route path="/admin/templates" element={<CategoryTemplatePage />} />
+          </Route>
+
+          {/* Customer Dashboard - separate route without admin Layout */}
+          <Route path="/customer/dashboard" element={<CustomerDashboardPage />} />
+          <Route path="/customer/order" element={<CustomerOrderPage />} />
+          <Route path="/customer/orders/:id" element={<CustomerOrderDetailPage />} />
+          <Route path="/customer/orders/:orderId/review" element={<ProductReviewPage />} />
+        </Routes>
       </Suspense>
       {/* Chat Widget - hiển thị trên tất cả các trang */}
       <ChatWidget />

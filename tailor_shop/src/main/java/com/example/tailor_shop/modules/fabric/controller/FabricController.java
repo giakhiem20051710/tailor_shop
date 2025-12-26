@@ -19,6 +19,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -41,8 +42,7 @@ public class FabricController {
     @GetMapping
     public ResponseEntity<CommonResponse<Page<FabricResponse>>> list(
             @Valid FabricFilterRequest filter,
-            @PageableDefault(size = 20, sort = "displayOrder,asc") Pageable pageable
-    ) {
+            @PageableDefault(size = 20, sort = "displayOrder,asc") Pageable pageable) {
         Page<FabricResponse> data = fabricService.list(filter, pageable);
         return ResponseEntity.ok(ResponseUtil.success(TraceIdUtil.getOrCreateTraceId(), data));
     }
@@ -89,8 +89,7 @@ public class FabricController {
     @PreAuthorize("hasAnyRole('ADMIN','STAFF')")
     public ResponseEntity<CommonResponse<FabricResponse>> create(
             @Valid @RequestBody FabricRequest request,
-            @AuthenticationPrincipal CustomUserDetails principal
-    ) {
+            @AuthenticationPrincipal CustomUserDetails principal) {
         FabricResponse data = fabricService.create(request, principal.getId());
         return ResponseEntity.ok(ResponseUtil.success(TraceIdUtil.getOrCreateTraceId(), data));
     }
@@ -102,8 +101,7 @@ public class FabricController {
     @PreAuthorize("hasAnyRole('ADMIN','STAFF')")
     public ResponseEntity<CommonResponse<FabricResponse>> update(
             @PathVariable Long id,
-            @Valid @RequestBody FabricRequest request
-    ) {
+            @Valid @RequestBody FabricRequest request) {
         FabricResponse data = fabricService.update(id, request);
         return ResponseEntity.ok(ResponseUtil.success(TraceIdUtil.getOrCreateTraceId(), data));
     }
@@ -125,8 +123,7 @@ public class FabricController {
     @PreAuthorize("hasAnyRole('ADMIN','STAFF')")
     public ResponseEntity<CommonResponse<Page<FabricInventoryResponse>>> getInventory(
             @PathVariable Long id,
-            @PageableDefault(size = 20) Pageable pageable
-    ) {
+            @PageableDefault(size = 20) Pageable pageable) {
         Page<FabricInventoryResponse> data = fabricService.getInventory(id, pageable);
         return ResponseEntity.ok(ResponseUtil.success(TraceIdUtil.getOrCreateTraceId(), data));
     }
@@ -138,8 +135,7 @@ public class FabricController {
     @PreAuthorize("hasAnyRole('ADMIN','STAFF')")
     public ResponseEntity<CommonResponse<FabricInventoryResponse>> updateInventory(
             @PathVariable Long id,
-            @Valid @RequestBody FabricInventoryRequest request
-    ) {
+            @Valid @RequestBody FabricInventoryRequest request) {
         FabricInventoryResponse data = fabricService.updateInventory(id, request);
         return ResponseEntity.ok(ResponseUtil.success(TraceIdUtil.getOrCreateTraceId(), data));
     }
@@ -151,8 +147,7 @@ public class FabricController {
     @PreAuthorize("hasRole('CUSTOMER')")
     public ResponseEntity<CommonResponse<FabricHoldRequestResponse>> createHoldRequest(
             @Valid @RequestBody FabricHoldRequestRequest request,
-            @AuthenticationPrincipal CustomUserDetails principal
-    ) {
+            @AuthenticationPrincipal CustomUserDetails principal) {
         FabricHoldRequestResponse data = fabricService.createHoldRequest(request, principal.getId());
         return ResponseEntity.ok(ResponseUtil.success(TraceIdUtil.getOrCreateTraceId(), data));
     }
@@ -165,17 +160,15 @@ public class FabricController {
     public ResponseEntity<CommonResponse<Page<FabricHoldRequestResponse>>> listHoldRequests(
             @RequestParam(required = false) Long fabricId,
             @RequestParam(required = false) Long userId,
-            @PageableDefault(size = 20, sort = "createdAt,desc") Pageable pageable,
-            @AuthenticationPrincipal CustomUserDetails principal
-    ) {
+            @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable,
+            @AuthenticationPrincipal CustomUserDetails principal) {
         // Customer can only see own requests
         if (principal != null && principal.getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equals("ROLE_CUSTOMER"))) {
             userId = principal.getId();
         }
         Page<FabricHoldRequestResponse> data = fabricService.listHoldRequests(
-                fabricId, userId, pageable
-        );
+                fabricId, userId, pageable);
         return ResponseEntity.ok(ResponseUtil.success(TraceIdUtil.getOrCreateTraceId(), data));
     }
 
@@ -186,8 +179,7 @@ public class FabricController {
     @PreAuthorize("hasAnyRole('CUSTOMER','ADMIN','STAFF')")
     public ResponseEntity<CommonResponse<FabricHoldRequestResponse>> getHoldRequestDetail(
             @PathVariable Long id,
-            @AuthenticationPrincipal CustomUserDetails principal
-    ) {
+            @AuthenticationPrincipal CustomUserDetails principal) {
         FabricHoldRequestResponse data = fabricService.getHoldRequestDetail(id);
         // Check ownership for customer
         if (principal != null && principal.getAuthorities().stream()
@@ -207,11 +199,9 @@ public class FabricController {
     public ResponseEntity<CommonResponse<FabricHoldRequestResponse>> updateHoldRequestStatus(
             @PathVariable Long id,
             @Valid @RequestBody UpdateHoldRequestStatusRequest request,
-            @AuthenticationPrincipal CustomUserDetails principal
-    ) {
+            @AuthenticationPrincipal CustomUserDetails principal) {
         FabricHoldRequestResponse data = fabricService.updateHoldRequestStatus(
-                id, request, principal.getId()
-        );
+                id, request, principal.getId());
         return ResponseEntity.ok(ResponseUtil.success(TraceIdUtil.getOrCreateTraceId(), data));
     }
 
@@ -222,8 +212,7 @@ public class FabricController {
     @PreAuthorize("hasRole('CUSTOMER')")
     public ResponseEntity<CommonResponse<Void>> cancelHoldRequest(
             @PathVariable Long id,
-            @AuthenticationPrincipal CustomUserDetails principal
-    ) {
+            @AuthenticationPrincipal CustomUserDetails principal) {
         fabricService.cancelHoldRequest(id, principal.getId());
         return ResponseEntity.ok(ResponseUtil.success(TraceIdUtil.getOrCreateTraceId(), null));
     }
@@ -235,10 +224,8 @@ public class FabricController {
     @PreAuthorize("hasRole('CUSTOMER')")
     public ResponseEntity<CommonResponse<FabricOrderResponse>> applyPromoCode(
             @Valid @RequestBody ApplyFabricPromoRequest request,
-            @AuthenticationPrincipal CustomUserDetails principal
-    ) {
+            @AuthenticationPrincipal CustomUserDetails principal) {
         FabricOrderResponse data = fabricService.applyPromoCode(request, principal.getId());
         return ResponseEntity.ok(ResponseUtil.success(TraceIdUtil.getOrCreateTraceId(), data));
     }
 }
-
