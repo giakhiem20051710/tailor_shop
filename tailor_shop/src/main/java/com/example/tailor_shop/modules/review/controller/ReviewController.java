@@ -14,6 +14,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -36,9 +37,8 @@ public class ReviewController {
     @GetMapping
     public ResponseEntity<CommonResponse<Page<ReviewResponse>>> list(
             @Valid ReviewFilterRequest filter,
-            @PageableDefault(size = 20, sort = "createdAt,desc") Pageable pageable,
-            @AuthenticationPrincipal CustomUserDetails principal
-    ) {
+            @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable,
+            @AuthenticationPrincipal CustomUserDetails principal) {
         Long currentUserId = principal != null ? principal.getId() : null;
         Page<ReviewResponse> data = reviewService.list(filter, pageable, currentUserId);
         return ResponseEntity.ok(ResponseUtil.success(TraceIdUtil.getOrCreateTraceId(), data));
@@ -50,8 +50,7 @@ public class ReviewController {
     @GetMapping("/{id}")
     public ResponseEntity<CommonResponse<ReviewResponse>> detail(
             @PathVariable Long id,
-            @AuthenticationPrincipal CustomUserDetails principal
-    ) {
+            @AuthenticationPrincipal CustomUserDetails principal) {
         Long currentUserId = principal != null ? principal.getId() : null;
         ReviewResponse data = reviewService.detail(id, currentUserId);
         return ResponseEntity.ok(ResponseUtil.success(TraceIdUtil.getOrCreateTraceId(), data));
@@ -65,8 +64,7 @@ public class ReviewController {
     public ResponseEntity<CommonResponse<ReviewResponse>> createProductReview(
             @PathVariable Long productId,
             @Valid @RequestBody ReviewRequest request,
-            @AuthenticationPrincipal CustomUserDetails principal
-    ) {
+            @AuthenticationPrincipal CustomUserDetails principal) {
         ReviewResponse data = reviewService.createProductReview(productId, request, principal.getId());
         return ResponseEntity.ok(ResponseUtil.success(TraceIdUtil.getOrCreateTraceId(), data));
     }
@@ -79,8 +77,7 @@ public class ReviewController {
     public ResponseEntity<CommonResponse<ReviewResponse>> createOrderReview(
             @PathVariable Long orderId,
             @Valid @RequestBody ReviewRequest request,
-            @AuthenticationPrincipal CustomUserDetails principal
-    ) {
+            @AuthenticationPrincipal CustomUserDetails principal) {
         ReviewResponse data = reviewService.createOrderReview(orderId, request, principal.getId());
         return ResponseEntity.ok(ResponseUtil.success(TraceIdUtil.getOrCreateTraceId(), data));
     }
@@ -93,8 +90,7 @@ public class ReviewController {
     public ResponseEntity<CommonResponse<ReviewResponse>> update(
             @PathVariable Long id,
             @Valid @RequestBody ReviewRequest request,
-            @AuthenticationPrincipal CustomUserDetails principal
-    ) {
+            @AuthenticationPrincipal CustomUserDetails principal) {
         ReviewResponse data = reviewService.update(id, request, principal.getId());
         return ResponseEntity.ok(ResponseUtil.success(TraceIdUtil.getOrCreateTraceId(), data));
     }
@@ -106,8 +102,7 @@ public class ReviewController {
     @PreAuthorize("hasRole('CUSTOMER')")
     public ResponseEntity<CommonResponse<Void>> delete(
             @PathVariable Long id,
-            @AuthenticationPrincipal CustomUserDetails principal
-    ) {
+            @AuthenticationPrincipal CustomUserDetails principal) {
         reviewService.delete(id, principal.getId());
         return ResponseEntity.ok(ResponseUtil.success(TraceIdUtil.getOrCreateTraceId(), null));
     }
@@ -120,8 +115,7 @@ public class ReviewController {
     public ResponseEntity<CommonResponse<ReviewResponse>> reply(
             @PathVariable Long id,
             @Valid @RequestBody ReplyReviewRequest request,
-            @AuthenticationPrincipal CustomUserDetails principal
-    ) {
+            @AuthenticationPrincipal CustomUserDetails principal) {
         ReviewResponse data = reviewService.reply(id, request, principal.getId());
         return ResponseEntity.ok(ResponseUtil.success(TraceIdUtil.getOrCreateTraceId(), data));
     }
@@ -133,8 +127,7 @@ public class ReviewController {
     @PreAuthorize("hasAnyRole('CUSTOMER','ADMIN','STAFF')")
     public ResponseEntity<CommonResponse<Void>> voteHelpful(
             @PathVariable Long id,
-            @AuthenticationPrincipal CustomUserDetails principal
-    ) {
+            @AuthenticationPrincipal CustomUserDetails principal) {
         reviewService.voteHelpful(id, principal.getId());
         return ResponseEntity.ok(ResponseUtil.success(TraceIdUtil.getOrCreateTraceId(), null));
     }
@@ -146,8 +139,7 @@ public class ReviewController {
     @PreAuthorize("hasAnyRole('CUSTOMER','ADMIN','STAFF')")
     public ResponseEntity<CommonResponse<Void>> unvoteHelpful(
             @PathVariable Long id,
-            @AuthenticationPrincipal CustomUserDetails principal
-    ) {
+            @AuthenticationPrincipal CustomUserDetails principal) {
         reviewService.unvoteHelpful(id, principal.getId());
         return ResponseEntity.ok(ResponseUtil.success(TraceIdUtil.getOrCreateTraceId(), null));
     }
@@ -161,8 +153,7 @@ public class ReviewController {
             @PathVariable Long id,
             @RequestParam String action, // APPROVE, REJECT, HIDE
             @RequestParam(required = false) String note,
-            @AuthenticationPrincipal CustomUserDetails principal
-    ) {
+            @AuthenticationPrincipal CustomUserDetails principal) {
         ReviewResponse data = reviewService.moderate(id, action, note, principal.getId());
         return ResponseEntity.ok(ResponseUtil.success(TraceIdUtil.getOrCreateTraceId(), data));
     }
@@ -191,8 +182,7 @@ public class ReviewController {
     @PreAuthorize("hasRole('CUSTOMER')")
     public ResponseEntity<CommonResponse<Boolean>> hasReviewedProduct(
             @PathVariable Long productId,
-            @AuthenticationPrincipal CustomUserDetails principal
-    ) {
+            @AuthenticationPrincipal CustomUserDetails principal) {
         boolean hasReviewed = reviewService.hasReviewedProduct(productId, principal.getId());
         return ResponseEntity.ok(ResponseUtil.success(TraceIdUtil.getOrCreateTraceId(), hasReviewed));
     }
@@ -204,10 +194,8 @@ public class ReviewController {
     @PreAuthorize("hasRole('CUSTOMER')")
     public ResponseEntity<CommonResponse<Boolean>> hasReviewedOrder(
             @PathVariable Long orderId,
-            @AuthenticationPrincipal CustomUserDetails principal
-    ) {
+            @AuthenticationPrincipal CustomUserDetails principal) {
         boolean hasReviewed = reviewService.hasReviewedOrder(orderId, principal.getId());
         return ResponseEntity.ok(ResponseUtil.success(TraceIdUtil.getOrCreateTraceId(), hasReviewed));
     }
 }
-

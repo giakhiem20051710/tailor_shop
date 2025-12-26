@@ -34,8 +34,8 @@ const getProductKey = (product) => {
   return undefined;
 };
 
-// Fallback image khi không có ảnh từ backend
-const FALLBACK_PRODUCT_IMAGE = "https://via.placeholder.com/800x1000?text=No+Image";
+// Fallback image khi không có ảnh từ backend - dùng SVG inline để tránh lỗi network
+const FALLBACK_PRODUCT_IMAGE = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='800' height='1000'%3E%3Crect fill='%23f3f4f6' width='800' height='1000'/%3E%3Ctext x='50%25' y='50%25' font-family='Arial, sans-serif' font-size='24' fill='%239ca3af' text-anchor='middle' dominant-baseline='middle'%3ENo Image%3C/text%3E%3C/svg%3E";
 
 const ProductsPage = () => {
   const navigate = useNavigate();
@@ -110,6 +110,17 @@ const ProductsPage = () => {
 
   // ====== HANDLERS ======
   const handleImageError = (event) => {
+    // Ngăn chặn vòng lặp vô hạn nếu fallback cũng lỗi
+    // Vì FALLBACK_PRODUCT_IMAGE là data URI nên không thể lỗi, nhưng vẫn check để an toàn
+    if (event.currentTarget.dataset.fallbackUsed === 'true' || 
+        event.currentTarget.src.startsWith('data:')) {
+      // Nếu đã dùng fallback rồi mà vẫn lỗi, ẩn ảnh
+      event.currentTarget.style.display = 'none';
+      return;
+    }
+    
+    // Đánh dấu đã dùng fallback
+    event.currentTarget.dataset.fallbackUsed = 'true';
     event.currentTarget.onerror = null;
     event.currentTarget.src = FALLBACK_PRODUCT_IMAGE;
   };
@@ -119,11 +130,21 @@ const ProductsPage = () => {
     if (!backendProductsList || backendProductsList.length === 0) return [];
 
     return backendProductsList.map((product, index) => {
-      // Lấy image từ product (có thể là imageUrl, image, baseImage, hoặc từ imageAssets)
-      let imageUrl = product.imageUrl || product.image || product.baseImage || FALLBACK_PRODUCT_IMAGE;
+      // Lấy image từ product (ưu tiên media[0].url)
+      let imageUrl = null;
+      
+      // Ưu tiên: media[0].url (nếu có)
+      if (product.media && Array.isArray(product.media) && product.media.length > 0) {
+        imageUrl = product.media[0].url || product.media[0].imageUrl;
+      }
+      
+      // Fallback: các trường khác
+      if (!imageUrl) {
+        imageUrl = product.imageUrl || product.image || product.baseImage;
+      }
       
       // Nếu không có image, tìm trong imageAssets
-      if (!imageUrl || imageUrl === FALLBACK_PRODUCT_IMAGE) {
+      if (!imageUrl) {
         const matchingImage = imageAssets.find(img => 
           img.productTemplateId === product.templateId || 
           img.productTemplateId === product.id
@@ -131,6 +152,11 @@ const ProductsPage = () => {
         if (matchingImage?.url) {
           imageUrl = matchingImage.url;
         }
+      }
+      
+      // Cuối cùng: dùng fallback nếu vẫn không có
+      if (!imageUrl) {
+        imageUrl = FALLBACK_PRODUCT_IMAGE;
       }
 
       // Map category từ backend sang frontend

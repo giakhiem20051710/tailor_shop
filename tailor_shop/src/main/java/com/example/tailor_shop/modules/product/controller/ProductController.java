@@ -13,6 +13,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -37,9 +38,8 @@ public class ProductController {
     @GetMapping
     public ResponseEntity<CommonResponse<Page<ProductListItemResponse>>> list(
             @Valid ProductFilterRequest filter,
-            @PageableDefault(size = 20, sort = "createdAt,desc") Pageable pageable,
-            @AuthenticationPrincipal CustomUserDetails principal
-    ) {
+            @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable,
+            @AuthenticationPrincipal CustomUserDetails principal) {
         Long currentUserId = principal != null ? principal.getId() : null;
         Page<ProductListItemResponse> data = productService.list(filter, pageable, currentUserId);
         return ResponseEntity.ok(ResponseUtil.success(TraceIdUtil.getOrCreateTraceId(), data));
@@ -48,8 +48,7 @@ public class ProductController {
     @GetMapping("/{key}")
     public ResponseEntity<CommonResponse<ProductDetailResponse>> detail(
             @PathVariable String key,
-            @AuthenticationPrincipal CustomUserDetails principal
-    ) {
+            @AuthenticationPrincipal CustomUserDetails principal) {
         Long currentUserId = principal != null ? principal.getId() : null;
         ProductDetailResponse data = productService.detail(key, currentUserId);
         return ResponseEntity.ok(ResponseUtil.success(TraceIdUtil.getOrCreateTraceId(), data));
@@ -58,8 +57,7 @@ public class ProductController {
     @PostMapping
     @PreAuthorize("hasAnyRole('ADMIN','STAFF')")
     public ResponseEntity<CommonResponse<ProductDetailResponse>> create(
-            @Valid @RequestBody ProductRequest request
-    ) {
+            @Valid @RequestBody ProductRequest request) {
         ProductDetailResponse data = productService.create(request);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ResponseUtil.success(TraceIdUtil.getOrCreateTraceId(), data));
@@ -69,8 +67,7 @@ public class ProductController {
     @PreAuthorize("hasAnyRole('ADMIN','STAFF')")
     public ResponseEntity<CommonResponse<ProductDetailResponse>> update(
             @PathVariable String key,
-            @Valid @RequestBody ProductRequest request
-    ) {
+            @Valid @RequestBody ProductRequest request) {
         ProductDetailResponse data = productService.update(key, request);
         return ResponseEntity.ok(ResponseUtil.success(TraceIdUtil.getOrCreateTraceId(), data));
     }
@@ -82,4 +79,3 @@ public class ProductController {
         return ResponseEntity.ok(ResponseUtil.success(TraceIdUtil.getOrCreateTraceId(), null));
     }
 }
-

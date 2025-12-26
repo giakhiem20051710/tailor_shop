@@ -187,7 +187,7 @@ export default function SampleImagesForm({ images, onChange }) {
                 className="w-full h-32 object-cover rounded-lg border border-gray-200"
                 onError={(e) => {
                   e.target.src =
-                    "https://via.placeholder.com/300x300?text=Ảnh+không+khả+dụng";
+                    "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Crect fill='%23f3f4f6' width='300' height='300'/%3E%3Ctext x='50%25' y='50%25' font-family='Arial, sans-serif' font-size='14' fill='%239ca3af' text-anchor='middle' dominant-baseline='middle'%3EẢnh không khả dụng%3C/text%3E%3C/svg%3E";
                 }}
               />
               <div className="absolute top-2 left-2">

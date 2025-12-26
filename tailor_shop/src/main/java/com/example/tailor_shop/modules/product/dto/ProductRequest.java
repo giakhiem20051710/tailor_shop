@@ -57,5 +57,36 @@ public class ProductRequest {
 
     @Size(max = 50, message = "Type must be at most 50 characters")
     private String type;
-}
 
+    // Tailoring specifications
+    @Size(max = 100, message = "Tailoring time must be at most 100 characters")
+    private String tailoringTime;
+
+    @Size(max = 50, message = "Fitting count must be at most 50 characters")
+    private String fittingCount;
+
+    @Size(max = 200, message = "Warranty must be at most 200 characters")
+    private String warranty;
+
+    @Size(max = 200, message = "Silhouette must be at most 200 characters")
+    private String silhouette;
+
+    private List<String> materials;
+
+    private List<String> colors;
+
+    @Size(max = 200, message = "Length info must be at most 200 characters")
+    private String lengthInfo;
+
+    @Size(max = 200, message = "Lining must be at most 200 characters")
+    private String lining;
+
+    @Size(max = 500, message = "Accessories must be at most 500 characters")
+    private String accessories;
+
+    private List<String> occasions;
+
+    private List<String> customerStyles;
+
+    private List<String> careInstructions;
+}

@@ -26,5 +26,5 @@ public class ProductListItemResponse {
     private BigDecimal rating;
     private Integer sold;
     private Boolean isFavorite;
+    private TailoringSpecDTO specifications; // Added field
 }
-

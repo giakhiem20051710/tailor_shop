@@ -12,6 +12,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,7 +21,8 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 /**
- * Favorite Controller - Module riêng, có thể tái sử dụng cho nhiều loại sản phẩm
+ * Favorite Controller - Module riêng, có thể tái sử dụng cho nhiều loại sản
+ * phẩm
  * Giống Shopee, FPT Shop: Favorite là module độc lập
  */
 @RestController
@@ -36,9 +38,8 @@ public class FavoriteController {
     @GetMapping
     @PreAuthorize("hasRole('CUSTOMER')")
     public ResponseEntity<com.example.tailor_shop.common.CommonResponse<Page<FavoriteResponse>>> list(
-            @PageableDefault(size = 20, sort = "createdAt,desc") Pageable pageable,
-            @AuthenticationPrincipal CustomUserDetails principal
-    ) {
+            @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable,
+            @AuthenticationPrincipal CustomUserDetails principal) {
         Page<FavoriteResponse> data = favoriteService.list(principal.getId(), pageable);
         return ResponseEntity.ok(ResponseUtil.success(TraceIdUtil.getOrCreateTraceId(), data));
     }
@@ -50,9 +51,8 @@ public class FavoriteController {
     @PreAuthorize("hasRole('CUSTOMER')")
     public ResponseEntity<com.example.tailor_shop.common.CommonResponse<Page<FavoriteResponse>>> listByType(
             @PathVariable FavoriteItemType itemType,
-            @PageableDefault(size = 20, sort = "createdAt,desc") Pageable pageable,
-            @AuthenticationPrincipal CustomUserDetails principal
-    ) {
+            @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable,
+            @AuthenticationPrincipal CustomUserDetails principal) {
         Page<FavoriteResponse> data = favoriteService.listByType(itemType, principal.getId(), pageable);
         return ResponseEntity.ok(ResponseUtil.success(TraceIdUtil.getOrCreateTraceId(), data));
     }
@@ -64,8 +64,7 @@ public class FavoriteController {
     @PreAuthorize("hasRole('CUSTOMER')")
     public ResponseEntity<com.example.tailor_shop.common.CommonResponse<FavoriteResponse>> add(
             @Valid @RequestBody AddFavoriteRequest request,
-            @AuthenticationPrincipal CustomUserDetails principal
-    ) {
+            @AuthenticationPrincipal CustomUserDetails principal) {
         FavoriteResponse data = favoriteService.add(principal.getId(), request);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ResponseUtil.success(TraceIdUtil.getOrCreateTraceId(), data));
@@ -79,8 +78,7 @@ public class FavoriteController {
     public ResponseEntity<com.example.tailor_shop.common.CommonResponse<Void>> remove(
             @PathVariable FavoriteItemType itemType,
             @PathVariable Long itemId,
-            @AuthenticationPrincipal CustomUserDetails principal
-    ) {
+            @AuthenticationPrincipal CustomUserDetails principal) {
         favoriteService.remove(principal.getId(), itemType, itemId);
         return ResponseEntity.ok(ResponseUtil.success(TraceIdUtil.getOrCreateTraceId(), null));
     }
@@ -92,8 +90,7 @@ public class FavoriteController {
     @PreAuthorize("hasRole('CUSTOMER')")
     public ResponseEntity<com.example.tailor_shop.common.CommonResponse<Void>> removeByKey(
             @PathVariable String itemKey,
-            @AuthenticationPrincipal CustomUserDetails principal
-    ) {
+            @AuthenticationPrincipal CustomUserDetails principal) {
         favoriteService.removeByKey(principal.getId(), itemKey);
         return ResponseEntity.ok(ResponseUtil.success(TraceIdUtil.getOrCreateTraceId(), null));
     }
@@ -106,23 +103,21 @@ public class FavoriteController {
     public ResponseEntity<com.example.tailor_shop.common.CommonResponse<FavoriteCheckResponse>> check(
             @PathVariable FavoriteItemType itemType,
             @PathVariable Long itemId,
-            @AuthenticationPrincipal CustomUserDetails principal
-    ) {
+            @AuthenticationPrincipal CustomUserDetails principal) {
         FavoriteCheckResponse data = favoriteService.check(principal.getId(), itemType, itemId);
         return ResponseEntity.ok(ResponseUtil.success(TraceIdUtil.getOrCreateTraceId(), data));
     }
 
     /**
-     * Kiểm tra sản phẩm có trong danh sách yêu thích không (by key - backward compatibility)
+     * Kiểm tra sản phẩm có trong danh sách yêu thích không (by key - backward
+     * compatibility)
      */
     @GetMapping("/check")
     @PreAuthorize("hasRole('CUSTOMER')")
     public ResponseEntity<com.example.tailor_shop.common.CommonResponse<FavoriteCheckResponse>> checkByKey(
             @RequestParam String itemKey,
-            @AuthenticationPrincipal CustomUserDetails principal
-    ) {
+            @AuthenticationPrincipal CustomUserDetails principal) {
         FavoriteCheckResponse data = favoriteService.checkByKey(principal.getId(), itemKey);
         return ResponseEntity.ok(ResponseUtil.success(TraceIdUtil.getOrCreateTraceId(), data));
     }
 }
-
