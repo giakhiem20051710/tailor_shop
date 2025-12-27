@@ -22,6 +22,14 @@ public interface InvoiceRepository extends JpaRepository<InvoiceEntity, Long> {
                                @Param("dateFrom") java.time.OffsetDateTime dateFrom,
                                @Param("dateTo") java.time.OffsetDateTime dateTo,
                                Pageable pageable);
+
+    /**
+     * Tìm invoice theo order ID
+     * @param orderId Order ID
+     * @return Invoice entity nếu tìm thấy
+     */
+    @Query("SELECT i FROM InvoiceEntity i WHERE i.order.id = :orderId AND i.isDeleted = false")
+    java.util.Optional<InvoiceEntity> findByOrderIdAndIsDeletedFalse(@Param("orderId") Long orderId);
 }
 
 

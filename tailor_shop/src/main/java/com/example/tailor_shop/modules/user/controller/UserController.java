@@ -59,10 +59,28 @@ public class UserController {
 
     @GetMapping("/customers")
     public ResponseEntity<CommonResponse<Page<UserResponseDTO>>> findCustomers(
+            @RequestParam(value = "phone", required = false) String phone,
             @PageableDefault(size = 20) Pageable pageable
     ) {
-        Page<UserResponseDTO> data = userService.findCustomers(pageable);
+        Page<UserResponseDTO> data;
+        if (phone != null && !phone.isBlank()) {
+            data = userService.findCustomersByPhone(phone, pageable);
+        } else {
+            data = userService.findCustomers(pageable);
+        }
         return ResponseEntity.ok(ResponseUtil.success(TraceIdUtil.getOrCreateTraceId(), data));
+    }
+
+    @GetMapping("/customers/by-phone")
+    public ResponseEntity<CommonResponse<UserResponseDTO>> findCustomerByPhone(
+            @RequestParam("phone") String phone
+    ) {
+        java.util.Optional<UserResponseDTO> data = userService.findCustomerByPhone(phone);
+        if (data.isPresent()) {
+            return ResponseEntity.ok(ResponseUtil.success(TraceIdUtil.getOrCreateTraceId(), data.get()));
+        } else {
+            return ResponseEntity.ok(ResponseUtil.success(TraceIdUtil.getOrCreateTraceId(), null));
+        }
     }
 
     @GetMapping("/tailors")
@@ -72,6 +90,7 @@ public class UserController {
         Page<UserResponseDTO> data = userService.findTailors(pageable);
         return ResponseEntity.ok(ResponseUtil.success(TraceIdUtil.getOrCreateTraceId(), data));
     }
+
 
     @GetMapping("/me")
     public ResponseEntity<CommonResponse<UserResponseDTO>> getProfile(@AuthenticationPrincipal CustomUserDetails principal) {

@@ -23,10 +23,12 @@ public class InvoiceRequest {
 
     private Long orderId;
 
-    @NotNull(message = "Customer ID is required")
     private Long customerId;
 
-    @NotNull(message = "Staff ID is required")
+    private String customerName;
+
+    private String customerPhone;
+
     private Long staffId;
 
     @NotBlank(message = "Currency is required")
@@ -36,6 +38,9 @@ public class InvoiceRequest {
     private BigDecimal discountAmount;
     private BigDecimal taxAmount;
     private LocalDate dueDate;
+
+    @Size(max = 50, message = "Promo code must be at most 50 characters")
+    private String promoCode;
 
     @Size(max = 500, message = "Notes must be at most 500 characters")
     private String notes;
@@ -64,5 +69,3 @@ public class InvoiceRequest {
         private BigDecimal taxRate;
     }
 }
-
-

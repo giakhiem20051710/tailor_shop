@@ -1,10 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
-import {
-  initializeDefaultInvoices,
-  addInvoice,
-  updateInvoice,
-  addTransactionToInvoice,
-} from "../utils/invoiceStorage";
+import invoiceService from "../services/invoiceService";
+import promotionService from "../services/promotionService";
+import { showSuccess, showError, showWarning, showInfo } from "../components/NotificationToast.jsx";
 
 const bankConfig = {
   bankName: "Vietcombank",
@@ -16,6 +13,50 @@ const bankConfig = {
 const momoConfig = {
   phone: "0901234567",
   owner: "MY HIEN FASHION",
+};
+
+// Map backend status to frontend status
+const mapBackendStatus = (status) => {
+  const statusMap = {
+    draft: "pending",
+    issued: "pending",
+    partial_paid: "processing",
+    paid: "paid",
+    voided: "pending",
+    refunded: "pending",
+  };
+  return statusMap[status] || "pending";
+};
+
+// Map frontend status to backend status
+const mapFrontendStatus = (status) => {
+  const statusMap = {
+    pending: "issued",
+    processing: "partial_paid",
+    paid: "paid",
+  };
+  return statusMap[status] || "issued";
+};
+
+// Map backend payment provider to frontend method
+const mapPaymentProvider = (provider) => {
+  const providerMap = {
+    vnpay: "BANK",
+    momo: "MOMO",
+    zalopay: "BANK",
+    cash: "CASH",
+  };
+  return providerMap[provider] || "BANK";
+};
+
+// Map frontend method to backend payment provider
+const mapPaymentMethod = (method) => {
+  const methodMap = {
+    BANK: "vnpay",
+    MOMO: "momo",
+    CASH: "cash",
+  };
+  return methodMap[method] || "vnpay";
 };
 
 const STATUS_META = {
@@ -55,11 +96,6 @@ const buildMomoQrUrl = (amount, transferContent) => {
   )}`;
 };
 
-const getPaidAmount = (invoice) =>
-  (invoice?.transactions || []).reduce(
-    (sum, tx) => sum + (Number(tx.amount) || 0),
-    0
-  );
 
 export default function InvoicePage() {
   const [invoices, setInvoices] = useState([]);
@@ -82,12 +118,126 @@ export default function InvoicePage() {
     dueDate: "",
     total: "",
     note: "",
+    promoCode: "",
+    promoDiscount: 0,
   });
 
+  const [loading, setLoading] = useState(true);
+
+  // Load invoices from API
   useEffect(() => {
-    const initial = initializeDefaultInvoices();
-    setInvoices(initial);
-    setSelectedInvoiceId(initial[0]?.id || null);
+    const loadInvoices = async () => {
+      try {
+        setLoading(true);
+        console.log('[InvoicePage] Loading invoices from API...');
+        const response = await invoiceService.list({}, { page: 0, size: 100 });
+        console.log('[InvoicePage] Raw API response:', response);
+        console.log('[InvoicePage] Response keys:', Object.keys(response || {}));
+        
+        // Backend trả về CommonResponse<Page<InvoiceResponse>> với cấu trúc:
+        // { 
+        //   responseStatus: {...}, 
+        //   responseData: { 
+        //     content: [...],  // Array of InvoiceResponse
+        //     totalElements: ...,
+        //     totalPages: ...,
+        //     ...
+        //   } 
+        // }
+        let invoicesData = [];
+        
+        // Ưu tiên responseData.content (cấu trúc chuẩn từ CommonResponse)
+        if (response?.responseData?.content && Array.isArray(response.responseData.content)) {
+          invoicesData = response.responseData.content;
+          console.log('[InvoicePage] ✅ Found in responseData.content, count:', invoicesData.length);
+        } 
+        // Fallback: data.content
+        else if (response?.data?.content && Array.isArray(response.data.content)) {
+          invoicesData = response.data.content;
+          console.log('[InvoicePage] ✅ Found in data.content, count:', invoicesData.length);
+        } 
+        // Fallback: responseData là Page object trực tiếp
+        else if (response?.responseData && Array.isArray(response.responseData)) {
+          invoicesData = response.responseData;
+          console.log('[InvoicePage] ✅ Found in responseData (direct array), count:', invoicesData.length);
+        }
+        // Fallback: content trực tiếp
+        else if (Array.isArray(response?.content)) {
+          invoicesData = response.content;
+          console.log('[InvoicePage] ✅ Found in content (direct array), count:', invoicesData.length);
+        } 
+        // Fallback: data trực tiếp
+        else if (Array.isArray(response?.data)) {
+          invoicesData = response.data;
+          console.log('[InvoicePage] ✅ Found in data (direct array), count:', invoicesData.length);
+        } 
+        // Fallback: response là array trực tiếp
+        else if (Array.isArray(response)) {
+          invoicesData = response;
+          console.log('[InvoicePage] ✅ Response is direct array, count:', invoicesData.length);
+        } 
+        // Không tìm thấy
+        else {
+          console.warn('[InvoicePage] ⚠️ Unknown response structure:', response);
+          console.warn('[InvoicePage] Response type:', typeof response);
+          if (response && typeof response === 'object') {
+            console.warn('[InvoicePage] Response keys:', Object.keys(response));
+            if (response.responseData) {
+              console.warn('[InvoicePage] responseData type:', typeof response.responseData);
+              console.warn('[InvoicePage] responseData keys:', Object.keys(response.responseData));
+            }
+          }
+          invoicesData = [];
+        }
+        
+        // Map backend invoices to frontend format
+        // Backend InvoiceResponse structure:
+        // { id, code, customer: {id, name, phone}, status, total, items: [{name, ...}], transactions: [{provider, amount, ...}], ... }
+        const mappedInvoices = Array.isArray(invoicesData) 
+          ? invoicesData.map(inv => {
+              console.log('[InvoicePage] Mapping invoice:', inv.code || inv.id);
+              return {
+                id: inv.code || `INV-${inv.id}`,
+                customerName: inv.customer?.name || "",
+                phone: inv.customer?.phone || "",
+                product: inv.items?.[0]?.name || "Dịch vụ may",
+                dueDate: inv.dueDate || "",
+                total: inv.total ? Number(inv.total) : 0,
+                note: inv.notes || "",
+                status: mapBackendStatus(inv.status),
+                createdAt: inv.createdAt || inv.issuedAt || "",
+                transactions: (inv.transactions || []).map(tx => ({
+                  id: tx.id,
+                  amount: tx.amount ? Number(tx.amount) : 0,
+                  method: mapPaymentProvider(tx.provider),
+                  reference: tx.providerRef || "",
+                  note: "",
+                  createdAt: tx.paidAt || tx.createdAt || "",
+                })),
+                // Store backend data for updates
+                _backendId: inv.id,
+                _backendData: inv,
+              };
+            })
+          : [];
+        
+        console.log('[InvoicePage] Mapped invoices count:', mappedInvoices.length);
+        if (mappedInvoices.length > 0) {
+          console.log('[InvoicePage] First mapped invoice:', mappedInvoices[0]);
+        }
+        
+        setInvoices(mappedInvoices);
+        if (mappedInvoices.length > 0) {
+          setSelectedInvoiceId(mappedInvoices[0].id);
+        }
+      } catch (error) {
+        console.error("Error loading invoices:", error);
+        showError("Không thể tải danh sách hóa đơn");
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadInvoices();
   }, []);
 
   const selectedInvoice =
@@ -111,7 +261,11 @@ export default function InvoicePage() {
     const totalInvoices = invoices.length;
     const paidInvoices = invoices.filter((inv) => inv.status === "paid").length;
     const outstandingAmount = invoices.reduce((sum, inv) => {
-      const remaining = Math.max(inv.total - getPaidAmount(inv), 0);
+      const paid = (inv.transactions || []).reduce(
+        (txSum, tx) => txSum + (Number(tx.amount) || 0),
+        0
+      );
+      const remaining = Math.max((inv.total || 0) - paid, 0);
       return sum + remaining;
     }, 0);
     return { totalInvoices, paidInvoices, outstandingAmount };
@@ -127,41 +281,163 @@ export default function InvoicePage() {
     });
   };
 
-  const handleStartPayment = () => {
+  const handleStartPayment = async () => {
     if (!selectedInvoice) return;
     setPaymentMethod("BANK");
     setShowPaymentModal(true);
-    if (selectedInvoice.status === "pending") {
-      const updated = updateInvoice(selectedInvoice.id, { status: "processing" });
-      if (updated) {
-        setInvoices((prev) =>
-          prev.map((inv) => (inv.id === updated.id ? updated : inv))
-        );
-      }
-    }
+    // Status update will be handled when payment is added
   };
 
-  const handleMarkPaid = () => {
-    if (!selectedInvoice) return;
-    const updated = updateInvoice(selectedInvoice.id, { status: "paid" });
-    if (updated) {
-      setInvoices((prev) =>
-        prev.map((inv) => (inv.id === updated.id ? updated : inv))
+  const handleMarkPaid = async () => {
+    if (!selectedInvoice || !selectedInvoice._backendId) return;
+    
+    try {
+      setLoading(true);
+      // Calculate remaining amount
+      const paid = (selectedInvoice.transactions || []).reduce(
+        (sum, tx) => sum + (Number(tx.amount) || 0),
+        0
       );
+      const remainingAmount = Math.max((selectedInvoice.total || 0) - paid, 0);
+      
+      if (remainingAmount > 0) {
+        await invoiceService.addPayment({
+          invoiceId: selectedInvoice._backendId,
+          provider: mapPaymentMethod(paymentMethod),
+          amount: remainingAmount,
+          providerRef: `MANUAL_${Date.now()}`,
+        });
+      }
+      
+      // Reload invoice detail to get updated status
+      const invoiceResponse = await invoiceService.getDetail(selectedInvoice._backendId);
+      const invoiceData = invoiceResponse?.data ?? invoiceResponse?.responseData ?? invoiceResponse;
+      
+      // Update the invoice in the list
+      const updatedInvoice = {
+        id: invoiceData.code || `INV-${invoiceData.id}`,
+        customerName: invoiceData.customer?.name || "",
+        phone: invoiceData.customer?.phone || "",
+        product: invoiceData.items?.[0]?.name || "",
+        dueDate: invoiceData.dueDate || "",
+        total: invoiceData.total ? Number(invoiceData.total) : 0,
+        note: invoiceData.notes || "",
+        status: mapBackendStatus(invoiceData.status),
+        createdAt: invoiceData.createdAt || invoiceData.issuedAt || "",
+        transactions: (invoiceData.transactions || []).map(tx => ({
+          id: tx.id,
+          amount: tx.amount ? Number(tx.amount) : 0,
+          method: mapPaymentProvider(tx.provider),
+          reference: tx.providerRef || "",
+          note: "",
+          createdAt: tx.paidAt || tx.createdAt || "",
+        })),
+        _backendId: invoiceData.id,
+        _backendData: invoiceData,
+      };
+      
+      setInvoices((prev) =>
+        prev.map((inv) => (inv.id === updatedInvoice.id ? updatedInvoice : inv))
+      );
+      setSelectedInvoiceId(updatedInvoice.id);
       setShowPaymentModal(false);
+      showSuccess("Đã cập nhật trạng thái thanh toán thành công!");
+    } catch (error) {
+      console.error("Error marking invoice as paid:", error);
+      showError("Không thể cập nhật trạng thái hóa đơn: " + (error.response?.data?.message || error.message));
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleAddInvoice = (e) => {
+  const handleAddInvoice = async (e) => {
     e.preventDefault();
-    if (!newInvoice.customerName || !newInvoice.total) return;
-    const payload = {
-      ...newInvoice,
-      total: Number(newInvoice.total.replace(/,/g, "")) || 0,
-    };
-    const created = addInvoice(payload);
-    setInvoices((prev) => [created, ...prev]);
-    setSelectedInvoiceId(created.id);
+    if (!newInvoice.customerName || !newInvoice.total) {
+      showWarning("Vui lòng điền đầy đủ thông tin bắt buộc (Tên khách hàng và Tổng tiền)");
+      return;
+    }
+    
+    try {
+      setLoading(true);
+      const totalAmount = Number(newInvoice.total.toString().replace(/,/g, "")) || 0;
+      
+      if (totalAmount <= 0) {
+        showWarning("Tổng tiền phải lớn hơn 0");
+        return;
+      }
+
+      // Validate product name
+      const productName = newInvoice.product?.trim() || "Dịch vụ may";
+      
+      // Create invoice via API - match backend InvoiceRequest structure
+      const invoiceData = {
+        orderId: null, // Manual invoice, no order
+        customerId: null, // Will be found/created by backend from phone
+        customerName: newInvoice.customerName.trim(),
+        customerPhone: newInvoice.phone?.trim() || null,
+        staffId: null, // Will use current user from auth
+        currency: "VND", // Required by backend
+        discountAmount: newInvoice.promoDiscount || 0,
+        taxAmount: 0,
+        dueDate: newInvoice.dueDate || null,
+        promoCode: newInvoice.promoCode?.trim() || null, // Send promo code to backend
+        notes: newInvoice.note?.trim() || null,
+        items: [{
+          name: productName,
+          quantity: 1,
+          unitPrice: totalAmount,
+          discountAmount: 0,
+          taxRate: 0
+        }]
+      };
+      
+      console.log('[InvoicePage] Creating invoice with data:', invoiceData);
+      const response = await invoiceService.create(invoiceData);
+      console.log('[InvoicePage] Invoice creation response:', response);
+      
+      const createdInvoice = response?.data ?? response?.responseData ?? response;
+      
+      if (!createdInvoice) {
+        throw new Error("Không nhận được phản hồi từ server");
+      }
+      
+      // Reload invoices
+      const listResponse = await invoiceService.list({}, { page: 0, size: 100 });
+      const invoicesData = listResponse?.data?.content || 
+                          listResponse?.content || 
+                          listResponse?.responseData?.content ||
+                          listResponse?.data || 
+                          [];
+      
+      const mappedInvoices = Array.isArray(invoicesData) 
+        ? invoicesData.map(inv => ({
+            id: inv.code || `INV-${inv.id}`,
+            customerName: inv.customer?.name || "",
+            phone: inv.customer?.phone || "",
+            product: inv.items?.[0]?.name || "",
+            dueDate: inv.dueDate || "",
+            total: inv.total || 0,
+            note: inv.notes || "",
+            status: mapBackendStatus(inv.status),
+            createdAt: inv.createdAt || inv.issuedAt || "",
+            transactions: (inv.transactions || []).map(tx => ({
+              id: tx.id,
+              amount: tx.amount,
+              method: mapPaymentProvider(tx.provider),
+              reference: tx.providerRef || "",
+              note: "",
+              createdAt: tx.paidAt || tx.createdAt || "",
+            })),
+            _backendId: inv.id,
+            _backendData: inv,
+          }))
+        : [];
+      
+      setInvoices(mappedInvoices);
+      if (createdInvoice?.code || createdInvoice?.id) {
+        const newId = createdInvoice.code || `INV-${createdInvoice.id}`;
+        setSelectedInvoiceId(newId);
+      }
     setShowCreateModal(false);
     setNewInvoice({
       customerName: "",
@@ -171,31 +447,95 @@ export default function InvoicePage() {
       total: "",
       note: "",
     });
+      
+      showSuccess("Tạo hóa đơn thành công!");
+    } catch (error) {
+      console.error("Error creating invoice:", error);
+      const errorMessage = error.response?.data?.message || 
+                          error.response?.data?.error || 
+                          error.message || 
+                          "Không thể tạo hóa đơn";
+      showError("Lỗi: " + errorMessage);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleAddTransaction = (e) => {
+  const handleAddTransaction = async (e) => {
     e.preventDefault();
-    if (!selectedInvoice) return;
+    if (!selectedInvoice) {
+      showWarning("Vui lòng chọn hóa đơn");
+      return;
+    }
     const amountNumber = Number(transactionForm.amount);
-    if (!amountNumber) return;
-    const result = addTransactionToInvoice(selectedInvoice.id, {
-      ...transactionForm,
+    if (!amountNumber || amountNumber <= 0) {
+      showWarning("Vui lòng nhập số tiền hợp lệ (lớn hơn 0)");
+      return;
+    }
+    
+    try {
+      setLoading(true);
+      const paymentPayload = {
+        invoiceId: selectedInvoice._backendId,
+        provider: mapPaymentMethod(transactionForm.method),
       amount: amountNumber,
-    });
-    if (result?.invoice) {
+        providerRef: transactionForm.reference || "",
+        notes: transactionForm.note || "",
+      };
+      
+      await invoiceService.addPayment(paymentPayload);
+      
+      // Reload invoice to get updated data
+      const invoiceResponse = await invoiceService.getDetail(selectedInvoice._backendId);
+      const invoiceData = invoiceResponse?.data ?? invoiceResponse?.responseData ?? invoiceResponse;
+      
+      const updated = {
+        id: invoiceData.code || `INV-${invoiceData.id}`,
+        customerName: invoiceData.customer?.name || "",
+        phone: invoiceData.customer?.phone || "",
+        product: invoiceData.items?.[0]?.name || "",
+        dueDate: invoiceData.dueDate || "",
+        total: invoiceData.total ? Number(invoiceData.total) : 0,
+        note: invoiceData.notes || "",
+        status: mapBackendStatus(invoiceData.status),
+        createdAt: invoiceData.createdAt || invoiceData.issuedAt || "",
+        transactions: (invoiceData.transactions || []).map(tx => ({
+          id: tx.id,
+          amount: tx.amount ? Number(tx.amount) : 0,
+          method: mapPaymentProvider(tx.provider),
+          reference: tx.providerRef || "",
+          note: "",
+          createdAt: tx.paidAt || tx.createdAt || "",
+        })),
+        _backendId: invoiceData.id,
+        _backendData: invoiceData,
+      };
+      
       setInvoices((prev) =>
-        prev.map((inv) => (inv.id === result.invoice.id ? result.invoice : inv))
+        prev.map((inv) => (inv.id === updated.id ? updated : inv))
       );
+      setSelectedInvoiceId(updated.id);
       setTransactionForm({
         amount: "",
         method: "BANK",
         reference: "",
         note: "",
       });
+      showSuccess("Đã thêm giao dịch thành công!");
+    } catch (error) {
+      console.error("Error adding payment:", error);
+      showError("Không thể thêm giao dịch: " + (error.response?.data?.message || error.message));
+    } finally {
+      setLoading(false);
     }
   };
 
-  const paidAmount = getPaidAmount(selectedInvoice);
+  const paidAmount = selectedInvoice 
+    ? (selectedInvoice.transactions || []).reduce(
+        (sum, tx) => sum + (Number(tx.amount) || 0),
+        0
+      )
+    : 0;
   const remainingAmount = Math.max(
     (selectedInvoice?.total || 0) - paidAmount,
     0
@@ -209,6 +549,17 @@ export default function InvoicePage() {
   const momoQr = selectedInvoice
     ? buildMomoQrUrl(selectedInvoice.total, transferContent)
     : "";
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#F7F5F0] py-10 px-4 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#1B4332] mx-auto mb-4"></div>
+          <p className="text-[#6B7280]">Đang tải dữ liệu...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#F7F5F0] py-10 px-4">
@@ -724,8 +1075,59 @@ function PaymentModal({
 }
 
 function CreateInvoiceModal({ formData, onClose, onChange, onSubmit }) {
+  const [applyingPromo, setApplyingPromo] = useState(false);
+  
   const updateField = (field, value) => {
     onChange((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleApplyPromoCode = async () => {
+    if (!formData.promoCode?.trim()) {
+      showWarning("Vui lòng nhập mã giảm giá");
+      return;
+    }
+    
+    if (!formData.total || Number(formData.total) <= 0) {
+      showWarning("Vui lòng nhập tổng tiền trước khi áp dụng mã giảm giá");
+      return;
+    }
+
+    try {
+      setApplyingPromo(true);
+      const orderAmount = Number(formData.total.toString().replace(/,/g, "")) || 0;
+      
+      const applyData = {
+        code: formData.promoCode.trim().toUpperCase(),
+        orderAmount: orderAmount,
+        productIds: null,
+        categoryIds: null
+      };
+
+      const response = await promotionService.applyPromoCode(applyData);
+      const promoResponse = response?.data ?? response?.responseData ?? response;
+      
+      if (promoResponse && promoResponse.discountAmount) {
+        onChange((prev) => ({
+          ...prev,
+          promoDiscount: promoResponse.discountAmount
+        }));
+        showSuccess(`Đã áp dụng mã giảm giá! Giảm ${promoResponse.discountAmount.toLocaleString('vi-VN')} VND`);
+      } else {
+        showError("Không thể áp dụng mã giảm giá này");
+      }
+    } catch (error) {
+      console.error('[CreateInvoiceModal] Failed to apply promo code:', error);
+      const errorMsg = error?.response?.data?.responseMessage || 
+                       error?.message || 
+                       "Mã giảm giá không hợp lệ hoặc đã hết hạn";
+      showError(errorMsg);
+      onChange((prev) => ({
+        ...prev,
+        promoDiscount: 0
+      }));
+    } finally {
+      setApplyingPromo(false);
+    }
   };
 
   return (
@@ -753,50 +1155,120 @@ function CreateInvoiceModal({ formData, onClose, onChange, onSubmit }) {
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
+          <div>
+            <label className="block text-xs text-[#6B7280] mb-1">
+              Tên khách hàng <span className="text-red-500">*</span>
+            </label>
           <input
             required
-            placeholder="Tên khách hàng"
+              placeholder="Nhập tên khách hàng"
             value={formData.customerName}
             onChange={(e) => updateField("customerName", e.target.value)}
-            className="px-4 py-3 rounded-2xl border border-[#E5E7EB] text-sm"
+              className="w-full px-4 py-3 rounded-2xl border border-[#E5E7EB] text-sm"
           />
+          </div>
+          <div>
+            <label className="block text-xs text-[#6B7280] mb-1">
+              Số điện thoại
+            </label>
           <input
-            placeholder="Số điện thoại"
+              type="tel"
+              placeholder="Nhập số điện thoại"
             value={formData.phone}
             onChange={(e) => updateField("phone", e.target.value)}
-            className="px-4 py-3 rounded-2xl border border-[#E5E7EB] text-sm"
+              className="w-full px-4 py-3 rounded-2xl border border-[#E5E7EB] text-sm"
           />
+          </div>
+          <div>
+            <label className="block text-xs text-[#6B7280] mb-1">
+              Tên sản phẩm / Dịch vụ
+            </label>
           <input
-            placeholder="Mẫu may"
+              placeholder="Ví dụ: Áo sơ mi, Quần âu..."
             value={formData.product}
             onChange={(e) => updateField("product", e.target.value)}
-            className="px-4 py-3 rounded-2xl border border-[#E5E7EB] text-sm"
+              className="w-full px-4 py-3 rounded-2xl border border-[#E5E7EB] text-sm"
           />
+          </div>
+          <div>
+            <label className="block text-xs text-[#6B7280] mb-1">
+              Ngày đến hạn
+            </label>
           <input
             type="date"
             value={formData.dueDate}
             onChange={(e) => updateField("dueDate", e.target.value)}
-            className="px-4 py-3 rounded-2xl border border-[#E5E7EB] text-sm"
+              className="w-full px-4 py-3 rounded-2xl border border-[#E5E7EB] text-sm"
           />
+          </div>
         </div>
 
+        <div>
+          <label className="block text-xs text-[#6B7280] mb-1">
+            Tổng tiền (VND) <span className="text-red-500">*</span>
+          </label>
         <input
           required
           type="number"
-          min="10000"
-          placeholder="Tổng tiền (đ)"
+            min="1000"
+            step="1000"
+            placeholder="Nhập tổng tiền"
           value={formData.total}
           onChange={(e) => updateField("total", e.target.value)}
           className="w-full px-4 py-3 rounded-2xl border border-[#E5E7EB] text-sm"
         />
+        </div>
 
+        <div>
+          <label className="block text-xs text-[#6B7280] mb-1">
+            Mã giảm giá (tùy chọn)
+          </label>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              placeholder="Nhập mã giảm giá"
+              value={formData.promoCode || ""}
+              onChange={(e) => {
+                updateField("promoCode", e.target.value.toUpperCase());
+                // Reset discount when code changes
+                if (formData.promoDiscount > 0) {
+                  updateField("promoDiscount", 0);
+                }
+              }}
+              className="flex-1 px-4 py-3 rounded-2xl border border-[#E5E7EB] text-sm"
+            />
+            <button
+              type="button"
+              onClick={handleApplyPromoCode}
+              disabled={applyingPromo || !formData.promoCode?.trim() || !formData.total}
+              className="px-4 py-3 rounded-2xl bg-[#111827] text-white text-sm font-semibold hover:bg-[#0B1324] disabled:bg-gray-300 disabled:cursor-not-allowed whitespace-nowrap"
+            >
+              {applyingPromo ? "Đang kiểm tra..." : "Áp dụng"}
+            </button>
+          </div>
+          {formData.promoDiscount && formData.promoDiscount > 0 && (
+            <p className="text-xs text-green-600 mt-1">
+              ✓ Đã áp dụng giảm giá: {formData.promoDiscount.toLocaleString('vi-VN')} VND
+            </p>
+          )}
+        </div>
+
+        <div>
+          <label className="block text-xs text-[#6B7280] mb-1">
+            Ghi chú
+          </label>
         <textarea
-          placeholder="Ghi chú"
+            placeholder="Nhập ghi chú (nếu có)"
           value={formData.note}
           onChange={(e) => updateField("note", e.target.value)}
           rows={3}
+            maxLength={500}
           className="w-full px-4 py-3 rounded-2xl border border-[#E5E7EB] text-sm"
         />
+          <p className="text-xs text-[#9CA3AF] mt-1">
+            {formData.note?.length || 0}/500 ký tự
+          </p>
+        </div>
 
         <button className="w-full px-4 py-3 rounded-full bg-[#111827] text-white font-semibold hover:bg-[#0B1324]">
           Lưu hóa đơn

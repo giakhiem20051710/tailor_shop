@@ -6,6 +6,8 @@ import com.example.tailor_shop.modules.user.dto.UserResponseDTO;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
+import java.util.Optional;
+
 public interface UserService {
     UserResponseDTO create(UserRequestDTO request);
 
@@ -16,6 +18,10 @@ public interface UserService {
     Page<UserResponseDTO> findAll(Pageable pageable);
 
     Page<UserResponseDTO> findCustomers(Pageable pageable);
+
+    Page<UserResponseDTO> findCustomersByPhone(String phone, Pageable pageable);
+
+    Optional<UserResponseDTO> findCustomerByPhone(String phone);
 
     Page<UserResponseDTO> findTailors(Pageable pageable);
 

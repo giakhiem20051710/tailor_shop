@@ -25,7 +25,7 @@ public interface OrderService {
 
     OrderResponse detail(Long id);
 
-    OrderResponse create(OrderResquest request, java.util.List<org.springframework.web.multipart.MultipartFile> files);
+    OrderResponse create(OrderResquest request, java.util.List<org.springframework.web.multipart.MultipartFile> files, Long currentUserId);
 
     OrderResponse updateStatus(Long id, UpdateOrderStatusRequest request);
 
@@ -33,5 +33,7 @@ public interface OrderService {
 
     OrderResponse uploadAttachment(Long id, org.springframework.web.multipart.MultipartFile file, Long currentUserId);
 
-    OrderResponse createWizard(OrderWizardRequest request);
+    OrderResponse createWizard(OrderWizardRequest request, Long currentUserId);
+
+    OrderResponse update(Long id, com.example.tailor_shop.modules.order.dto.UpdateOrderRequest request, Long currentUserId);
 }

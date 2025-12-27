@@ -28,6 +28,8 @@ public class OrderResponse {
     private List<Timeline> timeline;
     private List<Payment> payments;
     private List<Attachment> attachments;
+    private Long invoiceId;
+    private String invoiceCode;
 
     public Long getId() {
         return id;
@@ -574,5 +576,21 @@ public class OrderResponse {
         public void setCreatedAt(Instant createdAt) {
             this.createdAt = createdAt;
         }
+    }
+
+    public Long getInvoiceId() {
+        return invoiceId;
+    }
+
+    public void setInvoiceId(Long invoiceId) {
+        this.invoiceId = invoiceId;
+    }
+
+    public String getInvoiceCode() {
+        return invoiceCode;
+    }
+
+    public void setInvoiceCode(String invoiceCode) {
+        this.invoiceCode = invoiceCode;
     }
 }

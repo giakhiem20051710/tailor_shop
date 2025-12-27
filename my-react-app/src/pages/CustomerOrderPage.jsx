@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import Header from "../components/Header.jsx";
-import { orderService } from "../services";
+import { orderService, invoiceService } from "../services";
 import { isAuthenticated, getCurrentUserRole, getCurrentUser, ROLES } from "../utils/authStorage";
 import { saveCustomerMeasurements } from "../utils/customerMeasurementsStorage";
 import {
@@ -59,6 +59,8 @@ const CustomerOrderPage = () => {
   const [referralError, setReferralError] = useState("");
   const [referralVoucher, setReferralVoucher] = useState("");
   const [hintModal, setHintModal] = useState(null); // { title, content }
+  const [invoiceId, setInvoiceId] = useState(null);
+  const [invoiceCode, setInvoiceCode] = useState(null);
 
   usePageMeta({
     title: "Form đặt may theo số đo | Đặt lịch tư vấn My Hiền Tailor",
@@ -267,6 +269,28 @@ const CustomerOrderPage = () => {
         !!responseData?.id;
 
       if (isSuccess) {
+        // Kiểm tra xem backend có trả về thông tin hóa đơn không (Giải pháp 1)
+        if (responseData?.invoiceId) {
+          setInvoiceId(responseData.invoiceId);
+          setInvoiceCode(responseData.invoiceCode || `INV-${responseData.invoiceId}`);
+          console.log("Hóa đơn đã được tự động tạo:", responseData.invoiceCode || responseData.invoiceId);
+        } else {
+          // Fallback: Nếu backend chưa kịp update, thử fetch invoice theo orderId
+          const orderId = responseData.id || responseData.orderId;
+          if (orderId) {
+            try {
+              const invoice = await invoiceService.getByOrderId(orderId);
+              if (invoice) {
+                setInvoiceId(invoice.id);
+                setInvoiceCode(invoice.code || `INV-${invoice.id}`);
+                console.log("Đã tìm thấy hóa đơn:", invoice.code || invoice.id);
+              }
+            } catch (error) {
+              console.error("Lỗi khi fetch invoice:", error);
+            }
+          }
+        }
+
         // Save measurements locally for history
         if (referralMeta) {
           recordReferralOnOrderCreated({
@@ -414,6 +438,21 @@ const CustomerOrderPage = () => {
             <p className="text-sm text-[#6B7280] mb-3">
               Cảm ơn bạn đã tin tưởng. Chúng tôi sẽ liên hệ với bạn trong thời gian sớm nhất.
             </p>
+            {invoiceId && invoiceCode && (
+              <div className="text-sm text-[#065f46] bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-3 mb-3">
+                Hóa đơn đã được tự động tạo:{" "}
+                <span className="font-semibold">{invoiceCode}</span>
+                <button
+                  onClick={() => {
+                    navigate(`/invoices/${invoiceId}`);
+                    setShowSuccess(false);
+                  }}
+                  className="ml-2 px-3 py-1 text-xs font-medium bg-[#1B4332] text-white rounded-lg hover:bg-[#14532d] transition"
+                >
+                  Xem hóa đơn
+                </button>
+              </div>
+            )}
             {referralVoucher && (
               <div className="text-sm text-[#065f46] bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-3 mb-3">
                 Bạn vừa nhận mã ưu đãi{" "}
