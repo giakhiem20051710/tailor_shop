@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
-import { orderService, userService, authService } from "../services";
+import { orderService, userService, authService, invoiceService } from "../services";
 
 const CustomerOrderDetailPage = () => {
   const { id } = useParams();
@@ -9,6 +9,7 @@ const CustomerOrderDetailPage = () => {
   const [order, setOrder] = useState(null);
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [invoice, setInvoice] = useState(null);
 
   useEffect(() => {
     console.log("CustomerOrderDetailPage mounted, id:", id);
@@ -104,6 +105,31 @@ const CustomerOrderDetailPage = () => {
             };
             console.log("Mapped order:", mappedOrder);
             setOrder(mappedOrder);
+
+            // Fetch invoice nếu có invoiceId trong order hoặc fetch theo orderId
+            const invoiceIdFromOrder = orderData.invoiceId;
+            const orderId = orderData.id;
+            
+            if (invoiceIdFromOrder) {
+              // Nếu có invoiceId trong response, fetch chi tiết
+              try {
+                const invoiceResponse = await invoiceService.getDetail(invoiceIdFromOrder);
+                const invoiceData = invoiceResponse?.data ?? invoiceResponse?.responseData ?? invoiceResponse;
+                setInvoice(invoiceData);
+              } catch (error) {
+                console.error("Error fetching invoice by ID:", error);
+              }
+            } else if (orderId) {
+              // Nếu không có invoiceId, thử fetch theo orderId
+              try {
+                const invoice = await invoiceService.getByOrderId(orderId);
+                if (invoice) {
+                  setInvoice(invoice);
+                }
+              } catch (error) {
+                console.error("Error fetching invoice by orderId:", error);
+              }
+            }
           } else {
             console.log("Not customer's order, redirecting. Current user ID:", currentUserId, "Order customer ID:", orderCustomerId);
             navigate("/customer/dashboard", { replace: true });
@@ -664,6 +690,60 @@ const CustomerOrderDetailPage = () => {
             )}
             </div>
           </div>
+
+        {/* Invoice Section */}
+        {invoice && (
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-xl p-8 hover:shadow-2xl transition-shadow duration-300">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-1 h-10 bg-gradient-to-b from-green-600 to-emerald-700 rounded-full"></div>
+              <h2 className="text-3xl font-serif font-bold text-gray-900 tracking-tight">Hóa đơn</h2>
+            </div>
+            <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-6 border-2 border-green-200">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div>
+                  <p className="text-sm text-gray-600 mb-1">Mã hóa đơn</p>
+                  <p className="text-lg font-bold text-gray-900">{invoice.code || `INV-${invoice.id}`}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600 mb-1">Tổng tiền</p>
+                  <p className="text-lg font-bold text-green-600">{formatCurrency(invoice.total || 0)}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600 mb-1">Trạng thái</p>
+                  <span className={`inline-block px-3 py-1 rounded-full text-sm font-semibold ${
+                    invoice.status === 'paid' ? 'bg-green-100 text-green-800' :
+                    invoice.status === 'partial_paid' ? 'bg-yellow-100 text-yellow-800' :
+                    invoice.status === 'issued' ? 'bg-blue-100 text-blue-800' :
+                    'bg-gray-100 text-gray-800'
+                  }`}>
+                    {invoice.status === 'paid' ? 'Đã thanh toán' :
+                     invoice.status === 'partial_paid' ? 'Thanh toán một phần' :
+                     invoice.status === 'issued' ? 'Đã phát hành' :
+                     invoice.status || 'Chưa xác định'}
+                  </span>
+                </div>
+                {invoice.dueDate && (
+                  <div>
+                    <p className="text-sm text-gray-600 mb-1">Ngày đến hạn</p>
+                    <p className="text-sm font-medium text-gray-900">
+                      {new Date(invoice.dueDate).toLocaleDateString("vi-VN")}
+                    </p>
+                  </div>
+                )}
+              </div>
+              <button
+                onClick={() => navigate(`/invoices/${invoice.id}`)}
+                className="w-full md:w-auto px-6 py-3 bg-[#1B4332] text-white rounded-lg hover:bg-[#14532d] transition-colors font-semibold flex items-center justify-center gap-2"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                </svg>
+                Xem chi tiết hóa đơn
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Timeline Section */}
         {order.timeline && order.timeline.length > 0 && (

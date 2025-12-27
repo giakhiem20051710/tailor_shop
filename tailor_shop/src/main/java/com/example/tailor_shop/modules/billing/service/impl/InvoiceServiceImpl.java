@@ -2,6 +2,8 @@ package com.example.tailor_shop.modules.billing.service.impl;
 
 import com.example.tailor_shop.common.TraceIdUtil;
 import com.example.tailor_shop.config.exception.BadRequestException;
+import com.example.tailor_shop.config.exception.BusinessException;
+import com.example.tailor_shop.config.exception.ErrorCode;
 import com.example.tailor_shop.config.exception.NotFoundException;
 import com.example.tailor_shop.modules.billing.domain.InvoiceEntity;
 import com.example.tailor_shop.modules.billing.domain.InvoiceItemEntity;
@@ -21,8 +23,20 @@ import com.example.tailor_shop.modules.billing.repository.PaymentTransactionRepo
 import com.example.tailor_shop.modules.billing.service.InvoiceService;
 import com.example.tailor_shop.modules.order.domain.OrderEntity;
 import com.example.tailor_shop.modules.order.repository.OrderRepository;
+import com.example.tailor_shop.modules.user.domain.RoleEntity;
 import com.example.tailor_shop.modules.user.domain.UserEntity;
+import com.example.tailor_shop.modules.user.dto.UserRequestDTO;
+import com.example.tailor_shop.modules.user.dto.UserResponseDTO;
+import com.example.tailor_shop.modules.user.repository.RoleRepository;
 import com.example.tailor_shop.modules.user.repository.UserRepository;
+import com.example.tailor_shop.modules.user.service.UserService;
+import com.example.tailor_shop.modules.promotion.service.PromotionService;
+import com.example.tailor_shop.modules.promotion.repository.PromotionUsageRepository;
+import com.example.tailor_shop.modules.promotion.repository.PromotionRepository;
+import com.example.tailor_shop.modules.promotion.domain.PromotionUsageEntity;
+import com.example.tailor_shop.modules.promotion.domain.PromotionEntity;
+import com.example.tailor_shop.modules.promotion.dto.ApplyPromoCodeRequest;
+import com.example.tailor_shop.modules.promotion.dto.ApplyPromoCodeResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -49,6 +63,11 @@ public class InvoiceServiceImpl implements InvoiceService {
     private final PaymentTransactionRepository paymentTransactionRepository;
     private final OrderRepository orderRepository;
     private final UserRepository userRepository;
+    private final UserService userService;
+    private final RoleRepository roleRepository;
+    private final PromotionService promotionService;
+    private final PromotionUsageRepository promotionUsageRepository;
+    private final PromotionRepository promotionRepository;
 
     @Override
     @Transactional(readOnly = true)
@@ -67,8 +86,7 @@ public class InvoiceServiceImpl implements InvoiceService {
                 filter != null ? filter.getStatus() : null,
                 from,
                 to,
-                pageable
-        );
+                pageable);
         return page.map(this::toResponse);
     }
 
@@ -87,10 +105,62 @@ public class InvoiceServiceImpl implements InvoiceService {
     @Override
     @Transactional
     public InvoiceResponse create(InvoiceRequest request, Long currentUserId) {
-        UserEntity customer = userRepository.findById(request.getCustomerId())
-                .orElseThrow(() -> new NotFoundException("Customer not found"));
-        UserEntity staff = userRepository.findById(request.getStaffId())
-                .orElseThrow(() -> new NotFoundException("Staff not found"));
+        UserEntity staff;
+        if (request.getStaffId() != null) {
+            staff = userRepository.findById(request.getStaffId())
+                    .orElseThrow(() -> new NotFoundException("Staff not found"));
+        } else {
+            // Auto-assign current user as staff
+            if (currentUserId == null) {
+                throw new BadRequestException("Staff ID is required or must be logged in");
+            }
+            staff = userRepository.findById(currentUserId)
+                    .orElseThrow(() -> new NotFoundException("Current staff user not found"));
+        }
+
+        UserEntity customer;
+        if (request.getCustomerId() != null) {
+            customer = userRepository.findById(request.getCustomerId())
+                    .orElseThrow(() -> new NotFoundException("Customer not found"));
+        } else {
+            // Resolve customer by Phone
+            if (request.getCustomerPhone() == null || request.getCustomerPhone().isBlank()) {
+                throw new BadRequestException("Customer Phone is required when Customer ID is missing");
+            }
+            String phone = request.getCustomerPhone();
+
+            // 1. Try to find existing user by phone
+            java.util.Optional<UserEntity> existingUser = userRepository.findByPhoneAndIsDeletedFalse(phone);
+
+            if (existingUser.isPresent()) {
+                customer = existingUser.get();
+            } else {
+                // 2. Create new Customer
+                if (request.getCustomerName() == null || request.getCustomerName().isBlank()) {
+                    throw new BadRequestException("Customer Name is required for new customer");
+                }
+
+                // Find Customer Role ID
+                RoleEntity customerRole = roleRepository.findByCode("CUSTOMER")
+                        .orElseThrow(() -> new BusinessException(ErrorCode.ROLE_NOT_FOUND));
+
+                // Create User DTO
+                // Generate dummy email if needed since it is required by DTO/Entity
+                String dummyEmail = phone + "@customer.local";
+
+                UserRequestDTO newUserReq = new UserRequestDTO(
+                        phone, // username = phone
+                        "123456", // default password
+                        request.getCustomerName(),
+                        dummyEmail,
+                        phone,
+                        customerRole.getId());
+
+                UserResponseDTO newCustomerDTO = userService.create(newUserReq);
+                customer = userRepository.findById(newCustomerDTO.id())
+                        .orElseThrow(() -> new RuntimeException("Failed to retrieve created customer"));
+            }
+        }
 
         OrderEntity order = null;
         if (request.getOrderId() != null) {
@@ -115,7 +185,56 @@ public class InvoiceServiceImpl implements InvoiceService {
 
         BigDecimal subtotal = ZERO;
         BigDecimal taxAmount = request.getTaxAmount() != null ? request.getTaxAmount() : ZERO;
-        BigDecimal discount = request.getDiscountAmount() != null ? request.getDiscountAmount() : ZERO;
+        BigDecimal discount = ZERO;
+        Long appliedPromotionId = null;
+        
+        // Apply promo code if provided
+        if (request.getPromoCode() != null && !request.getPromoCode().trim().isEmpty()) {
+            try {
+                // Calculate subtotal first to get order amount
+                BigDecimal tempSubtotal = ZERO;
+                for (InvoiceRequest.ItemRequest item : request.getItems()) {
+                    BigDecimal lineBase = item.getUnitPrice()
+                            .multiply(BigDecimal.valueOf(item.getQuantity()))
+                            .subtract(item.getDiscountAmount() != null ? item.getDiscountAmount() : ZERO);
+                    BigDecimal lineTax = lineBase.multiply(
+                            item.getTaxRate() != null ? item.getTaxRate() : ZERO
+                    ).divide(BigDecimal.valueOf(100));
+                    tempSubtotal = tempSubtotal.add(lineBase.add(lineTax));
+                }
+                BigDecimal orderAmount = tempSubtotal.add(taxAmount);
+                
+                // Build ApplyPromoCodeRequest
+                ApplyPromoCodeRequest promoRequest = ApplyPromoCodeRequest.builder()
+                        .code(request.getPromoCode().trim().toUpperCase())
+                        .orderAmount(orderAmount)
+                        .productIds(null) // Could extract from items if needed
+                        .categoryIds(null) // Could extract from items if needed
+                        .build();
+                
+                // Apply promo code (use customer ID for validation)
+                ApplyPromoCodeResponse promoResponse = promotionService.applyPromoCode(
+                        promoRequest, 
+                        customer.getId()
+                );
+                
+                discount = promoResponse.getDiscountAmount();
+                appliedPromotionId = promoResponse.getPromotionId();
+                
+                log.info("[TraceId: {}] Applied promo code {} to invoice, discount: {}", 
+                        TraceIdUtil.getTraceId(), request.getPromoCode(), discount);
+            } catch (Exception e) {
+                log.warn("[TraceId: {}] Failed to apply promo code {}: {}. Using manual discount if provided.", 
+                        TraceIdUtil.getTraceId(), request.getPromoCode(), e.getMessage());
+                // Fall back to manual discount if promo code fails
+                if (request.getDiscountAmount() != null) {
+                    discount = request.getDiscountAmount();
+                }
+            }
+        } else {
+            // Use manual discount if no promo code
+            discount = request.getDiscountAmount() != null ? request.getDiscountAmount() : ZERO;
+        }
 
         List<InvoiceItemEntity> items = request.getItems().stream().map(item -> {
             InvoiceItemEntity entity = new InvoiceItemEntity();
@@ -161,6 +280,36 @@ public class InvoiceServiceImpl implements InvoiceService {
         invoiceItemRepository.saveAll(items);
         savedInvoice.setItems(items);
 
+        // Track promotion usage if promo code was applied
+        if (appliedPromotionId != null && discount.compareTo(ZERO) > 0) {
+            try {
+                PromotionEntity promotion = promotionRepository.findById(appliedPromotionId)
+                        .orElseThrow(() -> new NotFoundException("Promotion not found"));
+                
+                BigDecimal originalAmount = subtotal.add(taxAmount);
+                BigDecimal finalAmount = total;
+                
+                PromotionUsageEntity usage = PromotionUsageEntity.builder()
+                        .promotion(promotion)
+                        .user(customer)
+                        .orderId(order != null ? order.getId() : null)
+                        .invoiceId(savedInvoice.getId())
+                        .discountAmount(discount)
+                        .originalAmount(originalAmount)
+                        .finalAmount(finalAmount)
+                        .build();
+                
+                promotionUsageRepository.save(usage);
+                
+                log.info("[TraceId: {}] Tracked promotion usage: promotionId={}, invoiceId={}, discount={}", 
+                        TraceIdUtil.getTraceId(), appliedPromotionId, savedInvoice.getId(), discount);
+            } catch (Exception e) {
+                // Log error but don't fail invoice creation
+                log.error("[TraceId: {}] Failed to track promotion usage for invoice {}: {}", 
+                        TraceIdUtil.getTraceId(), savedInvoice.getId(), e.getMessage(), e);
+            }
+        }
+
         return toResponse(savedInvoice);
     }
 
@@ -184,8 +333,7 @@ public class InvoiceServiceImpl implements InvoiceService {
         transaction.setInvoice(invoice);
         transaction.setProvider(request.getProvider());
         transaction.setStatus(
-                request.getProvider() == PaymentProvider.cash ? PaymentStatus.success : PaymentStatus.pending
-        );
+                request.getProvider() == PaymentProvider.cash ? PaymentStatus.success : PaymentStatus.pending);
         transaction.setAmount(request.getAmount());
         transaction.setProviderRef(UUID.randomUUID().toString());
         transaction.setRequestPayload(null);
@@ -352,5 +500,3 @@ public class InvoiceServiceImpl implements InvoiceService {
         return "https://pay.example.com/redirect?ref=" + transaction.getProviderRef();
     }
 }
-
-

@@ -26,5 +26,7 @@ public interface MeasurementRepository extends JpaRepository<MeasurementEntity, 
     List<MeasurementEntity> findByGroupIdOrderByVersionDesc(String groupId);
 
     MeasurementEntity findFirstByGroupIdAndIsLatestTrue(String groupId);
+
+    MeasurementEntity findFirstByOrderAndIsLatestTrue(com.example.tailor_shop.modules.order.domain.OrderEntity order);
 }
 

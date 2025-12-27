@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { getOrders, updateOrder } from "../utils/orderStorage";
+import { orderService } from "../services";
 import { getUsersByRole, ROLES } from "../utils/authStorage";
 import {
   addWorkingSlot,
@@ -40,15 +40,27 @@ export default function SchedulePage() {
   const [weeklyModalDate, setWeeklyModalDate] = useState(selectedDate);
 
   useEffect(() => {
-    const allOrders = getOrders();
-    setOrders(allOrders);
-    
-    // Load tailors
-    const tailorUsers = getUsersByRole(ROLES.TAILOR);
-    setTailors(tailorUsers);
+    const loadData = async () => {
+      try {
+        // Load orders from API
+        const response = await orderService.list({}, { page: 0, size: 100 });
+        const responseData = response?.data ?? response?.responseData ?? response;
+        const ordersList = responseData?.content ?? responseData?.data ?? [];
+        setOrders(ordersList);
+      } catch (error) {
+        console.error("Error loading orders:", error);
+        setOrders([]);
+      }
+      
+      // Load tailors
+      const tailorUsers = getUsersByRole(ROLES.TAILOR);
+      setTailors(tailorUsers);
 
-    setWorkingSlots(getWorkingSlots());
-    setAppointments(getAppointments());
+      setWorkingSlots(getWorkingSlots());
+      setAppointments(getAppointments());
+    };
+    
+    loadData();
   }, []);
 
   // Get date range for week view
@@ -1504,7 +1516,13 @@ export default function SchedulePage() {
                       ? "Hoàn thành"
                       : "Đang may"
                     : undefined;
-                if (nextStatus) updateOrder(updated.orderId, { status: nextStatus });
+                if (nextStatus) {
+                  try {
+                    await orderService.updateStatus(updated.orderId, { status: nextStatus });
+                  } catch (error) {
+                    console.error("Error updating order status:", error);
+                  }
+                }
               }
               recalcSlotStatus(updated.slotId);
             }

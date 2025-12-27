@@ -127,7 +127,7 @@ public class PromotionController {
     }
 
     @PostMapping("/apply")
-    @PreAuthorize("hasAnyRole('CUSTOMER')")
+    @PreAuthorize("hasAnyRole('CUSTOMER','ADMIN','STAFF')")
     public ResponseEntity<CommonResponse<ApplyPromoCodeResponse>> applyPromoCode(
             @Valid @RequestBody ApplyPromoCodeRequest request,
             @AuthenticationPrincipal CustomUserDetails principal

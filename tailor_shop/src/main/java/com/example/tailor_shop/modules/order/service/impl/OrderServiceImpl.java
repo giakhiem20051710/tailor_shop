@@ -6,6 +6,7 @@ import com.example.tailor_shop.modules.order.domain.*;
 import com.example.tailor_shop.modules.order.dto.OrderResquest;
 import com.example.tailor_shop.modules.order.dto.OrderResponse;
 import com.example.tailor_shop.modules.order.dto.OrderWizardRequest;
+import com.example.tailor_shop.modules.order.dto.UpdateOrderRequest;
 import com.example.tailor_shop.modules.order.dto.UpdateOrderStatusRequest;
 import com.example.tailor_shop.modules.order.repository.*;
 import com.example.tailor_shop.modules.order.service.OrderService;
@@ -17,12 +18,16 @@ import com.example.tailor_shop.modules.measurement.repository.MeasurementReposit
 import com.example.tailor_shop.modules.appointment.service.AppointmentService;
 import com.example.tailor_shop.modules.appointment.dto.AppointmentRequest;
 import com.example.tailor_shop.modules.appointment.domain.AppointmentType;
+import com.example.tailor_shop.modules.billing.service.InvoiceService;
+import com.example.tailor_shop.modules.billing.dto.InvoiceRequest;
+import com.example.tailor_shop.modules.billing.repository.InvoiceRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+import lombok.extern.slf4j.Slf4j;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -33,6 +38,7 @@ import java.util.stream.Collectors;
 
 @Service
 @Transactional
+@Slf4j
 public class OrderServiceImpl implements OrderService {
 
     private final OrderRepository orderRepository;
@@ -44,6 +50,8 @@ public class OrderServiceImpl implements OrderService {
     private final S3StorageService s3StorageService;
     private final MeasurementRepository measurementRepository;
     private final AppointmentService appointmentService;
+    private final InvoiceService invoiceService;
+    private final InvoiceRepository invoiceRepository;
 
     public OrderServiceImpl(OrderRepository orderRepository,
                             OrderItemRepository orderItemRepository,
@@ -53,7 +61,9 @@ public class OrderServiceImpl implements OrderService {
                             UserRepository userRepository,
                             S3StorageService s3StorageService,
                             MeasurementRepository measurementRepository,
-                            AppointmentService appointmentService) {
+                            AppointmentService appointmentService,
+                            InvoiceService invoiceService,
+                            InvoiceRepository invoiceRepository) {
         this.orderRepository = orderRepository;
         this.orderItemRepository = orderItemRepository;
         this.orderTimelineRepository = orderTimelineRepository;
@@ -63,6 +73,8 @@ public class OrderServiceImpl implements OrderService {
         this.s3StorageService = s3StorageService;
         this.measurementRepository = measurementRepository;
         this.appointmentService = appointmentService;
+        this.invoiceService = invoiceService;
+        this.invoiceRepository = invoiceRepository;
     }
 
     @Override
@@ -89,7 +101,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public OrderResponse create(OrderResquest request, java.util.List<MultipartFile> files) {
+    public OrderResponse create(OrderResquest request, java.util.List<MultipartFile> files, Long currentUserId) {
         UserEntity customer = userRepository.findById(request.getCustomerId())
                 .orElseThrow(() -> new NotFoundException("Customer not found"));
         UserEntity tailor = null;
@@ -173,6 +185,14 @@ public class OrderServiceImpl implements OrderService {
 
         addTimeline(order, order.getStatus(), "Order created");
 
+        // Tự động tạo hóa đơn sau khi tạo đơn hàng
+        try {
+            createInvoiceForOrder(order, currentUserId);
+        } catch (Exception e) {
+            log.error("Failed to create invoice for order {}: {}", order.getId(), e.getMessage(), e);
+            // Không throw exception để không block việc tạo order
+        }
+
         return mapToDetail(order);
     }
 
@@ -216,7 +236,9 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public OrderResponse createWizard(OrderWizardRequest request) {
+    public OrderResponse createWizard(OrderWizardRequest request, Long currentUserId) {
+        log.info("Creating order via wizard for customerId: {}, currentUserId: {}", request.getCustomerId(), currentUserId);
+        
         UserEntity customer = userRepository.findById(request.getCustomerId())
                 .orElseThrow(() -> new NotFoundException("Customer not found"));
 
@@ -243,7 +265,10 @@ public class OrderServiceImpl implements OrderService {
             order.setExpectedBudget(request.getProduct().getBudget());
         }
         order.setNote(buildWizardNote(request));
+        
+        log.debug("Saving order entity: code={}, customerId={}, status={}", order.getCode(), customer.getId(), order.getStatus());
         order = orderRepository.save(order);
+        log.info("Order saved successfully with id: {}", order.getId());
 
         if (request.getProduct() != null && request.getProduct().getProductName() != null) {
             OrderItemEntity item = new OrderItemEntity();
@@ -271,6 +296,11 @@ public class OrderServiceImpl implements OrderService {
         }
 
         addTimeline(order, order.getStatus(), "Order created via wizard");
+        log.debug("Timeline added for order {}", order.getId());
+        
+        // Tự động tạo hóa đơn sau khi tạo đơn hàng
+        log.debug("Attempting to create invoice for order {}", order.getId());
+        createInvoiceForOrder(order, currentUserId);
         
         // Tự động tạo appointment nếu order có appointmentDate hoặc dueDate
         LocalDate appointmentDate = order.getAppointmentDate() != null 
@@ -340,7 +370,10 @@ public class OrderServiceImpl implements OrderService {
             }
         }
         
-        return mapToDetail(order);
+        log.info("Order creation completed successfully. Order ID: {}, Code: {}", order.getId(), order.getCode());
+        OrderResponse response = mapToDetail(order);
+        log.debug("OrderResponse mapped successfully for order {}", order.getId());
+        return response;
     }
 
     @Override
@@ -494,6 +527,18 @@ public class OrderServiceImpl implements OrderService {
         }
         dto.setAppointmentDate(order.getAppointmentDate());
         dto.setDueDate(order.getDueDate());
+        
+        // Lấy thông tin hóa đơn nếu có (cho list view)
+        try {
+            invoiceRepository.findByOrderIdAndIsDeletedFalse(order.getId()).ifPresent(invoice -> {
+                dto.setInvoiceId(invoice.getId());
+                dto.setInvoiceCode(invoice.getCode());
+            });
+        } catch (Exception e) {
+            // Không throw exception để không ảnh hưởng đến việc trả về order list
+            log.warn("Error fetching invoice for order {} in mapToSummary: {}", order.getId(), e.getMessage());
+        }
+        
         return dto;
     }
 
@@ -573,6 +618,17 @@ public class OrderServiceImpl implements OrderService {
             dto.setMeasurement(dm);
         }
 
+        // Lấy thông tin hóa đơn nếu có
+        try {
+            invoiceRepository.findByOrderIdAndIsDeletedFalse(order.getId()).ifPresent(invoice -> {
+                dto.setInvoiceId(invoice.getId());
+                dto.setInvoiceCode(invoice.getCode());
+            });
+        } catch (Exception e) {
+            // Không throw exception để không ảnh hưởng đến việc trả về order detail
+            log.warn("Error fetching invoice for order {} in mapToDetail: {}", order.getId(), e.getMessage());
+        }
+
         return dto;
     }
 
@@ -588,5 +644,224 @@ public class OrderServiceImpl implements OrderService {
         if (text == null) return null;
         String t = text.trim();
         return t.isEmpty() ? null : t;
+    }
+
+    /**
+     * Tự động tạo hóa đơn cho đơn hàng sau khi đơn hàng được tạo thành công.
+     * 
+     * @param order Đơn hàng đã được tạo
+     * @param currentUserId ID của user hiện tại (có thể là null nếu tạo tự động)
+     */
+    private void createInvoiceForOrder(OrderEntity order, Long currentUserId) {
+        try {
+            // Kiểm tra xem đơn hàng có items không
+            java.util.List<OrderItemEntity> orderItems = orderItemRepository.findByOrder(order);
+            if (orderItems == null || orderItems.isEmpty()) {
+                log.debug("Skipping invoice creation for order {}: no items found", order.getId());
+                return;
+            }
+
+            // Tìm staffId: ưu tiên tailorId, sau đó tìm staff mặc định
+            Long staffId = findStaffIdForInvoice(order, currentUserId);
+            if (staffId == null) {
+                log.warn("Cannot create invoice for order {}: no staff found", order.getId());
+                return;
+            }
+
+            // Tạo InvoiceRequest từ OrderEntity
+            InvoiceRequest invoiceRequest = buildInvoiceRequestFromOrder(order, staffId);
+
+            // Tạo hóa đơn
+            invoiceService.create(invoiceRequest, currentUserId);
+            log.info("Successfully created invoice for order {}", order.getId());
+            // Note: invoiceId sẽ được set trong mapToDetail() khi query lại
+        } catch (Exception e) {
+            // KHÔNG throw exception để không rollback transaction của order
+            // Chỉ log error và tiếp tục, order vẫn được tạo thành công
+            log.error("Error creating invoice for order {}: {}", order.getId(), e.getMessage(), e);
+            log.warn("Order {} was created successfully but invoice creation failed. Invoice can be created manually later.", order.getId());
+        }
+    }
+
+    /**
+     * Tìm staffId để tạo hóa đơn.
+     * Ưu tiên: 1) tailorId từ order, 2) currentUserId nếu là staff/admin, 3) staff mặc định
+     */
+    private Long findStaffIdForInvoice(OrderEntity order, Long currentUserId) {
+        // Ưu tiên 1: Sử dụng tailorId nếu có và tailor có role STAFF hoặc ADMIN
+        if (order.getTailor() != null) {
+            UserEntity tailor = order.getTailor();
+            String roleCode = tailor.getRole() != null ? tailor.getRole().getCode() : null;
+            if ("STAFF".equalsIgnoreCase(roleCode) || "ADMIN".equalsIgnoreCase(roleCode)) {
+                log.debug("Using tailor {} as staff for invoice", tailor.getId());
+                return tailor.getId();
+            }
+        }
+
+        // Ưu tiên 2: Sử dụng currentUserId nếu là staff/admin
+        if (currentUserId != null) {
+            UserEntity currentUser = userRepository.findById(currentUserId).orElse(null);
+            if (currentUser != null) {
+                String roleCode = currentUser.getRole() != null ? currentUser.getRole().getCode() : null;
+                if ("STAFF".equalsIgnoreCase(roleCode) || "ADMIN".equalsIgnoreCase(roleCode)) {
+                    log.debug("Using current user {} as staff for invoice", currentUserId);
+                    return currentUserId;
+                }
+            }
+        }
+
+        // Ưu tiên 3: Tìm staff mặc định (ưu tiên ADMIN, sau đó STAFF)
+        Page<UserEntity> adminPage = userRepository.findByRole_CodeAndIsDeletedFalse("ADMIN", PageRequest.of(0, 1));
+        if (!adminPage.isEmpty()) {
+            Long adminId = adminPage.getContent().get(0).getId();
+            log.debug("Using default admin {} as staff for invoice", adminId);
+            return adminId;
+        }
+
+        Page<UserEntity> staffPage = userRepository.findByRole_CodeAndIsDeletedFalse("STAFF", PageRequest.of(0, 1));
+        if (!staffPage.isEmpty()) {
+            Long staffId = staffPage.getContent().get(0).getId();
+            log.debug("Using default staff {} as staff for invoice", staffId);
+            return staffId;
+        }
+
+        log.warn("No staff found for invoice creation");
+        return null;
+    }
+
+    /**
+     * Xây dựng InvoiceRequest từ OrderEntity
+     */
+    private InvoiceRequest buildInvoiceRequestFromOrder(OrderEntity order, Long staffId) {
+        InvoiceRequest request = new InvoiceRequest();
+        request.setOrderId(order.getId());
+        request.setCustomerId(order.getCustomer().getId());
+        request.setStaffId(staffId);
+        request.setCurrency("VND"); // Mặc định VND, có thể config sau
+        request.setDiscountAmount(BigDecimal.ZERO);
+        request.setTaxAmount(BigDecimal.ZERO);
+        request.setDueDate(order.getDueDate() != null ? order.getDueDate() : 
+                          java.time.LocalDate.now().plusDays(30)); // Mặc định 30 ngày
+        request.setNotes("Hóa đơn tự động tạo từ đơn hàng " + order.getCode());
+
+        // Chuyển đổi OrderItems thành InvoiceItems
+        java.util.List<OrderItemEntity> orderItems = orderItemRepository.findByOrder(order);
+        java.util.List<InvoiceRequest.ItemRequest> invoiceItems = orderItems.stream()
+                .map(item -> {
+                    InvoiceRequest.ItemRequest invoiceItem = new InvoiceRequest.ItemRequest();
+                    invoiceItem.setName(item.getProductName() != null ? item.getProductName() : "Sản phẩm");
+                    invoiceItem.setQuantity(item.getQuantity());
+                    invoiceItem.setUnitPrice(item.getUnitPrice());
+                    invoiceItem.setDiscountAmount(BigDecimal.ZERO);
+                    invoiceItem.setTaxRate(BigDecimal.ZERO);
+                    return invoiceItem;
+                })
+                .collect(Collectors.toList());
+
+        request.setItems(invoiceItems);
+        return request;
+    }
+
+    @Override
+    @Transactional
+    public OrderResponse update(Long id, com.example.tailor_shop.modules.order.dto.UpdateOrderRequest request, Long currentUserId) {
+        log.info("Updating order {} by user {}", id, currentUserId);
+        
+        OrderEntity order = orderRepository.findById(id)
+                .orElseThrow(() -> new com.example.tailor_shop.config.exception.NotFoundException("Order not found: " + id));
+
+        // Update customer if provided
+        if (request.getCustomerId() != null) {
+            UserEntity customer = userRepository.findById(request.getCustomerId())
+                    .orElseThrow(() -> new com.example.tailor_shop.config.exception.NotFoundException("Customer not found: " + request.getCustomerId()));
+            order.setCustomer(customer);
+        }
+
+        // Update tailor if provided
+        if (request.getTailorId() != null) {
+            UserEntity tailor = userRepository.findById(request.getTailorId())
+                    .orElseThrow(() -> new com.example.tailor_shop.config.exception.NotFoundException("Tailor not found: " + request.getTailorId()));
+            order.setTailor(tailor);
+        }
+
+        // Update dates
+        if (request.getAppointmentDate() != null) {
+            order.setAppointmentDate(request.getAppointmentDate());
+        }
+        if (request.getDueDate() != null) {
+            order.setDueDate(request.getDueDate());
+        }
+
+        // Update amounts
+        if (request.getDepositAmount() != null) {
+            order.setDepositAmount(request.getDepositAmount());
+        }
+        if (request.getTotal() != null) {
+            order.setTotal(request.getTotal());
+        }
+
+        // Update note
+        if (request.getNote() != null) {
+            order.setNote(request.getNote());
+        }
+
+        // Update measurement if provided
+        if (request.getMeasurement() != null) {
+            com.example.tailor_shop.modules.order.dto.UpdateOrderRequest.Measurement measurementDto = request.getMeasurement();
+            // Find existing measurement for this order
+            MeasurementEntity measurement = measurementRepository.findFirstByOrderAndIsLatestTrue(order);
+            
+            if (measurement == null) {
+                measurement = new MeasurementEntity();
+                measurement.setOrder(order);
+                measurement.setCustomer(order.getCustomer());
+                measurement.setGroupId(UUID.randomUUID().toString());
+                measurement.setVersion(1);
+                measurement.setIsLatest(true);
+            }
+
+            if (measurementDto.getChest() != null) measurement.setChest(measurementDto.getChest());
+            if (measurementDto.getWaist() != null) measurement.setWaist(measurementDto.getWaist());
+            if (measurementDto.getHip() != null) measurement.setHip(measurementDto.getHip());
+            if (measurementDto.getShoulder() != null) measurement.setShoulder(measurementDto.getShoulder());
+            if (measurementDto.getSleeve() != null) measurement.setSleeve(measurementDto.getSleeve());
+            if (measurementDto.getBicep() != null) measurement.setBicep(measurementDto.getBicep());
+            if (measurementDto.getNeck() != null) measurement.setNeck(measurementDto.getNeck());
+            if (measurementDto.getThigh() != null) measurement.setThigh(measurementDto.getThigh());
+            if (measurementDto.getCrotch() != null) measurement.setCrotch(measurementDto.getCrotch());
+            if (measurementDto.getAnkle() != null) measurement.setAnkle(measurementDto.getAnkle());
+            if (measurementDto.getShirtLength() != null) measurement.setShirtLength(measurementDto.getShirtLength());
+            if (measurementDto.getPantsLength() != null) measurement.setPantsLength(measurementDto.getPantsLength());
+            if (measurementDto.getHeight() != null) measurement.setHeight(measurementDto.getHeight());
+            if (measurementDto.getWeight() != null) measurement.setWeight(measurementDto.getWeight());
+            if (measurementDto.getNote() != null) measurement.setNote(measurementDto.getNote());
+
+            measurementRepository.save(measurement);
+        }
+
+        // Update items if provided
+        if (request.getItems() != null && !request.getItems().isEmpty()) {
+            // Delete existing items
+            orderItemRepository.deleteAll(orderItemRepository.findByOrder(order));
+            
+            // Create new items
+            for (com.example.tailor_shop.modules.order.dto.UpdateOrderRequest.Item itemDto : request.getItems()) {
+                OrderItemEntity item = new OrderItemEntity();
+                item.setOrder(order);
+                
+                // Note: Product and Fabric references are optional and may not be needed for simple updates
+                // If needed, these repositories should be injected in constructor
+                item.setQuantity(itemDto.getQuantity() != null ? itemDto.getQuantity() : 1);
+                item.setUnitPrice(itemDto.getUnitPrice() != null ? itemDto.getUnitPrice() : BigDecimal.ZERO);
+                item.setProductName(itemDto.getProductName() != null ? itemDto.getProductName() : "Sản phẩm");
+                
+                orderItemRepository.save(item);
+            }
+        }
+
+        orderRepository.save(order);
+        log.info("Order {} updated successfully", id);
+        
+        return mapToDetail(order);
     }
 }

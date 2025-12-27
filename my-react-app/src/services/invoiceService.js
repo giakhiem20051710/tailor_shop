@@ -68,6 +68,27 @@ class InvoiceService {
       includeAuth: false,
     });
   }
+
+  /**
+   * Get invoice by order ID
+   * @param {number} orderId - Order ID
+   * @returns {Promise<Object|null>} Invoice or null if not found
+   */
+  async getByOrderId(orderId) {
+    try {
+      const response = await this.list({ orderId }, { page: 0, size: 1 });
+      // Xử lý các cấu trúc response khác nhau
+      const invoices = response?.data?.content || 
+                      response?.content || 
+                      response?.responseData?.content ||
+                      response?.data || 
+                      [];
+      return Array.isArray(invoices) && invoices.length > 0 ? invoices[0] : null;
+    } catch (error) {
+      console.error("Error fetching invoice by orderId:", error);
+      return null;
+    }
+  }
 }
 
 export default new InvoiceService();

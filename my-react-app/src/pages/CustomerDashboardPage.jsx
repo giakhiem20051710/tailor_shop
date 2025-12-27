@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { getOrders, updateOrder } from "../utils/orderStorage";
+// Removed orderStorage - using API only
 import { getCurrentUser, getUsersByRole, ROLES } from "../utils/authStorage";
 import { orderService, appointmentService } from "../services";
 import { saveCustomerMeasurements } from "../utils/customerMeasurementsStorage";
@@ -19,6 +19,7 @@ import StatusBadge from "../components/StatusBadge";
 import Header from "../components/Header.jsx";
 import CustomerHistory from "../components/CustomerHistory.jsx";
 import usePageMeta from "../hooks/usePageMeta";
+import { showSuccess, showError } from "../components/NotificationToast.jsx";
 
 export default function CustomerDashboardPage() {
   const navigate = useNavigate();
@@ -135,15 +136,8 @@ export default function CustomerDashboardPage() {
       }
     } catch (error) {
       console.error("Error loading orders from API:", error);
-      // Fallback to localStorage
-      const allOrders = getOrders() || [];
-      const customerOrders = allOrders.filter(
-        (order) =>
-          order.phone === user?.phone || 
-          order.name === user?.name ||
-          order.customerId === customerId
-      );
-      setOrders(customerOrders);
+      showError("Không thể tải danh sách đơn hàng: " + (error.message || "Lỗi không xác định"));
+      setOrders([]);
     } finally {
       setLoadingOrders(false);
     }
@@ -228,15 +222,9 @@ export default function CustomerDashboardPage() {
       if (customerId) {
         loadOrdersFromAPI(customerId);
       } else {
-        // Fallback to localStorage if no customerId
-        const allOrders = getOrders() || [];
-        const customerOrders = allOrders.filter(
-          (order) =>
-            order.phone === currentUser.phone || 
-            order.name === currentUser.name ||
-            order.customerId === currentUser.username
-        );
-        setOrders(customerOrders);
+        // No customerId - show empty list
+        console.warn("No customerId found, cannot load orders");
+        setOrders([]);
       }
     }
 
@@ -587,23 +575,26 @@ const parseAmount = (value) => {
       setAvailableSlots(slots);
     }
 
-    // Nếu có đơn mới nhất đang "Mới" / "Đang may" thì gắn ngày hẹn vào để dashboard cũ vẫn hiển thị
+    // Nếu có đơn mới nhất đang "Mới" / "Đang may" thì cập nhật qua API
     if (latestOrder && !latestOrder.appointmentDate) {
-      const appointmentDate = slot.date;
-      const appointmentTime = `${slot.startTime}–${slot.endTime}`;
-      const updated = updateOrder(latestOrder.id, {
-        appointmentDate,
-        appointmentTime,
-        appointmentType: bookingType === "pickup" ? "pickup" : "fitting",
-      });
-      if (updated) {
-        setOrders((prev) =>
-          prev.map((o) => (o.id === updated.id ? updated : o))
-        );
+      try {
+        const appointmentDate = slot.date;
+        const appointmentTime = `${slot.startTime}–${slot.endTime}`;
+        await orderService.update(latestOrder.id, {
+          appointmentDate,
+          note: latestOrder.notes || "",
+        });
+        // Reload orders to get updated data
+        const customerId = user?.id || user?.userId;
+        if (customerId) {
+          await loadOrdersFromAPI(customerId);
+        }
+      } catch (error) {
+        console.error("Error updating order:", error);
       }
     }
 
-    alert(
+    showSuccess(
       `Đã đặt lịch ${bookingTypeLabel(
         bookingType
       )} vào ${slot.date} ${slot.startTime}–${slot.endTime}.`

@@ -16,6 +16,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Optional;
+
 @Service
 @Transactional
 public class UserServiceImpl implements UserService {
@@ -27,8 +29,7 @@ public class UserServiceImpl implements UserService {
     public UserServiceImpl(
             UserRepository userRepository,
             RoleRepository roleRepository,
-            PasswordEncoder passwordEncoder
-    ) {
+            PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.passwordEncoder = passwordEncoder;
@@ -120,7 +121,22 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional(readOnly = true)
     public Page<UserResponseDTO> findCustomers(Pageable pageable) {
-        return userRepository.findByRole_CodeAndIsDeletedFalse("customer", pageable)
+        return userRepository.findByRole_CodeIgnoreCaseAndIsDeletedFalse("customer", pageable)
+                .map(this::toResponseDTO);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<UserResponseDTO> findCustomersByPhone(String phone, Pageable pageable) {
+        return userRepository
+                .findByRole_CodeIgnoreCaseAndPhoneContainingIgnoreCaseAndIsDeletedFalse("customer", phone, pageable)
+                .map(this::toResponseDTO);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<UserResponseDTO> findCustomerByPhone(String phone) {
+        return userRepository.findByRole_CodeIgnoreCaseAndPhoneAndIsDeletedFalse("customer", phone)
                 .map(this::toResponseDTO);
     }
 
@@ -181,8 +197,6 @@ public class UserServiceImpl implements UserService {
                 entity.getRole() != null ? entity.getRole().getCode() : null,
                 entity.getRole() != null ? entity.getRole().getName() : null,
                 entity.getCreatedAt(),
-                entity.getUpdatedAt()
-        );
+                entity.getUpdatedAt());
     }
 }
-

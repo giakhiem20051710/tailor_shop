@@ -9,6 +9,7 @@ import com.example.tailor_shop.modules.order.domain.OrderStatus;
 import com.example.tailor_shop.modules.order.dto.OrderResquest;
 import com.example.tailor_shop.modules.order.dto.OrderResponse;
 import com.example.tailor_shop.modules.order.dto.OrderWizardRequest;
+import com.example.tailor_shop.modules.order.dto.UpdateOrderRequest;
 import com.example.tailor_shop.modules.order.dto.UpdateOrderStatusRequest;
 import com.example.tailor_shop.modules.order.service.OrderService;
 import jakarta.validation.Valid;
@@ -78,8 +79,10 @@ public class OrderController {
 
     @PostMapping(consumes = {"application/json"})
     @PreAuthorize("hasAnyRole('ADMIN','STAFF')")
-    public ResponseEntity<CommonResponse<OrderResponse>> create(@Valid @RequestBody OrderResquest request) {
-        OrderResponse data = orderService.create(request, null);
+    public ResponseEntity<CommonResponse<OrderResponse>> create(
+            @Valid @RequestBody OrderResquest request,
+            @AuthenticationPrincipal CustomUserDetails principal) {
+        OrderResponse data = orderService.create(request, null, principal != null ? principal.getId() : null);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ResponseUtil.success(TraceIdUtil.getOrCreateTraceId(), data));
     }
@@ -91,7 +94,11 @@ public class OrderController {
             @RequestPart(value = "files", required = false) java.util.List<org.springframework.web.multipart.MultipartFile> files,
             @AuthenticationPrincipal CustomUserDetails principal
     ) {
-        OrderResponse data = orderService.create(request, files != null ? files : java.util.Collections.emptyList());
+        OrderResponse data = orderService.create(
+                request, 
+                files != null ? files : java.util.Collections.emptyList(),
+                principal != null ? principal.getId() : null
+        );
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ResponseUtil.success(TraceIdUtil.getOrCreateTraceId(), data));
     }
@@ -110,7 +117,7 @@ public class OrderController {
             request.setCustomerId(principal.getId());
         }
 
-        OrderResponse data = orderService.createWizard(request);
+        OrderResponse data = orderService.createWizard(request, principal != null ? principal.getId() : null);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ResponseUtil.success(TraceIdUtil.getOrCreateTraceId(), data));
     }
@@ -146,6 +153,17 @@ public class OrderController {
             @AuthenticationPrincipal CustomUserDetails principal
     ) {
         OrderResponse data = orderService.uploadAttachment(id, file, principal != null ? principal.getId() : null);
+        return ResponseEntity.ok(ResponseUtil.success(TraceIdUtil.getOrCreateTraceId(), data));
+    }
+
+    @PutMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN','STAFF','TAILOR')")
+    public ResponseEntity<CommonResponse<OrderResponse>> update(
+            @PathVariable Long id,
+            @Valid @RequestBody UpdateOrderRequest request,
+            @AuthenticationPrincipal CustomUserDetails principal
+    ) {
+        OrderResponse data = orderService.update(id, request, principal != null ? principal.getId() : null);
         return ResponseEntity.ok(ResponseUtil.success(TraceIdUtil.getOrCreateTraceId(), data));
     }
 }

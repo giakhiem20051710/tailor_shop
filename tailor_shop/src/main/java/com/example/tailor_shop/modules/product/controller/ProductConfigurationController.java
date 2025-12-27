@@ -40,8 +40,7 @@ public class ProductConfigurationController {
      */
     @PostMapping
     public ResponseEntity<CommonResponse<ProductConfigurationResponse>> create(
-            @Valid @RequestBody ProductConfigurationRequest request
-    ) {
+            @Valid @RequestBody ProductConfigurationRequest request) {
         ProductConfigurationResponse data = productConfigurationService.create(request);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ResponseUtil.success(TraceIdUtil.getOrCreateTraceId(), data));
@@ -52,8 +51,7 @@ public class ProductConfigurationController {
      */
     @GetMapping("/{id}")
     public ResponseEntity<CommonResponse<ProductConfigurationResponse>> getById(
-            @PathVariable Long id
-    ) {
+            @PathVariable Long id) {
         ProductConfigurationResponse data = productConfigurationService.getById(id);
         return ResponseEntity.ok(ResponseUtil.success(TraceIdUtil.getOrCreateTraceId(), data));
     }
@@ -61,7 +59,7 @@ public class ProductConfigurationController {
     /**
      * Lấy danh sách templates
      */
-    @GetMapping("/templates")
+    @GetMapping("/all-templates")
     public ResponseEntity<CommonResponse<List<ProductTemplateResponse>>> getAllTemplates() {
         List<ProductTemplateResponse> data = productConfigurationService.getAllTemplates();
         return ResponseEntity.ok(ResponseUtil.success(TraceIdUtil.getOrCreateTraceId(), data));
@@ -74,8 +72,7 @@ public class ProductConfigurationController {
     public ResponseEntity<CommonResponse<Page<FabricResponse>>> getFabricsByTemplate(
             @PathVariable Long templateId,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size
-    ) {
+            @RequestParam(defaultValue = "20") int size) {
         Page<FabricResponse> data = productConfigurationService.getFabricsByTemplate(templateId, page, size);
         return ResponseEntity.ok(ResponseUtil.success(TraceIdUtil.getOrCreateTraceId(), data));
     }
@@ -87,8 +84,7 @@ public class ProductConfigurationController {
     public ResponseEntity<CommonResponse<Page<StyleResponse>>> getStylesByTemplate(
             @PathVariable Long templateId,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size
-    ) {
+            @RequestParam(defaultValue = "20") int size) {
         Page<StyleResponse> data = productConfigurationService.getStylesByTemplate(templateId, page, size);
         return ResponseEntity.ok(ResponseUtil.success(TraceIdUtil.getOrCreateTraceId(), data));
     }
@@ -100,10 +96,8 @@ public class ProductConfigurationController {
     public ResponseEntity<CommonResponse<BigDecimal>> calculatePrice(
             @RequestParam Long templateId,
             @RequestParam Long fabricId,
-            @RequestParam(required = false) Long styleId
-    ) {
+            @RequestParam(required = false) Long styleId) {
         BigDecimal price = productConfigurationService.calculatePrice(templateId, fabricId, styleId);
         return ResponseEntity.ok(ResponseUtil.success(TraceIdUtil.getOrCreateTraceId(), price));
     }
 }
-

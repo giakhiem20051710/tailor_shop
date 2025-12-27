@@ -29,7 +29,7 @@ public class DataInitializer {
     @Bean("databaseInitializer")
     @Transactional
     public ApplicationRunner applicationRunner(RoleRepository roleRepository,
-                                               UserRepository userRepository) {
+            UserRepository userRepository) {
         return args -> {
             log.info("Initializing application roles and default admin user...");
 
@@ -38,8 +38,7 @@ public class DataInitializer {
                     PredefinedRole.ADMIN_ROLE,
                     PredefinedRole.STAFF_ROLE,
                     PredefinedRole.TAILOR_ROLE,
-                    PredefinedRole.CUSTOMER_ROLE
-            );
+                    PredefinedRole.CUSTOMER_ROLE);
 
             roleRepository.findAll().forEach(role -> {
                 if (!validRoleCodes.contains(role.getCode())) {
@@ -51,7 +50,8 @@ public class DataInitializer {
                         log.info("Deleting old role: {} ({})", role.getCode(), role.getName());
                         roleRepository.delete(role);
                     } else {
-                        log.warn("Cannot delete role {} ({}) - users are still using it", role.getCode(), role.getName());
+                        log.warn("Cannot delete role {} ({}) - users are still using it", role.getCode(),
+                                role.getName());
                     }
                 }
             });
@@ -82,24 +82,42 @@ public class DataInitializer {
                     });
 
             // Seed a default admin account
-            userRepository.findByEmailAndIsDeletedFalse(ADMIN_EMAIL).or(() ->
-                    userRepository.findByUsernameAndIsDeletedFalse(ADMIN_USERNAME)
-            ).orElseGet(() -> {
-                log.warn("Seeding default admin user with email: {} / username: {}", ADMIN_EMAIL, ADMIN_USERNAME);
-                UserEntity admin = new UserEntity();
-                admin.setUsername(ADMIN_USERNAME);
-                admin.setEmail(ADMIN_EMAIL);
-                admin.setPhone("0900000000"); // Số điện thoại mặc định cho admin
-                admin.setName("Default Admin");
-                admin.setPassword(passwordEncoder.encode(ADMIN_PASSWORD));
-                admin.setRole(adminRole);
-                admin.setStatus(UserEntity.UserStatus.active);
-                admin.setIsDeleted(false);
-                return userRepository.save(admin);
-            });
+            userRepository.findByEmailAndIsDeletedFalse(ADMIN_EMAIL)
+                    .or(() -> userRepository.findByUsernameAndIsDeletedFalse(ADMIN_USERNAME)).orElseGet(() -> {
+                        log.warn("Seeding default admin user with email: {} / username: {}", ADMIN_EMAIL,
+                                ADMIN_USERNAME);
+                        UserEntity admin = new UserEntity();
+                        admin.setUsername(ADMIN_USERNAME);
+                        admin.setEmail(ADMIN_EMAIL);
+                        admin.setPhone("0900000000"); // Số điện thoại mặc định cho admin
+                        admin.setName("Default Admin");
+                        admin.setPassword(passwordEncoder.encode(ADMIN_PASSWORD));
+                        admin.setRole(adminRole);
+                        admin.setStatus(UserEntity.UserStatus.active);
+                        admin.setIsDeleted(false);
+                        return userRepository.save(admin);
+                    });
+
+            // Seed a default customer account
+            if (userRepository.findByEmailAndIsDeletedFalse("customer@example.com").isEmpty()
+                    && !userRepository.existsByPhone("0912345678")) {
+                log.info("Seeding default customer user...");
+                RoleEntity customerRole = roleRepository.findByCode(PredefinedRole.CUSTOMER_ROLE)
+                        .orElseThrow(() -> new RuntimeException("Customer role not found"));
+
+                UserEntity customer = new UserEntity();
+                customer.setUsername("customer");
+                customer.setEmail("customer@example.com");
+                customer.setPhone("0912345678");
+                customer.setName("Nguyen Van A");
+                customer.setPassword(passwordEncoder.encode("123456"));
+                customer.setRole(customerRole);
+                customer.setStatus(UserEntity.UserStatus.active);
+                customer.setIsDeleted(false);
+                userRepository.save(customer);
+            }
 
             log.info("Application initialization completed.");
         };
     }
 }
-

@@ -66,6 +66,16 @@ class OrderService {
   }
 
   /**
+   * Update order
+   * @param {number} id - Order ID
+   * @param {Object} orderData - Order data
+   * @returns {Promise<Object>} Updated order
+   */
+  async update(id, orderData) {
+    return httpClient.put(API_ENDPOINTS.ORDER.UPDATE(id), orderData);
+  }
+
+  /**
    * Update order status
    * @param {number} id - Order ID
    * @param {Object} statusData - Status data

@@ -1,10 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import {
-  addOrder,
-  updateOrder,
-  getOrderById,
-} from "../utils/orderStorage";
+import orderService from "../services/orderService";
+import CustomerApi from "../services/api/CustomerApi";
 import MeasurementsForm from "../components/orders/MeasurementsForm";
 import SampleImagesForm from "../components/orders/SampleImagesForm";
 
@@ -29,92 +26,235 @@ export default function OrderFormPage() {
 
   const [showPopup, setShowPopup] = useState(false);
   const [popupMessage, setPopupMessage] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [customerId, setCustomerId] = useState(null);
 
   // Load order data if in edit mode
   useEffect(() => {
-    if (isEditMode) {
-      const order = getOrderById(id);
-      if (order) {
-        setForm({
-          name: order.name || "",
-          phone: order.phone || "",
-          receive: order.receive || "",
-          due: order.due || "",
-          total: order.total?.toString().replace(/,/g, "") || "",
-          notes: order.notes || "",
-          status: order.status || "Mới",
-          measurements: order.measurements || {},
-          sampleImages: order.sampleImages || null,
-          appointmentType: order.appointmentType || "pickup",
-          appointmentTime: order.appointmentTime || "",
-        });
-      } else {
-        navigate("/orders");
+    const loadOrder = async () => {
+      if (isEditMode && id) {
+        try {
+          setLoading(true);
+          const response = await orderService.getDetail(id);
+          console.log('[OrderFormPage] Order detail response:', response);
+          
+          // Backend trả về CommonResponse với responseData
+          const orderData = response?.responseData ?? response?.data ?? response;
+          
+          if (orderData) {
+            console.log('[OrderFormPage] Parsed order data:', orderData);
+            setForm({
+              name: orderData.customer?.name || "",
+              phone: orderData.customerPhone || orderData.customer?.phone || "",
+              receive: orderData.appointmentDate || "",
+              due: orderData.dueDate || "",
+              total: orderData.total?.toString() || "",
+              notes: orderData.note || "",
+              status: orderData.status || "DRAFT",
+              measurements: orderData.measurement ? {
+                chest: orderData.measurement.chest,
+                waist: orderData.measurement.waist,
+                hip: orderData.measurement.hip,
+                shoulder: orderData.measurement.shoulder,
+                sleeve: orderData.measurement.sleeve,
+                bicep: orderData.measurement.bicep,
+                height: orderData.measurement.height,
+                weight: orderData.measurement.weight,
+                neck: orderData.measurement.neck,
+                thigh: orderData.measurement.thigh,
+                crotch: orderData.measurement.crotch,
+                ankle: orderData.measurement.ankle,
+                shirtLength: orderData.measurement.shirtLength,
+                pantsLength: orderData.measurement.pantsLength,
+              } : {},
+              sampleImages: orderData.attachments?.map(a => a.url || a.fileUrl) || null,
+              appointmentType: "pickup",
+              appointmentTime: "",
+            });
+            setCustomerId(orderData.customer?.id);
+          } else {
+            console.warn('[OrderFormPage] No order data found');
+            navigate("/orders");
+          }
+        } catch (error) {
+          console.error("[OrderFormPage] Error loading order:", error);
+          alert("Không thể tải thông tin đơn hàng: " + (error.message || "Lỗi không xác định"));
+          navigate("/orders");
+        } finally {
+          setLoading(false);
+        }
       }
-    }
+    };
+    loadOrder();
   }, [id, isEditMode, navigate]);
 
   const update = (field, value) =>
     setForm((prev) => ({ ...prev, [field]: value }));
 
-  const handleSubmit = () => {
+  // Tìm hoặc tạo customer
+  const findOrCreateCustomer = async (name, phone) => {
+    try {
+      // Tìm customer theo phone qua API mới
+      const customerResponse = await CustomerApi.getCustomerByPhone(phone);
+      console.log('[OrderFormPage] Customer by phone response:', customerResponse);
+      
+      const customerData = customerResponse?.responseData ?? customerResponse?.data ?? customerResponse;
+      
+      if (customerData && customerData.id) {
+        console.log('[OrderFormPage] Found existing customer:', customerData.id);
+        return customerData.id;
+      }
+
+      // Nếu không tìm thấy, tạo customer mới
+      console.log('[OrderFormPage] Creating new customer...');
+      // Cần tìm roleId của CUSTOMER - tạm thời dùng roleId = 3 (thường là CUSTOMER)
+      const newCustomerResponse = await CustomerApi.createCustomer({
+        name,
+        phone,
+        roleId: 3, // CUSTOMER role ID - cần kiểm tra trong DB
+        username: phone, // Dùng phone làm username
+        password: "123456", // Mật khẩu mặc định, có thể yêu cầu đổi sau
+        email: `${phone}@temp.com`, // Email tạm
+      });
+      
+      console.log('[OrderFormPage] New customer response:', newCustomerResponse);
+      const newCustomer = newCustomerResponse?.responseData ?? newCustomerResponse?.data ?? newCustomerResponse;
+      
+      if (newCustomer?.id) {
+        return newCustomer.id;
+      }
+      
+      throw new Error("Không thể tạo khách hàng mới");
+    } catch (error) {
+      console.error("[OrderFormPage] Error finding/creating customer:", error);
+      throw new Error("Không thể tìm hoặc tạo khách hàng: " + (error.message || "Lỗi không xác định"));
+    }
+  };
+
+  const handleSubmit = async () => {
     // Validation
     if (!form.name || !form.phone || !form.due) {
       alert("Vui lòng điền đầy đủ thông tin bắt buộc");
       return;
     }
 
-    // Tự động set ngày khách tới đo / đặt may thành ngày hiện tại khi tạo đơn mới
-    const receiveDate = isEditMode 
-      ? form.receive 
-      : new Date().toISOString().split("T")[0];
+    setLoading(true);
 
-    const orderData = {
-      name: form.name,
-      phone: form.phone,
-      receive: receiveDate, // Tự động set ngày hiện tại khi tạo đơn mới
-      due: form.due,
-      total: form.total.toString(),
-      notes: form.notes,
-      status: form.status,
-      measurements: form.measurements || {},
-      sampleImages: form.sampleImages || null,
-      // Tự động tạo lịch hẹn khi tạo đơn mới
-      appointmentType: form.appointmentType || "pickup",
-      appointmentDate: form.due, // Lấy ngày hẹn từ due date
-      appointmentTime: form.appointmentTime || "",
-    };
+    try {
+      if (isEditMode) {
+        // Tìm hoặc tạo customer nếu name/phone thay đổi
+        let customerIdToUse = customerId;
+        if (form.name && form.phone) {
+          customerIdToUse = await findOrCreateCustomer(form.name, form.phone);
+        }
 
-    if (isEditMode) {
-      // Update existing order
-      // Nếu chưa có lịch hẹn và có ngày hẹn, tự động tạo lịch hẹn
-      const existingOrder = getOrderById(id);
-      if (!existingOrder.appointmentDate && form.due) {
-        orderData.appointmentDate = form.due;
-        orderData.appointmentType = orderData.appointmentType || "pickup";
-      }
-      
-      const updated = updateOrder(id, orderData);
-      if (updated) {
+        // Map measurements
+        const measurement = {
+          chest: form.measurements.chest ? parseFloat(form.measurements.chest) : null,
+          waist: form.measurements.waist ? parseFloat(form.measurements.waist) : null,
+          hip: form.measurements.hip ? parseFloat(form.measurements.hip) : null,
+          shoulder: form.measurements.shoulder ? parseFloat(form.measurements.shoulder) : null,
+          sleeve: form.measurements.sleeve ? parseFloat(form.measurements.sleeve) : null,
+          bicep: form.measurements.bicep ? parseFloat(form.measurements.bicep) : null,
+          height: form.measurements.height ? parseFloat(form.measurements.height) : null,
+          weight: form.measurements.weight ? parseFloat(form.measurements.weight) : null,
+          neck: form.measurements.neck ? parseFloat(form.measurements.neck) : null,
+          thigh: form.measurements.thigh ? parseFloat(form.measurements.thigh) : null,
+          crotch: form.measurements.crotch ? parseFloat(form.measurements.crotch) : null,
+          ankle: form.measurements.ankle ? parseFloat(form.measurements.ankle) : null,
+          shirtLength: form.measurements.shirtLength ? parseFloat(form.measurements.shirtLength) : null,
+          pantsLength: form.measurements.pantsLength ? parseFloat(form.measurements.pantsLength) : null,
+          note: form.notes || "",
+        };
+
+        // Update order
+        const updateData = {
+          customerId: customerIdToUse,
+          dueDate: form.due || null,
+          appointmentDate: form.receive || null,
+          total: form.total ? parseFloat(form.total) : null,
+          note: form.notes || "",
+          measurement,
+        };
+
+        await orderService.update(id, updateData);
+
         setPopupMessage("Cập nhật đơn thành công!");
         setShowPopup(true);
         setTimeout(() => {
           setShowPopup(false);
           navigate(`/orders/${id}`);
         }, 1500);
+      } else {
+        // Tìm hoặc tạo customer
+        const customerIdToUse = await findOrCreateCustomer(form.name, form.phone);
+
+        // Map measurements
+        const measurement = {
+          chest: form.measurements.chest ? parseFloat(form.measurements.chest) : null,
+          waist: form.measurements.waist ? parseFloat(form.measurements.waist) : null,
+          hip: form.measurements.hip ? parseFloat(form.measurements.hip) : null,
+          shoulder: form.measurements.shoulder ? parseFloat(form.measurements.shoulder) : null,
+          sleeve: form.measurements.sleeve ? parseFloat(form.measurements.sleeve) : null,
+          bicep: form.measurements.bicep ? parseFloat(form.measurements.bicep) : null,
+          height: form.measurements.height ? parseFloat(form.measurements.height) : null,
+          weight: form.measurements.weight ? parseFloat(form.measurements.weight) : null,
+          neck: form.measurements.neck ? parseFloat(form.measurements.neck) : null,
+          thigh: form.measurements.thigh ? parseFloat(form.measurements.thigh) : null,
+          crotch: form.measurements.crotch ? parseFloat(form.measurements.crotch) : null,
+          ankle: form.measurements.ankle ? parseFloat(form.measurements.ankle) : null,
+          shirtLength: form.measurements.shirtLength ? parseFloat(form.measurements.shirtLength) : null,
+          pantsLength: form.measurements.pantsLength ? parseFloat(form.measurements.pantsLength) : null,
+          note: form.notes || "",
+        };
+
+        // Tạo order qua wizard
+        const wizardOrder = {
+          customerId: customerIdToUse,
+          contact: {
+            name: form.name,
+            phone: form.phone,
+            email: "",
+            address: "",
+          },
+          product: {
+            productName: "Đơn đặt may", // Tên mặc định
+            productType: "",
+            description: form.notes || "",
+            budget: form.total ? parseFloat(form.total) : 0,
+            dueDate: form.due,
+            notes: form.notes || "",
+            appointmentType: form.appointmentType || "pickup",
+            appointmentTime: form.appointmentTime || "",
+          },
+          measurement,
+        };
+
+        console.log('[OrderFormPage] Tạo order với data:', wizardOrder);
+        const response = await orderService.createWizard(wizardOrder);
+        console.log('[OrderFormPage] Order API response:', response);
+        
+        const responseData = response?.responseData ?? response?.data ?? response;
+        console.log('[OrderFormPage] Order response data:', responseData);
+
+        if (responseData?.id) {
+          const appointmentTypeLabel = form.appointmentType === "fitting" ? "Thử đồ" : "Nhận đồ";
+          setPopupMessage(`Tạo đơn thành công! Lịch hẹn ${appointmentTypeLabel} đã được tạo cho ngày ${form.due}`);
+          setShowPopup(true);
+          setTimeout(() => {
+            setShowPopup(false);
+            navigate("/orders");
+          }, 2000);
+        } else {
+          console.error('[OrderFormPage] Order không có ID:', responseData);
+          throw new Error("Không thể tạo đơn hàng");
+        }
       }
-    } else {
-      // Create new order
-      const newOrder = addOrder(orderData);
-      if (newOrder) {
-        const appointmentTypeLabel = form.appointmentType === "fitting" ? "Thử đồ" : "Nhận đồ";
-        setPopupMessage(`Tạo đơn thành công! Lịch hẹn ${appointmentTypeLabel} đã được tạo cho ngày ${form.due}`);
-        setShowPopup(true);
-        setTimeout(() => {
-          setShowPopup(false);
-          navigate("/orders");
-        }, 2000);
-      }
+    } catch (error) {
+      console.error("Error saving order:", error);
+      alert("Lỗi: " + (error.response?.data?.message || error.message || "Không thể lưu đơn hàng"));
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -250,10 +390,13 @@ export default function OrderFormPage() {
                 value={form.status}
                 onChange={(e) => update("status", e.target.value)}
               >
-                <option value="Mới">Mới</option>
-                <option value="Đang may">Đang may</option>
-                <option value="Hoàn thành">Hoàn thành</option>
-                <option value="Hủy">Hủy</option>
+                <option value="DRAFT">DRAFT</option>
+                <option value="WAITING_FOR_QUOTE">WAITING_FOR_QUOTE</option>
+                <option value="CONFIRMED">CONFIRMED</option>
+                <option value="IN_PROGRESS">IN_PROGRESS</option>
+                <option value="FITTING">FITTING</option>
+                <option value="COMPLETED">COMPLETED</option>
+                <option value="CANCELLED">CANCELLED</option>
               </select>
             </div>
           )}
@@ -317,13 +460,15 @@ export default function OrderFormPage() {
         <div className="flex gap-3 mt-6">
           <button
             onClick={handleSubmit}
-            className="px-6 py-3 bg-green-700 text-white rounded-xl hover:bg-green-800 transition"
+            disabled={loading}
+            className="px-6 py-3 bg-green-700 text-white rounded-xl hover:bg-green-800 transition disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isEditMode ? "Cập nhật đơn" : "Lưu đơn"}
+            {loading ? "Đang xử lý..." : (isEditMode ? "Cập nhật đơn" : "Lưu đơn")}
           </button>
           <button
             onClick={() => navigate("/orders")}
-            className="px-6 py-3 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition"
+            disabled={loading}
+            className="px-6 py-3 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition disabled:opacity-50"
           >
             Hủy
           </button>
