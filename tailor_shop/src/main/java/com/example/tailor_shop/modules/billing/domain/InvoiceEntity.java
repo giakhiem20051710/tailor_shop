@@ -93,6 +93,9 @@ public class InvoiceEntity {
     @Column(name = "notes", length = 500)
     private String notes;
 
+    @Column(name = "promotion_id")
+    private Long promotionId;
+
     @Column(name = "is_deleted", nullable = false)
     private Boolean isDeleted;
 

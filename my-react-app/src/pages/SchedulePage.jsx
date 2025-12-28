@@ -1505,7 +1505,7 @@ export default function SchedulePage() {
           appointments={slotDetail.apps}
           tailors={tailors}
           onClose={() => setSlotDetail(null)}
-          onUpdateStatus={(appId, newStatus) => {
+          onUpdateStatus={async (appId, newStatus) => {
             const updated = updateAppointment(appId, { status: newStatus });
             if (updated) {
               setAppointments(getAppointments());

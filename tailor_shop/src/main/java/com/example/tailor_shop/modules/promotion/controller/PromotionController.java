@@ -45,7 +45,7 @@ public class PromotionController {
     @GetMapping
     public ResponseEntity<CommonResponse<Page<PromotionResponse>>> list(
             @Valid PromotionFilterRequest filter,
-            @PageableDefault(size = 20, sort = "priority,desc") Pageable pageable,
+            @PageableDefault(size = 20) Pageable pageable,
             @AuthenticationPrincipal CustomUserDetails principal
     ) {
         Long currentUserId = principal != null ? principal.getId() : null;

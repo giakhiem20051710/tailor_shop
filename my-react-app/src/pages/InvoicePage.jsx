@@ -1076,9 +1076,95 @@ function PaymentModal({
 
 function CreateInvoiceModal({ formData, onClose, onChange, onSubmit }) {
   const [applyingPromo, setApplyingPromo] = useState(false);
+  const [showPromoList, setShowPromoList] = useState(false);
+  const [availablePromos, setAvailablePromos] = useState([]);
+  const [loadingPromos, setLoadingPromos] = useState(false);
+  const [selectedPromo, setSelectedPromo] = useState(null);
   
   const updateField = (field, value) => {
     onChange((prev) => ({ ...prev, [field]: value }));
+  };
+
+  // Load available promotions
+  const loadAvailablePromos = async () => {
+    if (!formData.total || Number(formData.total) <= 0) {
+      showWarning("Vui lòng nhập tổng tiền trước");
+      return;
+    }
+
+    try {
+      setLoadingPromos(true);
+      const orderAmount = Number(formData.total.toString().replace(/,/g, "")) || 0;
+      
+      // Load active promotions
+      const response = await promotionService.listActivePublic({ page: 0, size: 20 });
+      const promosData = response?.data?.content || 
+                        response?.responseData?.content || 
+                        response?.content || 
+                        [];
+      
+      // Filter promotions that can be applied to this order amount
+      const applicablePromos = promosData.filter(promo => {
+        if (!promo.minOrderValue) return true;
+        return orderAmount >= promo.minOrderValue;
+      });
+      
+      setAvailablePromos(applicablePromos);
+      setShowPromoList(true);
+    } catch (error) {
+      console.error('[CreateInvoiceModal] Failed to load promotions:', error);
+      showError("Không thể tải danh sách mã giảm giá");
+    } finally {
+      setLoadingPromos(false);
+    }
+  };
+
+  const handleSelectPromo = async (promo) => {
+    if (!formData.total || Number(formData.total) <= 0) {
+      showWarning("Vui lòng nhập tổng tiền trước");
+      return;
+    }
+
+    try {
+      setApplyingPromo(true);
+      setSelectedPromo(promo);
+      const orderAmount = Number(formData.total.toString().replace(/,/g, "")) || 0;
+      
+      const applyData = {
+        code: promo.code,
+        orderAmount: orderAmount,
+        productIds: null,
+        categoryIds: null
+      };
+
+      const response = await promotionService.applyPromoCode(applyData);
+      const promoResponse = response?.data ?? response?.responseData ?? response;
+      
+      if (promoResponse && promoResponse.discountAmount) {
+        onChange((prev) => ({
+          ...prev,
+          promoCode: promo.code,
+          promoDiscount: promoResponse.discountAmount
+        }));
+        setShowPromoList(false);
+        showSuccess(`Đã áp dụng mã ${promo.code}! Giảm ${promoResponse.discountAmount.toLocaleString('vi-VN')} VND`);
+      } else {
+        showError("Không thể áp dụng mã giảm giá này");
+      }
+    } catch (error) {
+      console.error('[CreateInvoiceModal] Failed to apply promo code:', error);
+      const errorMsg = error?.response?.data?.responseMessage || 
+                       error?.message || 
+                       "Mã giảm giá không hợp lệ hoặc đã hết hạn";
+      showError(errorMsg);
+      setSelectedPromo(null);
+      onChange((prev) => ({
+        ...prev,
+        promoDiscount: 0
+      }));
+    } finally {
+      setApplyingPromo(false);
+    }
   };
 
   const handleApplyPromoCode = async () => {
@@ -1223,20 +1309,29 @@ function CreateInvoiceModal({ formData, onClose, onChange, onSubmit }) {
           <label className="block text-xs text-[#6B7280] mb-1">
             Mã giảm giá (tùy chọn)
           </label>
-          <div className="flex gap-2">
+          <div className="flex gap-2 relative">
             <input
               type="text"
-              placeholder="Nhập mã giảm giá"
+              placeholder="Nhập mã giảm giá hoặc chọn từ danh sách"
               value={formData.promoCode || ""}
               onChange={(e) => {
                 updateField("promoCode", e.target.value.toUpperCase());
                 // Reset discount when code changes
                 if (formData.promoDiscount > 0) {
                   updateField("promoDiscount", 0);
+                  setSelectedPromo(null);
                 }
               }}
               className="flex-1 px-4 py-3 rounded-2xl border border-[#E5E7EB] text-sm"
             />
+            <button
+              type="button"
+              onClick={loadAvailablePromos}
+              disabled={loadingPromos || !formData.total}
+              className="px-4 py-3 rounded-2xl bg-[#EE4D2D] text-white text-sm font-semibold hover:bg-[#D73211] disabled:bg-gray-300 disabled:cursor-not-allowed whitespace-nowrap"
+            >
+              {loadingPromos ? "..." : "Chọn mã"}
+            </button>
             <button
               type="button"
               onClick={handleApplyPromoCode}
@@ -1246,10 +1341,85 @@ function CreateInvoiceModal({ formData, onClose, onChange, onSubmit }) {
               {applyingPromo ? "Đang kiểm tra..." : "Áp dụng"}
             </button>
           </div>
+          
+          {/* Promo List Dropdown */}
+          {showPromoList && availablePromos.length > 0 && (
+            <div className="mt-2 border border-[#E5E7EB] rounded-2xl bg-white shadow-lg max-h-64 overflow-y-auto">
+              {availablePromos.map((promo) => (
+                <div
+                  key={promo.id}
+                  onClick={() => handleSelectPromo(promo)}
+                  className={`p-4 border-b border-[#E5E7EB] last:border-0 cursor-pointer hover:bg-[#F9FAFB] transition-colors ${
+                    selectedPromo?.id === promo.id ? 'bg-[#FEF3E2] border-l-4 border-l-[#EE4D2D]' : ''
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="font-semibold text-[#EE4D2D]">{promo.code}</span>
+                        {promo.type === 'PERCENTAGE' && (
+                          <span className="text-xs bg-[#EE4D2D] text-white px-2 py-1 rounded">
+                            Giảm {promo.value}%
+                          </span>
+                        )}
+                        {promo.type === 'FIXED_AMOUNT' && (
+                          <span className="text-xs bg-[#EE4D2D] text-white px-2 py-1 rounded">
+                            Giảm {promo.value?.toLocaleString('vi-VN')}₫
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-xs text-[#6B7280]">{promo.name}</p>
+                      {promo.minOrderValue && (
+                        <p className="text-xs text-[#9CA3AF] mt-1">
+                          Áp dụng cho đơn từ {promo.minOrderValue.toLocaleString('vi-VN')}₫
+                        </p>
+                      )}
+                      {promo.endDate && (
+                        <p className="text-xs text-[#9CA3AF]">
+                          HSD: {new Date(promo.endDate).toLocaleDateString('vi-VN')}
+                        </p>
+                      )}
+                    </div>
+                    <button
+                      type="button"
+                      className="px-3 py-1.5 rounded-lg bg-[#EE4D2D] text-white text-xs font-semibold hover:bg-[#D73211]"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleSelectPromo(promo);
+                      }}
+                    >
+                      Chọn
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+          
           {formData.promoDiscount && formData.promoDiscount > 0 && (
-            <p className="text-xs text-green-600 mt-1">
-              ✓ Đã áp dụng giảm giá: {formData.promoDiscount.toLocaleString('vi-VN')} VND
-            </p>
+            <div className="mt-2 p-3 bg-green-50 border border-green-200 rounded-xl">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs text-green-700 font-semibold">
+                    ✓ Đã áp dụng mã: {formData.promoCode}
+                  </p>
+                  <p className="text-sm text-green-600 font-bold mt-1">
+                    Giảm: {formData.promoDiscount.toLocaleString('vi-VN')} VND
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    updateField("promoCode", "");
+                    updateField("promoDiscount", 0);
+                    setSelectedPromo(null);
+                  }}
+                  className="text-xs text-red-600 hover:text-red-700"
+                >
+                  Xóa
+                </button>
+              </div>
+            </div>
           )}
         </div>
 

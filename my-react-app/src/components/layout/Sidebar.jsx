@@ -11,6 +11,7 @@ export default function Sidebar({ onNavigate }) {
     { label: "Thợ may", path: "/tailors" },
     { label: "Mẫu thiết kế", path: "/styles" },
     { label: "Hóa đơn", path: "/invoice" },
+    { label: "🎟️ Mã giảm giá", path: "/admin/promotions" },
     { label: "Giao dịch", path: "/transactions" },
     { label: "Kho vải", path: "/fabric-inventory" },
     { label: "Vải / Booking", path: "/fabric-requests" },

@@ -62,8 +62,8 @@ jwt:
 
 aws:
   s3:
-    bucket: 
-    region: 
+    bucket:
+    region:
     access-key: 
     secret-key: 
     base-url: 

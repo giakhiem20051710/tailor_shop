@@ -196,6 +196,11 @@ class HttpClient {
       requestBody = body;
     } else if (body && typeof body === 'object') {
       requestBody = JSON.stringify(body);
+      // Debug log for POST/PUT requests
+      if (import.meta.env.DEV && (method === 'POST' || method === 'PUT')) {
+        console.log('[httpClient] Request body:', requestBody);
+        console.log('[httpClient] Request body parsed:', JSON.parse(requestBody));
+      }
     }
 
     const config = {
