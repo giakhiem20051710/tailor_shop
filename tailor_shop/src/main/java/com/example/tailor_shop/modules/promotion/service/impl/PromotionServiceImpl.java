@@ -56,12 +56,22 @@ public class PromotionServiceImpl implements PromotionService {
     @Override
     @Transactional(readOnly = true)
     public Page<PromotionResponse> list(PromotionFilterRequest filter, Pageable pageable, Long currentUserId) {
+        // Ensure sort by priority DESC if no sort is specified
+        Pageable sortedPageable = pageable;
+        if (pageable.getSort().isEmpty()) {
+            sortedPageable = org.springframework.data.domain.PageRequest.of(
+                    pageable.getPageNumber(),
+                    pageable.getPageSize(),
+                    org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "priority")
+            );
+        }
+        
         Page<PromotionEntity> page = promotionRepository.searchPromotions(
                 filter != null ? filter.getStatus() : null,
                 filter != null ? filter.getType() : null,
                 filter != null ? filter.getKeyword() : null,
                 filter != null ? filter.getIsPublic() : null,
-                pageable
+                sortedPageable
         );
 
         return page.map(entity -> toResponse(entity, currentUserId));
@@ -387,15 +397,25 @@ public class PromotionServiceImpl implements PromotionService {
     // Helper methods
 
     private PromotionResponse toResponse(PromotionEntity entity, Long currentUserId) {
-        Long totalUsage = promotionRepository.countUsagesByPromotionId(entity.getId());
+        Long totalUsage = 0L;
+        try {
+            totalUsage = promotionRepository.countUsagesByPromotionId(entity.getId());
+        } catch (Exception e) {
+            log.warn("Error counting total usages for promotion {}: {}", entity.getId(), e.getMessage());
+        }
+        
         Long userUsage = null;
         Boolean isEligible = null;
         Boolean isUsed = null;
 
         if (currentUserId != null) {
-            userUsage = promotionRepository.countUsagesByPromotionIdAndUserId(entity.getId(), currentUserId);
-            isEligible = isEligibleForUser(entity, currentUserId);
-            isUsed = userUsage > 0 && entity.getIsSingleUse();
+            try {
+                userUsage = promotionRepository.countUsagesByPromotionIdAndUserId(entity.getId(), currentUserId);
+                isEligible = isEligibleForUser(entity, currentUserId);
+                isUsed = userUsage > 0 && (entity.getIsSingleUse() != null && entity.getIsSingleUse());
+            } catch (Exception e) {
+                log.warn("Error counting user usages for promotion {} and user {}: {}", entity.getId(), currentUserId, e.getMessage());
+            }
         }
 
         return PromotionResponse.builder()
@@ -550,7 +570,12 @@ public class PromotionServiceImpl implements PromotionService {
 
     private boolean isEligibleForUser(PromotionEntity promotion, Long userId) {
         LocalDate today = LocalDate.now();
-        if (today.isBefore(promotion.getStartDate()) || today.isAfter(promotion.getEndDate())) {
+        
+        // Check dates if they exist
+        if (promotion.getStartDate() != null && today.isBefore(promotion.getStartDate())) {
+            return false;
+        }
+        if (promotion.getEndDate() != null && today.isAfter(promotion.getEndDate())) {
             return false;
         }
 
@@ -559,7 +584,7 @@ public class PromotionServiceImpl implements PromotionService {
         }
 
         Long userUsage = promotionRepository.countUsagesByPromotionIdAndUserId(promotion.getId(), userId);
-        if (promotion.getIsSingleUse() && userUsage > 0) {
+        if (promotion.getIsSingleUse() != null && promotion.getIsSingleUse() && userUsage > 0) {
             return false;
         }
         if (promotion.getMaxUsagePerUser() != null && userUsage >= promotion.getMaxUsagePerUser()) {

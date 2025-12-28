@@ -1,9 +1,12 @@
+import { useNavigate } from "react-router-dom";
 import { exportAllData, exportOrdersToCSV, exportAppointmentsToCSV } from "../utils/dataExport.js";
 import { getErrorLogs, clearErrorLogs } from "../utils/errorLogger.js";
 import { getAnalyticsEvents, clearAnalyticsEvents } from "../utils/analytics.js";
 import { showSuccess, showError } from "../components/NotificationToast.jsx";
 
 export default function DashboardPage() {
+  const navigate = useNavigate();
+
   const handleExportAll = () => {
     try {
       exportAllData();
@@ -70,6 +73,42 @@ export default function DashboardPage() {
             💾 Backup tất cả
           </button>
         </div>
+      </div>
+
+      {/* QUICK LINKS */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <button
+          onClick={() => navigate("/orders")}
+          className="bg-white p-5 rounded-2xl shadow border border-gray-200 hover:shadow-lg transition text-left"
+        >
+          <div className="text-2xl mb-2">📦</div>
+          <div className="font-semibold text-gray-900">Đơn hàng</div>
+          <div className="text-sm text-gray-500">Quản lý đơn hàng</div>
+        </button>
+        <button
+          onClick={() => navigate("/invoice")}
+          className="bg-white p-5 rounded-2xl shadow border border-gray-200 hover:shadow-lg transition text-left"
+        >
+          <div className="text-2xl mb-2">🧾</div>
+          <div className="font-semibold text-gray-900">Hóa đơn</div>
+          <div className="text-sm text-gray-500">Quản lý hóa đơn</div>
+        </button>
+        <button
+          onClick={() => navigate("/admin/promotions")}
+          className="bg-white p-5 rounded-2xl shadow border border-gray-200 hover:shadow-lg transition text-left"
+        >
+          <div className="text-2xl mb-2">🎟️</div>
+          <div className="font-semibold text-gray-900">Mã giảm giá</div>
+          <div className="text-sm text-gray-500">Quản lý khuyến mãi</div>
+        </button>
+        <button
+          onClick={() => navigate("/customers")}
+          className="bg-white p-5 rounded-2xl shadow border border-gray-200 hover:shadow-lg transition text-left"
+        >
+          <div className="text-2xl mb-2">👥</div>
+          <div className="font-semibold text-gray-900">Khách hàng</div>
+          <div className="text-sm text-gray-500">Danh sách khách hàng</div>
+        </button>
       </div>
 
       {/* CARDS */}

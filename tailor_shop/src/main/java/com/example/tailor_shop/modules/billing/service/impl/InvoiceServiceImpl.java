@@ -272,6 +272,8 @@ public class InvoiceServiceImpl implements InvoiceService {
         invoice.setTotal(total);
         invoice.setPaidAmount(ZERO);
         invoice.setDueAmount(total);
+        // Lưu promotionId để track usage khi thanh toán (không track ngay khi tạo invoice)
+        invoice.setPromotionId(appliedPromotionId);
 
         InvoiceEntity savedInvoice = invoiceRepository.save(invoice);
         for (InvoiceItemEntity item : items) {
@@ -280,35 +282,8 @@ public class InvoiceServiceImpl implements InvoiceService {
         invoiceItemRepository.saveAll(items);
         savedInvoice.setItems(items);
 
-        // Track promotion usage if promo code was applied
-        if (appliedPromotionId != null && discount.compareTo(ZERO) > 0) {
-            try {
-                PromotionEntity promotion = promotionRepository.findById(appliedPromotionId)
-                        .orElseThrow(() -> new NotFoundException("Promotion not found"));
-                
-                BigDecimal originalAmount = subtotal.add(taxAmount);
-                BigDecimal finalAmount = total;
-                
-                PromotionUsageEntity usage = PromotionUsageEntity.builder()
-                        .promotion(promotion)
-                        .user(customer)
-                        .orderId(order != null ? order.getId() : null)
-                        .invoiceId(savedInvoice.getId())
-                        .discountAmount(discount)
-                        .originalAmount(originalAmount)
-                        .finalAmount(finalAmount)
-                        .build();
-                
-                promotionUsageRepository.save(usage);
-                
-                log.info("[TraceId: {}] Tracked promotion usage: promotionId={}, invoiceId={}, discount={}", 
-                        TraceIdUtil.getTraceId(), appliedPromotionId, savedInvoice.getId(), discount);
-            } catch (Exception e) {
-                // Log error but don't fail invoice creation
-                log.error("[TraceId: {}] Failed to track promotion usage for invoice {}: {}", 
-                        TraceIdUtil.getTraceId(), savedInvoice.getId(), e.getMessage(), e);
-            }
-        }
+        // KHÔNG track promotion usage ngay khi tạo invoice
+        // Sẽ track khi invoice được thanh toán (status = paid) trong method applyPayment()
 
         return toResponse(savedInvoice);
     }
@@ -408,10 +383,62 @@ public class InvoiceServiceImpl implements InvoiceService {
         }
         invoice.setPaidAmount(newPaid);
         invoice.setDueAmount(newDue);
-        if (newDue.compareTo(ZERO) == 0) {
+        
+        boolean isNowPaid = newDue.compareTo(ZERO) == 0;
+        if (isNowPaid) {
             invoice.setStatus(InvoiceStatus.paid);
+            // Track promotion usage khi invoice được thanh toán hoàn toàn
+            trackPromotionUsageOnPayment(invoice);
         } else {
             invoice.setStatus(InvoiceStatus.partial_paid);
+        }
+    }
+
+    /**
+     * Track promotion usage khi invoice được thanh toán hoàn toàn
+     * Chỉ track một lần khi invoice status chuyển sang 'paid'
+     */
+    private void trackPromotionUsageOnPayment(InvoiceEntity invoice) {
+        if (invoice.getPromotionId() == null || invoice.getDiscountAmount().compareTo(ZERO) <= 0) {
+            return; // Không có mã giảm giá hoặc không có discount
+        }
+
+        try {
+            // Kiểm tra xem đã track usage chưa (tránh track nhiều lần)
+            java.util.Optional<PromotionUsageEntity> existingUsage = 
+                    promotionUsageRepository.findByPromotionIdAndInvoiceId(
+                            invoice.getPromotionId(), invoice.getId());
+            
+            if (existingUsage.isPresent()) {
+                log.debug("[TraceId: {}] Promotion usage already tracked for invoice {}", 
+                        TraceIdUtil.getTraceId(), invoice.getId());
+                return; // Đã track rồi, không track lại
+            }
+
+            PromotionEntity promotion = promotionRepository.findById(invoice.getPromotionId())
+                    .orElseThrow(() -> new NotFoundException("Promotion not found"));
+            
+            BigDecimal originalAmount = invoice.getSubtotal().add(invoice.getTaxAmount());
+            BigDecimal finalAmount = invoice.getTotal();
+            
+            PromotionUsageEntity usage = PromotionUsageEntity.builder()
+                    .promotion(promotion)
+                    .user(invoice.getCustomer())
+                    .orderId(invoice.getOrder() != null ? invoice.getOrder().getId() : null)
+                    .invoiceId(invoice.getId())
+                    .discountAmount(invoice.getDiscountAmount())
+                    .originalAmount(originalAmount)
+                    .finalAmount(finalAmount)
+                    .build();
+            
+            promotionUsageRepository.save(usage);
+            
+            log.info("[TraceId: {}] Tracked promotion usage on payment: promotionId={}, invoiceId={}, discount={}", 
+                    TraceIdUtil.getTraceId(), invoice.getPromotionId(), invoice.getId(), invoice.getDiscountAmount());
+        } catch (Exception e) {
+            // Log error but don't fail payment processing
+            log.error("[TraceId: {}] Failed to track promotion usage for invoice {}: {}", 
+                    TraceIdUtil.getTraceId(), invoice.getId(), e.getMessage(), e);
         }
     }
 

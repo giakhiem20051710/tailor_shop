@@ -47,6 +47,7 @@ const CustomizeProductPage = lazy(() => import("./pages/CustomizeProductPage.jsx
 const ImageUploadPage = lazy(() => import("./pages/ImageUploadPage.jsx"));
 const CustomerOrderPage = lazy(() => import("./pages/CustomerOrderPage.jsx"));
 const PromotionsPage = lazy(() => import("./pages/PromotionsPage.jsx"));
+const PromotionManagementPage = lazy(() => import("./pages/PromotionManagementPage.jsx"));
 const SupportPage = lazy(() => import("./pages/SupportPage.jsx"));
 const ArticlesPage = lazy(() => import("./pages/ArticlesPage.jsx"));
 const FavoritesPage = lazy(() => import("./pages/FavoritesPage.jsx"));
@@ -166,6 +167,7 @@ export default function App() {
             <Route path="/admin/products" element={<ProductManagerPage />} />
             <Route path="/invoice" element={<InvoicePage />} />
             <Route path="/transactions" element={<TransactionManagementPage />} />
+            <Route path="/admin/promotions" element={<PromotionManagementPage />} />
             <Route path="/fabric-requests" element={<FabricRequestsPage />} />
             <Route path="/fabric-inventory" element={<FabricInventoryPage />} />
             <Route path="/profile" element={<ProfilePage />} />
