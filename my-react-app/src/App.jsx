@@ -8,7 +8,7 @@ import { SkipToContentLink } from "./utils/accessibility.jsx";
 import RoleGuard, { StaffAndAdmin, TailorAndAbove, AuthenticatedOnly } from "./components/RoleGuard.jsx";
 import CustomerDashboardPage from "./pages/CustomerDashboardPage.jsx";
 
-const HomePage = lazy(() => import("./pages/HomePage.jsx"));
+// HomePage removed
 const AboutPage = lazy(() => import("./pages/AboutPage.jsx"));
 const CustomerHomePage = lazy(() => import("./pages/CustomerHomePage.jsx"));
 const LoginSelectionPage = lazy(() => import("./pages/LoginSelectionPage.jsx"));
@@ -101,8 +101,7 @@ export default function App() {
           {/* Root - Redirect to Login */}
           <Route path="/" element={<Navigate to="/login" replace />} />
 
-          {/* Home Page */}
-          <Route path="/home" element={<HomePage />} />
+          {/* HomePage removed - use /customer-home instead */}
 
           {/* About Page */}
           <Route path="/about" element={<AboutPage />} />

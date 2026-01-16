@@ -204,7 +204,7 @@ export default function LoginPage() {
                 <Scissors className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h1 className="text-white">ELEGANCE TAILOR</h1>
+                <h1 className="text-white">MỸ HIỀN TAILOR</h1>
                 <p className="text-amber-400 text-sm">Bespoke Tailoring Studio</p>
               </div>
             </div>
@@ -240,7 +240,7 @@ export default function LoginPage() {
               <Scissors className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h2 className="text-slate-900">ELEGANCE TAILOR</h2>
+              <h2 className="text-slate-900">MỸ HIỀN TAILOR</h2>
               <p className="text-amber-600 text-sm">Bespoke Tailoring Studio</p>
             </div>
           </div>
