@@ -1,17 +1,20 @@
 import { lazy, Suspense } from "react";
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import Layout from "./layout.jsx";
 import ChatWidget from "./components/ChatWidget.jsx";
 import ErrorBoundary from "./components/ErrorBoundary.jsx";
 import NotificationToast from "./components/NotificationToast.jsx";
 import { SkipToContentLink } from "./utils/accessibility.jsx";
+import RoleGuard, { StaffAndAdmin, TailorAndAbove } from "./components/RoleGuard.jsx";
+import CustomerDashboardPage from "./pages/CustomerDashboardPage.jsx";
 
 const HomePage = lazy(() => import("./pages/HomePage.jsx"));
 const AboutPage = lazy(() => import("./pages/AboutPage.jsx"));
 const CustomerHomePage = lazy(() => import("./pages/CustomerHomePage.jsx"));
 const LoginSelectionPage = lazy(() => import("./pages/LoginSelectionPage.jsx"));
 const RoleBasedLoginPage = lazy(() => import("./pages/RoleBasedLoginPage.jsx"));
-const LoginPage = lazy(() => import("./pages/LoginPage.jsx"));
+import LoginPage from "./pages/LoginPage.jsx";
+// const LoginPage = lazy(() => import("./pages/LoginPage.jsx"));
 const RegisterPage = lazy(() => import("./pages/RegisterPage.jsx"));
 const ForgotPasswordPage = lazy(() => import("./pages/ForgotPasswordPage.jsx"));
 const ResetPasswordPage = lazy(() => import("./pages/ResetPasswordPage.jsx"));
@@ -34,11 +37,11 @@ const FabricRequestsPage = lazy(() => import("./pages/FabricRequestsPage.jsx"));
 const FabricInventoryPage = lazy(() => import("./pages/FabricInventoryPage.jsx"));
 const ProfilePage = lazy(() => import("./pages/ProfilePage.jsx"));
 const SchedulePage = lazy(() => import("./pages/SchedulePage.jsx"));
-const CustomerDashboardPage = lazy(() =>
-  import("./pages/CustomerDashboardPage.jsx")
-);
 const CustomerOrderDetailPage = lazy(() =>
   import("./pages/CustomerOrderDetailPage.jsx")
+);
+const CustomerInvoiceDetailPage = lazy(() =>
+  import("./pages/CustomerInvoiceDetailPage.jsx")
 );
 const ProductReviewPage = lazy(() => import("./pages/ProductReviewPage.jsx"));
 const ProductDetailPage = lazy(() => import("./pages/ProductDetailPage.jsx"));
@@ -76,6 +79,15 @@ const VirtualTryOnPage = lazy(() => import("./pages/VirtualTryOnPage.jsx"));
 const TrendAnalysisPage = lazy(() => import("./pages/TrendAnalysisPage.jsx"));
 const CategoryTemplatePage = lazy(() => import("./pages/CategoryTemplatePage.jsx"));
 
+// Flash Sale
+const FlashSalePage = lazy(() => import("./pages/FlashSalePage.jsx"));
+const FlashSaleManagementPage = lazy(() => import("./pages/FlashSaleManagementPage.jsx"));
+
+// Tailor Dashboard
+const TailorDashboardPage = lazy(() => import("./pages/TailorDashboardPage.jsx"));
+const TailorOrderDetailPage = lazy(() => import("./pages/TailorOrderDetailPage.jsx"));
+import TailorLayout from "./components/TailorLayout.jsx";
+
 const Loader = () => (
   <div className="p-6 text-sm text-slate-500">Đang tải...</div>
 );
@@ -86,8 +98,11 @@ export default function App() {
       <SkipToContentLink />
       <Suspense fallback={<Loader />}>
         <Routes>
-          {/* Home Page - Root */}
-          <Route path="/" element={<HomePage />} />
+          {/* Root - Redirect to Login */}
+          <Route path="/" element={<Navigate to="/login" replace />} />
+
+          {/* Home Page */}
+          <Route path="/home" element={<HomePage />} />
 
           {/* About Page */}
           <Route path="/about" element={<AboutPage />} />
@@ -104,11 +119,11 @@ export default function App() {
           {/* Customize Product Page */}
           <Route path="/customize-product" element={<CustomizeProductPage />} />
 
-          {/* Image Upload & Management Page */}
-          <Route path="/images" element={<ImageUploadPage />} />
-
           {/* Promotions Page */}
           <Route path="/promotions" element={<PromotionsPage />} />
+
+          {/* Flash Sale Page */}
+          <Route path="/flash-sale" element={<FlashSalePage />} />
 
           {/* Fabrics Page */}
           <Route path="/fabrics" element={<FabricsPage />} />
@@ -162,18 +177,27 @@ export default function App() {
             <Route path="/tailors" element={<TailorListPage />} />
             <Route path="/tailors/orders/:tailorId?" element={<TailorOrdersPage />} />
             <Route path="/tailors/completed" element={<CompletedOrdersPage />} />
-            <Route path="/schedule" element={<SchedulePage />} />
-            <Route path="/styles" element={<ProductManagerPage />} />
-            <Route path="/admin/products" element={<ProductManagerPage />} />
-            <Route path="/invoice" element={<InvoicePage />} />
-            <Route path="/transactions" element={<TransactionManagementPage />} />
-            <Route path="/admin/promotions" element={<PromotionManagementPage />} />
-            <Route path="/fabric-requests" element={<FabricRequestsPage />} />
-            <Route path="/fabric-inventory" element={<FabricInventoryPage />} />
+            <Route path="/schedule" element={<StaffAndAdmin><SchedulePage /></StaffAndAdmin>} />
+            <Route path="/styles" element={<StaffAndAdmin><ProductManagerPage /></StaffAndAdmin>} />
+            <Route path="/admin/products" element={<StaffAndAdmin><ProductManagerPage /></StaffAndAdmin>} />
+            <Route path="/invoice" element={<StaffAndAdmin><InvoicePage /></StaffAndAdmin>} />
+            <Route path="/invoices/:id" element={<InvoicePage />} />
+            <Route path="/transactions" element={<StaffAndAdmin><TransactionManagementPage /></StaffAndAdmin>} />
+            <Route path="/admin/promotions" element={<StaffAndAdmin><PromotionManagementPage /></StaffAndAdmin>} />
+            <Route path="/fabric-requests" element={<StaffAndAdmin><FabricRequestsPage /></StaffAndAdmin>} />
+            <Route path="/fabric-inventory" element={<StaffAndAdmin><FabricInventoryPage /></StaffAndAdmin>} />
+            <Route path="/admin/flash-sales" element={<StaffAndAdmin><FlashSaleManagementPage /></StaffAndAdmin>} />
             <Route path="/profile" element={<ProfilePage />} />
-            <Route path="/tailor/dashboard" element={<TailorOrdersPage />} />
-            <Route path="/tailor/schedule" element={<SchedulePage />} />
             <Route path="/admin/templates" element={<CategoryTemplatePage />} />
+            {/* Image Upload & Management Page (Admin) */}
+            <Route path="/images" element={<ImageUploadPage />} />
+          </Route>
+
+          {/* Tailor Routes - Separate layout for tailors */}
+          <Route element={<TailorLayout />}>
+            <Route path="/tailor/dashboard" element={<TailorDashboardPage />} />
+            <Route path="/tailor/orders/:id" element={<TailorOrderDetailPage />} />
+            <Route path="/tailor/schedule" element={<SchedulePage />} />
           </Route>
 
           {/* Customer Dashboard - separate route without admin Layout */}
@@ -181,6 +205,7 @@ export default function App() {
           <Route path="/customer/order" element={<CustomerOrderPage />} />
           <Route path="/customer/orders/:id" element={<CustomerOrderDetailPage />} />
           <Route path="/customer/orders/:orderId/review" element={<ProductReviewPage />} />
+          <Route path="/customer/invoices/:id" element={<CustomerInvoiceDetailPage />} />
         </Routes>
       </Suspense>
       {/* Chat Widget - hiển thị trên tất cả các trang */}

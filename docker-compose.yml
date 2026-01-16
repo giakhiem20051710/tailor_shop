@@ -1,0 +1,97 @@
+services:
+  # MySQL Database
+  mysql:
+    image: mysql:8.0
+    container_name: tailor-shop-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-rootpassword}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-tailor_shop}
+      MYSQL_USER: ${MYSQL_USER:-tailor_user}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-tailor_password}
+    ports:
+      - "${MYSQL_PORT:-3306}:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./tailor_shop/src/main/resources/db:/docker-entrypoint-initdb.d
+    networks:
+      - tailor-shop-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD:-rootpassword}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    command: --default-authentication-plugin=mysql_native_password --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+
+  # Spring Boot Backend
+  backend:
+    build:
+      context: ./tailor_shop
+      dockerfile: Dockerfile
+    container_name: tailor-shop-backend
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/${MYSQL_DATABASE:-tailor_shop}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&createDatabaseIfNotExist=true
+      SPRING_DATASOURCE_USERNAME: ${MYSQL_USER:-tailor_user}
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASSWORD:-tailor_password}
+      MYSQL_USER: ${MYSQL_USER:-tailor_user}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-tailor_password}
+      JWT_SECRET: ${JWT_SECRET:-change-me-256-bit-secret-key-min-length-32-bytes!!!}
+      MAIL_HOST: ${MAIL_HOST:-smtp.gmail.com}
+      MAIL_PORT: ${MAIL_PORT:-587}
+      MAIL_USERNAME: ${MAIL_USERNAME:-}
+      MAIL_PASSWORD: ${MAIL_PASSWORD:-}
+      AWS_ACCESS_KEY: ${AWS_ACCESS_KEY:-}
+      AWS_SECRET_KEY: ${AWS_SECRET_KEY:-}
+      AWS_S3_BUCKET: ${AWS_S3_BUCKET:-carbonx-storagee}
+      AWS_S3_REGION: ${AWS_S3_REGION:-ap-southeast-2}
+      AWS_S3_BASE_URL: ${AWS_S3_BASE_URL:-https://carbonx-storagee.s3.ap-southeast-2.amazonaws.com}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+    ports:
+      - "${BACKEND_PORT:-8083}:8083"
+    networks:
+      - tailor-shop-network
+    healthcheck:
+      test: ["CMD", "sh", "-c", "curl -f http://localhost:8083/api/v1/health || curl -f http://localhost:8083/ || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    volumes:
+      - ./tailor_shop/uploads:/app/uploads
+    command: ["java", "-jar", "app.jar", "--spring.profiles.active=docker"]
+
+  # React Frontend
+  frontend:
+    build:
+      context: ./my-react-app
+      dockerfile: Dockerfile
+    container_name: tailor-shop-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "${FRONTEND_PORT:-80}:80"
+    networks:
+      - tailor-shop-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health || exit 1"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+    environment:
+      - VITE_API_BASE_URL=${VITE_API_BASE_URL:-http://localhost:8083/api/v1}
+
+volumes:
+  mysql_data:
+    driver: local
+
+networks:
+  tailor-shop-network:
+    driver: bridge
+

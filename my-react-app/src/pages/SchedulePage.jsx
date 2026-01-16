@@ -1,23 +1,15 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { orderService } from "../services";
-import { getUsersByRole, ROLES } from "../utils/authStorage";
-import {
-  addWorkingSlot,
-  getWorkingSlots,
-  updateWorkingSlot,
-} from "../utils/workingSlotStorage.js";
-import {
-  getAppointments,
-  updateAppointment,
-} from "../utils/appointmentStorage.js";
+import { orderService, appointmentService, userService, workingSlotService } from "../services";
+import { SlotDetailModal, ScheduleTutorial, shouldShowScheduleTutorial, ScheduleSettingsModal } from "../components/schedule";
+import { showSuccess, showError } from "../components/NotificationToast.jsx";
 
 export default function SchedulePage() {
   const navigate = useNavigate();
   const [orders, setOrders] = useState([]);
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split("T")[0]);
   const [tailors, setTailors] = useState([]);
-  
+
   // Filter states
   const [typeFilter, setTypeFilter] = useState("all"); // all, fitting, pickup
   const [tailorFilter, setTailorFilter] = useState("all"); // all or tailor ID
@@ -29,6 +21,8 @@ export default function SchedulePage() {
     date: new Date().toISOString().split("T")[0],
     startTime: "09:00",
     endTime: "21:30",
+    breakStartTime: "12:00",
+    breakEndTime: "13:00",
     type: "consult",
     tailorId: "all",
     capacity: 1,
@@ -37,31 +31,104 @@ export default function SchedulePage() {
   const [appointments, setAppointments] = useState([]);
   const [slotDetail, setSlotDetail] = useState(null);
   const [showWeeklyModal, setShowWeeklyModal] = useState(false);
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [weeklyModalDate, setWeeklyModalDate] = useState(selectedDate);
+  const [showTutorial, setShowTutorial] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  // Show tutorial on first visit
+  useEffect(() => {
+    if (shouldShowScheduleTutorial()) {
+      setShowTutorial(true);
+    }
+  }, []);
+
+  // Load data from API
+  const loadData = useCallback(async () => {
+    setLoading(true);
+    try {
+      // Load orders from API
+      const orderResponse = await orderService.list({}, { page: 0, size: 100 });
+      const orderData = orderResponse?.data ?? orderResponse?.responseData ?? orderResponse;
+      const ordersList = orderData?.content ?? orderData?.data ?? [];
+      setOrders(ordersList);
+
+      // Load working slots from API
+      const slotsResponse = await workingSlotService.list(
+        { date: selectedDate },
+        { page: 0, size: 100 }
+      );
+      const slotsData = slotsResponse?.data ?? slotsResponse?.responseData ?? slotsResponse;
+      const slotsList = slotsData?.content ?? slotsData?.data ?? slotsData ?? [];
+      setWorkingSlots(Array.isArray(slotsList) ? slotsList : []);
+
+      // Load appointments from API
+      const aptsResponse = await appointmentService.list(
+        { date: selectedDate },
+        { page: 0, size: 100 }
+      );
+      const aptsData = aptsResponse?.data ?? aptsResponse?.responseData ?? aptsResponse;
+      const aptsList = aptsData?.content ?? aptsData?.data ?? aptsData ?? [];
+      setAppointments(Array.isArray(aptsList) ? aptsList : []);
+
+      // Load tailors (staff users)
+      try {
+        // Try listTailors first
+        let tailorList = [];
+        try {
+          const tailorResponse = await userService.listTailors({ size: 100 });
+          const tailorData = tailorResponse?.data ?? tailorResponse?.responseData ?? tailorResponse;
+          tailorList = tailorData?.content ?? tailorData?.data ?? tailorData ?? [];
+        } catch (e1) {
+          // If tailors endpoint fails, try list with role filter
+          try {
+            const listResponse = await userService.list({ role: 'TAILOR', size: 100 });
+            const listData = listResponse?.data ?? listResponse?.responseData ?? listResponse;
+            tailorList = listData?.content ?? listData?.data ?? listData ?? [];
+          } catch (e2) {
+            console.warn("Could not load tailors from any API endpoint");
+          }
+        }
+
+        // If API returns empty, use fallback from localStorage (legacy support)
+        if (!tailorList || tailorList.length === 0) {
+          const { getUsersByRole, ROLES } = await import("../utils/authStorage");
+          const localTailors = getUsersByRole(ROLES.TAILOR);
+          if (localTailors && localTailors.length > 0) {
+            // Ensure IDs are numbers
+            tailorList = localTailors.map((t, idx) => ({
+              ...t,
+              id: typeof t.id === 'number' ? t.id : idx + 1,
+            }));
+            console.log("Using tailors from localStorage fallback:", tailorList);
+          }
+        }
+
+        // Last resort: hardcoded tailors (for demo/testing when not logged in)
+        if (!tailorList || tailorList.length === 0) {
+          console.warn("No tailors from API or localStorage. Please login first or add tailors to database.");
+          // Note: These IDs must exist in your database!
+          // You should add real tailors via admin panel or API
+          showError("Vui lòng đăng nhập để xem danh sách thợ may.");
+        }
+
+        setTailors(Array.isArray(tailorList) ? tailorList : []);
+        console.log("Final tailors list:", tailorList);
+      } catch (e) {
+        console.warn("Could not load tailors:", e);
+        setTailors([]);
+      }
+    } catch (error) {
+      console.error("Error loading schedule data:", error);
+      showError("Không thể tải dữ liệu lịch hẹn");
+    } finally {
+      setLoading(false);
+    }
+  }, [selectedDate]);
 
   useEffect(() => {
-    const loadData = async () => {
-      try {
-        // Load orders from API
-        const response = await orderService.list({}, { page: 0, size: 100 });
-        const responseData = response?.data ?? response?.responseData ?? response;
-        const ordersList = responseData?.content ?? responseData?.data ?? [];
-        setOrders(ordersList);
-      } catch (error) {
-        console.error("Error loading orders:", error);
-        setOrders([]);
-      }
-      
-      // Load tailors
-      const tailorUsers = getUsersByRole(ROLES.TAILOR);
-      setTailors(tailorUsers);
-
-      setWorkingSlots(getWorkingSlots());
-      setAppointments(getAppointments());
-    };
-    
     loadData();
-  }, []);
+  }, [loadData]);
 
   // Get date range for week view
   const getDateRange = () => {
@@ -162,10 +229,16 @@ export default function SchedulePage() {
     setSelectedDate(new Date().toISOString().split("T")[0]);
   };
 
-  const getTailorName = (tailorId) => {
-    if (!tailorId) return "Chưa phân công";
-    const tailor = tailors.find(t => t.username === tailorId || t.id === tailorId);
-    return tailor ? tailor.name : tailorId;
+  // Get tailor name from staffId or tailorId (supports both API and legacy data)
+  const getTailorName = (staffIdOrTailorId) => {
+    if (!staffIdOrTailorId) return "Chưa phân công";
+    const id = Number(staffIdOrTailorId);
+    const tailor = tailors.find(t =>
+      t.id === id ||
+      t.id === staffIdOrTailorId ||
+      t.username === staffIdOrTailorId
+    );
+    return tailor ? (tailor.name || tailor.username) : `Thợ #${staffIdOrTailorId}`;
   };
 
   const formatCurrency = (amount) => {
@@ -205,8 +278,8 @@ export default function SchedulePage() {
       slot.status === "blocked"
         ? "blocked"
         : active >= capacity
-        ? "booked"
-        : "available";
+          ? "booked"
+          : "available";
     const updated = updateWorkingSlot(slotId, {
       bookedCount: active,
       status,
@@ -226,15 +299,22 @@ export default function SchedulePage() {
     }));
   };
 
-  const handleCreateSlot = (e) => {
+  const handleCreateSlot = async (e) => {
     e.preventDefault();
     if (!slotForm.date || !slotForm.startTime || !slotForm.endTime) return;
     if (slotForm.endTime <= slotForm.startTime) {
-      alert("Giờ kết thúc phải sau giờ bắt đầu.");
+      showError("Giờ kết thúc phải sau giờ bắt đầu.");
       return;
     }
-    if (slotForm.tailorId === "all") {
-      alert("Vui lòng chọn thợ phụ trách.");
+    if (slotForm.tailorId === "all" || !slotForm.tailorId) {
+      showError("Vui lòng chọn thợ phụ trách.");
+      return;
+    }
+
+    // Validate staffId is a valid number
+    const staffId = Number(slotForm.tailorId);
+    if (isNaN(staffId) || staffId <= 0) {
+      showError("Thợ may không hợp lệ. Vui lòng chọn lại.");
       return;
     }
 
@@ -246,47 +326,68 @@ export default function SchedulePage() {
     const newStart = toMinutes(slotForm.startTime);
     const newEnd = toMinutes(slotForm.endTime);
 
-    const existingSlots = getWorkingSlots();
-    const conflict = existingSlots.some((slot) => {
+    // Check for conflicts in current slots
+    const conflict = workingSlots.some((slot) => {
+      // Compare with the slot's staffId (from API) - handle both staff object and staffId number
+      const slotStaffId = slot.staff?.id || slot.staffId;
       if (
-        slot.tailorId !== slotForm.tailorId ||
+        slotStaffId !== staffId ||
         slot.date !== slotForm.date
       ) {
         return false;
       }
       const start = toMinutes(slot.startTime);
       const end = toMinutes(slot.endTime);
-      // khoảng thời gian chồng lên nhau
       return newStart < end && newEnd > start;
     });
 
     if (conflict) {
-      alert(
-        "Ca rảnh này bị trùng với một ca đã tồn tại của thợ. Vui lòng chọn giờ khác."
-      );
+      showError("Ca rảnh này bị trùng với một ca đã tồn tại của thợ. Vui lòng chọn giờ khác.");
       return;
     }
 
-    const created = addWorkingSlot({
-      date: slotForm.date,
-      startTime: slotForm.startTime,
-      endTime: slotForm.endTime,
-      type: slotForm.type,
-      tailorId: slotForm.tailorId,
-      capacity: slotForm.capacity || 1,
-    });
-    setWorkingSlots((prev) => [...prev, created]);
-    setShowSlotForm(false);
+    // Calculate DayOfWeek string (MONDAY, TUESDAY, etc.)
+    const dateObj = new Date(slotForm.date);
+    const days = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'];
+    const dayOfWeek = days[dateObj.getDay()];
+
+    try {
+      const response = await workingSlotService.create({
+        dayOfWeek: dayOfWeek,
+        startTime: slotForm.startTime,
+        endTime: slotForm.endTime,
+        breakStartTime: slotForm.breakStartTime || null,
+        breakEndTime: slotForm.breakEndTime || null,
+        // For a single day slot, effectiveFrom and effectiveTo are the same
+        effectiveFrom: slotForm.date,
+        effectiveTo: slotForm.date,
+        type: slotForm.type.toUpperCase(),
+        staffId: staffId, // Use validated staffId
+        capacity: slotForm.capacity || 1,
+        isActive: true
+      });
+      const created = response?.data ?? response?.responseData ?? response;
+      showSuccess("Đã tạo ca rảnh mới");
+      setShowSlotForm(false);
+      loadData(); // Reload data from API
+    } catch (error) {
+      console.error("Error creating working slot:", error);
+      showError("Không thể tạo ca rảnh. Vui lòng thử lại.");
+    }
   };
 
-  const toggleSlotStatus = (slot) => {
-    const updated = updateWorkingSlot(slot.id, {
-      status: slot.status === "blocked" ? "available" : "blocked",
-    });
-    if (updated) {
-      setWorkingSlots((prev) =>
-        prev.map((s) => (s.id === updated.id ? updated : s))
-      );
+  const toggleSlotStatus = async (slot) => {
+    const newStatus = slot.status === "BLOCKED" ? "AVAILABLE" : "BLOCKED";
+    try {
+      await workingSlotService.update(slot.id, {
+        ...slot,
+        status: newStatus,
+      });
+      showSuccess(newStatus === "BLOCKED" ? "Đã chặn ca rảnh" : "Đã mở lại ca rảnh");
+      loadData(); // Reload data from API
+    } catch (error) {
+      console.error("Error updating slot status:", error);
+      showError("Không thể cập nhật trạng thái ca rảnh");
     }
   };
 
@@ -298,6 +399,21 @@ export default function SchedulePage() {
           Lịch hẹn
         </h1>
         <div className="flex gap-2 sm:gap-3 items-center">
+          <button
+            onClick={() => setShowSettingsModal(true)}
+            className="px-3 py-2 bg-slate-100 text-slate-600 rounded-lg hover:bg-slate-200 transition text-sm flex items-center gap-1.5"
+          >
+            <span>⚙️</span>
+            <span className="hidden sm:inline">Quản lý</span>
+          </button>
+          <button
+            onClick={() => setShowTutorial(true)}
+            className="px-3 py-2 bg-slate-100 text-slate-600 rounded-lg hover:bg-slate-200 transition text-sm flex items-center gap-1.5"
+            title="Hướng dẫn sử dụng"
+          >
+            <span>❓</span>
+            <span className="hidden sm:inline">Hướng dẫn</span>
+          </button>
           <button
             onClick={() => setShowSlotForm(true)}
             className="px-4 py-2 bg-emerald-700 text-white rounded-lg shadow hover:bg-emerald-800 transition text-sm md:text-base"
@@ -381,11 +497,10 @@ export default function SchedulePage() {
           <div className="flex items-center gap-2">
             <button
               onClick={() => setViewMode("day")}
-              className={`px-3 py-1.5 rounded-lg text-sm transition ${
-                viewMode === "day"
-                  ? "bg-green-600 text-white"
-                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-              }`}
+              className={`px-3 py-1.5 rounded-lg text-sm transition ${viewMode === "day"
+                ? "bg-green-600 text-white"
+                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                }`}
             >
               Theo ngày
             </button>
@@ -517,23 +632,20 @@ export default function SchedulePage() {
                 return (
                   <div
                     key={dateStr}
-                    className={`border-2 rounded-xl p-3 space-y-2 min-h-[120px] transition-all ${
-                      isToday
-                        ? "border-[#1B4332] bg-[#1B4332]/5 shadow-md"
-                        : "border-gray-200 bg-gray-50/50"
-                    }`}
+                    className={`border-2 rounded-xl p-3 space-y-2 min-h-[120px] transition-all ${isToday
+                      ? "border-[#1B4332] bg-[#1B4332]/5 shadow-md"
+                      : "border-gray-200 bg-gray-50/50"
+                      }`}
                   >
-                    <div className={`text-xs font-bold flex justify-between items-center pb-2 border-b ${
-                      isToday ? "text-[#1B4332] border-[#1B4332]/20" : "text-gray-700 border-gray-200"
-                    }`}>
+                    <div className={`text-xs font-bold flex justify-between items-center pb-2 border-b ${isToday ? "text-[#1B4332] border-[#1B4332]/20" : "text-gray-700 border-gray-200"
+                      }`}>
                       <span className="uppercase">
                         {d.toLocaleDateString("vi-VN", {
                           weekday: "short",
                         })}
                       </span>
-                      <span className={`px-2 py-0.5 rounded-full ${
-                        isToday ? "bg-[#1B4332] text-white" : "bg-gray-200 text-gray-600"
-                      }`}>
+                      <span className={`px-2 py-0.5 rounded-full ${isToday ? "bg-[#1B4332] text-white" : "bg-gray-200 text-gray-600"
+                        }`}>
                         {d.getDate().toString().padStart(2, "0")}
                       </span>
                     </div>
@@ -554,7 +666,7 @@ export default function SchedulePage() {
                                 t.username === slot.tailorId ||
                                 t.id === slot.tailorId
                             ) || {}).name || "Thợ";
-                            
+
                             const slotConfig = {
                               consult: {
                                 gradient: "from-sky-500 to-blue-600",
@@ -592,13 +704,13 @@ export default function SchedulePage() {
 
                             const config = slot.status === "blocked"
                               ? {
-                                  gradient: "from-gray-400 to-gray-500",
-                                  bg: "bg-gray-100",
-                                  border: "border-gray-300",
-                                  text: "text-gray-600",
-                                  icon: "🚫",
-                                  label: "Đã chặn",
-                                }
+                                gradient: "from-gray-400 to-gray-500",
+                                bg: "bg-gray-100",
+                                border: "border-gray-300",
+                                text: "text-gray-600",
+                                icon: "🚫",
+                                label: "Đã chặn",
+                              }
                               : slotConfig[slot.type] || slotConfig.consult;
 
                             return (
@@ -622,13 +734,12 @@ export default function SchedulePage() {
                                       <p className={`font-bold text-xs ${config.text}`}>
                                         {slot.startTime}–{slot.endTime}
                                       </p>
-                                      <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold ${
-                                        slot.status === "blocked"
-                                          ? "bg-gray-200 text-gray-600"
-                                          : booked >= (slot.capacity || 1)
+                                      <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold ${slot.status === "blocked"
+                                        ? "bg-gray-200 text-gray-600"
+                                        : booked >= (slot.capacity || 1)
                                           ? "bg-red-100 text-red-700"
                                           : "bg-green-100 text-green-700"
-                                      }`}>
+                                        }`}>
                                         {slot.status === "blocked"
                                           ? "🚫"
                                           : `${booked}/${slot.capacity || 1}`}
@@ -681,7 +792,7 @@ export default function SchedulePage() {
                       t.username === slot.tailorId ||
                       t.id === slot.tailorId
                   ) || {}).name || "Thợ";
-                  
+
                   const slotConfig = {
                     consult: {
                       gradient: "from-sky-500 to-blue-600",
@@ -723,14 +834,14 @@ export default function SchedulePage() {
 
                   const config = slot.status === "blocked"
                     ? {
-                        gradient: "from-gray-400 to-gray-500",
-                        bg: "bg-gray-100",
-                        border: "border-gray-300",
-                        text: "text-gray-600",
-                        icon: "🚫",
-                        label: "Đã chặn",
-                        lightBg: "bg-gray-200",
-                      }
+                      gradient: "from-gray-400 to-gray-500",
+                      bg: "bg-gray-100",
+                      border: "border-gray-300",
+                      text: "text-gray-600",
+                      icon: "🚫",
+                      label: "Đã chặn",
+                      lightBg: "bg-gray-200",
+                    }
                     : slotConfig[slot.type] || slotConfig.consult;
 
                   const isFull = booked >= (slot.capacity || 1);
@@ -750,13 +861,13 @@ export default function SchedulePage() {
                     >
                       {/* Gradient overlay on hover */}
                       <div className={`absolute inset-0 bg-gradient-to-br ${config.gradient} opacity-0 group-hover:opacity-10 transition-opacity`}></div>
-                      
+
                       <div className="relative flex items-center gap-4">
                         {/* Icon */}
                         <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${config.gradient} flex items-center justify-center text-2xl flex-shrink-0 shadow-lg group-hover:scale-110 transition-transform`}>
                           {config.icon}
                         </div>
-                        
+
                         {/* Content */}
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between mb-2">
@@ -769,25 +880,24 @@ export default function SchedulePage() {
                               </p>
                             </div>
                             <div className="flex flex-col items-end gap-1">
-                              <span className={`text-xs px-2.5 py-1 rounded-full font-bold ${
-                                slot.status === "blocked"
-                                  ? "bg-gray-200 text-gray-700"
-                                  : isFull
+                              <span className={`text-xs px-2.5 py-1 rounded-full font-bold ${slot.status === "blocked"
+                                ? "bg-gray-200 text-gray-700"
+                                : isFull
                                   ? "bg-red-100 text-red-700"
                                   : "bg-green-100 text-green-700"
-                              }`}>
+                                }`}>
                                 {slot.status === "blocked"
                                   ? "🚫 Đã chặn"
                                   : isFull
-                                  ? "✅ Đã đầy"
-                                  : "🟢 Còn chỗ"}
+                                    ? "✅ Đã đầy"
+                                    : "🟢 Còn chỗ"}
                               </span>
                               <span className="text-xs text-gray-600 font-medium">
                                 {booked}/{slot.capacity || 1} khách
                               </span>
                             </div>
                           </div>
-                          
+
                           <div className="flex items-center gap-3 mt-3 pt-3 border-t border-white/50">
                             <div className="flex items-center gap-2">
                               <div className={`w-8 h-8 rounded-full ${config.lightBg || "bg-white/50"} flex items-center justify-center`}>
@@ -808,7 +918,7 @@ export default function SchedulePage() {
                             )}
                           </div>
                         </div>
-                        
+
                         {/* Arrow */}
                         <div className="flex-shrink-0">
                           <svg className={`w-6 h-6 ${config.text} group-hover:translate-x-1 transition-transform`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -957,7 +1067,7 @@ export default function SchedulePage() {
 
       {/* Weekly Schedule Modal */}
       {showWeeklyModal && (
-        <div 
+        <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
           onClick={(e) => {
             if (e.target === e.currentTarget) {
@@ -965,7 +1075,7 @@ export default function SchedulePage() {
             }
           }}
         >
-          <div 
+          <div
             className="bg-white rounded-2xl shadow-2xl w-full max-w-[98vw] max-h-[95vh] flex flex-col overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
@@ -977,7 +1087,7 @@ export default function SchedulePage() {
                 const diff = date.getDate() - day + (day === 0 ? -6 : 1); // Get Monday
                 const monday = new Date(date);
                 monday.setDate(diff);
-                
+
                 const weekDates = [];
                 for (let i = 0; i < 7; i++) {
                   const d = new Date(monday);
@@ -1018,16 +1128,16 @@ export default function SchedulePage() {
                 const startMinutes = timeToMinutes(app.slot.startTime);
                 const endMinutes = timeToMinutes(app.slot.endTime);
                 const duration = endMinutes - startMinutes;
-                
+
                 // Timeline starts at 8:00 (480 minutes)
                 const startOffset = startMinutes - 480;
                 const totalMinutes = 14 * 60; // 8:00 to 22:00 = 14 hours
-                
+
                 // Each hour slot is 48px (h-12)
                 const totalHeight = timeSlots.length * 48;
                 const topPx = (startOffset / totalMinutes) * totalHeight;
                 const heightPx = (duration / totalMinutes) * totalHeight;
-                
+
                 return {
                   top: `${topPx}px`,
                   height: `${heightPx}px`,
@@ -1123,7 +1233,7 @@ export default function SchedulePage() {
                           </button>
                         </div>
                       </div>
-                      
+
                       {/* Week dates header */}
                       <div className="grid grid-cols-7 gap-1.5">
                         {weekDates.map((dateStr, idx) => {
@@ -1131,7 +1241,7 @@ export default function SchedulePage() {
                           const dayAppointments = getDayAppointments(dateStr);
                           const isSelectedDay = isSelected(dateStr);
                           const isTodayDay = isToday(dateStr);
-                          
+
                           return (
                             <button
                               key={dateStr}
@@ -1140,36 +1250,31 @@ export default function SchedulePage() {
                                 setSelectedDate(dateStr);
                                 setShowWeeklyModal(false);
                               }}
-                              className={`text-center p-2 rounded-lg transition-all duration-200 ${
-                                isSelectedDay
-                                  ? "bg-white text-[#1B4332] shadow-lg transform scale-105"
-                                  : isTodayDay
+                              className={`text-center p-2 rounded-lg transition-all duration-200 ${isSelectedDay
+                                ? "bg-white text-[#1B4332] shadow-lg transform scale-105"
+                                : isTodayDay
                                   ? "bg-white/25 backdrop-blur-sm hover:bg-white/30"
                                   : "bg-white/10 backdrop-blur-sm hover:bg-white/20"
-                              }`}
+                                }`}
                             >
-                              <p className={`text-[10px] font-semibold mb-1 uppercase tracking-wide ${
-                                isSelectedDay ? "text-[#1B4332]/70" : "text-white/80"
-                              }`}>
+                              <p className={`text-[10px] font-semibold mb-1 uppercase tracking-wide ${isSelectedDay ? "text-[#1B4332]/70" : "text-white/80"
+                                }`}>
                                 {dayNames[idx]}
                               </p>
-                              <p className={`text-lg font-bold mb-0.5 ${
-                                isSelectedDay ? "text-[#1B4332]" : "text-white"
-                              }`}>
+                              <p className={`text-lg font-bold mb-0.5 ${isSelectedDay ? "text-[#1B4332]" : "text-white"
+                                }`}>
                                 {d.getDate()}
                               </p>
-                              <p className={`text-[10px] mb-1 ${
-                                isSelectedDay ? "text-[#1B4332]/70" : "text-white/70"
-                              }`}>
+                              <p className={`text-[10px] mb-1 ${isSelectedDay ? "text-[#1B4332]/70" : "text-white/70"
+                                }`}>
                                 {d.toLocaleDateString("vi-VN", { month: "short" })}
                               </p>
                               {dayAppointments.length > 0 && (
                                 <div className="mt-1">
-                                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${
-                                    isSelectedDay
-                                      ? "bg-[#1B4332] text-white"
-                                      : "bg-white/30 text-white backdrop-blur-sm"
-                                  }`}>
+                                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${isSelectedDay
+                                    ? "bg-[#1B4332] text-white"
+                                    : "bg-white/30 text-white backdrop-blur-sm"
+                                    }`}>
                                     {dayAppointments.length}
                                   </span>
                                 </div>
@@ -1184,7 +1289,7 @@ export default function SchedulePage() {
                         })}
                       </div>
                     </div>
-                    
+
                     <div className="ml-4 flex flex-col items-end gap-2">
                       <button
                         onClick={() => setShowWeeklyModal(false)}
@@ -1218,49 +1323,44 @@ export default function SchedulePage() {
                             Giờ
                           </div>
                         </div>
-                        
+
                         {/* Day column headers */}
                         {weekDates.map((dateStr, idx) => {
                           const d = new Date(dateStr + "T00:00:00");
                           const dayAppointments = getDayAppointments(dateStr);
                           const isSelectedDay = isSelected(dateStr);
                           const isTodayDay = isToday(dateStr);
-                          
+
                           return (
                             <div
                               key={dateStr}
-                              className={`border-r-2 border-gray-300 p-2 text-center transition-all ${
-                                isSelectedDay
-                                  ? "bg-gradient-to-br from-[#1B4332] to-[#2D5A47] text-white shadow-lg"
-                                  : isTodayDay
+                              className={`border-r-2 border-gray-300 p-2 text-center transition-all ${isSelectedDay
+                                ? "bg-gradient-to-br from-[#1B4332] to-[#2D5A47] text-white shadow-lg"
+                                : isTodayDay
                                   ? "bg-gradient-to-br from-blue-100 to-blue-50"
                                   : "bg-gradient-to-br from-gray-100 to-gray-50"
-                              }`}
+                                }`}
                             >
-                              <p className={`text-[10px] font-semibold mb-0.5 ${
-                                isSelectedDay ? "text-white/90" : "text-gray-600"
-                              }`}>
+                              <p className={`text-[10px] font-semibold mb-0.5 ${isSelectedDay ? "text-white/90" : "text-gray-600"
+                                }`}>
                                 {dayNames[idx]}
                               </p>
-                              <p className={`text-sm font-bold mb-0.5 ${
-                                isSelectedDay ? "text-white" : isTodayDay ? "text-blue-700" : "text-gray-900"
-                              }`}>
+                              <p className={`text-sm font-bold mb-0.5 ${isSelectedDay ? "text-white" : isTodayDay ? "text-blue-700" : "text-gray-900"
+                                }`}>
                                 {d.getDate()}
                               </p>
-                              <p className={`text-[10px] mb-1 ${
-                                isSelectedDay ? "text-white/80" : "text-gray-500"
-                              }`}>
+                              <p className={`text-[10px] mb-1 ${isSelectedDay ? "text-white/80" : "text-gray-500"
+                                }`}>
                                 {d.toLocaleDateString("vi-VN", { month: "short" })}
                               </p>
                               {dayAppointments.length > 0 && (
                                 <div className="mt-1">
-                                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${
-                                    isSelectedDay
-                                      ? "bg-white/20 text-white border border-white/30"
-                                      : isTodayDay
+                                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${isSelectedDay
+                                    ? "bg-white/20 text-white border border-white/30"
+                                    : isTodayDay
                                       ? "bg-blue-200 text-blue-800"
                                       : "bg-gray-200 text-gray-700"
-                                  }`}>
+                                    }`}>
                                     {dayAppointments.length}
                                   </span>
                                 </div>
@@ -1291,13 +1391,12 @@ export default function SchedulePage() {
                           const dayAppointments = getDayAppointments(dateStr);
                           const isSelectedDay = isSelected(dateStr);
                           const isTodayDay = isToday(dateStr);
-                          
+
                           return (
                             <div
                               key={dateStr}
-                              className={`border-r-2 border-gray-300 relative ${
-                                isSelectedDay ? "bg-white" : isTodayDay ? "bg-blue-50/30" : "bg-white"
-                              }`}
+                              className={`border-r-2 border-gray-300 relative ${isSelectedDay ? "bg-white" : isTodayDay ? "bg-blue-50/30" : "bg-white"
+                                }`}
                             >
                               {/* Time grid cells */}
                               <div className="relative" style={{ minHeight: `${timeSlots.length * 48}px` }}>
@@ -1307,13 +1406,13 @@ export default function SchedulePage() {
                                     className="border-b border-gray-200 h-12 hover:bg-gray-50/50 transition-colors"
                                   />
                                 ))}
-                                
+
                                 {/* Appointments overlay */}
                                 {dayAppointments.map((app) => {
                                   const config = slotConfig[app.slot.type] || slotConfig.consult;
                                   const style = getAppointmentStyle(app);
                                   const tailorName = getTailorName(app.slot.tailorId);
-                                  
+
                                   return (
                                     <button
                                       key={app.id}
@@ -1330,7 +1429,7 @@ export default function SchedulePage() {
                                     >
                                       {/* Gradient overlay on hover */}
                                       <div className={`absolute inset-0 bg-gradient-to-br ${config.gradient} opacity-0 group-hover:opacity-10 transition-opacity`}></div>
-                                      
+
                                       <div className="relative flex items-start gap-1.5">
                                         <div className={`w-5 h-5 rounded-md bg-gradient-to-br ${config.gradient} flex items-center justify-center text-[10px] flex-shrink-0 shadow-sm group-hover:scale-110 transition-transform`}>
                                           {config.icon}
@@ -1340,19 +1439,18 @@ export default function SchedulePage() {
                                             <p className={`font-bold text-[10px] ${config.text}`}>
                                               {app.slot.startTime} - {app.slot.endTime}
                                             </p>
-                                            <span className={`text-[8px] px-1 py-0.5 rounded-full font-semibold ${
-                                              app.status === "pending"
-                                                ? "bg-yellow-100 text-yellow-700"
-                                                : app.status === "confirmed"
+                                            <span className={`text-[8px] px-1 py-0.5 rounded-full font-semibold ${app.status === "pending"
+                                              ? "bg-yellow-100 text-yellow-700"
+                                              : app.status === "confirmed"
                                                 ? "bg-blue-100 text-blue-700"
                                                 : app.status === "done"
-                                                ? "bg-green-100 text-green-700"
-                                                : "bg-gray-100 text-gray-700"
-                                            }`}>
+                                                  ? "bg-green-100 text-green-700"
+                                                  : "bg-gray-100 text-gray-700"
+                                              }`}>
                                               {app.status === "pending" ? "Chờ" :
-                                               app.status === "confirmed" ? "OK" :
-                                               app.status === "done" ? "Xong" :
-                                               app.status === "cancelled" ? "Hủy" : app.status}
+                                                app.status === "confirmed" ? "OK" :
+                                                  app.status === "done" ? "Xong" :
+                                                    app.status === "cancelled" ? "Hủy" : app.status}
                                             </span>
                                           </div>
                                           <p className="font-semibold text-gray-900 text-[10px] truncate mb-0.5">
@@ -1379,8 +1477,8 @@ export default function SchedulePage() {
               );
             })()}
           </div>
-            </div>
-          )}
+        </div>
+      )}
 
 
       {/* Slot form modal */}
@@ -1424,10 +1522,10 @@ export default function SchedulePage() {
                   <option value="all">-- Chọn thợ may --</option>
                   {tailors.map((tailor) => (
                     <option
-                      key={tailor.username || tailor.id}
-                      value={tailor.username || tailor.id}
+                      key={tailor.id}
+                      value={tailor.id}
                     >
-                      {tailor.name}
+                      {tailor.name || tailor.username}
                     </option>
                   ))}
                 </select>
@@ -1451,6 +1549,28 @@ export default function SchedulePage() {
                   onChange={handleSlotFormChange}
                   className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
                 />
+              </div>
+              <div className="md:col-span-2 grid grid-cols-2 gap-3 bg-slate-50 p-3 rounded-lg">
+                <div>
+                  <label className="block mb-1 text-slate-600 text-xs">Giờ nghỉ (Từ)</label>
+                  <input
+                    type="time"
+                    name="breakStartTime"
+                    value={slotForm.breakStartTime}
+                    onChange={handleSlotFormChange}
+                    className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm"
+                  />
+                </div>
+                <div>
+                  <label className="block mb-1 text-slate-600 text-xs">Giờ nghỉ (Đến)</label>
+                  <input
+                    type="time"
+                    name="breakEndTime"
+                    value={slotForm.breakEndTime}
+                    onChange={handleSlotFormChange}
+                    className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm"
+                  />
+                </div>
               </div>
               <div>
                 <label className="block mb-1 text-slate-600">Loại lịch</label>
@@ -1506,136 +1626,52 @@ export default function SchedulePage() {
           tailors={tailors}
           onClose={() => setSlotDetail(null)}
           onUpdateStatus={async (appId, newStatus) => {
-            const updated = updateAppointment(appId, { status: newStatus });
-            if (updated) {
-              setAppointments(getAppointments());
-              if (updated.orderId) {
+            try {
+              await appointmentService.updateStatus(appId, { status: newStatus });
+              showSuccess(`Đã cập nhật trạng thái: ${newStatus === "done" ? "Hoàn thành" : "Đã hủy"}`);
+
+              // Also update order status if applicable
+              const apt = slotDetail.apps?.find(a => a.id === appId);
+              if (apt?.orderId) {
                 const nextStatus =
                   newStatus === "done"
-                    ? updated.type === "pickup"
+                    ? apt.type === "pickup" || apt.type === "PICKUP"
                       ? "Hoàn thành"
                       : "Đang may"
                     : undefined;
                 if (nextStatus) {
                   try {
-                    await orderService.updateStatus(updated.orderId, { status: nextStatus });
+                    await orderService.updateStatus(apt.orderId, { status: nextStatus });
                   } catch (error) {
                     console.error("Error updating order status:", error);
                   }
                 }
               }
-              recalcSlotStatus(updated.slotId);
+
+              // Reload appointments after update
+              loadData();
+            } catch (error) {
+              console.error(error);
+              showError("Không thể cập nhật trạng thái");
             }
           }}
-          onToggleBlock={() => toggleSlotStatus(slotDetail.slot)}
+          onToggleBlock={() => {
+            toggleSlotStatus(slotDetail.slot);
+            setSlotDetail(null);
+          }}
+        />
+      )}
+
+      {/* Schedule Settings Modal */}
+      {showSettingsModal && (
+        <ScheduleSettingsModal
+          onClose={() => {
+            setShowSettingsModal(false);
+            loadData(); // Reload data in case settings changed
+          }}
+          tailors={tailors}
         />
       )}
     </div>
   );
 }
-
-function SlotDetailModal({
-  slot,
-  appointments,
-  tailors,
-  onClose,
-  onUpdateStatus,
-  onToggleBlock,
-}) {
-  const getTailorName = (tailorId) =>
-    (tailors.find((t) => t.username === tailorId || t.id === tailorId) || {})
-      .name || "Thợ";
-
-  const typeLabel = (type) => {
-    switch (type) {
-      case "consult":
-        return "Tư vấn";
-      case "measure":
-        return "Đo số đo";
-      case "fitting":
-        return "Thử đồ";
-      case "pickup":
-        return "Nhận đồ";
-      default:
-        return "Lịch hẹn";
-    }
-  };
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-auto">
-        <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100">
-          <div>
-            <h3 className="text-lg font-semibold text-slate-900">Chi tiết ca rảnh</h3>
-            <p className="text-xs text-slate-500">
-              {slot.date} · {slot.startTime}–{slot.endTime} · {typeLabel(slot.type)} ·{" "}
-              {getTailorName(slot.tailorId)}
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={onToggleBlock}
-              className="px-3 py-1 rounded-full text-xs border border-slate-200 text-slate-700 hover:bg-slate-50"
-            >
-              {slot.status === "blocked" ? "Mở lại" : "Chặn giờ"}
-            </button>
-            <button
-              type="button"
-              onClick={onClose}
-              className="text-slate-500 hover:text-slate-800"
-            >
-              ✕
-            </button>
-          </div>
-        </div>
-
-        <div className="p-4 space-y-3 text-sm">
-          {(!appointments || appointments.length === 0) && (
-            <p className="text-slate-500 italic">Chưa có khách đặt slot này.</p>
-          )}
-
-          {appointments && appointments.length > 0 && (
-            <div className="space-y-2">
-              {appointments.map((app) => (
-                <div
-                  key={app.id}
-                  className="border border-slate-200 rounded-lg p-3 flex justify-between items-start"
-                >
-                  <div>
-                    <p className="font-semibold text-slate-900">
-                      Khách: {app.customerId || "Khách lẻ"}
-                    </p>
-                    <p className="text-xs text-slate-500">Loại lịch: {typeLabel(app.type)}</p>
-                    <p className="text-xs text-slate-500">
-                      Trạng thái: <span className="font-semibold">{app.status}</span>
-                    </p>
-                  </div>
-                  <div className="flex gap-2">
-                    {app.status !== "done" && (
-                      <button
-                        onClick={() => onUpdateStatus(app.id, "done")}
-                        className="px-3 py-1 rounded-full bg-emerald-600 text-white text-xs hover:bg-emerald-700"
-                      >
-                        Đánh dấu xong
-                      </button>
-                    )}
-                    {app.status !== "cancelled" && (
-                      <button
-                        onClick={() => onUpdateStatus(app.id, "cancelled")}
-                        className="px-3 py-1 rounded-full bg-red-100 text-red-700 text-xs hover:bg-red-200"
-                      >
-                        Hủy lịch
-                      </button>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
-

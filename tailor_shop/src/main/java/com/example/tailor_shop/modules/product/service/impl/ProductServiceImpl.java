@@ -2,6 +2,7 @@ package com.example.tailor_shop.modules.product.service.impl;
 
 import com.example.tailor_shop.config.exception.BadRequestException;
 import com.example.tailor_shop.config.exception.NotFoundException;
+import com.example.tailor_shop.config.redis.CacheConfig;
 import com.example.tailor_shop.modules.favorite.domain.FavoriteItemType;
 import com.example.tailor_shop.modules.favorite.repository.FavoriteRepository;
 import com.example.tailor_shop.modules.product.domain.ProductEntity;
@@ -19,6 +20,9 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -42,10 +46,16 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     @Transactional(readOnly = true)
+    @Cacheable(value = CacheConfig.PRODUCTS_CACHE, key = "'list:' + #filter?.category + ':' + #filter?.occasion + ':' + #pageable.pageNumber + ':' + #pageable.pageSize", condition = "#currentUserId == null") // Only
+                                                                                                                                                                                                                // cache
+                                                                                                                                                                                                                // for
+                                                                                                                                                                                                                // anonymous
+                                                                                                                                                                                                                // users
     public Page<ProductListItemResponse> list(
             ProductFilterRequest filter,
             Pageable pageable,
             Long currentUserId) {
+        log.debug("Fetching products from database (cache miss)");
         Page<ProductEntity> page = productRepository.search(
                 filter != null ? filter.getCategory() : null,
                 filter != null ? filter.getOccasion() : null,
@@ -72,7 +82,13 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     @Transactional(readOnly = true)
+    @Cacheable(value = CacheConfig.PRODUCT_DETAIL_CACHE, key = "#key", condition = "#currentUserId == null") // Only
+                                                                                                             // cache
+                                                                                                             // for
+                                                                                                             // anonymous
+                                                                                                             // users
     public ProductDetailResponse detail(String key, Long currentUserId) {
+        log.debug("Fetching product detail from database (cache miss): {}", key);
         ProductEntity entity = productRepository.findByKeyAndIsDeletedFalse(key)
                 .orElseThrow(() -> new NotFoundException("Product not found"));
 
@@ -104,7 +120,12 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     @Transactional
+    @Caching(evict = {
+            @CacheEvict(value = CacheConfig.PRODUCTS_CACHE, allEntries = true),
+            @CacheEvict(value = CacheConfig.PRODUCT_DETAIL_CACHE, allEntries = true)
+    })
     public ProductDetailResponse create(ProductRequest request) {
+        log.info("Creating product, evicting cache");
         if (productRepository.existsByKeyAndIsDeletedFalse(request.getKey())) {
             throw new BadRequestException("Product key already exists");
         }
@@ -150,7 +171,12 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     @Transactional
+    @Caching(evict = {
+            @CacheEvict(value = CacheConfig.PRODUCTS_CACHE, allEntries = true),
+            @CacheEvict(value = CacheConfig.PRODUCT_DETAIL_CACHE, key = "#key")
+    })
     public ProductDetailResponse update(String key, ProductRequest request) {
+        log.info("Updating product {}, evicting cache", key);
         ProductEntity entity = productRepository.findByKeyAndIsDeletedFalse(key)
                 .orElseThrow(() -> new NotFoundException("Product not found"));
 
@@ -201,7 +227,12 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     @Transactional
+    @Caching(evict = {
+            @CacheEvict(value = CacheConfig.PRODUCTS_CACHE, allEntries = true),
+            @CacheEvict(value = CacheConfig.PRODUCT_DETAIL_CACHE, key = "#key")
+    })
     public void delete(String key) {
+        log.info("Deleting product {}, evicting cache", key);
         ProductEntity entity = productRepository.findByKeyAndIsDeletedFalse(key)
                 .orElseThrow(() -> new NotFoundException("Product not found"));
 

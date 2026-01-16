@@ -12,12 +12,14 @@ import java.util.List;
 public interface AppointmentService {
 
     Page<AppointmentResponse> list(Long staffId, Long customerId, LocalDate date,
-                                    AppointmentStatus status, AppointmentType type,
-                                    Long currentUserId, boolean isCustomer, Pageable pageable);
+            AppointmentStatus status, AppointmentType type,
+            Long currentUserId, boolean isCustomer, Pageable pageable);
 
     AppointmentResponse detail(Long id, Long currentUserId, boolean isCustomer);
 
     AppointmentResponse create(AppointmentRequest request, Long currentUserId);
+
+    AppointmentResponse createByCustomer(CustomerAppointmentRequest request, Long customerId);
 
     AppointmentResponse update(Long id, AppointmentRequest request, Long currentUserId);
 
@@ -27,29 +29,7 @@ public interface AppointmentService {
 
     List<AppointmentResponse> getSchedule(Long staffId, LocalDate date, AppointmentType type);
 
+    AppointmentResponse reschedule(Long id, RescheduleRequest request, Long currentUserId);
+
     List<AvailableSlotResponse> getAvailableSlots(Long staffId, LocalDate date, Integer durationMinutes);
-
-    // Working Slots
-    Page<WorkingSlotResponse> listWorkingSlots(Long staffId, LocalDate date, Pageable pageable);
-
-    Page<WorkingSlotResponse> listAllWorkingSlots(LocalDate date, Pageable pageable);
-
-    WorkingSlotResponse getWorkingSlot(Long id);
-
-    WorkingSlotResponse createWorkingSlot(WorkingSlotRequest request, Long currentUserId);
-
-    WorkingSlotResponse updateWorkingSlot(Long id, WorkingSlotRequest request, Long currentUserId);
-
-    void deleteWorkingSlot(Long id, Long currentUserId);
-
-    // Bulk operations for easier management
-    List<WorkingSlotResponse> createBulkWorkingSlots(BulkWorkingSlotRequest request, Long currentUserId);
-
-    void resetToDefaultWorkingHours(Long staffId, Long currentUserId);
-
-    WorkingHoursResponse getWorkingHours(Long staffId);
-
-    // Đóng cửa theo ngày/tuần/tháng
-    List<WorkingSlotResponse> closeDates(CloseDateRequest request, Long currentUserId);
 }
-

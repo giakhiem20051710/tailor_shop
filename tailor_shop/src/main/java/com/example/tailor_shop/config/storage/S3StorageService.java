@@ -1,5 +1,6 @@
 package com.example.tailor_shop.config.storage;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -13,6 +14,7 @@ import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 import software.amazon.awssdk.services.s3.model.HeadObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.NoSuchKeyException;
 
 import java.io.IOException;
@@ -20,6 +22,7 @@ import java.io.InputStream;
 import java.util.UUID;
 
 @Service
+@ConditionalOnExpression("'${aws.s3.access-key:}' != ''")
 public class S3StorageService {
 
     private static final long MAX_SIZE_BYTES = 50L * 1024 * 1024; // 50 MB
@@ -43,7 +46,8 @@ public class S3StorageService {
         String original = file.getOriginalFilename();
         String ext = StringUtils.getFilenameExtension(original);
         String key = (prefix != null ? prefix + "/" : "") + UUID.randomUUID() + (ext != null ? "." + ext : "");
-        String contentType = file.getContentType() != null ? file.getContentType() : MediaType.APPLICATION_OCTET_STREAM_VALUE;
+        String contentType = file.getContentType() != null ? file.getContentType()
+                : MediaType.APPLICATION_OCTET_STREAM_VALUE;
         try {
             // Bỏ ACL vì bucket không cho phép ACLs (AWS S3 mặc định)
             // Thay vào đó, dùng bucket policy để set public read
@@ -55,7 +59,9 @@ public class S3StorageService {
                     .build();
             s3Client.putObject(req, RequestBody.fromBytes(file.getBytes()));
             if (props.getBaseUrl() != null && !props.getBaseUrl().isBlank()) {
-                String base = props.getBaseUrl().endsWith("/") ? props.getBaseUrl().substring(0, props.getBaseUrl().length() - 1) : props.getBaseUrl();
+                String base = props.getBaseUrl().endsWith("/")
+                        ? props.getBaseUrl().substring(0, props.getBaseUrl().length() - 1)
+                        : props.getBaseUrl();
                 return base + "/" + key;
             }
             return "https://" + props.getBucket() + ".s3." + props.getRegion() + ".amazonaws.com/" + key;
@@ -64,18 +70,18 @@ public class S3StorageService {
         } catch (SdkException e) {
             // Log chi tiết lỗi S3
             String errorMsg = String.format(
-                "S3 Upload failed - Bucket: %s, Key: %s, Error: %s",
-                props.getBucket(), key, e.getMessage()
-            );
+                    "S3 Upload failed - Bucket: %s, Key: %s, Error: %s",
+                    props.getBucket(), key, e.getMessage());
             throw new RuntimeException(errorMsg, e);
         }
     }
 
     /**
      * Upload ảnh từ byte array lên S3
-     * @param prefix Thư mục trên S3 (ví dụ: "templates", "fabrics")
-     * @param imageData Byte array của ảnh
-     * @param fileName Tên file (ví dụ: "shirt.jpg")
+     * 
+     * @param prefix      Thư mục trên S3 (ví dụ: "templates", "fabrics")
+     * @param imageData   Byte array của ảnh
+     * @param fileName    Tên file (ví dụ: "shirt.jpg")
      * @param contentType Content type (ví dụ: "image/jpeg")
      * @return URL của ảnh trên S3
      */
@@ -89,7 +95,7 @@ public class S3StorageService {
 
         String ext = StringUtils.getFilenameExtension(fileName);
         String key = (prefix != null ? prefix + "/" : "") + UUID.randomUUID() + (ext != null ? "." + ext : "");
-        
+
         if (contentType == null || contentType.isBlank()) {
             contentType = MediaType.IMAGE_JPEG_VALUE; // Default to JPEG
         }
@@ -104,26 +110,26 @@ public class S3StorageService {
                     .contentType(contentType)
                     .build();
             s3Client.putObject(req, RequestBody.fromBytes(imageData));
-            
+
             if (props.getBaseUrl() != null && !props.getBaseUrl().isBlank()) {
-                String base = props.getBaseUrl().endsWith("/") 
-                    ? props.getBaseUrl().substring(0, props.getBaseUrl().length() - 1) 
-                    : props.getBaseUrl();
+                String base = props.getBaseUrl().endsWith("/")
+                        ? props.getBaseUrl().substring(0, props.getBaseUrl().length() - 1)
+                        : props.getBaseUrl();
                 return base + "/" + key;
             }
             return "https://" + props.getBucket() + ".s3." + props.getRegion() + ".amazonaws.com/" + key;
         } catch (SdkException e) {
             // Log chi tiết lỗi S3
             String errorMsg = String.format(
-                "S3 Upload failed - Bucket: %s, Key: %s, Error: %s",
-                props.getBucket(), key, e.getMessage()
-            );
+                    "S3 Upload failed - Bucket: %s, Key: %s, Error: %s",
+                    props.getBucket(), key, e.getMessage());
             throw new RuntimeException(errorMsg, e);
         }
     }
 
     /**
      * Kiểm tra object có tồn tại trong S3 không
+     * 
      * @param s3Key S3 key của object
      * @return true nếu object tồn tại, false nếu không
      */
@@ -148,6 +154,7 @@ public class S3StorageService {
 
     /**
      * Download object từ S3 bằng S3 SDK (không cần public read)
+     * 
      * @param s3Key S3 key của object (ví dụ: "uploads/uuid_filename.jpg")
      * @return Byte array của object
      * @throws IOException Nếu không thể download
@@ -164,7 +171,7 @@ public class S3StorageService {
                     .build();
 
             ResponseInputStream<GetObjectResponse> response = s3Client.getObject(getObjectRequest);
-            
+
             try (InputStream inputStream = response) {
                 byte[] buffer = new byte[8192];
                 java.io.ByteArrayOutputStream outputStream = new java.io.ByteArrayOutputStream();
@@ -191,7 +198,9 @@ public class S3StorageService {
 
     /**
      * Extract S3 key từ S3 URL
-     * @param s3Url Full S3 URL (ví dụ: "https://bucket.s3.region.amazonaws.com/key")
+     * 
+     * @param s3Url Full S3 URL (ví dụ:
+     *              "https://bucket.s3.region.amazonaws.com/key")
      * @return S3 key (ví dụ: "uploads/uuid_filename.jpg")
      */
     public String extractS3KeyFromUrl(String s3Url) {
@@ -201,9 +210,9 @@ public class S3StorageService {
 
         // Nếu có base URL, remove nó
         if (props.getBaseUrl() != null && !props.getBaseUrl().isBlank()) {
-            String baseUrl = props.getBaseUrl().endsWith("/") 
-                ? props.getBaseUrl().substring(0, props.getBaseUrl().length() - 1) 
-                : props.getBaseUrl();
+            String baseUrl = props.getBaseUrl().endsWith("/")
+                    ? props.getBaseUrl().substring(0, props.getBaseUrl().length() - 1)
+                    : props.getBaseUrl();
             if (s3Url.startsWith(baseUrl)) {
                 return s3Url.substring(baseUrl.length() + 1); // +1 để bỏ dấu /
             }
@@ -224,5 +233,34 @@ public class S3StorageService {
 
         return s3Url; // Return as is if can't parse
     }
-}
 
+    /**
+     * Xóa file từ S3
+     * 
+     * @param s3Key S3 key của file cần xóa (ví dụ: "images/uuid.jpg")
+     * @return true nếu xóa thành công, false nếu file không tồn tại
+     */
+    public boolean deleteFile(String s3Key) {
+        if (s3Key == null || s3Key.isBlank()) {
+            throw new IllegalArgumentException("S3 key cannot be empty");
+        }
+
+        try {
+            DeleteObjectRequest deleteRequest = DeleteObjectRequest.builder()
+                    .bucket(props.getBucket())
+                    .key(s3Key)
+                    .build();
+
+            s3Client.deleteObject(deleteRequest);
+            return true;
+        } catch (NoSuchKeyException e) {
+            // File không tồn tại, không phải lỗi nghiêm trọng
+            return false;
+        } catch (SdkException e) {
+            String errorMsg = String.format(
+                    "S3 Delete failed - Bucket: %s, Key: %s, Error: %s",
+                    props.getBucket(), s3Key, e.getMessage());
+            throw new RuntimeException(errorMsg, e);
+        }
+    }
+}

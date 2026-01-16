@@ -34,6 +34,11 @@ public class FavoriteEntity {
     @JoinColumn(name = "user_id", nullable = false)
     private UserEntity user;
 
+    // Legacy field - database có field customer_id yêu cầu có giá trị
+    // Set cùng giá trị với user.id
+    @Column(name = "customer_id", nullable = false)
+    private Long customerId; // Legacy field - set cùng giá trị với user.id
+
     @Enumerated(EnumType.STRING)
     @Column(name = "item_type", nullable = false, length = 50)
     private FavoriteItemType itemType;
@@ -43,6 +48,11 @@ public class FavoriteEntity {
 
     @Column(name = "item_key", length = 100)
     private String itemKey; // Key của sản phẩm (product_key, fabric_code, etc.) - để backward compatibility
+    
+    // Legacy field - database có field product_key yêu cầu có giá trị
+    // Map cùng giá trị với item_key
+    @Column(name = "product_key", length = 100)
+    private String productKey; // Legacy field - set cùng giá trị với itemKey
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)

@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Management Services - Product Module</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a472a 0%, #0d2818 50%, #05140c 100%);
+            color: #eee;
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: #4caf50;
+            font-size: 3em;
+            margin-bottom: 10px;
+            text-shadow: 0 0 30px rgba(76, 175, 80, 0.6);
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #888;
+            margin-bottom: 40px;
+            font-size: 1.2em;
+        }
+
+        h2 {
+            color: #81c784;
+            margin: 40px 0 20px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #4caf50;
+            font-size: 2em;
+        }
+
+        h3 {
+            color: #66bb6a;
+            margin: 30px 0 15px;
+            font-size: 1.5em;
+        }
+
+        h4 {
+            color: #4caf50;
+            margin: 20px 0 10px;
+        }
+
+        .section {
+            background: rgba(76, 175, 80, 0.08);
+            border-radius: 15px;
+            padding: 30px;
+            margin: 25px 0;
+            border: 1px solid rgba(76, 175, 80, 0.3);
+        }
+
+        .mermaid {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            margin: 20px 0;
+            box-shadow: 0 8px 32px rgba(76, 175, 80, 0.4);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 14px;
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        th,
+        td {
+            padding: 14px 16px;
+            text-align: left;
+            border: 1px solid rgba(76, 175, 80, 0.3);
+        }
+
+        th {
+            background: rgba(76, 175, 80, 0.4);
+            color: #81c784;
+            font-weight: 600;
+        }
+
+        tr:hover {
+            background: rgba(76, 175, 80, 0.15);
+        }
+
+        code {
+            background: rgba(76, 175, 80, 0.2);
+            padding: 3px 8px;
+            border-radius: 4px;
+            color: #81c784;
+            font-family: 'Consolas', monospace;
+        }
+
+        pre {
+            background: rgba(0, 0, 0, 0.5);
+            padding: 20px;
+            border-radius: 10px;
+            overflow-x: auto;
+            margin: 15px 0;
+            border-left: 4px solid #4caf50;
+        }
+
+        .highlight {
+            background: linear-gradient(135deg, rgba(76, 175, 80, 0.2), rgba(56, 142, 60, 0.2));
+            padding: 25px;
+            border-radius: 12px;
+            border-left: 5px solid #4caf50;
+            margin: 20px 0;
+        }
+
+        .toc {
+            background: rgba(76, 175, 80, 0.1);
+            padding: 25px;
+            border-radius: 12px;
+            margin: 30px 0;
+            border: 1px solid rgba(76, 175, 80, 0.3);
+        }
+
+        .toc a {
+            color: #81c784;
+            text-decoration: none;
+        }
+
+        .toc a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>📁 Image Management Services</h1>
+        <p class="subtitle">S3 Storage, Duplicate Detection & Filename Parsing</p>
+
+        <div class="toc">
+            <h3>📑 Mục Lục</h3>
+            <ol>
+                <li><a href="#overview">Tổng quan</a></li>
+                <li><a href="#image-asset">ImageAssetService - Core Image Management</a></li>
+                <li><a href="#duplicate">DuplicateCheckService - Checksum-based Detection</a></li>
+                <li><a href="#filename">FilenameParserService - Metadata Extraction</a></li>
+            </ol>
+        </div>
+
+        <div class="section" id="overview">
+            <h2>1️⃣ Tổng quan</h2>
+            <div class="highlight">
+                <strong>Image Management Services</strong> quản lý toàn bộ lifecycle của images:
+                <ul>
+                    <li>☁️ Upload to S3 storage</li>
+                    <li>🔍 Duplicate detection với MD5 checksum</li>
+                    <li>📝 Parse metadata từ filename</li>
+                    <li>🤖 AI classification integration</li>
+                    <li>🗑️ Cleanup orphan checksums</li>
+                </ul>
+            </div>
+
+            <h3>🔄 Complete Image Upload Flow</h3>
+            <div class="mermaid">
+                sequenceDiagram
+                participant U as User
+                participant C as Controller
+                participant IAS as ImageAssetService
+                participant FP as FilenameParserService
+                participant DC as DuplicateCheckService
+                participant S3 as AWS S3
+                participant AI as GeminiVisionService
+
+                U->>C: Upload image
+                C->>FP: parseFilename()
+                FP-->>C: ProductInfo
+
+                C->>DC: Calculate checksum
+                DC->>DC: Check if exists
+
+                alt Duplicate Found
+                DC-->>C: Existing asset
+                C-->>U: Return existing
+                else New Image
+                C->>S3: Upload file
+                S3-->>C: S3 URL
+                C->>AI: Classify image
+                AI-->>C: Classification
+                C->>IAS: Save ImageAsset
+                IAS->>DC: Save checksum
+                IAS-->>C: Response
+                C-->>U: Created
+                end
+            </div>
+        </div>
+
+        <div class="section" id="image-asset">
+            <h2>2️⃣ ImageAssetService</h2>
+
+            <h3>🎯 Key Responsibilities</h3>
+            <table>
+                <tr>
+                    <th>Method</th>
+                    <th>Purpose</th>
+                </tr>
+                <tr>
+                    <td><code>create()</code></td>
+                    <td>Create image asset manually</td>
+                </tr>
+                <tr>
+                    <td><code>createWithAutoClassification()</code></td>
+                    <td>Create with AI classification</td>
+                </tr>
+                <tr>
+                    <td><code>getById() / getAll()</code></td>
+                    <td>Retrieve operations</td>
+                </tr>
+                <tr>
+                    <td><code>getByCategory()</code></td>
+                    <td>Filter by category</td>
+                </tr>
+                <tr>
+                    <td><code>getByCategoryAndType()</code></td>
+                    <td>Multi-filter</td>
+                </tr>
+                <tr>
+                    <td><code>delete()</code></td>
+                    <td>Delete image + cleanup S3</td>
+                </tr>
+                <tr>
+                    <td><code>cleanupOrphanChecksums()</code></td>
+                    <td>Maintenance task</td>
+                </tr>
+            </table>
+
+            <h3>💾 Create with Auto-Classification</h3>
+            <pre><code>public ImageAssetResponse createWithAutoClassification(
+    String s3Key, String url, String description, String fileName) {
+    
+    // 1. Auto-classify với AI hoặc rule-based
+    var classification = imageClassificationService
+        .classify(description, fileName);
+    
+    // 2. Create entity
+    ImageAssetEntity entity = ImageAssetEntity.builder()
+        .s3Key(s3Key)
+        .url(url)
+        .category(classification.getCategory())
+        .type(classification.getType())
+        .gender(classification.getGender())
+        .aiDescription(description)
+        .build();
+    
+    // 3. Save to database
+    return toResponse(imageAssetRepository.save(entity));
+}</code></pre>
+
+            <h3>🗑️ Delete with S3 Cleanup</h3>
+            <pre><code>@Transactional
+public void delete(Long id) {
+    ImageAssetEntity entity = imageAssetRepository.findById(id)
+        .orElseThrow(() -> new NotFoundException("Image not found"));
+    
+    // 1. Delete from S3
+    if (entity.getS3Key() != null) {
+        s3StorageService.deleteFile(entity.getS3Key());
+    }
+    
+    // 2. Delete checksum
+    checksumRepository.deleteByImageAssetId(id);
+    
+    // 3. Delete entity
+    imageAssetRepository.delete(entity);
+}</code></pre>
+        </div>
+
+        <div class="section" id="duplicate">
+            <h2>3️⃣ DuplicateCheckService</h2>
+
+            <div class="highlight">
+                <strong>Purpose:</strong> Prevent duplicate uploads bằng MD5 checksum
+            </div>
+
+            <h3>🔍 Duplicate Detection Flow</h3>
+            <div class="mermaid">
+                flowchart LR
+                File[Upload File] --> MD5[Calculate MD5]
+                MD5 --> Check{Checksum<br />exists?}
+                Check -->|Yes| Return[Return existing<br />ImageAsset]
+                Check -->|No| Upload[Upload to S3]
+                Upload --> Save[Save new<br />ImageAsset]
+                Save --> SaveCS[Save Checksum]
+            </div>
+
+            <h3>📋 Key Methods</h3>
+            <pre><code>// Check multiple checksums at once
+Map<String, Boolean> checkDuplicates(List<String> checksums);
+
+// Get full info for duplicates
+Map<String, DuplicateInfo> getDuplicateInfo(List<String> checksums);
+
+// Save checksum after upload
+void saveChecksum(String checksum, Long imageAssetId, 
+                  Long productId, String s3Url);</code></pre>
+
+            <h3>💡 Usage Example</h3>
+            <pre><code>// 1. Calculate checksum
+String checksum = DigestUtils.md5Hex(fileBytes);
+
+// 2. Check if duplicate
+Map<String, Boolean> result = 
+    duplicateCheckService.checkDuplicates(List.of(checksum));
+
+if (result.get(checksum)) {
+    // Duplicate found - get existing info
+    var info = duplicateCheckService
+        .getDuplicateInfo(List.of(checksum))
+        .get(checksum);
+    
+    return existingImageAsset(info.getImageAssetId());
+} else {
+    // New image - proceed with upload
+    uploadToS3AndSave();
+}</code></pre>
+        </div>
+
+        <div class="section" id="filename">
+            <h2>4️⃣ FilenameParserService</h2>
+
+            <div class="highlight">
+                <strong>Tier 1 Classification:</strong> Fast, cheap metadata extraction từ filename
+            </div>
+
+            <h3>📝 Parsing Logic</h3>
+            <table>
+                <tr>
+                    <th>Extract</th>
+                    <th>Pattern</th>
+                    <th>Example</th>
+                </tr>
+                <tr>
+                    <td>Price</td>
+                    <td><code>(\d+)\s*(k|tr|vnd)</code></td>
+                    <td>"500k" → 500,000</td>
+                </tr>
+                <tr>
+                    <td>Category</td>
+                    <td>Keyword matching</td>
+                    <td>"vest" → "vest"</td>
+                </tr>
+                <tr>
+                    <td>Name</td>
+                    <td>Remove price + normalize</td>
+                    <td>"vest-nam-500k" → "Vest Nam"</td>
+                </tr>
+            </table>
+
+            <h3>🎯 Example Parsing</h3>
+            <pre><code>// Input filename: "ao-vest-nam-cong-so-2tr.jpg"
+
+ProductInfo info = filenameParserService.parseFilename(filename);
+
+// Output:
+// name: "Ao Vest Nam Cong So"
+// price: 2,000,000
+// category: "vest"
+// description: "Ao Vest Nam Cong So Vest công sở..."</code></pre>
+
+            <h3>🔧 Category Keywords</h3>
+            <pre><code>CATEGORY_KEYWORDS = {
+    "ao-dai", "áo dài" → "ao-dai"
+    "vest", "suit" → "vest"
+    "dam", "đầm", "dress" → "dam"
+    "quan", "quần", "pants" → "quan-tay"
+}</code></pre>
+
+            <h3>💰 Price Extraction</h3>
+            <pre><code>// Supports multiple formats:
+"500k" → 500,000
+"2tr" → 2,000,000
+"1.5tr" → 1,500,000
+"500000" → 500,000 (if >= 100k)</code></pre>
+        </div>
+
+        <div class="section" style="text-align: center; margin-top: 50px;">
+            <p style="color: #888;">Created for Tailor Shop Project</p>
+            <p style="color: #666; font-size: 12px;">Image Management Services - 2024</p>
+            <a href="ProductModule_Diagram.html" style="color: #81c784;">← Product Module</a> |
+            <a href="index.html" style="color: #81c784;">Home</a>
+        </div>
+    </div>
+
+    <script>
+        mermaid.initialize({ startOnLoad: true, theme: 'default', securityLevel: 'loose' });
+    </script>
+</body>
+
+</html>

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Scissors, Mail, Lock, Eye, EyeOff, User, Phone } from "lucide-react";
 import { authService, userService } from "../services";

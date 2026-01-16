@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bulk Processing Services - Product Module</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #4a148c 0%, #311b92 50%, #1a0f4d 100%);
+            color: #eee;
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: #ab47bc;
+            font-size: 3em;
+            margin-bottom: 10px;
+            text-shadow: 0 0 30px rgba(171, 71, 188, 0.6);
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #888;
+            margin-bottom: 40px;
+            font-size: 1.2em;
+        }
+
+        h2 {
+            color: #ba68c8;
+            margin: 40px 0 20px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #ab47bc;
+            font-size: 2em;
+        }
+
+        h3 {
+            color: #ce93d8;
+            margin: 30px 0 15px;
+            font-size: 1.5em;
+        }
+
+        .section {
+            background: rgba(171, 71, 188, 0.08);
+            border-radius: 15px;
+            padding: 30px;
+            margin: 25px 0;
+            border: 1px solid rgba(171, 71, 188, 0.3);
+        }
+
+        .mermaid {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            margin: 20px 0;
+            box-shadow: 0 8px 32px rgba(171, 71, 188, 0.4);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 14px;
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        th,
+        td {
+            padding: 14px 16px;
+            text-align: left;
+            border: 1px solid rgba(171, 71, 188, 0.3);
+        }
+
+        th {
+            background: rgba(171, 71, 188, 0.4);
+            color: #ba68c8;
+            font-weight: 600;
+        }
+
+        tr:hover {
+            background: rgba(171, 71, 188, 0.15);
+        }
+
+        code {
+            background: rgba(171, 71, 188, 0.2);
+            padding: 3px 8px;
+            border-radius: 4px;
+            color: #ba68c8;
+            font-family: 'Consolas', monospace;
+        }
+
+        pre {
+            background: rgba(0, 0, 0, 0.5);
+            padding: 20px;
+            border-radius: 10px;
+            overflow-x: auto;
+            margin: 15px 0;
+            border-left: 4px solid #ab47bc;
+        }
+
+        .highlight {
+            background: linear-gradient(135deg, rgba(171, 71, 188, 0.2), rgba(142, 36, 170, 0.2));
+            padding: 25px;
+            border-radius: 12px;
+            border-left: 5px solid #ab47bc;
+            margin: 20px 0;
+        }
+
+        .toc {
+            background: rgba(171, 71, 188, 0.1);
+            padding: 25px;
+            border-radius: 12px;
+            margin: 30px 0;
+            border: 1px solid rgba(171, 71, 188, 0.3);
+        }
+
+        .toc a {
+            color: #ba68c8;
+            text-decoration: none;
+        }
+
+        .toc a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>📦 Bulk Processing Services</h1>
+        <p class="subtitle">Batch Upload, Async Jobs & Trend Analysis</p>
+
+        <div class="toc">
+            <h3>📑 Mục Lục</h3>
+            <ol>
+                <li><a href="#overview">Tổng quan Bulk Processing</a></li>
+                <li><a href="#bulk-product">BulkProductService - Batch Upload</a></li>
+                <li><a href="#bulk-classification">BulkImageClassificationService</a></li>
+                <li><a href="#trend">TrendAnalysisService - Analytics</a></li>
+            </ol>
+        </div>
+
+        <div class="section" id="overview">
+            <h2>1️⃣ Tổng quan Bulk Processing</h2>
+
+            <div class="highlight">
+                <strong>Bulk Processing</strong> cho phép xử lý hàng loạt với:
+                <ul>
+                    <li>📦 Batch upload nhiều images/products</li>
+                    <li>⏱️ Async processing với job tracking</li>
+                    <li>📊 Progress monitoring</li>
+                    <li>🤖 AI classification cho mỗi item</li>
+                    <li>❌ Error handling & partial success</li>
+                </ul>
+            </div>
+
+            <h3>🔄 Bulk Upload Architecture</h3>
+            <div class="mermaid">
+                flowchart TB
+                subgraph Client["Client"]
+                U[User uploads<br />100 files]
+                end
+
+                subgraph API["API Layer"]
+                C[BulkProductController]
+                end
+
+                subgraph Service["Service Layer"]
+                BPS[BulkProductService]
+                BICS[BulkImageClassificationService]
+                end
+
+                subgraph Processing["Async Processing"]
+                Q[Job Queue]
+                W1[Worker 1]
+                W2[Worker 2]
+                W3[Worker 3]
+                end
+
+                subgraph Storage["Storage"]
+                DB[(Database)]
+                S3[(S3 Storage)]
+                end
+
+                U --> C
+                C --> BPS
+                BPS --> Q
+                BPS --> DB
+
+                Q --> W1
+                Q --> W2
+                Q --> W3
+
+                W1 --> BICS
+                W2 --> BICS
+                W3 --> BICS
+
+                BICS --> S3
+                BICS --> DB
+
+                style Q fill:#ab47bc,color:white
+                style BICS fill:#9c27b0,color:white
+            </div>
+        </div>
+
+        <div class="section" id="bulk-product">
+            <h2>2️⃣ BulkProductService</h2>
+
+            <h3>📋 Job Status Lifecycle</h3>
+            <div class="mermaid">
+                stateDiagram-v2
+                [*] --> PENDING: Create job
+                PENDING --> PROCESSING: Start processing
+                PROCESSING --> COMPLETED: All success
+                PROCESSING --> FAILED: All failed
+                PROCESSING --> PARTIAL: Some failed
+                COMPLETED --> [*]
+                FAILED --> [*]
+                PARTIAL --> [*]
+            </div>
+
+            <h3>🔄 Bulk Upload Flow</h3>
+            <div class="mermaid">
+                sequenceDiagram
+                participant U as User
+                participant C as Controller
+                participant BPS as BulkProductService
+                participant DB as Database
+                participant AI as AI Classification
+
+                U->>C: POST /bulk-upload<br />(100 files)
+                C->>BPS: submitBulkUpload()
+
+                BPS->>DB: Create BulkUploadJob<br />(status: PENDING)
+                DB-->>BPS: jobId
+
+                BPS-->>C: 202 Accepted
+                C-->>U: {jobId: "123"}
+
+                Note over BPS: Async Processing
+
+                loop For each file
+                BPS->>AI: Classify & upload
+                AI-->>BPS: Result
+                BPS->>DB: Update progress
+                end
+
+                BPS->>DB: Update status: COMPLETED
+
+                U->>C: GET /jobs/{jobId}/status
+                C->>BPS: getJobStatus()
+                BPS->>DB: Query job
+                DB-->>BPS: Job details
+                BPS-->>C: JobStatusResponse
+                C-->>U: {progress: 100/100}
+            </div>
+
+            <h3>📊 Job Tracking</h3>
+            <pre><code>@Entity
+@Table(name = "bulk_upload_jobs")
+public class BulkUploadJobEntity {
+    private Long id;
+    private String status; // PENDING, PROCESSING, COMPLETED, FAILED
+    private Integer totalFiles;
+    private Integer processedFiles;
+    private Integer successCount;
+    private Integer failureCount;
+    private LocalDateTime createdAt;
+    private LocalDateTime completedAt;
+}</code></pre>
+
+            <h3>💻 Submit Bulk Upload</h3>
+            <pre><code>@Async
+public CompletableFuture<BulkUploadJobResponse> submitBulkUpload(
+    List<MultipartFile> files) {
+    
+    // 1. Create job
+    BulkUploadJobEntity job = new BulkUploadJobEntity();
+    job.setStatus("PENDING");
+    job.setTotalFiles(files.size());
+    job = jobRepository.save(job);
+    
+    // 2. Process asynchronously
+    processBulkUpload(job.getId(), files);
+    
+    // 3. Return job info immediately
+    return CompletableFuture.completedFuture(
+        toResponse(job)
+    );
+}
+
+private void processBulkUpload(Long jobId, List<MultipartFile> files) {
+    BulkUploadJobEntity job = jobRepository.findById(jobId).get();
+    job.setStatus("PROCESSING");
+    jobRepository.save(job);
+    
+    int success = 0;
+    int failure = 0;
+    
+    for (MultipartFile file : files) {
+        try {
+            // Upload & classify
+            imageAssetService.uploadAndClassify(file);
+            success++;
+        } catch (Exception e) {
+            failure++;
+            log.error("Failed to process file: {}", file.getOriginalFilename(), e);
+        }
+        
+        // Update progress
+        job.setProcessedFiles(success + failure);
+        jobRepository.save(job);
+    }
+    
+    // Mark as completed
+    job.setStatus(failure == 0 ? "COMPLETED" : "PARTIAL");
+    job.setSuccessCount(success);
+    job.setFailureCount(failure);
+    job.setCompletedAt(LocalDateTime.now());
+    jobRepository.save(job);
+}</code></pre>
+        </div>
+
+        <div class="section" id="bulk-classification">
+            <h2>3️⃣ BulkImageClassificationService</h2>
+
+            <div class="highlight">
+                <strong>Optimized bulk classification</strong> với:
+                <ul>
+                    <li>🔄 Parallel processing</li>
+                    <li>⏱️ Rate limiting per batch</li>
+                    <li>📊 Progress callbacks</li>
+                </ul>
+            </div>
+
+            <h3>💻 Batch Classification</h3>
+            <pre><code>public List<ClassificationResult> classifyBatch(
+    List<MultipartFile> files,
+    ProgressCallback callback) {
+    
+    List<ClassificationResult> results = new ArrayList<>();
+    
+    for (int i = 0; i < files.size(); i++) {
+        MultipartFile file = files.get(i);
+        
+        try {
+            // Classify with rate limiting
+            var result = aiRateLimiter.executeWithRateLimit(() ->
+                geminiService.analyzeImage(
+                    file.getBytes(), 
+                    file.getContentType()
+                )
+            );
+            
+            results.add(result);
+            
+            // Report progress
+            if (callback != null) {
+                callback.onProgress(i + 1, files.size());
+            }
+            
+        } catch (Exception e) {
+            results.add(ClassificationResult.failed(e));
+        }
+    }
+    
+    return results;
+}</code></pre>
+        </div>
+
+        <div class="section" id="trend">
+            <h2>4️⃣ TrendAnalysisService</h2>
+
+            <div class="highlight">
+                <strong>TrendAnalysisService</strong> phân tích xu hướng sản phẩm
+            </div>
+
+            <h3>📊 Analysis Types</h3>
+            <table>
+                <tr>
+                    <th>Analysis</th>
+                    <th>Description</th>
+                </tr>
+                <tr>
+                    <td>Popular Categories</td>
+                    <td>Top categories by sales/views</td>
+                </tr>
+                <tr>
+                    <td>Price Trends</td>
+                    <td>Average price changes over time</td>
+                </tr>
+                <tr>
+                    <td>Seasonal Patterns</td>
+                    <td>Demand by season</td>
+                </tr>
+                <tr>
+                    <td>Color Trends</td>
+                    <td>Popular colors this month</td>
+                </tr>
+            </table>
+
+            <h3>💻 Get Trends</h3>
+            <pre><code>public TrendAnalysisResponse getTrends(LocalDate from, LocalDate to) {
+    // 1. Query products in date range
+    List<ProductEntity> products = productRepository
+        .findByCreatedAtBetween(from, to);
+    
+    // 2. Analyze categories
+    Map<String, Long> categoryCount = products.stream()
+        .collect(Collectors.groupingBy(
+            ProductEntity::getCategory,
+            Collectors.counting()
+        ));
+    
+    // 3. Analyze price ranges
+    Map<String, BigDecimal> avgPrices = products.stream()
+        .collect(Collectors.groupingBy(
+            ProductEntity::getCategory,
+            Collectors.averagingDouble(p -> 
+                p.getPrice().doubleValue()
+            )
+        ));
+    
+    // 4. Build response
+    return TrendAnalysisResponse.builder()
+        .topCategories(categoryCount)
+        .averagePrices(avgPrices)
+        .totalProducts(products.size())
+        .build();
+}</code></pre>
+        </div>
+
+        <div class="section" style="text-align: center; margin-top: 50px;">
+            <p style="color: #888;">Created for Tailor Shop Project</p>
+            <p style="color: #666; font-size: 12px;">Bulk Processing Services - 2024</p>
+            <a href="ProductModule_Diagram.html" style="color: #ba68c8;">← Product Module</a> |
+            <a href="index.html" style="color: #ba68c8;">Home</a>
+        </div>
+    </div>
+
+    <script>
+        mermaid.initialize({ startOnLoad: true, theme: 'default', securityLevel: 'loose' });
+    </script>
+</body>
+
+</html>

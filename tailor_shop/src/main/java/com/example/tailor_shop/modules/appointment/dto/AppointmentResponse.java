@@ -6,6 +6,8 @@ import com.example.tailor_shop.modules.appointment.domain.AppointmentType;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.OffsetDateTime;
+import java.util.List;
+import java.util.Set;
 
 public class AppointmentResponse {
 
@@ -18,9 +20,13 @@ public class AppointmentResponse {
     private LocalDate appointmentDate;
     private LocalTime appointmentTime;
     private AppointmentStatus status;
+    private Integer durationMinutes;
+    private LocalTime estimatedEndTime;
     private String notes;
     private OffsetDateTime createdAt;
     private OffsetDateTime updatedAt;
+    private Set<AppointmentType> secondaryTypes;
+    private List<String> checklist;
 
     public static class Party {
         private Long id;
@@ -123,6 +129,14 @@ public class AppointmentResponse {
         this.type = type;
     }
 
+    public Set<AppointmentType> getSecondaryTypes() {
+        return secondaryTypes;
+    }
+
+    public void setSecondaryTypes(Set<AppointmentType> secondaryTypes) {
+        this.secondaryTypes = secondaryTypes;
+    }
+
     public LocalDate getAppointmentDate() {
         return appointmentDate;
     }
@@ -145,6 +159,22 @@ public class AppointmentResponse {
 
     public void setStatus(AppointmentStatus status) {
         this.status = status;
+    }
+
+    public Integer getDurationMinutes() {
+        return durationMinutes;
+    }
+
+    public void setDurationMinutes(Integer durationMinutes) {
+        this.durationMinutes = durationMinutes;
+    }
+
+    public LocalTime getEstimatedEndTime() {
+        return estimatedEndTime;
+    }
+
+    public void setEstimatedEndTime(LocalTime estimatedEndTime) {
+        this.estimatedEndTime = estimatedEndTime;
     }
 
     public String getNotes() {
@@ -170,5 +200,12 @@ public class AppointmentResponse {
     public void setUpdatedAt(OffsetDateTime updatedAt) {
         this.updatedAt = updatedAt;
     }
-}
 
+    public List<String> getChecklist() {
+        return checklist;
+    }
+
+    public void setChecklist(List<String> checklist) {
+        this.checklist = checklist;
+    }
+}

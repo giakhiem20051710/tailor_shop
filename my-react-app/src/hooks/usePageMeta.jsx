@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { Helmet } from "react-helmet-async";
 
+// --- CẤU HÌNH MẶC ĐỊNH ---
 const defaultMeta = {
   title: "My Hiền Tailor Studio",
   description:
@@ -15,6 +16,7 @@ const defaultMeta = {
   keywords: "may đo, áo dài, vest, đầm dạ hội, vải cao cấp, My Hiền",
 };
 
+// --- SCHEMA JSON-LD ---
 const localBusinessSchema = {
   "@context": "https://schema.org",
   "@type": "Tailor",
@@ -57,13 +59,14 @@ const localBusinessSchema = {
   ],
 };
 
-const PageMetaContext = createContext({
-  setMeta: () => {},
-});
+// --- CONTEXT ---
+const PageMetaContext = createContext(null);
 
+// --- PROVIDER COMPONENT (Dùng trong main.jsx) ---
 export function PageMetaProvider({ children }) {
   const [meta, setMeta] = useState(defaultMeta);
 
+  // Merge meta hiện tại với default để đảm bảo luôn có đủ field
   const mergedMeta = useMemo(
     () => ({
       ...defaultMeta,
@@ -82,6 +85,7 @@ export function PageMetaProvider({ children }) {
   return (
     <PageMetaContext.Provider value={contextValue}>
       <Helmet prioritizeSeoTags>
+        {/* Basic Meta */}
         <title>{mergedMeta.title}</title>
         {mergedMeta.description && (
           <meta name="description" content={mergedMeta.description} />
@@ -92,6 +96,8 @@ export function PageMetaProvider({ children }) {
         {mergedMeta.robots && (
           <meta name="robots" content={mergedMeta.robots} />
         )}
+
+        {/* Open Graph / Facebook */}
         <meta property="og:type" content={mergedMeta.ogType || "website"} />
         <meta
           property="og:title"
@@ -109,6 +115,8 @@ export function PageMetaProvider({ children }) {
         {mergedMeta.ogUrl && (
           <meta property="og:url" content={mergedMeta.ogUrl} />
         )}
+
+        {/* Twitter */}
         <meta name="twitter:card" content="summary_large_image" />
         <meta
           name="twitter:title"
@@ -120,9 +128,13 @@ export function PageMetaProvider({ children }) {
         {mergedMeta.ogImage && (
           <meta name="twitter:image" content={mergedMeta.ogImage} />
         )}
+
+        {/* Canonical */}
         {mergedMeta.canonical && (
           <link rel="canonical" href={mergedMeta.canonical} />
         )}
+
+        {/* JSON-LD Schema */}
         <script type="application/ld+json">
           {JSON.stringify(localBusinessSchema)}
         </script>
@@ -132,21 +144,43 @@ export function PageMetaProvider({ children }) {
   );
 }
 
-/**
- * Hook dùng trong từng page để cập nhật meta hiện tại.
- * Giữ nguyên API cũ để không phải thay đổi mọi page.
- */
+// --- HOOK (Dùng trong các Page Component) ---
 export default function usePageMeta(metaConfig = {}) {
-  const { setMeta } = useContext(PageMetaContext);
+  const context = useContext(PageMetaContext);
+  
+  // Kiểm tra nếu hook được dùng ngoài Provider
+  if (!context) {
+    console.warn("usePageMeta must be used within a PageMetaProvider");
+    return;
+  }
+
+  const { setMeta } = context;
+
   useEffect(() => {
     if (!setMeta) return;
+
+    // Cập nhật meta khi component mount
     setMeta((prev) => ({
       ...prev,
       ...metaConfig,
+      // Ưu tiên các giá trị cụ thể nếu có
       ogTitle: metaConfig.ogTitle || metaConfig.title || prev.ogTitle,
       ogDescription:
         metaConfig.ogDescription || metaConfig.description || prev.ogDescription,
     }));
-  }, [setMeta, JSON.stringify(metaConfig)]);
-}
 
+    // Cleanup (Optional): Reset về default khi unmount nếu muốn
+    // return () => setMeta(defaultMeta); 
+  }, [
+    setMeta,
+    metaConfig.title,
+    metaConfig.description,
+    metaConfig.ogTitle,
+    metaConfig.ogDescription,
+    metaConfig.ogImage,
+    metaConfig.ogUrl,
+    metaConfig.canonical,
+    metaConfig.keywords,
+    metaConfig.robots,
+  ]);
+}

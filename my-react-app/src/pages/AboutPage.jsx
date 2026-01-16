@@ -1,11 +1,45 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import "./AboutPage.css";
 import Header from "../components/Header.jsx";
+
 import usePageMeta from "../hooks/usePageMeta";
+import { imageAssetService } from "../services/index.js";
+
+const FALLBACK_PRODUCT_IMAGE = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='800' height='1000'%3E%3Crect fill='%23f3f4f6' width='800' height='1000'/%3E%3Ctext x='50%25' y='50%25' font-family='Arial, sans-serif' font-size='24' fill='%239ca3af' text-anchor='middle' dominant-baseline='middle'%3ENo Image%3C/text%3E%3C/svg%3E";
 
 const AboutPage = () => {
   const navigate = useNavigate();
+  const [products, setProducts] = useState([]);
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const response = await imageAssetService.filter({
+          category: "template",
+          page: 0,
+          size: 8, // Get 8 items for the grid
+        });
+        const data = imageAssetService.parseResponse(response);
+        const items = data?.content || data?.data || (Array.isArray(data) ? data : []);
+
+        const mappedProducts = items.map(item => ({
+          name: item.type ? item.type.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase()) : "Sản phẩm thiết kế",
+          price: "Liên hệ",
+          img: item.url || item.thumbnailUrl || FALLBACK_PRODUCT_IMAGE,
+          description: item.description || "Sản phẩm thiết kế cao cấp từ Mỹ Hiền Fashion",
+          tag: item.category || "New Arrival",
+          id: item.id
+        }));
+
+        setProducts(mappedProducts);
+      } catch (error) {
+        console.error("Failed to fetch products for About page:", error);
+      }
+    };
+
+    fetchProducts();
+  }, []);
 
   usePageMeta({
     title: "Về My Hiền Tailor | Atelier may đo tại TP.HCM",
@@ -158,7 +192,7 @@ const AboutPage = () => {
         <div className="section-container">
           <h2 className="section-title">SẢN PHẨM MỚI NHẤT</h2>
           <div className="products-grid">
-            {[
+            {(products.length > 0 ? products : [
               {
                 name: "Áo Blazer Nữ – Noir Chic Blazer",
                 price: "1.350.000 ₫",
@@ -179,27 +213,7 @@ const AboutPage = () => {
                 price: "450.000 ₫",
                 img: "https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=600&auto=format&fit=crop&q=80",
               },
-              {
-                name: "Bralette – Sérénité Chaleureuse",
-                price: "450.000 ₫",
-                img: "https://images.unsplash.com/photo-1539533018447-63fcce2678e3?w=600&auto=format&fit=crop&q=80",
-              },
-              {
-                name: "Bralette – Lumière Éternelle",
-                price: "450.000 ₫",
-                img: "https://images.unsplash.com/photo-1552374196-c4e7ffc6e126?w=600&auto=format&fit=crop&q=80",
-              },
-              {
-                name: "Bralette – Éclat de Rosée",
-                price: "450.000 ₫",
-                img: "https://images.unsplash.com/photo-1586790170083-2f9ceadc732d?w=600&auto=format&fit=crop&q=80",
-              },
-              {
-                name: "Set Sơ Mi Phối Nơ – A009",
-                price: "1.150.000 ₫",
-                img: "https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?w=600&auto=format&fit=crop&q=80",
-              },
-            ].map((p, idx) => (
+            ]).map((p, idx) => (
               <div key={idx} className="product-card">
                 <div className="product-card__image-wrap">
                   <img src={p.img} alt={p.name} />

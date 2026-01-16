@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product CRUD Services - Product Module</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a237e 0%, #0d1642 50%, #050a21 100%);
+            color: #eee;
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: #2196f3;
+            font-size: 3em;
+            margin-bottom: 10px;
+            text-shadow: 0 0 30px rgba(33, 150, 243, 0.6);
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #888;
+            margin-bottom: 40px;
+            font-size: 1.2em;
+        }
+
+        h2 {
+            color: #64b5f6;
+            margin: 40px 0 20px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #2196f3;
+            font-size: 2em;
+        }
+
+        h3 {
+            color: #42a5f5;
+            margin: 30px 0 15px;
+            font-size: 1.5em;
+        }
+
+        .section {
+            background: rgba(33, 150, 243, 0.08);
+            border-radius: 15px;
+            padding: 30px;
+            margin: 25px 0;
+            border: 1px solid rgba(33, 150, 243, 0.3);
+        }
+
+        .mermaid {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            margin: 20px 0;
+            box-shadow: 0 8px 32px rgba(33, 150, 243, 0.4);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 14px;
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        th,
+        td {
+            padding: 14px 16px;
+            text-align: left;
+            border: 1px solid rgba(33, 150, 243, 0.3);
+        }
+
+        th {
+            background: rgba(33, 150, 243, 0.4);
+            color: #64b5f6;
+            font-weight: 600;
+        }
+
+        tr:hover {
+            background: rgba(33, 150, 243, 0.15);
+        }
+
+        code {
+            background: rgba(33, 150, 243, 0.2);
+            padding: 3px 8px;
+            border-radius: 4px;
+            color: #64b5f6;
+            font-family: 'Consolas', monospace;
+        }
+
+        pre {
+            background: rgba(0, 0, 0, 0.5);
+            padding: 20px;
+            border-radius: 10px;
+            overflow-x: auto;
+            margin: 15px 0;
+            border-left: 4px solid #2196f3;
+        }
+
+        .highlight {
+            background: linear-gradient(135deg, rgba(33, 150, 243, 0.2), rgba(25, 118, 210, 0.2));
+            padding: 25px;
+            border-radius: 12px;
+            border-left: 5px solid #2196f3;
+            margin: 20px 0;
+        }
+
+        .toc {
+            background: rgba(33, 150, 243, 0.1);
+            padding: 25px;
+            border-radius: 12px;
+            margin: 30px 0;
+            border: 1px solid rgba(33, 150, 243, 0.3);
+        }
+
+        .toc a {
+            color: #64b5f6;
+            text-decoration: none;
+        }
+
+        .toc a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>🛠️ Product CRUD Services</h1>
+        <p class="subtitle">ProductService, StyleService, CategoryTemplate & Configuration</p>
+
+        <div class="toc">
+            <h3>📑 Mục Lục</h3>
+            <ol>
+                <li><a href="#product">ProductServiceImpl - Main CRUD Operations</a></li>
+                <li><a href="#style">StyleServiceImpl - Style Management</a></li>
+                <li><a href="#category">CategoryTemplateServiceImpl</a></li>
+                <li><a href="#config">ProductConfigurationServiceImpl</a></li>
+            </ol>
+        </div>
+
+        <div class="section" id="product">
+            <h2>1️⃣ ProductServiceImpl</h2>
+
+            <div class="highlight">
+                <strong>Core service</strong> cho Product CRUD operations với:
+                <ul>
+                    <li>✅ Create, Read, Update, Delete</li>
+                    <li>🔍 Advanced filtering & pagination</li>
+                    <li>❤️ Favorite integration</li>
+                    <li>🔗 Related products</li>
+                    <li>📝 Slug generation</li>
+                    <li>🗑️ Soft delete</li>
+                </ul>
+            </div>
+
+            <h3>📋 Key Methods</h3>
+            <table>
+                <tr>
+                    <th>Method</th>
+                    <th>Purpose</th>
+                    <th>Features</th>
+                </tr>
+                <tr>
+                    <td><code>list()</code></td>
+                    <td>Get paginated products</td>
+                    <td>Filter by category, type, price, favorite status</td>
+                </tr>
+                <tr>
+                    <td><code>detail()</code></td>
+                    <td>Get product details</td>
+                    <td>Includes related products, favorite status</td>
+                </tr>
+                <tr>
+                    <td><code>create()</code></td>
+                    <td>Create new product</td>
+                    <td>Auto-generate key, slug, normalize category</td>
+                </tr>
+                <tr>
+                    <td><code>update()</code></td>
+                    <td>Update existing product</td>
+                    <td>Update slug if name changed</td>
+                </tr>
+                <tr>
+                    <td><code>delete()</code></td>
+                    <td>Soft delete product</td>
+                    <td>Set isDeleted = true</td>
+                </tr>
+            </table>
+
+            <h3>🔄 Create Product Flow</h3>
+            <div class="mermaid">
+                flowchart TB
+                Start([Create Product Request])
+
+                Start --> GenKey[Generate unique key<br />UUID]
+                GenKey --> GenSlug[Generate slug<br />from name]
+                GenSlug --> Normalize[Normalize category]
+                Normalize --> Convert[Convert JSON fields<br />gallery, materials, colors]
+                Convert --> Save[Save to database]
+                Save --> Response[Return ProductDetailResponse]
+
+                style Start fill:#2196f3,color:white
+                style Response fill:#4caf50,color:white
+            </div>
+
+            <h3>💻 Create Implementation</h3>
+            <pre><code>@Transactional
+public ProductDetailResponse create(ProductRequest request) {
+    // 1. Generate unique key
+    String key = UUID.randomUUID().toString();
+    
+    // 2. Generate slug
+    String slug = generateSlug(request.getSlug(), request.getName());
+    
+    // 3. Normalize category
+    String category = normalizeCategory(request.getCategory());
+    
+    // 4. Build entity
+    ProductEntity entity = ProductEntity.builder()
+        .key(key)
+        .name(request.getName())
+        .slug(slug)
+        .category(category)
+        .price(request.getPrice())
+        .gallery(convertGalleryToString(request.getGallery()))
+        .materials(convertListToJson(request.getMaterials()))
+        .colors(convertListToJson(request.getColors()))
+        .isDeleted(false)
+        .build();
+    
+    // 5. Save
+    ProductEntity saved = productRepository.save(entity);
+    
+    // 6. Return response
+    return toDetailResponse(saved, false, List.of());
+}</code></pre>
+
+            <h3>🔍 List with Filtering</h3>
+            <pre><code>public Page<ProductListItemResponse> list(
+    ProductFilterRequest filter, 
+    Pageable pageable, 
+    Long currentUserId) {
+    
+    // 1. Get favorite keys for current user
+    Set<String> favoriteKeys = currentUserId != null
+        ? favoriteRepository.findByUserId(currentUserId)
+            .stream()
+            .map(FavoriteEntity::getProductKey)
+            .collect(Collectors.toSet())
+        : Set.of();
+    
+    // 2. Query with filters
+    Page<ProductEntity> page = productRepository.findAll(
+        ProductSpecification.withFilters(filter), 
+        pageable
+    );
+    
+    // 3. Map to response
+    return page.map(entity -> 
+        toListItemResponse(entity, favoriteKeys)
+    );
+}</code></pre>
+
+            <h3>🗑️ Soft Delete</h3>
+            <pre><code>@Transactional
+public void delete(String key) {
+    ProductEntity product = productRepository
+        .findByKeyOrSlug(key, key)
+        .orElseThrow(() -> new NotFoundException("Product not found"));
+    
+    product.setIsDeleted(true);
+    productRepository.save(product);
+    // Product vẫn trong DB, chỉ đánh dấu deleted
+}</code></pre>
+        </div>
+
+        <div class="section" id="style">
+            <h2>2️⃣ StyleServiceImpl</h2>
+
+            <div class="highlight">
+                <strong>StyleService</strong> quản lý các style/phong cách sản phẩm
+            </div>
+
+            <h3>📋 Operations</h3>
+            <ul>
+                <li>Create, Read, Update, Delete styles</li>
+                <li>Filter by characteristics</li>
+                <li>Pagination support</li>
+            </ul>
+
+            <h3>💾 Style Entity</h3>
+            <pre><code>@Entity
+@Table(name = "styles")
+public class StyleEntity {
+    private Long id;
+    private String name;
+    private String description;
+    private String characteristics; // JSON
+    private LocalDateTime createdAt;
+}</code></pre>
+        </div>
+
+        <div class="section" id="category">
+            <h2>3️⃣ CategoryTemplateServiceImpl</h2>
+
+            <div class="highlight">
+                <strong>CategoryTemplate</strong> định nghĩa template cho từng category
+            </div>
+
+            <h3>🎯 Purpose</h3>
+            <ul>
+                <li>Define default fields per category</li>
+                <li>Validation rules</li>
+                <li>UI rendering hints</li>
+            </ul>
+        </div>
+
+        <div class="section" id="config">
+            <h2>4️⃣ ProductConfigurationServiceImpl</h2>
+
+            <div class="highlight">
+                <strong>ProductConfiguration</strong> quản lý cấu hình sản phẩm
+            </div>
+
+            <h3>⚙️ Configuration Types</h3>
+            <ul>
+                <li>Size charts</li>
+                <li>Color palettes</li>
+                <li>Material options</li>
+                <li>Pricing rules</li>
+            </ul>
+        </div>
+
+        <div class="section" style="text-align: center; margin-top: 50px;">
+            <p style="color: #888;">Created for Tailor Shop Project</p>
+            <p style="color: #666; font-size: 12px;">Product CRUD Services - 2024</p>
+            <a href="ProductModule_Diagram.html" style="color: #64b5f6;">← Product Module</a> |
+            <a href="index.html" style="color: #64b5f6;">Home</a>
+        </div>
+    </div>
+
+    <script>
+        mermaid.initialize({ startOnLoad: true, theme: 'default', securityLevel: 'loose' });
+    </script>
+</body>
+
+</html>

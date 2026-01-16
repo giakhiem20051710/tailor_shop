@@ -3,7 +3,8 @@
   --mh-bg-soft: #f9fafb;
   --mh-text: #111827;
   --mh-text-muted: #6b7280;
-  --mh-primary: #b45309; /* amber/brown */
+  --mh-primary: #b45309;
+  /* amber/brown */
   --mh-primary-dark: #92400e;
   --mh-accent: #f59e0b;
   --mh-border: #e5e7eb;
@@ -19,12 +20,14 @@
     sans-serif;
 
   /* THÊM 2 DÒNG NÀY */
-  padding-top: 170px;   /* mobile / tablet */
+  padding-top: 170px;
+  /* mobile / tablet */
 }
 
 @media (min-width: 768px) {
   .about-page {
-    padding-top: 190px; /* desktop – cao hơn chút để hở hẳn hero */
+    padding-top: 190px;
+    /* desktop – cao hơn chút để hở hẳn hero */
   }
 }
 
@@ -257,12 +260,10 @@
 
 .about-hero {
   padding: 32px 16px 40px;
-  background: linear-gradient(
-    135deg,
-    #fef3c7 0%,
-    #fff7ed 30%,
-    #f9fafb 100%
-  );
+  background: linear-gradient(135deg,
+      #fef3c7 0%,
+      #fff7ed 30%,
+      #f9fafb 100%);
 }
 
 .about-hero__inner {
@@ -512,7 +513,7 @@
 }
 
 .product-card__image-wrap {
-  height: 170px;
+  height: 320px;
   background: #e5e7eb;
   overflow: hidden;
 }
@@ -521,6 +522,7 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
+  object-position: top center;
 }
 
 .product-card__info {
@@ -556,7 +558,7 @@
   margin-bottom: 22px;
 }
 
-.about-contact__box p + p {
+.about-contact__box p+p {
   margin-top: 4px;
 }
 
@@ -664,6 +666,7 @@
 }
 
 @media (max-width: 640px) {
+
   .about-header__top-inner,
   .about-header__middle-inner,
   .about-header__nav-inner {

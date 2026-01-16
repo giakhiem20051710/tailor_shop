@@ -19,8 +19,11 @@ public class WorkingSlotEntity {
     private Long id;
 
     @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "staff_id", nullable = false)
+    @JoinColumn(name = "tailor_id", nullable = false)
     private UserEntity staff;
+
+    @Column(name = "staff_id", nullable = false)
+    private Long staffId;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "day_of_week", nullable = false, length = 10)
@@ -65,6 +68,17 @@ public class WorkingSlotEntity {
 
     public void setStaff(UserEntity staff) {
         this.staff = staff;
+        if (staff != null) {
+            this.staffId = staff.getId();
+        }
+    }
+
+    public Long getStaffId() {
+        return staffId;
+    }
+
+    public void setStaffId(Long staffId) {
+        this.staffId = staffId;
     }
 
     public DayOfWeek getDayOfWeek() {
@@ -139,4 +153,3 @@ public class WorkingSlotEntity {
         return updatedAt;
     }
 }
-

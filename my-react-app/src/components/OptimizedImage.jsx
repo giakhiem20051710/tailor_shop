@@ -25,7 +25,9 @@ const OptimizedImage = ({
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
+            // Preload image with high quality settings
             const img = new Image();
+            // Removed crossOrigin setting to avoid CORS issues with S3
             img.src = src;
             img.onload = () => {
               setImageSrc(src);
@@ -58,9 +60,32 @@ const OptimizedImage = ({
         src={imageSrc}
         alt={alt}
         loading={loading}
-        className={`transition-opacity duration-300 ${
-          isLoaded ? "opacity-100" : "opacity-50"
-        } ${hasError ? "opacity-30" : ""}`}
+        decoding="async"
+        fetchPriority={loading === "eager" ? "high" : "auto"}
+        className={`transition-opacity duration-300 ${isLoaded ? "opacity-100" : "opacity-50"
+          } ${hasError ? "opacity-30" : ""} ${className.includes('w-auto') ? '' : 'w-full h-full'}`}
+        style={{
+          WebkitImageRendering: '-webkit-optimize-contrast',
+          imageRendering: props.style?.imageRendering || 'auto',
+          objectFit: props.style?.objectFit || 'cover',
+          objectPosition: props.style?.objectPosition || 'center',
+          minHeight: props.style?.width === 'auto' ? 'auto' : '100%',
+          width: props.style?.width || '100%',
+          height: props.style?.height || '100%',
+          maxWidth: props.style?.maxWidth || '100%',
+          maxHeight: props.style?.maxHeight || '100%',
+          display: 'block',
+          margin: props.style?.margin || '0',
+          backfaceVisibility: 'hidden',
+          WebkitBackfaceVisibility: 'hidden',
+          transform: 'translateZ(0)',
+          willChange: 'opacity',
+          filter: 'none',
+          // Ensure crisp rendering
+          imageRendering: '-webkit-optimize-contrast',
+          msInterpolationMode: 'bicubic',
+          ...props.style,
+        }}
         onError={() => {
           setHasError(true);
           if (onError) onError();

@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Security & JWT Audit Report - Tailor Shop</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a0000 0%, #2a1010 50%, #1a0000 100%);
+            color: #eee;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: #ff4444;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 0 0 20px rgba(255, 68, 68, 0.5);
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #888;
+            margin-bottom: 30px;
+        }
+
+        h2 {
+            color: #ffd700;
+            margin: 40px 0 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #ffd700;
+        }
+
+        h3 {
+            color: #00ff88;
+            margin: 25px 0 15px;
+        }
+
+        h4 {
+            color: #00d9ff;
+            margin: 20px 0 10px;
+        }
+
+        .section {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 25px;
+            margin: 20px 0;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .mermaid {
+            background: #fff;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 15px 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+            font-size: 14px;
+        }
+
+        th,
+        td {
+            padding: 12px 15px;
+            text-align: left;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        th {
+            background: rgba(255, 68, 68, 0.2);
+            color: #ff4444;
+        }
+
+        tr:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        code {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 2px 8px;
+            border-radius: 4px;
+            color: #00ff88;
+            font-family: 'Consolas', monospace;
+        }
+
+        pre {
+            background: rgba(0, 0, 0, 0.4);
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 10px 0;
+            font-size: 12px;
+        }
+
+        .critical {
+            background: linear-gradient(135deg, rgba(255, 0, 0, 0.2), rgba(139, 0, 0, 0.2));
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 5px solid #ff0000;
+            margin: 15px 0;
+        }
+
+        .high {
+            background: linear-gradient(135deg, rgba(255, 100, 0, 0.2), rgba(200, 50, 0, 0.2));
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 4px solid #ff6600;
+            margin: 15px 0;
+        }
+
+        .medium {
+            background: linear-gradient(135deg, rgba(255, 193, 7, 0.2), rgba(200, 150, 0, 0.2));
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 4px solid #ffc107;
+            margin: 15px 0;
+        }
+
+        .low {
+            background: linear-gradient(135deg, rgba(0, 200, 255, 0.1), rgba(0, 100, 200, 0.1));
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 4px solid #00d9ff;
+            margin: 15px 0;
+        }
+
+        .good {
+            background: linear-gradient(135deg, rgba(0, 255, 136, 0.1), rgba(0, 200, 100, 0.1));
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 4px solid #00ff88;
+            margin: 15px 0;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            margin: 3px;
+        }
+
+        .badge-critical {
+            background: #ff0000;
+            color: white;
+        }
+
+        .badge-high {
+            background: #ff6600;
+            color: white;
+        }
+
+        .badge-medium {
+            background: #ffc107;
+            color: black;
+        }
+
+        .badge-low {
+            background: #17a2b8;
+            color: white;
+        }
+
+        .badge-good {
+            background: #28a745;
+            color: white;
+        }
+
+        .score-box {
+            text-align: center;
+            padding: 30px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 20px;
+            margin: 20px 0;
+        }
+
+        .score {
+            font-size: 5em;
+            font-weight: bold;
+        }
+
+        .score.fail {
+            color: #ff4444;
+        }
+
+        .score.warn {
+            color: #ffc107;
+        }
+
+        .score.pass {
+            color: #00ff88;
+        }
+
+        ul,
+        ol {
+            padding-left: 25px;
+            margin: 10px 0;
+        }
+
+        li {
+            margin: 8px 0;
+            line-height: 1.6;
+        }
+
+        .file-path {
+            color: #888;
+            font-size: 12px;
+        }
+
+        .fix-code {
+            background: rgba(0, 255, 136, 0.1);
+            border: 1px solid #00ff88;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>🔒 Security & JWT Audit Report</h1>
+        <p class="subtitle">Tailor Shop Backend - Production Readiness Assessment</p>
+
+        <!-- Score -->
+        <div class="score-box">
+            <div class="score warn">65/100</div>
+            <p style="color: #ffc107; font-size: 1.5em; margin-top: 15px;">⚠️ CẦN CẢI THIỆN</p>
+            <p style="color: #888; margin-top: 10px;">Phát hiện 3 Critical + 3 High + 3 Medium issues</p>
+        </div>
+
+        <!-- Summary -->
+        <div class="section">
+            <h2>📊 Tổng Quan</h2>
+            <table>
+                <tr>
+                    <th>Severity</th>
+                    <th>Count</th>
+                    <th>Description</th>
+                </tr>
+                <tr>
+                    <td><span class="badge badge-critical">CRITICAL</span></td>
+                    <td>3</td>
+                    <td>Secrets exposed, Actuator open, Production URLs thiếu</td>
+                </tr>
+                <tr>
+                    <td><span class="badge badge-high">HIGH</span></td>
+                    <td>3</td>
+                    <td>JWT token quá dài, thiếu Refresh Token, Rate Limit bị reset</td>
+                </tr>
+                <tr>
+                    <td><span class="badge badge-medium">MEDIUM</span></td>
+                    <td>3</td>
+                    <td>Thiếu token revocation, thiếu HTTP headers, thiếu audit log</td>
+                </tr>
+                <tr>
+                    <td><span class="badge badge-good">GOOD</span></td>
+                    <td>8</td>
+                    <td>Các tính năng bảo mật đã implement tốt</td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- Architecture -->
+        <div class="section">
+            <h2>🏗️ Kiến Trúc Bảo Mật Hiện Tại</h2>
+
+            <div class="mermaid">
+                flowchart TB
+                subgraph "Client Request"
+                REQ[HTTP Request]
+                end
+
+                subgraph "Spring Security Filter Chain"
+                CORS[CORS Filter]
+                JWT[JwtAuthFilter]
+                AUTH[AuthenticationProvider]
+                end
+
+                subgraph "Services"
+                AS[AuthService]
+                JS[JwtService]
+                LAS[LoginAttemptService]
+                CUDS[CustomUserDetailsService]
+                end
+
+                subgraph "Data"
+                UR[(UserRepository)]
+                PRTR[(PasswordResetTokenRepo)]
+                end
+
+                REQ --> CORS
+                CORS --> JWT
+                JWT --> AUTH
+                AUTH --> CUDS
+                CUDS --> UR
+
+                AS --> JS
+                AS --> LAS
+                AS --> PRTR
+            </div>
+        </div>
+
+        <!-- CRITICAL Issues -->
+        <div class="section">
+            <h2>🚨 CRITICAL Issues (Phải fix ngay!)</h2>
+
+            <div class="critical">
+                <h3>1. ⛔ SECRETS EXPOSED IN CODE & .env TRONG GIT</h3>
+                <p class="file-path">Files: .env, application.yml</p>
+
+                <p><strong>Vấn đề:</strong> Tất cả secrets (JWT, AWS, Email, Gemini API) đều được hardcode và có thể đã
+                    commit lên Git.</p>
+
+                <pre><code># .env (EXPOSED!)
+JWT_SECRET=your-jwt-secret-key-here
+AWS_ACCESS_KEY=YOUR_AWS_ACCESS_KEY_HERE
+AWS_SECRET_KEY=YOUR_AWS_SECRET_KEY_HERE
+MAIL_PASSWORD=your_mail_password_here
+GEMINI_API_KEY=your_gemini_api_key_here</code></pre>
+
+                <div class="fix-code">
+                    <strong>✅ FIX:</strong>
+                    <ol>
+                        <li>Thêm <code>.env</code> vào <code>.gitignore</code> NGAY</li>
+                        <li>Revoke tất cả API keys hiện tại và tạo mới</li>
+                        <li>Sử dụng Secret Manager (AWS Secrets Manager, HashiCorp Vault)</li>
+                        <li>Kiểm tra git history và xóa secrets đã commit: <code>git filter-branch</code></li>
+                    </ol>
+                </div>
+            </div>
+
+            <div class="critical">
+                <h3>2. ⛔ ACTUATOR EXPOSED TO PUBLIC</h3>
+                <p class="file-path">File: application.yml (line 98-99)</p>
+
+                <p><strong>Vấn đề:</strong> Tất cả actuator endpoints đều public, bao gồm <code>/actuator/env</code>,
+                    <code>/actuator/heapdump</code>, etc.
+                </p>
+
+                <pre><code>management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"  # ⚠️ DANGEROUS!</code></pre>
+
+                <div class="fix-code">
+                    <strong>✅ FIX:</strong>
+                    <pre><code>management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus  # Chỉ expose cần thiết
+  endpoint:
+    health:
+      show-details: when-authorized  # Không show cho anonymous</code></pre>
+                </div>
+            </div>
+
+            <div class="critical">
+                <h3>3. ⛔ CORS CHỈ CÓ LOCALHOST - PRODUCTION SẼ FAIL</h3>
+                <p class="file-path">File: SecurityConfig.java (line 92-104)</p>
+
+                <p><strong>Vấn đề:</strong> CORS chỉ cho phép localhost, khi deploy production sẽ bị block.</p>
+
+                <pre><code>configuration.setAllowedOrigins(List.of(
+    "http://localhost",
+    "http://localhost:80",
+    "http://localhost:3000",
+    // ... chỉ có localhost
+));</code></pre>
+
+                <div class="fix-code">
+                    <strong>✅ FIX:</strong> Sử dụng environment variable
+                    <pre><code>@Value("${cors.allowed-origins}")
+private List<String> allowedOrigins;
+
+// application-prod.yml
+cors:
+  allowed-origins: https://tailor-shop.com,https://www.tailor-shop.com</code></pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- HIGH Issues -->
+        <div class="section">
+            <h2>🔥 HIGH Issues (Cần fix trước production)</h2>
+
+            <div class="high">
+                <h3>4. JWT Token Expiration Quá Dài</h3>
+                <p class="file-path">File: application.yml (line 61)</p>
+
+                <p><strong>Vấn đề:</strong> Token expires sau <strong>24 giờ</strong> (86400000ms). Nếu token bị steal,
+                    attacker có 24h để exploit.</p>
+
+                <pre><code>jwt:
+  expiration: 86400000  # 24 hours - TOO LONG!</code></pre>
+
+                <div class="fix-code">
+                    <strong>✅ FIX:</strong>
+                    <ul>
+                        <li>Access Token: 15-30 phút (900000 - 1800000 ms)</li>
+                        <li>Implement Refresh Token (7-14 ngày)</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="high">
+                <h3>5. Thiếu Refresh Token Mechanism</h3>
+                <p class="file-path">Impact: JwtService, AuthService</p>
+
+                <p><strong>Vấn đề:</strong> Không có refresh token, user phải login lại sau mỗi 24h (hoặc ngắn hơn nếu
+                    fix issue #4).</p>
+
+                <div class="fix-code">
+                    <strong>✅ FIX:</strong> Implement Refresh Token
+                    <pre><code>public class RefreshTokenEntity {
+    String token;        // UUID hoặc JWT
+    Long userId;
+    Instant expiresAt;   // 7-14 days
+    boolean revoked;
+}
+
+// Endpoint: POST /api/v1/auth/refresh
+public TokenResponse refreshToken(String refreshToken)</code></pre>
+                </div>
+            </div>
+
+            <div class="high">
+                <h3>6. LoginAttemptService Bị Reset Khi Restart</h3>
+                <p class="file-path">File: LoginAttemptService.java</p>
+
+                <p><strong>Vấn đề:</strong> Login attempts lưu trong memory (ConcurrentHashMap), restart server = reset
+                    count.</p>
+
+                <pre><code>private final Map<String, Attempts> attempts = new ConcurrentHashMap<>();
+// Restart server → Map trống → Attacker có thể brute force lại</code></pre>
+
+                <div class="fix-code">
+                    <strong>✅ FIX:</strong> Lưu vào Redis hoặc Database
+                    <pre><code>@Autowired
+private RedisTemplate<String, Integer> redisTemplate;
+
+public void recordFailure(String key) {
+    String redisKey = "login:attempts:" + key;
+    redisTemplate.opsForValue().increment(redisKey);
+    redisTemplate.expire(redisKey, 15, TimeUnit.MINUTES);
+}</code></pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- MEDIUM Issues -->
+        <div class="section">
+            <h2>⚠️ MEDIUM Issues (Nên fix)</h2>
+
+            <div class="medium">
+                <h3>7. Thiếu Token Revocation / Blacklist</h3>
+                <p><strong>Vấn đề:</strong> Không thể invalidate token khi user logout hoặc bị ban.</p>
+
+                <div class="fix-code">
+                    <strong>✅ FIX:</strong> Implement token blacklist hoặc JTI (JWT ID)
+                    <pre><code>// Redis blacklist
+public void revokeToken(String token) {
+    String jti = jwtService.extractJti(token);
+    long ttl = jwtService.extractExpiration(token) - System.currentTimeMillis();
+    redisTemplate.opsForValue().set("blacklist:" + jti, "1", ttl, MILLISECONDS);
+}
+
+public boolean isTokenBlacklisted(String token) {
+    String jti = jwtService.extractJti(token);
+    return redisTemplate.hasKey("blacklist:" + jti);
+}</code></pre>
+                </div>
+            </div>
+
+            <div class="medium">
+                <h3>8. Thiếu Security HTTP Headers</h3>
+                <p><strong>Vấn đề:</strong> Không có headers bảo mật: X-Content-Type-Options, X-Frame-Options, CSP, HSTS
+                </p>
+
+                <div class="fix-code">
+                    <strong>✅ FIX:</strong> Thêm vào SecurityConfig
+                    <pre><code>http
+    .headers(headers -> headers
+        .contentTypeOptions(Customizer.withDefaults())
+        .frameOptions(frame -> frame.deny())
+        .xssProtection(xss -> xss.headerValue(XXssProtectionHeaderWriter.HeaderValue.ENABLED_MODE_BLOCK))
+        .contentSecurityPolicy(csp -> csp.policyDirectives("default-src 'self'"))
+        .httpStrictTransportSecurity(hsts -> hsts
+            .includeSubDomains(true)
+            .maxAgeInSeconds(31536000))
+    )</code></pre>
+                </div>
+            </div>
+
+            <div class="medium">
+                <h3>9. Thiếu Audit Log cho Security Events</h3>
+                <p><strong>Vấn đề:</strong> Không log các events: login success/failure, password change, role change
+                </p>
+
+                <div class="fix-code">
+                    <strong>✅ FIX:</strong> Thêm audit logging
+                    <pre><code>@Slf4j
+public class SecurityAuditLogger {
+    public void logLoginSuccess(String username, String ip) {
+        log.info("AUDIT: LOGIN_SUCCESS user={} ip={}", username, ip);
+    }
+    public void logLoginFailure(String username, String ip, String reason) {
+        log.warn("AUDIT: LOGIN_FAILURE user={} ip={} reason={}", username, ip, reason);
+    }
+}</code></pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- GOOD Things -->
+        <div class="section">
+            <h2>✅ Những Điểm Tốt</h2>
+
+            <div class="good">
+                <h3>Đã Implement Đúng Cách:</h3>
+                <ul>
+                    <li>✅ <strong>BCrypt Password Encoder</strong> - Đúng chuẩn industry</li>
+                    <li>✅ <strong>JWT với HMAC-SHA256</strong> - Yêu cầu key >= 32 bytes</li>
+                    <li>✅ <strong>Stateless Session</strong> - SessionCreationPolicy.STATELESS</li>
+                    <li>✅ <strong>CSRF Disabled</strong> - Phù hợp với REST API + JWT</li>
+                    <li>✅ <strong>Login Attempt Limiting</strong> - 5 attempts / 15 phút</li>
+                    <li>✅ <strong>OTP for Password Reset</strong> - 6 digits, 10 phút expire</li>
+                    <li>✅ <strong>Rate Limit OTP</strong> - Max 3 requests / 30 phút</li>
+                    <li>✅ <strong>Role-based Authorization</strong> - @EnableMethodSecurity</li>
+                    <li>✅ <strong>Soft Delete Users</strong> - findByXxxAndIsDeletedFalse()</li>
+                    <li>✅ <strong>Role Validation on Register</strong> - Không cho phép tự đăng ký admin</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- JWT Flow -->
+        <div class="section">
+            <h2>🔐 JWT Authentication Flow (Hiện tại)</h2>
+
+            <div class="mermaid">
+                sequenceDiagram
+                participant C as Client
+                participant F as JwtAuthFilter
+                participant JS as JwtService
+                participant UDS as UserDetailsService
+                participant SC as SecurityContext
+
+                C->>F: Request + Bearer token
+                F->>F: Extract token from header
+                F->>JS: extractUsername(token)
+                JS-->>F: username
+
+                F->>UDS: loadUserByUsername(username)
+                UDS-->>F: UserDetails
+
+                F->>JS: isTokenValid(token, userDetails)
+                JS-->>F: true/false
+
+                alt Token Valid
+                F->>SC: setAuthentication(authToken)
+                F->>C: Continue to Controller
+                else Token Invalid
+                F->>C: 401 Unauthorized
+                end
+            </div>
+        </div>
+
+        <!-- Action Plan -->
+        <div class="section">
+            <h2>📋 Priority Action Plan</h2>
+
+            <table>
+                <tr>
+                    <th>Priority</th>
+                    <th>Issue</th>
+                    <th>Effort</th>
+                    <th>Action</th>
+                </tr>
+                <tr>
+                    <td><span class="badge badge-critical">P0</span></td>
+                    <td>Secrets in Git</td>
+                    <td>1h</td>
+                    <td>Revoke keys, add .env to .gitignore, clean git history</td>
+                </tr>
+                <tr>
+                    <td><span class="badge badge-critical">P0</span></td>
+                    <td>Actuator exposed</td>
+                    <td>15min</td>
+                    <td>Limit exposed endpoints</td>
+                </tr>
+                <tr>
+                    <td><span class="badge badge-critical">P0</span></td>
+                    <td>CORS localhost only</td>
+                    <td>30min</td>
+                    <td>Add production domains via env var</td>
+                </tr>
+                <tr>
+                    <td><span class="badge badge-high">P1</span></td>
+                    <td>JWT 24h expiration</td>
+                    <td>15min</td>
+                    <td>Reduce to 15-30 minutes</td>
+                </tr>
+                <tr>
+                    <td><span class="badge badge-high">P1</span></td>
+                    <td>No Refresh Token</td>
+                    <td>4h</td>
+                    <td>Implement refresh token mechanism</td>
+                </tr>
+                <tr>
+                    <td><span class="badge badge-high">P1</span></td>
+                    <td>LoginAttempt in-memory</td>
+                    <td>2h</td>
+                    <td>Move to Redis</td>
+                </tr>
+                <tr>
+                    <td><span class="badge badge-medium">P2</span></td>
+                    <td>No token revocation</td>
+                    <td>3h</td>
+                    <td>Implement blacklist in Redis</td>
+                </tr>
+                <tr>
+                    <td><span class="badge badge-medium">P2</span></td>
+                    <td>Missing security headers</td>
+                    <td>30min</td>
+                    <td>Add to SecurityConfig</td>
+                </tr>
+                <tr>
+                    <td><span class="badge badge-medium">P2</span></td>
+                    <td>No audit logging</td>
+                    <td>2h</td>
+                    <td>Implement SecurityAuditLogger</td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- Production Checklist -->
+        <div class="section">
+            <h2>✅ Production Readiness Checklist</h2>
+
+            <table>
+                <tr>
+                    <th>Item</th>
+                    <th>Status</th>
+                </tr>
+                <tr>
+                    <td>HTTPS enabled</td>
+                    <td>⚠️ Check nginx/load balancer config</td>
+                </tr>
+                <tr>
+                    <td>Secrets in Secret Manager</td>
+                    <td>❌ Not implemented</td>
+                </tr>
+                <tr>
+                    <td>JWT expiration reasonable</td>
+                    <td>❌ 24h too long</td>
+                </tr>
+                <tr>
+                    <td>Refresh token mechanism</td>
+                    <td>❌ Not implemented</td>
+                </tr>
+                <tr>
+                    <td>Brute force protection persisted</td>
+                    <td>❌ In-memory only</td>
+                </tr>
+                <tr>
+                    <td>Token revocation/logout</td>
+                    <td>❌ Not implemented</td>
+                </tr>
+                <tr>
+                    <td>Security headers</td>
+                    <td>❌ Not configured</td>
+                </tr>
+                <tr>
+                    <td>Audit logging</td>
+                    <td>❌ Not implemented</td>
+                </tr>
+                <tr>
+                    <td>Actuator secured</td>
+                    <td>❌ All endpoints exposed</td>
+                </tr>
+                <tr>
+                    <td>CORS for production</td>
+                    <td>❌ Localhost only</td>
+                </tr>
+                <tr>
+                    <td>Password encoding (BCrypt)</td>
+                    <td>✅ Implemented</td>
+                </tr>
+                <tr>
+                    <td>Role-based access control</td>
+                    <td>✅ Implemented</td>
+                </tr>
+                <tr>
+                    <td>OTP password reset</td>
+                    <td>✅ Implemented</td>
+                </tr>
+                <tr>
+                    <td>Login attempt limiting</td>
+                    <td>✅ Implemented (in-memory)</td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- Footer -->
+        <div class="section" style="text-align: center; margin-top: 40px;">
+            <p style="color: #888;">Generated by Antigravity AI Assistant</p>
+            <p style="color: #666; font-size: 12px;">Security Audit Report - 2024</p>
+            <a href="index.html" style="color: #00d9ff;">← Quay lại danh sách</a>
+        </div>
+    </div>
+
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            securityLevel: 'loose'
+        });
+    </script>
+</body>
+
+</html>

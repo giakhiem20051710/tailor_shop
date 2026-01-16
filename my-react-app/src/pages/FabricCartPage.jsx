@@ -4,6 +4,7 @@ import Header from "../components/Header.jsx";
 import usePageMeta from "../hooks/usePageMeta.jsx";
 import { cartService, authService } from "../services";
 import { showError, showSuccess } from "../components/NotificationToast.jsx";
+import PromoCodeModal from "../components/PromoCodeModal.jsx";
 
 export default function FabricCartPage() {
   const navigate = useNavigate();
@@ -14,6 +15,8 @@ export default function FabricCartPage() {
   const [selectedItems, setSelectedItems] = useState(new Set());
   const [promoCode, setPromoCode] = useState("");
   const [discount, setDiscount] = useState(0);
+  const [showPromoModal, setShowPromoModal] = useState(false);
+  const [appliedPromo, setAppliedPromo] = useState(null);
 
   // SEO Meta Tags
   usePageMeta({
@@ -48,9 +51,11 @@ export default function FabricCartPage() {
     try {
       setLoading(true);
       const response = await cartService.getCart();
-      if (response.success && response.data) {
-        setCart(response.data);
-        setCartItems(response.data.items || []);
+      // Handle different response structures
+      const cartData = response?.data ?? response?.responseData ?? response;
+      if (cartData && (cartData.items || cartData.itemCount >= 0)) {
+        setCart(cartData);
+        setCartItems(cartData.items || []);
       }
     } catch (error) {
       console.error("Error loading cart:", error);
@@ -114,11 +119,11 @@ export default function FabricCartPage() {
   );
 
   const subtotal = selectedItemsList.reduce((sum, item) => {
-    const price = typeof item.itemPrice === 'number' 
-      ? item.itemPrice 
-      : (typeof item.itemPrice === 'string' 
-          ? parseFloat(item.itemPrice.replace(/[^\d]/g, '')) || 0 
-          : 0);
+    const price = typeof item.itemPrice === 'number'
+      ? item.itemPrice
+      : (typeof item.itemPrice === 'string'
+        ? parseFloat(item.itemPrice.replace(/[^\d]/g, '')) || 0
+        : 0);
     const quantity = parseFloat(item.quantity) || 1;
     return sum + price * quantity;
   }, 0);
@@ -129,6 +134,20 @@ export default function FabricCartPage() {
   const rewardPoints = Math.floor(finalTotal / 4000); // 1 điểm = 4000₫
 
   const allSelected = cartItems.length > 0 && selectedItems.size === cartItems.length;
+
+  const handleApplyPromo = (promoData) => {
+    setAppliedPromo(promoData);
+    setPromoCode(promoData.code);
+    setDiscount(promoData.discountAmount);
+    showSuccess(`Đã áp dụng mã "${promoData.code}" - Giảm ${formatPrice(promoData.discountAmount)}`);
+  };
+
+  const handleRemovePromo = () => {
+    setAppliedPromo(null);
+    setPromoCode("");
+    setDiscount(0);
+    showSuccess("Đã xóa mã khuyến mãi");
+  };
 
   const handleConfirmOrder = () => {
     if (selectedItemsList.length === 0) {
@@ -143,6 +162,8 @@ export default function FabricCartPage() {
         total: finalTotal,
         discount: totalDiscount,
         subtotal: subtotal,
+        promoCode: appliedPromo?.code || null,
+        appliedPromo: appliedPromo,
       },
     });
   };
@@ -240,11 +261,11 @@ export default function FabricCartPage() {
                   ) : (
                     cartItems.map((item) => {
                       const isSelected = selectedItems.has(item.id);
-                      const priceValue = typeof item.itemPrice === 'number' 
-                        ? item.itemPrice 
-                        : (typeof item.itemPrice === 'string' 
-                            ? parseFloat(item.itemPrice.replace(/[^\d]/g, '')) || 0 
-                            : 0);
+                      const priceValue = typeof item.itemPrice === 'number'
+                        ? item.itemPrice
+                        : (typeof item.itemPrice === 'string'
+                          ? parseFloat(item.itemPrice.replace(/[^\d]/g, '')) || 0
+                          : 0);
                       const quantity = parseFloat(item.quantity) || 1;
 
                       return (
@@ -378,7 +399,10 @@ export default function FabricCartPage() {
                 </div>
 
                 {/* Promo Code */}
-                <div className="flex items-center gap-2 mb-4 pb-4 border-b border-[#E5E7EB] cursor-pointer hover:text-[#F97316] transition-colors">
+                <div
+                  onClick={() => setShowPromoModal(true)}
+                  className="flex items-center gap-2 mb-4 pb-4 border-b border-[#E5E7EB] cursor-pointer hover:text-[#F97316] transition-colors"
+                >
                   <svg
                     className="w-5 h-5 text-[#6B7280]"
                     fill="none"
@@ -393,21 +417,40 @@ export default function FabricCartPage() {
                     />
                   </svg>
                   <span className="text-[13px] text-[#111827] flex-1">
-                    Chọn hoặc nhập ưu đãi
+                    {appliedPromo ? (
+                      <span className="flex items-center gap-2">
+                        <span className="text-[#F97316] font-medium">{appliedPromo.code}</span>
+                        <span className="text-[12px] text-[#10B981]">(-{formatPrice(appliedPromo.discountAmount)})</span>
+                      </span>
+                    ) : (
+                      "Chọn hoặc nhập ưu đãi"
+                    )}
                   </span>
-                  <svg
-                    className="w-4 h-4 text-[#6B7280]"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 5l7 7-7 7"
-                    />
-                  </svg>
+                  {appliedPromo ? (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleRemovePromo();
+                      }}
+                      className="text-[12px] text-red-500 hover:text-red-700"
+                    >
+                      Xóa
+                    </button>
+                  ) : (
+                    <svg
+                      className="w-4 h-4 text-[#6B7280]"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 5l7 7-7 7"
+                      />
+                    </svg>
+                  )}
                 </div>
 
                 {/* Reward Points */}
@@ -507,11 +550,10 @@ export default function FabricCartPage() {
                 <button
                   onClick={handleConfirmOrder}
                   disabled={selectedItemsList.length === 0}
-                  className={`w-full py-3 rounded-lg font-semibold text-[14px] transition-colors ${
-                    selectedItemsList.length === 0
-                      ? "bg-[#D1D5DB] text-[#9CA3AF] cursor-not-allowed"
-                      : "bg-[#F97316] text-white hover:bg-[#EA580C]"
-                  }`}
+                  className={`w-full py-3 rounded-lg font-semibold text-[14px] transition-colors ${selectedItemsList.length === 0
+                    ? "bg-[#D1D5DB] text-[#9CA3AF] cursor-not-allowed"
+                    : "bg-[#F97316] text-white hover:bg-[#EA580C]"
+                    }`}
                 >
                   Xác nhận đơn
                 </button>
@@ -520,6 +562,15 @@ export default function FabricCartPage() {
           </div>
         </div>
       </main>
+
+      {/* Promo Code Modal */}
+      <PromoCodeModal
+        isOpen={showPromoModal}
+        onClose={() => setShowPromoModal(false)}
+        onApply={handleApplyPromo}
+        cartTotal={subtotal}
+        cartItemIds={selectedItemsList.map(item => item.id)}
+      />
     </div>
   );
 }

@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import invoiceService from "../services/invoiceService";
+import { createLogger } from "../utils/logger.js";
 
+const logger = createLogger("Transactions");
 const METHOD_LABELS = {
   BANK: "Ngân hàng",
   MOMO: "Ví MoMo",
@@ -24,7 +26,7 @@ export default function TransactionManagementPage() {
         const response = await invoiceService.list({}, { page: 0, size: 100 });
         console.log('[TransactionManagementPage] Raw API response:', response);
         console.log('[TransactionManagementPage] Response keys:', Object.keys(response || {}));
-        
+
         // Backend trả về CommonResponse<Page<InvoiceResponse>> với cấu trúc:
         // { 
         //   responseStatus: {...}, 
@@ -36,17 +38,17 @@ export default function TransactionManagementPage() {
         //   } 
         // }
         let invoicesData = [];
-        
+
         // Ưu tiên responseData.content (cấu trúc chuẩn từ CommonResponse)
         if (response?.responseData?.content && Array.isArray(response.responseData.content)) {
           invoicesData = response.responseData.content;
           console.log('[TransactionManagementPage] ✅ Found in responseData.content, count:', invoicesData.length);
-        } 
+        }
         // Fallback: data.content
         else if (response?.data?.content && Array.isArray(response.data.content)) {
           invoicesData = response.data.content;
           console.log('[TransactionManagementPage] ✅ Found in data.content, count:', invoicesData.length);
-        } 
+        }
         // Fallback: responseData là Page object trực tiếp
         else if (response?.responseData && Array.isArray(response.responseData)) {
           invoicesData = response.responseData;
@@ -56,17 +58,17 @@ export default function TransactionManagementPage() {
         else if (Array.isArray(response?.content)) {
           invoicesData = response.content;
           console.log('[TransactionManagementPage] ✅ Found in content (direct array), count:', invoicesData.length);
-        } 
+        }
         // Fallback: data trực tiếp
         else if (Array.isArray(response?.data)) {
           invoicesData = response.data;
           console.log('[TransactionManagementPage] ✅ Found in data (direct array), count:', invoicesData.length);
-        } 
+        }
         // Fallback: response là array trực tiếp
         else if (Array.isArray(response)) {
           invoicesData = response;
           console.log('[TransactionManagementPage] ✅ Response is direct array, count:', invoicesData.length);
-        } 
+        }
         // Không tìm thấy
         else {
           console.warn('[TransactionManagementPage] ⚠️ Unknown response structure:', response);
@@ -80,35 +82,35 @@ export default function TransactionManagementPage() {
           }
           invoicesData = [];
         }
-        
+
         // Map backend invoices to frontend format
         // Backend InvoiceResponse structure:
         // { id, code, customer: {id, name, phone}, transactions: [{provider, amount, ...}], ... }
-        const mappedInvoices = Array.isArray(invoicesData) 
+        const mappedInvoices = Array.isArray(invoicesData)
           ? invoicesData.map(inv => {
-              console.log('[TransactionManagementPage] Mapping invoice:', inv.code || inv.id);
-              return {
-                id: inv.code || `INV-${inv.id}`,
-                customerName: inv.customer?.name || "",
-                phone: inv.customer?.phone || "",
-                transactions: (inv.transactions || []).map(tx => ({
-                  id: tx.id,
-                  amount: tx.amount ? Number(tx.amount) : 0,
-                  method: tx.provider === "vnpay" ? "BANK" : 
-                         tx.provider === "momo" ? "MOMO" : 
-                         tx.provider === "cash" ? "CASH" : "BANK",
-                  reference: tx.providerRef || "",
-                  createdAt: tx.paidAt || tx.createdAt || "",
-                })),
-              };
-            })
+            console.log('[TransactionManagementPage] Mapping invoice:', inv.code || inv.id);
+            return {
+              id: inv.code || `INV-${inv.id}`,
+              customerName: inv.customer?.name || "",
+              phone: inv.customer?.phone || "",
+              transactions: (inv.transactions || []).map(tx => ({
+                id: tx.id,
+                amount: tx.amount ? Number(tx.amount) : 0,
+                method: tx.provider === "vnpay" ? "BANK" :
+                  tx.provider === "momo" ? "MOMO" :
+                    tx.provider === "cash" ? "CASH" : "BANK",
+                reference: tx.providerRef || "",
+                createdAt: tx.paidAt || tx.createdAt || "",
+              })),
+            };
+          })
           : [];
-        
+
         console.log('[TransactionManagementPage] Mapped invoices count:', mappedInvoices.length);
         if (mappedInvoices.length > 0) {
           console.log('[TransactionManagementPage] First mapped invoice:', mappedInvoices[0]);
         }
-        
+
         setInvoices(mappedInvoices);
       } catch (error) {
         console.error("Error loading invoices:", error);
@@ -117,7 +119,7 @@ export default function TransactionManagementPage() {
         setLoading(false);
       }
     };
-    
+
     loadInvoices();
   }, []);
 
@@ -145,9 +147,9 @@ export default function TransactionManagementPage() {
         methodFilter === "all" ? true : tx.method === methodFilter;
       const searchMatch = term
         ? tx.customerName.toLowerCase().includes(term) ||
-          tx.phone.includes(term) ||
-          (tx.reference || "").toLowerCase().includes(term) ||
-          (tx.invoiceId || "").toLowerCase().includes(term)
+        tx.phone.includes(term) ||
+        (tx.reference || "").toLowerCase().includes(term) ||
+        (tx.invoiceId || "").toLowerCase().includes(term)
         : true;
       return methodMatch && searchMatch;
     });

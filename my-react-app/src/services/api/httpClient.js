@@ -11,7 +11,7 @@ class HttpClient {
     this.timeout = config.timeout || API_CONFIG.TIMEOUT;
     this.retryAttempts = config.retryAttempts || API_CONFIG.RETRY_ATTEMPTS;
     this.retryDelay = config.retryDelay || API_CONFIG.RETRY_DELAY;
-    
+
     // Request interceptors
     this.requestInterceptors = [];
     // Response interceptors
@@ -183,11 +183,19 @@ class HttpClient {
       headers: customHeaders = {},
       includeAuth = true,
       retry = false,
+      timeout: requestTimeout, // NEW: Allow per-request timeout override
       ...restOptions
     } = options;
 
     const url = this.buildURL(endpoint);
     const headers = this.buildHeaders(customHeaders, includeAuth);
+
+    // Debug log for DELETE requests
+    if (import.meta.env.DEV && method === 'DELETE') {
+      console.log('[httpClient] DELETE request:', url);
+      console.log('[httpClient] Headers:', headers);
+      console.log('[httpClient] Auth token:', this.getAuthToken() ? 'Present' : 'Missing');
+    }
 
     // Handle FormData (don't set Content-Type for FormData)
     let requestBody = body;
@@ -196,10 +204,16 @@ class HttpClient {
       requestBody = body;
     } else if (body && typeof body === 'object') {
       requestBody = JSON.stringify(body);
-      // Debug log for POST/PUT requests
-      if (import.meta.env.DEV && (method === 'POST' || method === 'PUT')) {
+      // Debug log for POST/PUT/DELETE requests
+      if (import.meta.env.DEV && (method === 'POST' || method === 'PUT' || method === 'DELETE')) {
         console.log('[httpClient] Request body:', requestBody);
-        console.log('[httpClient] Request body parsed:', JSON.parse(requestBody));
+        if (requestBody && typeof requestBody === 'string') {
+          try {
+            console.log('[httpClient] Request body parsed:', JSON.parse(requestBody));
+          } catch (e) {
+            // Not JSON, skip
+          }
+        }
       }
     }
 
@@ -213,10 +227,13 @@ class HttpClient {
     // Apply request interceptors
     const finalConfig = await this.applyRequestInterceptors(config);
 
+    // Use per-request timeout if provided, otherwise use default
+    const timeoutMs = requestTimeout || this.timeout;
+
     // Make request
     const requestFn = async () => {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), this.timeout);
+      const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
       try {
         const response = await fetch(url, {
@@ -230,7 +247,7 @@ class HttpClient {
       } catch (error) {
         clearTimeout(timeoutId);
         if (error.name === 'AbortError') {
-          throw new Error('Request timeout');
+          throw new Error(`Request timeout after ${timeoutMs / 1000}s`);
         }
         throw error;
       }
@@ -269,9 +286,17 @@ class HttpClient {
 
   /**
    * DELETE request
+   * @param {string} endpoint - API endpoint
+   * @param {*} body - Request body (optional)
+   * @param {Object} options - Additional options
    */
-  delete(endpoint, options = {}) {
-    return this.request(endpoint, { ...options, method: 'DELETE' });
+  delete(endpoint, body, options = {}) {
+    // If second param is an object and doesn't have method/headers/body, treat it as options
+    if (body && typeof body === 'object' && !Array.isArray(body) && !body.method && !body.headers && !body.body) {
+      return this.request(endpoint, { ...body, method: 'DELETE' });
+    }
+    // Otherwise, treat second param as body
+    return this.request(endpoint, { ...options, method: 'DELETE', body });
   }
 }
 

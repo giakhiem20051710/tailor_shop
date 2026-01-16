@@ -15,7 +15,9 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class MediaDTO {
-    private String thumbnail; // Main product image
+    private String thumbnail; // Thumbnail URL (300x300px)
+    private String url; // Medium/Original URL
+    private String large; // Large URL (1200px width)
     private List<String> gallery; // Additional product images
 }
 

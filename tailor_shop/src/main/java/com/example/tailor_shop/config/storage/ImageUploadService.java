@@ -38,30 +38,31 @@ public class ImageUploadService {
 
     /**
      * Download ảnh từ URL và upload lên S3 với xử lý chất lượng cao
+     * 
      * @param imageUrl URL của ảnh trên web
-     * @param prefix Thư mục trên S3 (ví dụ: "templates", "fabrics", "styles")
+     * @param prefix   Thư mục trên S3 (ví dụ: "templates", "fabrics", "styles")
      * @param fileName Tên file (ví dụ: "shirt.jpg")
      * @return URL của ảnh trên S3
      */
     public String downloadAndUpload(String imageUrl, String prefix, String fileName) {
         try {
             log.info("Downloading and uploading image: {} to S3 prefix: {}", imageUrl, prefix);
-            
+
             // Download ảnh từ web
             byte[] imageData = imageDownloadService.downloadImage(imageUrl);
-            
+
             // Xử lý ảnh chất lượng cao (nếu enabled)
             if (imageProcessingEnabled) {
                 imageData = processImage(imageData);
             }
-            
+
             // Xác định content type từ URL hoặc format đã xử lý
             String contentType = determineContentType(imageUrl, convertToWebp);
-            
+
             // Upload lên S3
             String s3Url = s3StorageService.uploadImage(prefix, imageData, fileName, contentType);
-            
-            log.info("Successfully uploaded processed image to S3: {} (size: {}KB)", 
+
+            log.info("Successfully uploaded processed image to S3: {} (size: {}KB)",
                     s3Url, imageData.length / 1024);
             return s3Url;
         } catch (IOException e) {
@@ -83,11 +84,10 @@ public class ImageUploadService {
         if (smartCropEnabled) {
             try {
                 java.awt.image.BufferedImage image = javax.imageio.ImageIO.read(
-                    new java.io.ByteArrayInputStream(originalData)
-                );
+                        new java.io.ByteArrayInputStream(originalData));
                 if (image != null) {
-                    Optional<ImageProcessingService.BoundingBox> detectedBox = 
-                        imageProcessingService.detectContentBounds(image);
+                    Optional<ImageProcessingService.BoundingBox> detectedBox = imageProcessingService
+                            .detectContentBounds(image);
                     if (detectedBox.isPresent()) {
                         boundingBox = detectedBox;
                         log.info("Detected content bounds: {}x{} at ({}, {})",
@@ -106,8 +106,7 @@ public class ImageUploadService {
                 targetWidth,
                 targetHeight,
                 boundingBox,
-                convertToWebp
-        );
+                convertToWebp);
     }
 
     /**
@@ -117,7 +116,7 @@ public class ImageUploadService {
         if (isWebp) {
             return "image/webp";
         }
-        
+
         String lowerUrl = url.toLowerCase();
         if (lowerUrl.contains(".jpg") || lowerUrl.contains(".jpeg")) {
             return "image/jpeg";
@@ -131,4 +130,3 @@ public class ImageUploadService {
         return "image/jpeg"; // Default
     }
 }
-

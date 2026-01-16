@@ -1,6 +1,8 @@
 package com.example.tailor_shop.modules.review.domain;
 
+import com.example.tailor_shop.modules.fabric.domain.FabricEntity;
 import com.example.tailor_shop.modules.order.domain.OrderEntity;
+import com.example.tailor_shop.modules.product.domain.ImageAssetEntity;
 import com.example.tailor_shop.modules.product.domain.ProductEntity;
 import com.example.tailor_shop.modules.user.domain.UserEntity;
 import jakarta.persistence.*;
@@ -18,8 +20,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Review Entity - Hỗ trợ cả Product Review và Order Review
- * Giống Shopee: một entity cho cả 2 loại, phân biệt bằng type
+ * Review Entity - Hỗ trợ cả Product Review, Order Review, ImageAsset Review và
+ * Fabric Review
+ * Giống Shopee: một entity cho cả loại, phân biệt bằng type
  */
 @Entity
 @Table(name = "reviews")
@@ -28,7 +31,8 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@ToString(exclude = {"product", "order", "user", "repliedBy", "moderatedBy", "images", "helpfulVotes"})
+@ToString(exclude = { "product", "order", "imageAsset", "fabric", "user", "repliedBy", "moderatedBy", "images",
+        "helpfulVotes" })
 public class ReviewEntity {
 
     @Id
@@ -44,8 +48,16 @@ public class ReviewEntity {
     private ProductEntity product;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "image_asset_id")
+    private ImageAssetEntity imageAsset;
+
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "order_id")
     private OrderEntity order;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "fabric_id")
+    private FabricEntity fabric;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
@@ -117,4 +129,3 @@ public class ReviewEntity {
     @Column(name = "updated_at")
     private OffsetDateTime updatedAt;
 }
-

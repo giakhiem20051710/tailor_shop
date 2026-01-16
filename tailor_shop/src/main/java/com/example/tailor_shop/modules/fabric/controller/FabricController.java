@@ -13,10 +13,17 @@ import com.example.tailor_shop.modules.fabric.dto.FabricInventoryResponse;
 import com.example.tailor_shop.modules.fabric.dto.FabricOrderResponse;
 import com.example.tailor_shop.modules.fabric.dto.FabricRequest;
 import com.example.tailor_shop.modules.fabric.dto.FabricResponse;
+import com.example.tailor_shop.modules.fabric.dto.FabricAIAnalysisRequest;
+import com.example.tailor_shop.modules.fabric.dto.FabricAIAnalysisResponse;
 import com.example.tailor_shop.modules.fabric.dto.UpdateHoldRequestStatusRequest;
 import com.example.tailor_shop.modules.fabric.service.FabricService;
+import com.example.tailor_shop.modules.fabric.service.FabricAIService;
+import com.example.tailor_shop.config.storage.S3StorageService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.MediaType;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -29,12 +36,15 @@ import org.springframework.web.bind.annotation.*;
 /**
  * Fabric Controller - Quản lý vải (giống Shopee)
  */
+@Slf4j
 @RestController
 @RequestMapping("/api/v1/fabrics")
 @RequiredArgsConstructor
 public class FabricController {
 
     private final FabricService fabricService;
+    private final FabricAIService fabricAIService;
+    private final S3StorageService s3StorageService;
 
     /**
      * List fabrics với filter (public)
@@ -42,7 +52,7 @@ public class FabricController {
     @GetMapping
     public ResponseEntity<CommonResponse<Page<FabricResponse>>> list(
             @Valid FabricFilterRequest filter,
-            @PageableDefault(size = 20, sort = "displayOrder,asc") Pageable pageable) {
+            @PageableDefault(size = 20) Pageable pageable) {
         Page<FabricResponse> data = fabricService.list(filter, pageable);
         return ResponseEntity.ok(ResponseUtil.success(TraceIdUtil.getOrCreateTraceId(), data));
     }
@@ -114,6 +124,55 @@ public class FabricController {
     public ResponseEntity<CommonResponse<Void>> delete(@PathVariable Long id) {
         fabricService.delete(id);
         return ResponseEntity.ok(ResponseUtil.success(TraceIdUtil.getOrCreateTraceId(), null));
+    }
+
+    /**
+     * Upload fabric image to S3 (admin/staff only)
+     * Returns the S3 URL of the uploaded image
+     */
+    @PostMapping(value = "/upload-image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasAnyRole('ADMIN','STAFF')")
+    public ResponseEntity<CommonResponse<java.util.Map<String, String>>> uploadImage(
+            @RequestParam("file") MultipartFile file) {
+        try {
+            if (file.isEmpty()) {
+                return ResponseEntity.badRequest().body(
+                        ResponseUtil.error(TraceIdUtil.getOrCreateTraceId(), "400", "File is empty"));
+            }
+
+            // Validate file type
+            String contentType = file.getContentType();
+            if (contentType == null || !contentType.startsWith("image/")) {
+                return ResponseEntity.badRequest().body(
+                        ResponseUtil.error(TraceIdUtil.getOrCreateTraceId(), "400", "Only image files are allowed"));
+            }
+
+            // Upload to S3
+            String s3Url = s3StorageService.upload("fabrics", file);
+            log.info("📷 Uploaded fabric image to S3: {}", s3Url);
+
+            java.util.Map<String, String> result = new java.util.HashMap<>();
+            result.put("url", s3Url);
+            result.put("fileName", file.getOriginalFilename());
+
+            return ResponseEntity.ok(ResponseUtil.success(TraceIdUtil.getOrCreateTraceId(), result));
+        } catch (Exception e) {
+            log.error("❌ Error uploading fabric image: {}", e.getMessage(), e);
+            return ResponseEntity.internalServerError().body(
+                    ResponseUtil.error(TraceIdUtil.getOrCreateTraceId(), "500", "Upload failed: " + e.getMessage()));
+        }
+    }
+
+    /**
+     * AI analyze fabric image (admin/staff only)
+     * Gửi ảnh vải để AI phân tích và gợi ý thông tin
+     */
+    @PostMapping("/ai-analyze")
+    @PreAuthorize("hasAnyRole('ADMIN','STAFF')")
+    public ResponseEntity<CommonResponse<FabricAIAnalysisResponse>> aiAnalyzeImage(
+            @Valid @RequestBody FabricAIAnalysisRequest request) {
+        FabricAIAnalysisResponse data = fabricAIService.analyzeImage(request);
+        return ResponseEntity.ok(ResponseUtil.success(TraceIdUtil.getOrCreateTraceId(), data));
     }
 
     /**

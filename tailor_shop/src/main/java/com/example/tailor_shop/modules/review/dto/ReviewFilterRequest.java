@@ -18,6 +18,7 @@ public class ReviewFilterRequest {
 
     private ReviewType type; // PRODUCT or ORDER
     private Long productId;
+    private Long imageAssetId;
     private Long orderId;
     private Long userId; // Reviewer
     private Integer rating; // Filter by rating (1-5)
@@ -27,4 +28,3 @@ public class ReviewFilterRequest {
     private Boolean isVerifiedPurchase; // Only verified purchases
     private String keyword; // Search in title/comment
 }
-

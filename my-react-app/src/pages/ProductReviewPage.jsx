@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation, useParams } from "react-router-dom";
-import { getOrderById } from "../utils/orderStorage";
+import orderService from "../services/orderService";
+import reviewService from "../services/reviewService";
+import imageAssetService from "../services/imageAssetService";
 import { getCurrentUser } from "../utils/authStorage";
-import { addReview, getReviewByOrderId, updateReview, deleteReview } from "../utils/reviewStorage";
+import { showSuccess, showError, showWarning } from "../components/NotificationToast.jsx";
 import Header from "../components/Header.jsx";
 
 const ProductReviewPage = () => {
@@ -16,72 +18,123 @@ const ProductReviewPage = () => {
   
   // Review form state
   const [rating, setRating] = useState(5);
+  const [title, setTitle] = useState("");
   const [comment, setComment] = useState("");
-  const [images, setImages] = useState([]);
+  const [imageFiles, setImageFiles] = useState([]); // Store File objects
+  const [imageUrls, setImageUrls] = useState([]); // Store preview URLs
+  const [isAnonymous, setIsAnonymous] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [uploadingImages, setUploadingImages] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showImageLightbox, setShowImageLightbox] = useState(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [reviewSubmitted, setReviewSubmitted] = useState(false);
 
   useEffect(() => {
-    const currentUser = getCurrentUser();
-    setUser(currentUser);
-
-    if (orderId) {
-      const orderData = getOrderById(orderId);
-      
-      if (orderData) {
-        const isCustomerOrder = 
-          orderData.phone === currentUser?.phone ||
-          orderData.name === currentUser?.name ||
-          orderData.customerId === currentUser?.username;
-        
-        // Cho phép đánh giá nếu:
-        // 1. Đơn hàng may đo: status phải là "Hoàn thành"
-        // 2. Đơn hàng vải: có thể đánh giá ngay (vì đã thanh toán)
-        const canReview = isCustomerOrder && (
-          orderData.status === "Hoàn thành" || 
-          orderData.isFabricOrder === true
-        );
-        
-        if (canReview) {
-          setOrder(orderData);
-          
-          // Kiểm tra xem đã có đánh giá chưa
-          const review = getReviewByOrderId(orderId);
-          if (review) {
-            setExistingReview(review);
-            setRating(review.rating || 5);
-            setComment(review.comment || "");
-            setImages(review.images || []);
-          }
-        } else {
-          // Nếu không thể đánh giá, redirect về dashboard
-          navigate("/customer/dashboard");
+    const loadData = async () => {
+      try {
+        const currentUser = getCurrentUser();
+        if (!currentUser) {
+          navigate("/login");
+          return;
         }
-      } else {
+        setUser(currentUser);
+
+        if (!orderId) {
+          navigate("/customer/dashboard");
+          return;
+        }
+
+        // Load order from API
+        const orderResponse = await orderService.getDetail(orderId);
+        const orderData = orderResponse?.responseData ?? orderResponse?.data ?? orderResponse;
+        
+        if (!orderData) {
+          showError("Không tìm thấy đơn hàng");
+          navigate("/customer/dashboard");
+          return;
+        }
+
+        // Check if user is the owner of this order
+        const isCustomerOrder = 
+          orderData.customerId === currentUser.id ||
+          orderData.customer?.id === currentUser.id ||
+          orderData.phone === currentUser.phone;
+        
+        if (!isCustomerOrder) {
+          showError("Bạn không có quyền đánh giá đơn hàng này");
+          navigate("/customer/dashboard");
+          return;
+        }
+
+        // Check if order can be reviewed (status must be COMPLETED or DELIVERED)
+        const canReview = orderData.status === "COMPLETED" || 
+                         orderData.status === "DELIVERED" ||
+                         orderData.status === "Hoàn thành";
+        
+        if (!canReview) {
+          showWarning("Chỉ có thể đánh giá đơn hàng đã hoàn thành");
+          navigate("/customer/dashboard");
+          return;
+        }
+
+        setOrder(orderData);
+
+        // Check if user has already reviewed this order
+        try {
+          const hasReviewed = await reviewService.hasReviewedOrder(orderId);
+          if (hasReviewed) {
+            // Load existing review
+            const reviewListResponse = await reviewService.list({
+              orderId: orderId,
+              userId: currentUser.id
+            });
+            const reviewList = reviewListResponse?.responseData?.content ?? 
+                              reviewListResponse?.data?.content ?? 
+                              reviewListResponse?.content ?? [];
+            
+            if (reviewList.length > 0) {
+              const existing = reviewList[0];
+              setExistingReview(existing);
+              setRating(existing.rating || 5);
+              setTitle(existing.title || "");
+              setComment(existing.comment || "");
+              setImageUrls(existing.imageUrls || []);
+              setIsAnonymous(existing.isAnonymous || false);
+            }
+          }
+        } catch (error) {
+          console.error("Error checking review:", error);
+          // Continue anyway, allow user to create review
+        }
+      } catch (error) {
+        console.error("Error loading order:", error);
+        showError("Không thể tải thông tin đơn hàng");
         navigate("/customer/dashboard");
+      } finally {
+        setLoading(false);
       }
-    } else {
-      navigate("/customer/dashboard");
-    }
-    
-    setLoading(false);
+    };
+
+    loadData();
   }, [orderId, navigate]);
 
   const handleImageUpload = (e) => {
     const files = Array.from(e.target.files);
-    if (files.length + images.length > 5) {
-      alert("Bạn chỉ có thể tải lên tối đa 5 hình ảnh");
+    if (files.length + imageFiles.length > 9) {
+      showWarning("Bạn chỉ có thể tải lên tối đa 9 hình ảnh");
       return;
     }
     
     files.forEach((file) => {
       if (file.type.startsWith("image/")) {
+        // Store file object
+        setImageFiles((prev) => [...prev, file]);
+        
+        // Create preview URL
         const reader = new FileReader();
         reader.onload = (event) => {
-          setImages((prev) => [...prev, event.target.result]);
+          setImageUrls((prev) => [...prev, event.target.result]);
         };
         reader.readAsDataURL(file);
       }
@@ -89,75 +142,105 @@ const ProductReviewPage = () => {
   };
 
   const removeImage = (index) => {
-    setImages((prev) => prev.filter((_, i) => i !== index));
+    setImageFiles((prev) => prev.filter((_, i) => i !== index));
+    setImageUrls((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (!comment.trim()) {
-      alert("Vui lòng nhập đánh giá của bạn");
+    // Validate required fields
+    if (!rating || rating < 1 || rating > 5) {
+      showError("Vui lòng chọn đánh giá từ 1 đến 5 sao");
+      return;
+    }
+
+    if (!comment.trim() && !title.trim()) {
+      showError("Vui lòng nhập nhận xét hoặc tiêu đề đánh giá");
+      return;
+    }
+
+    if (comment.length > 5000) {
+      showError("Nhận xét không được vượt quá 5000 ký tự");
+      return;
+    }
+
+    if (title.length > 255) {
+      showError("Tiêu đề không được vượt quá 255 ký tự");
       return;
     }
 
     setSubmitting(true);
+    setUploadingImages(true);
 
     try {
-      // Lấy fabricKeys từ đơn hàng vải
-      let fabricKeys = [];
-      if (order.isFabricOrder && order.items && Array.isArray(order.items)) {
-        fabricKeys = order.items
-          .map(item => {
-            const key = item.key || item.fabricKey || item.id;
-            console.log("🔍 Item:", item, "→ Key:", key);
-            return key;
-          })
-          .filter(key => key); // Loại bỏ null/undefined
-        console.log("📦 Order items:", order.items);
-        console.log("🔑 Fabric keys extracted:", fabricKeys);
-        
-        if (fabricKeys.length === 0) {
-          console.warn("⚠️ No fabric keys found in order items!");
+      // Upload images to S3 first
+      let uploadedImageUrls = [];
+      if (imageFiles.length > 0) {
+        try {
+          const uploadPromises = imageFiles.map(file => 
+            imageAssetService.upload(file, {
+              description: `Review image for order ${orderId}`,
+              category: 'review'
+            })
+          );
+          
+          const uploadResults = await Promise.all(uploadPromises);
+          uploadedImageUrls = uploadResults.map(result => {
+            const data = result?.responseData ?? result?.data ?? result;
+            return data?.url || data?.s3Url || data?.imageUrl;
+          }).filter(url => url); // Remove null/undefined
+          
+          console.log("Uploaded images:", uploadedImageUrls);
+        } catch (uploadError) {
+          console.error("Error uploading images:", uploadError);
+          showWarning("Một số hình ảnh không thể tải lên. Tiếp tục với các hình ảnh đã tải lên thành công.");
         }
-      } else {
-        console.log("ℹ️ Not a fabric order or no items:", {
-          isFabricOrder: order.isFabricOrder,
-          hasItems: !!order.items,
-          itemsType: Array.isArray(order.items) ? 'array' : typeof order.items
-        });
       }
 
-      const reviewData = {
-        orderId: order.id,
-        productName: order.styleName || order.style || order.productName || (order.isFabricOrder ? "Đơn mua vải" : "Sản phẩm may đo"),
-        productType: order.productType || (order.isFabricOrder ? "Vải" : "May đo"),
+      // Combine uploaded images with existing imageUrls (if editing)
+      const allImageUrls = [...uploadedImageUrls, ...imageUrls.filter(url => 
+        typeof url === 'string' && (url.startsWith('http') || url.startsWith('https'))
+      )];
+
+      // Build payload matching ReviewRequest DTO
+      const reviewPayload = {
         rating: rating,
-        comment: comment.trim(),
-        images: images,
-        customerName: user?.name || order.name || "Khách hàng",
-        customerId: user?.username || user?.phone,
-        orderDate: order.receive || order.createdAt,
-        fabricKeys: fabricKeys, // Lưu danh sách fabric keys để hiển thị trên trang sản phẩm
-        isFabricOrder: order.isFabricOrder || false,
+        title: title.trim() || null,
+        comment: comment.trim() || null,
+        imageUrls: allImageUrls.length > 0 ? allImageUrls : null,
+        isAnonymous: isAnonymous
       };
 
+      console.log("Submitting review with payload:", reviewPayload);
+
+      let response;
       if (existingReview) {
-        const updated = updateReview(existingReview.id, reviewData);
-        console.log("✅ Updated review:", updated);
-        setSubmitting(false);
-        setReviewSubmitted(true);
-        setShowSuccessModal(true);
+        // Update existing review
+        response = await reviewService.update(existingReview.id, reviewPayload);
+        showSuccess("Cập nhật đánh giá thành công!");
       } else {
-        const newReview = addReview(reviewData);
-        console.log("✅ Added new review:", newReview);
-        setSubmitting(false);
-        setReviewSubmitted(true);
-        setShowSuccessModal(true);
+        // Create new review
+        response = await reviewService.createOrderReview(orderId, reviewPayload);
+        showSuccess("Gửi đánh giá thành công!");
       }
+
+      // Handle response
+      const reviewData = response?.responseData ?? response?.data ?? response;
+      console.log("Review response:", reviewData);
+
+      setReviewSubmitted(true);
+      setShowSuccessModal(true);
     } catch (error) {
       console.error("Error submitting review:", error);
-      alert("Có lỗi xảy ra khi gửi đánh giá. Vui lòng thử lại.");
+      const errorMsg = error?.response?.data?.responseMessage ||
+                      error?.response?.data?.message ||
+                      error?.message ||
+                      "Có lỗi xảy ra khi gửi đánh giá. Vui lòng thử lại.";
+      showError(errorMsg);
+    } finally {
       setSubmitting(false);
+      setUploadingImages(false);
     }
   };
 
@@ -171,11 +254,23 @@ const ProductReviewPage = () => {
     navigate(`/customer/orders/${order.id}`);
   };
 
-  const handleDeleteReview = () => {
-    if (existingReview) {
-      deleteReview(existingReview.id);
-      alert("Đã xóa đánh giá thành công!");
+  const handleDeleteReview = async () => {
+    if (!existingReview) return;
+
+    try {
+      setSubmitting(true);
+      await reviewService.delete(existingReview.id);
+      showSuccess("Đã xóa đánh giá thành công!");
       navigate(`/customer/orders/${order.id}`);
+    } catch (error) {
+      console.error("Error deleting review:", error);
+      const errorMsg = error?.response?.data?.responseMessage ||
+                      error?.response?.data?.message ||
+                      error?.message ||
+                      "Không thể xóa đánh giá. Vui lòng thử lại.";
+      showError(errorMsg);
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -305,36 +400,78 @@ const ProductReviewPage = () => {
               </div>
             </div>
 
+            {/* Title */}
+            <div className="mb-6">
+              <label className="block text-sm font-semibold text-gray-900 mb-2">
+                Tiêu đề đánh giá (Tùy chọn)
+              </label>
+              <input
+                type="text"
+                value={title}
+                onChange={(e) => {
+                  if (e.target.value.length <= 255) {
+                    setTitle(e.target.value);
+                  }
+                }}
+                maxLength={255}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1B4332] focus:border-[#1B4332] outline-none"
+                placeholder="Tóm tắt đánh giá của bạn..."
+              />
+              <p className={`text-xs mt-1 ${title.length >= 255 ? 'text-red-500' : 'text-gray-500'}`}>
+                {title.length}/255 ký tự
+              </p>
+            </div>
+
             {/* Comment */}
             <div className="mb-6">
               <label className="block text-sm font-semibold text-gray-900 mb-2">
-                Nhận xét chi tiết <span className="text-red-500">*</span>
+                Nhận xét chi tiết {!title.trim() && <span className="text-red-500">*</span>}
               </label>
               <textarea
                 value={comment}
                 onChange={(e) => {
-                  if (e.target.value.length <= 500) {
+                  if (e.target.value.length <= 5000) {
                     setComment(e.target.value);
                   }
                 }}
                 rows={6}
-                maxLength={500}
+                maxLength={5000}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1B4332] focus:border-[#1B4332] outline-none resize-none"
                 placeholder="Chia sẻ trải nghiệm của bạn về sản phẩm này..."
-                required
+                required={!title.trim()}
               />
-              <p className={`text-xs mt-1 ${comment.length >= 500 ? 'text-red-500' : 'text-gray-500'}`}>
-                {comment.length}/500 ký tự
+              <p className={`text-xs mt-1 ${comment.length >= 5000 ? 'text-red-500' : 'text-gray-500'}`}>
+                {comment.length}/5000 ký tự
               </p>
+            </div>
+
+            {/* Anonymous Checkbox */}
+            <div className="mb-6">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={isAnonymous}
+                  onChange={(e) => setIsAnonymous(e.target.checked)}
+                  className="w-4 h-4 text-[#1B4332] border-gray-300 rounded focus:ring-[#1B4332]"
+                />
+                <span className="text-sm text-gray-700">
+                  Đánh giá ẩn danh (tên của bạn sẽ không hiển thị)
+                </span>
+              </label>
             </div>
 
             {/* Image Upload */}
             <div className="mb-6">
               <label className="block text-sm font-semibold text-gray-900 mb-2">
-                Hình ảnh (Tùy chọn)
+                Hình ảnh (Tùy chọn, tối đa 9 ảnh)
               </label>
+              {uploadingImages && (
+                <div className="mb-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                  <p className="text-sm text-blue-700">Đang tải lên hình ảnh...</p>
+                </div>
+              )}
               <div className="grid grid-cols-5 gap-3 mb-3">
-                {images.map((img, index) => (
+                {imageUrls.map((img, index) => (
                   <div key={index} className="relative group">
                     <img
                       src={img}
@@ -353,7 +490,7 @@ const ProductReviewPage = () => {
                     </button>
                   </div>
                 ))}
-                {images.length < 5 && (
+                {imageUrls.length < 9 && (
                   <label className="w-full h-24 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center cursor-pointer hover:border-[#1B4332] hover:bg-gray-50 transition-colors">
                     <input
                       type="file"
@@ -361,6 +498,7 @@ const ProductReviewPage = () => {
                       multiple
                       onChange={handleImageUpload}
                       className="hidden"
+                      disabled={uploadingImages}
                     />
                     <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -369,7 +507,7 @@ const ProductReviewPage = () => {
                 )}
               </div>
               <p className="text-xs text-gray-500">
-                Tối đa 5 hình ảnh (JPG, PNG)
+                Tối đa 9 hình ảnh (JPG, PNG). Kích thước tối đa 5MB mỗi ảnh.
               </p>
             </div>
 
@@ -410,10 +548,10 @@ const ProductReviewPage = () => {
               </button>
               <button
                 type="submit"
-                disabled={submitting || !comment.trim()}
+                disabled={submitting || (!comment.trim() && !title.trim())}
                 className="flex-1 px-4 py-3 bg-[#1B4332] text-white rounded-lg hover:bg-[#14532d] transition-colors text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {submitting ? "Đang gửi..." : existingReview ? "Cập nhật đánh giá" : "Gửi đánh giá"}
+                {submitting ? (uploadingImages ? "Đang tải ảnh..." : "Đang gửi...") : existingReview ? "Cập nhật đánh giá" : "Gửi đánh giá"}
               </button>
             </div>
           </form>
@@ -538,11 +676,11 @@ const ProductReviewPage = () => {
                         <p className="text-sm text-gray-700 line-clamp-2">{comment}</p>
                       </div>
                     )}
-                    {images.length > 0 && (
+                    {imageUrls.length > 0 && (
                       <div className="pt-2 border-t border-gray-200">
                         <p className="text-xs text-gray-600 mb-1">Hình ảnh:</p>
                         <div className="flex gap-2">
-                          {images.slice(0, 3).map((img, idx) => (
+                          {imageUrls.slice(0, 3).map((img, idx) => (
                             <img
                               key={idx}
                               src={img}
@@ -550,9 +688,9 @@ const ProductReviewPage = () => {
                               className="w-12 h-12 object-cover rounded border border-gray-200"
                             />
                           ))}
-                          {images.length > 3 && (
+                          {imageUrls.length > 3 && (
                             <div className="w-12 h-12 rounded border border-gray-200 bg-gray-100 flex items-center justify-center text-xs text-gray-500">
-                              +{images.length - 3}
+                              +{imageUrls.length - 3}
                             </div>
                           )}
                         </div>
@@ -628,12 +766,12 @@ const ProductReviewPage = () => {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
-              {images.length > 1 && (
+              {imageUrls.length > 1 && (
                 <>
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      setShowImageLightbox((prev) => (prev > 0 ? prev - 1 : images.length - 1));
+                      setShowImageLightbox((prev) => (prev > 0 ? prev - 1 : imageUrls.length - 1));
                     }}
                     className="absolute left-4 w-10 h-10 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center text-white transition-colors"
                   >
@@ -644,7 +782,7 @@ const ProductReviewPage = () => {
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      setShowImageLightbox((prev) => (prev < images.length - 1 ? prev + 1 : 0));
+                      setShowImageLightbox((prev) => (prev < imageUrls.length - 1 ? prev + 1 : 0));
                     }}
                     className="absolute right-4 w-10 h-10 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center text-white transition-colors"
                   >
@@ -655,14 +793,14 @@ const ProductReviewPage = () => {
                 </>
               )}
               <img
-                src={images[showImageLightbox]}
+                src={imageUrls[showImageLightbox]}
                 alt={`Review image ${showImageLightbox + 1}`}
                 className="max-w-full max-h-[90vh] object-contain rounded-lg"
                 onClick={(e) => e.stopPropagation()}
               />
-              {images.length > 1 && (
+              {imageUrls.length > 1 && (
                 <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 text-white text-sm">
-                  {showImageLightbox + 1} / {images.length}
+                  {showImageLightbox + 1} / {imageUrls.length}
                 </div>
               )}
             </div>

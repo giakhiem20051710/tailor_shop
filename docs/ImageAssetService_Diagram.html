@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ImageAssetService - Sơ Đồ Hoạt Động</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #eee;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: #00d9ff;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            text-shadow: 0 0 20px rgba(0, 217, 255, 0.3);
+        }
+
+        h2 {
+            color: #ffd700;
+            margin: 40px 0 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #ffd700;
+        }
+
+        h3 {
+            color: #00ff88;
+            margin: 25px 0 15px;
+        }
+
+        .section {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 25px;
+            margin: 20px 0;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .mermaid {
+            background: #fff;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 15px 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+
+        th,
+        td {
+            padding: 12px 15px;
+            text-align: left;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        th {
+            background: rgba(0, 217, 255, 0.2);
+            color: #00d9ff;
+        }
+
+        tr:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        code {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 2px 8px;
+            border-radius: 4px;
+            color: #00ff88;
+            font-family: 'Consolas', monospace;
+        }
+
+        .highlight {
+            color: #ff6b6b;
+            font-weight: bold;
+        }
+
+        .overview {
+            background: linear-gradient(135deg, rgba(0, 217, 255, 0.1), rgba(0, 255, 136, 0.1));
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+
+        .emoji {
+            font-size: 1.2em;
+            margin-right: 8px;
+        }
+
+        ul {
+            padding-left: 25px;
+            margin: 10px 0;
+        }
+
+        li {
+            margin: 8px 0;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>📊 ImageAssetService - Sơ Đồ Hoạt Động</h1>
+
+        <div class="overview">
+            <h2>1. Tổng Quan Class</h2>
+            <p><code>ImageAssetService</code> là service chịu trách nhiệm quản lý <strong>Image Assets</strong> (tài
+                nguyên hình ảnh) trong hệ thống Tailor Shop. Service này xử lý việc tạo, đọc, xóa ảnh và tích hợp với AI
+                để tự động phân loại ảnh.</p>
+        </div>
+
+        <div class="section">
+            <h2>2. Sơ Đồ Kiến Trúc</h2>
+            <div class="mermaid">
+                graph TB
+                subgraph "Controllers"
+                C[ImageAssetController]
+                end
+
+                subgraph "ImageAssetService"
+                S[ImageAssetService]
+                S --> CREATE[create]
+                S --> AUTO[createWithAutoClassification]
+                S --> READ[getById / getAll / getByCategory]
+                S --> DELETE[delete]
+                S --> CLEANUP[cleanupOrphanChecksums]
+                end
+
+                subgraph "Dependencies"
+                REPO[ImageAssetRepository]
+                PROD[ProductTemplateRepository]
+                FAB[FabricRepository]
+                STY[StyleRepository]
+                CLASS[ImageClassificationService]
+                BULK[BulkUploadJobFileRepository]
+                end
+
+                subgraph "Database"
+                DB[(MySQL Database)]
+                end
+
+                subgraph "External"
+                S3[AWS S3 Storage]
+                AI[AI Classification]
+                end
+
+                C --> S
+                CREATE --> REPO
+                CREATE --> PROD
+                CREATE --> FAB
+                CREATE --> STY
+                AUTO --> CLASS
+                CLASS --> AI
+                DELETE --> BULK
+                DELETE --> REPO
+                CLEANUP --> BULK
+                REPO --> DB
+                S3 -.-> |"URLs stored"| DB
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>3. Sơ Đồ Luồng Tạo Image Asset</h2>
+
+            <h3>3.1. Luồng Tạo Thủ Công (create)</h3>
+            <div class="mermaid">
+                sequenceDiagram
+                participant Client
+                participant Controller
+                participant Service as ImageAssetService
+                participant Repos as Repositories
+                participant DB as Database
+
+                Client->>Controller: POST /api/v1/image-assets
+                Controller->>Service: create(ImageAssetRequest)
+
+                Service->>Service: Build ImageAssetEntity
+
+                alt Has ProductTemplateId
+                Service->>Repos: productTemplateRepository.findById()
+                Repos-->>Service: ProductTemplate entity
+                end
+
+                alt Has FabricId
+                Service->>Repos: fabricRepository.findById()
+                Repos-->>Service: Fabric entity
+                end
+
+                alt Has StyleId
+                Service->>Repos: styleRepository.findById()
+                Repos-->>Service: Style entity
+                end
+
+                Service->>Repos: imageAssetRepository.save(entity)
+                Repos->>DB: INSERT INTO image_assets
+                DB-->>Repos: Saved entity
+                Repos-->>Service: entity with ID
+
+                Service->>Service: toResponse(entity)
+                Service-->>Controller: ImageAssetResponse
+                Controller-->>Client: 200 OK + JSON
+            </div>
+
+            <h3>3.2. Luồng Tạo Với Auto Classification</h3>
+            <div class="mermaid">
+                sequenceDiagram
+                participant Client
+                participant Controller
+                participant Service as ImageAssetService
+                participant ClassSvc as ImageClassificationService
+                participant AI as AI/Gemini
+                participant DB as Database
+
+                Client->>Controller: Upload image with description
+                Controller->>Service: createWithAutoClassification(s3Key, url, description, fileName)
+
+                Note over Service: Bước 1: Phân loại tự động
+                Service->>ClassSvc: classify(description, fileName)
+                ClassSvc->>AI: Analyze image content
+                AI-->>ClassSvc: Classification result
+                ClassSvc-->>Service: category, type, gender, tags
+
+                Note over Service: Bước 2: Build request
+                Service->>Service: Build ImageAssetRequest with classification
+
+                Note over Service: Bước 3: Gọi create
+                Service->>Service: create(request)
+                Service->>DB: Save to database
+                DB-->>Service: Saved entity
+
+                Service-->>Controller: ImageAssetResponse
+                Controller-->>Client: 200 OK + JSON
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>4. Sơ Đồ Luồng Xóa Image Asset</h2>
+            <div class="mermaid">
+                sequenceDiagram
+                participant Client
+                participant Controller
+                participant Service as ImageAssetService
+                participant BulkRepo as BulkUploadJobFileRepository
+                participant AssetRepo as ImageAssetRepository
+                participant S3 as AWS S3
+                participant DB as Database
+
+                Client->>Controller: DELETE /api/v1/image-assets/id
+                Controller->>Service: delete(id)
+
+                Service->>AssetRepo: findById(id)
+                AssetRepo-->>Service: ImageAssetEntity
+
+                Note over Service: Cleanup checksum records
+                Service->>BulkRepo: findByImageAssetId(id)
+                BulkRepo-->>Service: List of checksums
+                Service->>BulkRepo: deleteByImageAssetId(id)
+                BulkRepo->>DB: DELETE FROM bulk_upload_job_files
+
+                Note over Service: Delete from database
+                Service->>AssetRepo: delete(entity)
+                AssetRepo->>DB: DELETE FROM image_assets
+
+                Service-->>Controller: void
+                Controller->>S3: Delete S3 files
+                Controller-->>Client: 204 No Content
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>5. Chi Tiết Các Methods</h2>
+
+            <h3>5.1. create(ImageAssetRequest request)</h3>
+            <table>
+                <tr>
+                    <th>Bước</th>
+                    <th>Mô tả</th>
+                </tr>
+                <tr>
+                    <td>1</td>
+                    <td>Nhận request chứa thông tin ảnh (s3Key, url, category, type, gender, tags...)</td>
+                </tr>
+                <tr>
+                    <td>2</td>
+                    <td>Build <code>ImageAssetEntity</code> từ request</td>
+                </tr>
+                <tr>
+                    <td>3</td>
+                    <td>Liên kết với ProductTemplate, Fabric, Style nếu có ID</td>
+                </tr>
+                <tr>
+                    <td>4</td>
+                    <td>Lưu entity vào database</td>
+                </tr>
+                <tr>
+                    <td>5</td>
+                    <td>Convert entity thành response và trả về</td>
+                </tr>
+            </table>
+
+            <h3>5.2. Query Methods</h3>
+            <table>
+                <tr>
+                    <th>Method</th>
+                    <th>Mô tả</th>
+                    <th>Parameters</th>
+                </tr>
+                <tr>
+                    <td><code>getById(Long id)</code></td>
+                    <td>Lấy 1 ImageAsset theo ID</td>
+                    <td>id</td>
+                </tr>
+                <tr>
+                    <td><code>getAll(Pageable)</code></td>
+                    <td>Lấy tất cả có phân trang</td>
+                    <td>pageable</td>
+                </tr>
+                <tr>
+                    <td><code>getByCategory(...)</code></td>
+                    <td>Lọc theo category</td>
+                    <td>category, pageable</td>
+                </tr>
+                <tr>
+                    <td><code>getByCategoryAndType(...)</code></td>
+                    <td>Lọc theo category + type</td>
+                    <td>category, type, pageable</td>
+                </tr>
+                <tr>
+                    <td><code>getByCategoryTypeAndGender(...)</code></td>
+                    <td>Lọc theo category + type + gender</td>
+                    <td>category, type, gender, pageable</td>
+                </tr>
+                <tr>
+                    <td><code>getByTemplateId(Long)</code></td>
+                    <td>Lấy ảnh của 1 ProductTemplate</td>
+                    <td>templateId</td>
+                </tr>
+            </table>
+        </div>
+
+        <div class="section">
+            <h2>6. Entity Relationships</h2>
+            <div class="mermaid">
+                erDiagram
+                ImageAsset ||--o| ProductTemplate : "belongs to"
+                ImageAsset ||--o| Fabric : "belongs to"
+                ImageAsset ||--o| Style : "belongs to"
+                ImageAsset ||--o{ BulkUploadJobFile : "has checksums"
+
+                ImageAsset {
+                Long id PK
+                String s3Key
+                String url
+                String thumbnailUrl
+                String largeUrl
+                String category
+                String type
+                String gender
+                String tags
+                String description
+                Long productTemplateId FK
+                Long fabricId FK
+                Long styleId FK
+                }
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>7. Các Categories và Types</h2>
+            <table>
+                <tr>
+                    <th>Category</th>
+                    <th>Type</th>
+                    <th>Mô tả</th>
+                </tr>
+                <tr>
+                    <td><code>product</code></td>
+                    <td>ao_dai, vest, dam, ao_so_mi</td>
+                    <td>Sản phẩm may đo</td>
+                </tr>
+                <tr>
+                    <td><code>fabric</code></td>
+                    <td>cotton, silk, linen</td>
+                    <td>Mẫu vải</td>
+                </tr>
+                <tr>
+                    <td><code>style</code></td>
+                    <td>classic, modern, casual</td>
+                    <td>Phong cách</td>
+                </tr>
+                <tr>
+                    <td><code>model</code></td>
+                    <td>male, female</td>
+                    <td>Ảnh người mẫu</td>
+                </tr>
+            </table>
+        </div>
+
+        <div class="section">
+            <h2>8. AI Classification Flow</h2>
+            <div class="mermaid">
+                flowchart LR
+                A[Upload Image] --> B[Get description & fileName]
+                B --> C[ImageClassificationService.classify]
+                C --> D[AI Analysis]
+                D --> E{Results}
+                E --> F[Category]
+                E --> G[Type]
+                E --> H[Gender]
+                E --> I[Tags]
+                F & G & H & I --> J[Build ImageAssetRequest]
+                J --> K[create method]
+                K --> L[Save to DB]
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>9. Error Handling</h2>
+            <table>
+                <tr>
+                    <th>Scenario</th>
+                    <th>Exception</th>
+                </tr>
+                <tr>
+                    <td>ImageAsset không tìm thấy</td>
+                    <td><code>RuntimeException("Image asset not found")</code></td>
+                </tr>
+                <tr>
+                    <td>Lỗi khi xóa checksum</td>
+                    <td>Log warning, tiếp tục xóa ImageAsset</td>
+                </tr>
+                <tr>
+                    <td>Lỗi cleanup orphan checksums</td>
+                    <td><code>RuntimeException</code> với message chi tiết</td>
+                </tr>
+            </table>
+        </div>
+
+        <div class="section">
+            <h2>10. Logging</h2>
+            <ul>
+                <li>✅ <code>Created ImageAsset ID: {} with type: {}, description: {}</code></li>
+                <li>✅ <code>Deleted ImageAsset with ID: {}</code></li>
+                <li>🧹 <code>Cleanup orphan checksums: found {} orphan checksums, deleted {} records</code></li>
+                <li>⚠️ <code>Failed to delete checksum records for ImageAsset ID {}: {}</code></li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            securityLevel: 'loose',
+            flowchart: {
+                useMaxWidth: true,
+                htmlLabels: true
+            }
+        });
+    </script>
+</body>
+
+</html>

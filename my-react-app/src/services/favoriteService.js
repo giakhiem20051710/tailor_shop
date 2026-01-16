@@ -81,6 +81,27 @@ class FavoriteService {
     const endpoint = `${API_ENDPOINTS.FAVORITE.CHECK_BY_KEY}?itemKey=${itemKey}`;
     return httpClient.get(endpoint);
   }
+
+  /**
+   * Parse response từ backend (xử lý CommonResponse structure)
+   * @param {Object} response - Response từ API
+   * @returns {*} Parsed data
+   */
+  parseResponse(response) {
+    // Backend trả về CommonResponse<T> với structure:
+    // { requestTrace, responseDateTime, responseStatus, responseData }
+    if (response?.responseData !== undefined) {
+      return response.responseData;
+    }
+    // Fallback cho các trường hợp khác
+    if (response?.data?.responseData !== undefined) {
+      return response.data.responseData;
+    }
+    if (response?.data !== undefined) {
+      return response.data;
+    }
+    return response;
+  }
 }
 
 export default new FavoriteService();

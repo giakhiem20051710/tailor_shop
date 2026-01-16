@@ -56,22 +56,32 @@ public class FabricServiceImpl implements FabricService {
     @Override
     @Transactional(readOnly = true)
     public Page<FabricResponse> list(FabricFilterRequest filter, Pageable pageable) {
-        // Filter by low stock if needed
-        Page<FabricEntity> page = fabricRepository.searchFabrics(
-                filter != null ? filter.getCategory() : null,
-                filter != null ? filter.getColor() : null,
-                filter != null ? filter.getPattern() : null,
-                filter != null ? filter.getMaterial() : null,
-                filter != null ? filter.getOrigin() : null,
-                filter != null ? filter.getIsAvailable() : null,
-                filter != null ? filter.getIsFeatured() : null,
-                filter != null ? filter.getMinPrice() : null,
-                filter != null ? filter.getMaxPrice() : null,
-                filter != null ? filter.getKeyword() : null,
-                pageable
-        );
+        try {
+            log.debug("[TraceId: {}] Listing fabrics with filter: {}, pageable: {}",
+                    TraceIdUtil.getTraceId(), filter, pageable);
 
-        return page.map(this::toResponse);
+            // Filter by low stock if needed
+            Page<FabricEntity> page = fabricRepository.searchFabrics(
+                    filter != null ? filter.getCategory() : null,
+                    filter != null ? filter.getColor() : null,
+                    filter != null ? filter.getPattern() : null,
+                    filter != null ? filter.getMaterial() : null,
+                    filter != null ? filter.getOrigin() : null,
+                    filter != null ? filter.getIsAvailable() : null,
+                    filter != null ? filter.getIsFeatured() : null,
+                    filter != null ? filter.getMinPrice() : null,
+                    filter != null ? filter.getMaxPrice() : null,
+                    filter != null ? filter.getKeyword() : null,
+                    pageable);
+
+            log.debug("[TraceId: {}] Found {} fabrics, converting to response",
+                    TraceIdUtil.getTraceId(), page.getTotalElements());
+
+            return page.map(this::toResponse);
+        } catch (Exception e) {
+            log.error("[TraceId: {}] Error listing fabrics: {}", TraceIdUtil.getTraceId(), e.getMessage(), e);
+            throw e;
+        }
     }
 
     @Override
@@ -102,10 +112,20 @@ public class FabricServiceImpl implements FabricService {
     @Override
     @Transactional
     public FabricResponse create(FabricRequest request, Long createdBy) {
-        // Check code exists
-        if (fabricRepository.existsByCodeAndIsDeletedFalse(request.getCode())) {
-            throw new BadRequestException("Fabric code already exists");
-        }
+        // Check code exists (globally)
+        fabricRepository.findByCode(request.getCode()).ifPresent(existing -> {
+            if (Boolean.FALSE.equals(existing.getIsDeleted())) {
+                throw new BadRequestException("Fabric code already exists");
+            } else {
+                // If deleted, rename it to release the code
+                long timestamp = System.currentTimeMillis();
+                existing.setCode(existing.getCode() + "_DEL_" + timestamp);
+                if (existing.getSlug() != null) {
+                    existing.setSlug(existing.getSlug() + "_DEL_" + timestamp);
+                }
+                fabricRepository.save(existing);
+            }
+        });
 
         // Generate slug if not provided
         String slug = request.getSlug();
@@ -160,9 +180,20 @@ public class FabricServiceImpl implements FabricService {
 
         // Check code change
         if (!entity.getCode().equals(request.getCode())) {
-            if (fabricRepository.existsByCodeAndIsDeletedFalse(request.getCode())) {
-                throw new BadRequestException("Fabric code already exists");
-            }
+            // Check code exists (globally)
+            fabricRepository.findByCode(request.getCode()).ifPresent(existing -> {
+                if (Boolean.FALSE.equals(existing.getIsDeleted())) {
+                    throw new BadRequestException("Fabric code already exists");
+                } else {
+                    // If deleted, rename it to release the code
+                    long timestamp = System.currentTimeMillis();
+                    existing.setCode(existing.getCode() + "_DEL_" + timestamp);
+                    if (existing.getSlug() != null) {
+                        existing.setSlug(existing.getSlug() + "_DEL_" + timestamp);
+                    }
+                    fabricRepository.save(existing);
+                }
+            });
             entity.setCode(request.getCode());
         }
 
@@ -211,6 +242,13 @@ public class FabricServiceImpl implements FabricService {
                 .orElseThrow(() -> new NotFoundException("Fabric not found"));
 
         entity.setIsDeleted(true);
+        // Append timestamp to code and slug to release unique constraints
+        long timestamp = System.currentTimeMillis();
+        entity.setCode(entity.getCode() + "_DEL_" + timestamp);
+        if (entity.getSlug() != null) {
+            entity.setSlug(entity.getSlug() + "_DEL_" + timestamp);
+        }
+
         fabricRepository.save(entity);
 
         log.info("[TraceId: {}] Fabric deleted: id={}, code={}",
@@ -251,8 +289,7 @@ public class FabricServiceImpl implements FabricService {
                 : new ArrayList<>();
 
         return new org.springframework.data.domain.PageImpl<>(
-                pagedList, pageable, responses.size()
-        );
+                pagedList, pageable, responses.size());
     }
 
     @Override
@@ -272,7 +309,8 @@ public class FabricServiceImpl implements FabricService {
 
         inventory.setQuantity(request.getQuantity());
         inventory.setReservedQuantity(request.getReservedQuantity() != null
-                ? request.getReservedQuantity() : BigDecimal.ZERO);
+                ? request.getReservedQuantity()
+                : BigDecimal.ZERO);
         inventory.setMinStockLevel(request.getMinStockLevel());
         inventory.setMaxStockLevel(request.getMaxStockLevel());
         inventory.setUnit(request.getUnit() != null ? request.getUnit() : "METER");
@@ -295,8 +333,7 @@ public class FabricServiceImpl implements FabricService {
     @Override
     @Transactional
     public FabricHoldRequestResponse createHoldRequest(
-            FabricHoldRequestRequest request, Long userId
-    ) {
+            FabricHoldRequestRequest request, Long userId) {
         FabricEntity fabric = fabricRepository.findById(request.getFabricId())
                 .filter(f -> Boolean.FALSE.equals(f.getIsDeleted()))
                 .orElseThrow(() -> new NotFoundException("Fabric not found"));
@@ -320,8 +357,7 @@ public class FabricServiceImpl implements FabricService {
 
             if (request.getQuantity().compareTo(available) > 0) {
                 throw new BadRequestException(
-                        String.format("Insufficient quantity. Available: %s", available)
-                );
+                        String.format("Insufficient quantity. Available: %s", available));
             }
 
             // Set expiry date (default 7 days if not provided)
@@ -349,7 +385,8 @@ public class FabricServiceImpl implements FabricService {
                 .status(FabricHoldRequestStatus.PENDING)
                 .expiryDate(request.getType() == FabricHoldRequestType.HOLD
                         ? (request.getExpiryDate() != null ? request.getExpiryDate()
-                        : LocalDate.now().plusDays(7)) : null)
+                                : LocalDate.now().plusDays(7))
+                        : null)
                 .notes(request.getNotes())
                 .isDeleted(false)
                 .build();
@@ -365,11 +402,9 @@ public class FabricServiceImpl implements FabricService {
     @Override
     @Transactional(readOnly = true)
     public Page<FabricHoldRequestResponse> listHoldRequests(
-            Long fabricId, Long userId, Pageable pageable
-    ) {
+            Long fabricId, Long userId, Pageable pageable) {
         Page<FabricHoldRequestEntity> page = fabricHoldRequestRepository.searchRequests(
-                fabricId, userId, null, null, null, pageable
-        );
+                fabricId, userId, null, null, null, pageable);
         return page.map(this::toHoldRequestResponse);
     }
 
@@ -385,8 +420,7 @@ public class FabricServiceImpl implements FabricService {
     @Override
     @Transactional
     public FabricHoldRequestResponse updateHoldRequestStatus(
-            Long id, UpdateHoldRequestStatusRequest request, Long handledBy
-    ) {
+            Long id, UpdateHoldRequestStatusRequest request, Long handledBy) {
         FabricHoldRequestEntity entity = fabricHoldRequestRepository
                 .findByIdAndIsDeletedFalse(id)
                 .orElseThrow(() -> new NotFoundException("Hold request not found"));
@@ -412,8 +446,8 @@ public class FabricServiceImpl implements FabricService {
             // Find or create inventory entry
             FabricInventoryEntity inventory = fabricInventoryRepository
                     .findByFabricIdAndLocationAndIsDeletedFalse(
-                            entity.getFabric().getId(), null
-                    ).orElse(FabricInventoryEntity.builder()
+                            entity.getFabric().getId(), null)
+                    .orElse(FabricInventoryEntity.builder()
                             .fabric(entity.getFabric())
                             .location("DEFAULT")
                             .quantity(BigDecimal.ZERO)
@@ -421,8 +455,7 @@ public class FabricServiceImpl implements FabricService {
                             .build());
 
             inventory.setReservedQuantity(
-                    inventory.getReservedQuantity().add(entity.getQuantity())
-            );
+                    inventory.getReservedQuantity().add(entity.getQuantity()));
             fabricInventoryRepository.save(inventory);
         }
 
@@ -457,13 +490,12 @@ public class FabricServiceImpl implements FabricService {
                 entity.getType() == FabricHoldRequestType.HOLD) {
             FabricInventoryEntity inventory = fabricInventoryRepository
                     .findByFabricIdAndLocationAndIsDeletedFalse(
-                            entity.getFabric().getId(), null
-                    ).orElse(null);
+                            entity.getFabric().getId(), null)
+                    .orElse(null);
 
             if (inventory != null) {
                 inventory.setReservedQuantity(
-                        inventory.getReservedQuantity().subtract(entity.getQuantity())
-                );
+                        inventory.getReservedQuantity().subtract(entity.getQuantity()));
                 fabricInventoryRepository.save(inventory);
             }
         }
@@ -479,58 +511,71 @@ public class FabricServiceImpl implements FabricService {
      * Convert entity to response DTO
      */
     private FabricResponse toResponse(FabricEntity entity) {
-        // Calculate inventory totals
-        BigDecimal totalQuantity = fabricInventoryRepository
-                .calculateTotalQuantityByFabricId(entity.getId());
-        BigDecimal totalReserved = fabricInventoryRepository
-                .calculateTotalReservedQuantityByFabricId(entity.getId());
-        BigDecimal availableQuantity = totalQuantity.subtract(totalReserved);
+        try {
+            // Calculate inventory totals (handle null safely)
+            BigDecimal totalQuantity = fabricInventoryRepository
+                    .calculateTotalQuantityByFabricId(entity.getId());
+            if (totalQuantity == null) {
+                totalQuantity = BigDecimal.ZERO;
+            }
 
-        // Check low stock
-        List<FabricInventoryEntity> lowStockInventories = fabricInventoryRepository
-                .findLowStockInventories(entity.getId());
-        Boolean isLowStock = !lowStockInventories.isEmpty();
+            BigDecimal totalReserved = fabricInventoryRepository
+                    .calculateTotalReservedQuantityByFabricId(entity.getId());
+            if (totalReserved == null) {
+                totalReserved = BigDecimal.ZERO;
+            }
 
-        // Parse gallery
-        List<String> gallery = parseGallery(entity.getGallery());
+            BigDecimal availableQuantity = totalQuantity.subtract(totalReserved);
 
-        return FabricResponse.builder()
-                .id(entity.getId())
-                .code(entity.getCode())
-                .name(entity.getName())
-                .slug(entity.getSlug())
-                .description(entity.getDescription())
-                .category(entity.getCategory())
-                .material(entity.getMaterial())
-                .color(entity.getColor())
-                .pattern(entity.getPattern())
-                .width(entity.getWidth())
-                .weight(entity.getWeight())
-                .pricePerMeter(entity.getPricePerMeter())
-                .image(entity.getImage())
-                .gallery(gallery)
-                .origin(entity.getOrigin())
-                .careInstructions(entity.getCareInstructions())
-                .isAvailable(entity.getIsAvailable())
-                .isFeatured(entity.getIsFeatured())
-                .displayOrder(entity.getDisplayOrder())
-                .viewCount(entity.getViewCount())
-                .totalQuantity(totalQuantity)
-                .availableQuantity(availableQuantity)
-                .isLowStock(isLowStock)
-                .createdById(entity.getCreatedBy() != null ? entity.getCreatedBy().getId() : null)
-                .createdByName(entity.getCreatedBy() != null ? entity.getCreatedBy().getName() : null)
-                .createdAt(entity.getCreatedAt())
-                .updatedAt(entity.getUpdatedAt())
-                .build();
+            // Check low stock
+            List<FabricInventoryEntity> lowStockInventories = fabricInventoryRepository
+                    .findLowStockInventories(entity.getId());
+            Boolean isLowStock = lowStockInventories != null && !lowStockInventories.isEmpty();
+
+            // Parse gallery
+            List<String> gallery = parseGallery(entity.getGallery());
+
+            return FabricResponse.builder()
+                    .id(entity.getId())
+                    .code(entity.getCode())
+                    .name(entity.getName())
+                    .slug(entity.getSlug())
+                    .description(entity.getDescription())
+                    .category(entity.getCategory())
+                    .material(entity.getMaterial())
+                    .color(entity.getColor())
+                    .pattern(entity.getPattern())
+                    .width(entity.getWidth())
+                    .weight(entity.getWeight())
+                    .pricePerMeter(entity.getPricePerMeter())
+                    .image(entity.getImage())
+                    .gallery(gallery)
+                    .origin(entity.getOrigin())
+                    .careInstructions(entity.getCareInstructions())
+                    .isAvailable(entity.getIsAvailable())
+                    .isFeatured(entity.getIsFeatured())
+                    .displayOrder(entity.getDisplayOrder())
+                    .viewCount(entity.getViewCount())
+                    .totalQuantity(totalQuantity)
+                    .availableQuantity(availableQuantity)
+                    .isLowStock(isLowStock)
+                    .createdById(entity.getCreatedBy() != null ? entity.getCreatedBy().getId() : null)
+                    .createdByName(entity.getCreatedBy() != null ? entity.getCreatedBy().getName() : null)
+                    .createdAt(entity.getCreatedAt())
+                    .updatedAt(entity.getUpdatedAt())
+                    .build();
+        } catch (Exception e) {
+            log.error("[TraceId: {}] Error converting fabric entity to response (id={}): {}",
+                    TraceIdUtil.getTraceId(), entity != null ? entity.getId() : null, e.getMessage(), e);
+            throw new RuntimeException("Error converting fabric to response: " + e.getMessage(), e);
+        }
     }
 
     /**
      * Convert inventory entity to response DTO
      */
     private FabricInventoryResponse toInventoryResponse(
-            FabricInventoryEntity inventory, FabricEntity fabric
-    ) {
+            FabricInventoryEntity inventory, FabricEntity fabric) {
         return FabricInventoryResponse.builder()
                 .id(inventory.getId())
                 .fabricId(fabric.getId())
@@ -613,7 +658,8 @@ public class FabricServiceImpl implements FabricService {
             return new ArrayList<>();
         }
         try {
-            return objectMapper.readValue(galleryJson, new TypeReference<List<String>>() {});
+            return objectMapper.readValue(galleryJson, new TypeReference<List<String>>() {
+            });
         } catch (Exception e) {
             log.error("[TraceId: {}] Error parsing gallery JSON: {}",
                     TraceIdUtil.getTraceId(), e.getMessage());
@@ -642,8 +688,7 @@ public class FabricServiceImpl implements FabricService {
 
         if (request.getQuantity().compareTo(availableQuantity) > 0) {
             throw new BadRequestException(
-                    String.format("Insufficient quantity. Available: %s", availableQuantity)
-            );
+                    String.format("Insufficient quantity. Available: %s", availableQuantity));
         }
 
         // Calculate subtotal
@@ -672,7 +717,7 @@ public class FabricServiceImpl implements FabricService {
 
         // Build response
         return FabricOrderResponse.builder()
-                    .fabricId(fabric.getId())
+                .fabricId(fabric.getId())
                 .fabricName(fabric.getName())
                 .fabricCode(fabric.getCode())
                 .quantity(request.getQuantity())
@@ -688,4 +733,3 @@ public class FabricServiceImpl implements FabricService {
                 .build();
     }
 }
-

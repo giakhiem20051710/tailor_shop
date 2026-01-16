@@ -151,7 +151,7 @@ export default function CustomerListPage() {
       setCustomers(customersList);
       setPagination(prev => {
         const newPagination = {
-          ...prev,
+        ...prev,
           totalElements: totalElements,
           totalPages: totalPages || 1
         };

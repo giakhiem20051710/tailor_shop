@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import promotionService from "../services/promotionService";
 import { showSuccess, showError, showWarning } from "../components/NotificationToast.jsx";
+import { createLogger } from "../utils/logger.js";
 
+const logger = createLogger("Promotions");
 const PromotionManagementPage = () => {
   const [promotions, setPromotions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -126,15 +128,15 @@ const PromotionManagementPage = () => {
 
   const handleCreate = async (e) => {
     e.preventDefault();
-    
+
     // Prevent double submission
     if (isSubmitting) {
       console.log('[PromotionManagementPage] Already submitting, ignoring duplicate request');
       return;
     }
-    
+
     setIsSubmitting(true);
-    
+
     try {
       // Validate required fields
       if (!formData.code?.trim()) {
@@ -161,7 +163,7 @@ const PromotionManagementPage = () => {
       // Validate and parse value
       const valueStr = String(formData.value || '').trim().replace(/,/g, '');
       const val = parseFloat(valueStr);
-      
+
       if (!valueStr || isNaN(val) || val <= 0 || !isFinite(val)) {
         showError("Giá trị giảm giá phải là số dương hợp lệ");
         e.target.disabled = false;
@@ -250,7 +252,7 @@ const PromotionManagementPage = () => {
       console.log('[PromotionManagementPage] Final payload:', JSON.stringify(payload, null, 2));
       console.log('[PromotionManagementPage] Payload has discountPercentage:', 'discountPercentage' in payload, payload.discountPercentage);
       console.log('[PromotionManagementPage] Payload has discountAmount:', 'discountAmount' in payload, payload.discountAmount);
-      
+
       const response = await promotionService.create(payload);
       console.log('[PromotionManagementPage] Response:', response);
 
@@ -266,7 +268,7 @@ const PromotionManagementPage = () => {
         resetForm();
         loadPromotions();
       } else {
-        const errorMsg = responseStatus?.responseMessage || 
+        const errorMsg = responseStatus?.responseMessage ||
           response?.responseMessage ||
           "Không thể tạo mã giảm giá";
         showError(errorMsg);
@@ -279,11 +281,11 @@ const PromotionManagementPage = () => {
         data: error?.data,
         response: error?.response
       });
-      
+
       // Check if error is actually a success response (sometimes httpClient throws even on 200)
-      if (error?.data?.responseStatus?.responseCode === "200" || 
-          error?.data?.responseStatus?.responseCode === 200 ||
-          (error?.data?.responseData && error?.data?.responseStatus?.responseMessage === "SUCCESS")) {
+      if (error?.data?.responseStatus?.responseCode === "200" ||
+        error?.data?.responseStatus?.responseCode === 200 ||
+        (error?.data?.responseData && error?.data?.responseStatus?.responseMessage === "SUCCESS")) {
         console.log('[PromotionManagementPage] Response was success but caught as error, handling as success');
         showSuccess("Tạo mã giảm giá thành công!");
         setShowCreateModal(false);
@@ -291,7 +293,7 @@ const PromotionManagementPage = () => {
         loadPromotions();
         return;
       }
-      
+
       const errorMsg = error?.data?.responseStatus?.responseMessage ||
         error?.data?.responseMessage ||
         error?.response?.data?.responseMessage ||
@@ -306,15 +308,15 @@ const PromotionManagementPage = () => {
 
   const handleUpdate = async (e) => {
     e.preventDefault();
-    
+
     // Prevent double submission
     if (isUpdating) {
       console.log('[PromotionManagementPage] Already updating, ignoring duplicate request');
       return;
     }
-    
+
     setIsUpdating(true);
-    
+
     try {
       // Validate required fields
       if (!formData.code?.trim()) {
@@ -341,7 +343,7 @@ const PromotionManagementPage = () => {
       // Validate and parse value
       const valueStr = String(formData.value || '').trim().replace(/,/g, '');
       const val = parseFloat(valueStr);
-      
+
       if (!valueStr || isNaN(val) || val <= 0 || !isFinite(val)) {
         showError("Giá trị giảm giá phải là số dương hợp lệ");
         e.target.disabled = false;
@@ -438,18 +440,18 @@ const PromotionManagementPage = () => {
         resetForm();
         loadPromotions();
       } else {
-        const errorMsg = responseStatus?.responseMessage || 
+        const errorMsg = responseStatus?.responseMessage ||
           response?.responseMessage ||
           "Không thể cập nhật mã giảm giá";
         showError(errorMsg);
       }
     } catch (error) {
       console.error("[PromotionManagementPage] Failed to update promotion:", error);
-      
+
       // Check if error is actually a success response
-      if (error?.data?.responseStatus?.responseCode === "200" || 
-          error?.data?.responseStatus?.responseCode === 200 ||
-          (error?.data?.responseData && error?.data?.responseStatus?.responseMessage === "SUCCESS")) {
+      if (error?.data?.responseStatus?.responseCode === "200" ||
+        error?.data?.responseStatus?.responseCode === 200 ||
+        (error?.data?.responseData && error?.data?.responseStatus?.responseMessage === "SUCCESS")) {
         showSuccess("Cập nhật mã giảm giá thành công!");
         setShowEditModal(false);
         setSelectedPromo(null);
@@ -457,7 +459,7 @@ const PromotionManagementPage = () => {
         loadPromotions();
         return;
       }
-      
+
       const errorMsg = error?.data?.responseStatus?.responseMessage ||
         error?.data?.responseMessage ||
         error?.response?.data?.responseMessage ||

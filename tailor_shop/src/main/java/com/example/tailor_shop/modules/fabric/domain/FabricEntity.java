@@ -26,7 +26,7 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@ToString(exclude = {"createdBy", "inventory", "holdRequests"})
+@ToString(exclude = { "createdBy", "inventory", "holdRequests" })
 public class FabricEntity {
 
     @Id
@@ -59,19 +59,27 @@ public class FabricEntity {
     @Column(name = "pattern", length = 100)
     private FabricPattern pattern;
 
-    @Column(name = "width", precision = 5, scale = 2)
+    @Enumerated(EnumType.STRING)
+    @Column(name = "stretch", length = 20)
+    private FabricStretch stretch;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "season", length = 20)
+    private FabricSeason season;
+
+    @Column(name = "width", precision = 10, scale = 2)
     private BigDecimal width;
 
-    @Column(name = "weight", precision = 5, scale = 2)
+    @Column(name = "weight", precision = 10, scale = 2)
     private BigDecimal weight;
 
     @Column(name = "price_per_meter", precision = 14, scale = 2)
     private BigDecimal pricePerMeter;
 
-    @Column(name = "image", length = 500)
+    @Column(name = "image", columnDefinition = "LONGTEXT")
     private String image;
 
-    @Column(name = "gallery", columnDefinition = "JSON")
+    @Column(name = "gallery", columnDefinition = "LONGTEXT")
     private String gallery; // Store as JSON string
 
     @Column(name = "origin", length = 100)
@@ -95,6 +103,21 @@ public class FabricEntity {
     @Column(name = "view_count", nullable = false)
     @Builder.Default
     private Integer viewCount = 0;
+
+    @Column(name = "sold_count", nullable = false)
+    @Builder.Default
+    private Integer soldCount = 0;
+
+    @Column(name = "rating_avg", precision = 2, scale = 1)
+    @Builder.Default
+    private BigDecimal ratingAvg = BigDecimal.ZERO;
+
+    @Column(name = "rating_count", nullable = false)
+    @Builder.Default
+    private Integer ratingCount = 0;
+
+    @Column(name = "tags", columnDefinition = "JSON")
+    private String tags; // Store as JSON string array
 
     @Column(name = "is_deleted", nullable = false)
     @Builder.Default
@@ -120,4 +143,3 @@ public class FabricEntity {
     @Column(name = "updated_at")
     private OffsetDateTime updatedAt;
 }
-
