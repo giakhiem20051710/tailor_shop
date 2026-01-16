@@ -35,9 +35,9 @@ export default function Topbar({ onToggleSidebar }) {
             />
           </svg>
         </button>
-      <h2 className="text-xl font-semibold text-gray-700">
-        Quản lý tiệm may
-      </h2>
+        <h2 className="text-xl font-semibold text-gray-700">
+          Quản lý tiệm may
+        </h2>
       </div>
       <div className="flex items-center gap-4">
         {role && (

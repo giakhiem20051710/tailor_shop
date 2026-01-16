@@ -156,7 +156,7 @@ const PromotionsPage = () => {
     {
       id: "popup-birthday",
       title: "Tháng sinh nhật của bạn",
-      subtitle: "Ưu đãi -20% & quà tặng riêng từ Lavi Tailor",
+      subtitle: "Ưu đãi -20% & quà tặng riêng từ Mỹ Hiền Tailor",
       tag: "Birthday month",
       image:
         "https://images.pexels.com/photos/1204595/pexels-photo-1204595.jpeg?auto=compress&cs=tinysrgb&w=1200",
@@ -190,7 +190,7 @@ const PromotionsPage = () => {
       id: "vip-fit",
       title: "Fit Check VIP Reel",
       description:
-        "Khách quay reel/FYP với sản phẩm Lavi Tailor, được giảm thêm 10% khi đính kèm mã video và book lịch fit thử cá nhân hóa.",
+        "Khách quay reel/FYP với sản phẩm Mỹ Hiền Tailor, được giảm thêm 10% khi đính kèm mã video và book lịch fit thử cá nhân hóa.",
       stat: "2.1M lượt xem",
       image:
         "https://images.pexels.com/photos/6311651/pexels-photo-6311651.jpeg?auto=compress&cs=tinysrgb&w=1200",
@@ -444,7 +444,7 @@ const PromotionsPage = () => {
                     className="text-[16px] text-[#4B5563] mt-3 leading-relaxed animate-fade-in-up delay-75"
                   >
                     {currentBanner.subtitle}. <br className="hidden md:block" />
-                    Chương trình áp dụng tự động tại Lavi Tailor.
+                    Chương trình áp dụng tự động tại Mỹ Hiền Tailor.
                   </p>
                 </div>
 
@@ -516,7 +516,7 @@ const PromotionsPage = () => {
                 </span>
               </h1>
               <p className="text-[14px] text-[#4B5563] max-w-2xl leading-relaxed">
-                Lavi Tailor thiết kế gói ưu đãi theo từng mùa lễ hội, sự kiện và
+                Mỹ Hiền Tailor thiết kế gói ưu đãi theo từng mùa lễ hội, sự kiện và
                 milestone quan trọng của khách hàng. Hệ thống sẽ tự động trừ
                 ưu đãi khi đơn hàng khớp điều kiện, không cần nhập mã hay chờ
                 xác nhận thủ công.
@@ -927,7 +927,7 @@ const PromotionsPage = () => {
               <li className="flex items-start gap-2">
                 <span className="text-[#1B4332] mt-1">•</span>
                 <span>
-                  Lavi Tailor có quyền tạm dừng hoặc kết thúc chương trình
+                  Mỹ Hiền Tailor có quyền tạm dừng hoặc kết thúc chương trình
                   khuyến mãi sớm hơn dự kiến khi đạt đủ số lượng đơn hàng.
                 </span>
               </li>
@@ -972,7 +972,7 @@ const PromotionsPage = () => {
             </div>
           </div>
           <div className="border-t border-[#1F2937] pt-4 flex justify-between items-center text-[#6B7280] text-[11px]">
-            <span>© 2025 Lavi Tailor</span>
+            <span>© 2025 Mỹ Hiền Tailor</span>
             <div className="flex gap-4">
               <a href="#">Privacy</a>
               <a href="#">Terms</a>

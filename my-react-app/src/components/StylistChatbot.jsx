@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 const QUESTIONS = [
     {
         id: 'occasion',
-        text: 'Chào bạn, mình là AI Stylist của Lavi Tailor ✨. Hôm nay bạn cần tìm trang phục cho dịp nào?',
+        text: 'Chào bạn, mình là AI Stylist của Mỹ Hiền Tailor ✨. Hôm nay bạn cần tìm trang phục cho dịp nào?',
         options: [
             { label: '💍 Đám cưới / Dự lễ', value: 'wedding' },
             { label: '💼 Đi làm / Công sở', value: 'office' },
@@ -118,7 +118,7 @@ const StylistChatbot = ({ isOpen, onClose, products }) => {
             if (top3.length > 0) {
                 setMessages(prev => [...prev, {
                     type: 'bot',
-                    text: `Dựa trên sở thích của bạn, đây là ${top3.length} gợi ý tốt nhất từ Lavi Tailor:`,
+                    text: `Dựa trên sở thích của bạn, đây là ${top3.length} gợi ý tốt nhất từ Mỹ Hiền Tailor:`,
                     isResult: true
                 }]);
             } else {
@@ -181,8 +181,8 @@ const StylistChatbot = ({ isOpen, onClose, products }) => {
                         <div key={idx} className={`flex ${msg.type === 'user' ? 'justify-end' : 'justify-start'}`}>
                             <div
                                 className={`max-w-[85%] rounded-2xl p-3.5 text-sm md:text-base leading-relaxed shadow-sm ${msg.type === 'user'
-                                        ? 'bg-[#1B4332] text-white rounded-tr-none'
-                                        : 'bg-white text-gray-800 border border-gray-100 rounded-tl-none'
+                                    ? 'bg-[#1B4332] text-white rounded-tr-none'
+                                    : 'bg-white text-gray-800 border border-gray-100 rounded-tl-none'
                                     }`}
                             >
                                 {msg.text}

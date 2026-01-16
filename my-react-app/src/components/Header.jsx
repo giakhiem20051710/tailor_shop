@@ -1,6 +1,7 @@
 import { useNavigate, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { authService, cartService, userService } from "../services";
+import SmartSearch from "./SmartSearch.jsx";
 
 const Header = ({ currentPage = "" }) => {
   const navigate = useNavigate();
@@ -122,15 +123,14 @@ const Header = ({ currentPage = "" }) => {
 
   const isActive = (page) => {
     if (currentPage) return currentPage === page;
-    return location.pathname === page || 
-           (page === "/customer-home" && location.pathname === "/");
+    return location.pathname === page ||
+      (page === "/customer-home" && location.pathname === "/");
   };
 
   return (
     <header
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
-        isScrolled ? "shadow-md bg-white/95 backdrop-blur" : "bg-white"
-      }`}
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${isScrolled ? "shadow-md bg-white/95 backdrop-blur" : "bg-white"
+        }`}
     >
       {/* Thanh vàng trên cùng */}
       <div className="bg-[#F2A500] text-white text-[11px]">
@@ -184,36 +184,9 @@ const Header = ({ currentPage = "" }) => {
             </div>
           </div>
 
-          {/* Search */}
-          <div className="flex-1 hidden md:flex items-center">
-            <form
-              className="w-full flex rounded-full border border-[#E5E7EB] overflow-hidden bg-white"
-              onSubmit={(e) => {
-                e.preventDefault();
-                if (searchQuery.trim()) {
-                  navigate(`/products?search=${encodeURIComponent(searchQuery.trim())}`);
-                  setSearchQuery("");
-                }
-              }}
-              role="search"
-              aria-label="Tìm kiếm sản phẩm"
-            >
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="flex-1 px-4 py-2 text-[12px] outline-none"
-                placeholder="Tìm váy, đầm, vải, sản phẩm..."
-                aria-label="Nhập từ khóa tìm kiếm"
-              />
-              <button
-                type="submit"
-                className="px-6 text-[12px] font-semibold bg-[#111827] text-white hover:bg-[#0f172a] transition-colors"
-                aria-label="Tìm kiếm"
-              >
-                TÌM KIẾM
-              </button>
-            </form>
+          {/* Smart Search with Autocomplete */}
+          <div className="flex-1 hidden md:block">
+            <SmartSearch className="w-full max-w-xl mx-auto" />
           </div>
 
           {/* Mobile Menu Toggle */}
@@ -284,27 +257,24 @@ const Header = ({ currentPage = "" }) => {
           <nav className="flex items-center gap-6 uppercase tracking-[0.16em] text-[#374151]">
             <a
               href="/customer-home"
-              className={`hover:text-[#111827] transition-colors ${
-                isActive("/customer-home") ? "text-[#111827] font-semibold" : ""
-              }`}
+              className={`hover:text-[#111827] transition-colors ${isActive("/customer-home") ? "text-[#111827] font-semibold" : ""
+                }`}
               onClick={handleHomeClick}
             >
               TRANG CHỦ
             </a>
             <a
               href="/about"
-              className={`hover:text-[#111827] transition-colors ${
-                isActive("/about") ? "text-[#111827] font-semibold" : ""
-              }`}
+              className={`hover:text-[#111827] transition-colors ${isActive("/about") ? "text-[#111827] font-semibold" : ""
+                }`}
               onClick={handleAboutClick}
             >
               GIỚI THIỆU
             </a>
             <a
               href="/products"
-              className={`hover:text-[#111827] transition-colors ${
-                isActive("/products") ? "text-[#111827] font-semibold" : ""
-              }`}
+              className={`hover:text-[#111827] transition-colors ${isActive("/products") ? "text-[#111827] font-semibold" : ""
+                }`}
               onClick={handleProductsClick}
             >
               SẢN PHẨM
@@ -317,13 +287,12 @@ const Header = ({ currentPage = "" }) => {
             >
               <a
                 href="#"
-                className={`hover:text-[#111827] transition-colors flex items-center gap-1 ${
-                  isActive("/ai-style-suggestions") || 
-                  isActive("/3d-preview") || 
-                  isActive("/virtual-tryon") || 
+                className={`hover:text-[#111827] transition-colors flex items-center gap-1 ${isActive("/ai-style-suggestions") ||
+                  isActive("/3d-preview") ||
+                  isActive("/virtual-tryon") ||
                   isActive("/trend-analysis")
-                    ? "text-[#111827] font-semibold" : ""
-                }`}
+                  ? "text-[#111827] font-semibold" : ""
+                  }`}
                 onClick={(e) => {
                   e.preventDefault();
                 }}
@@ -386,9 +355,8 @@ const Header = ({ currentPage = "" }) => {
             </div>
             <a
               href="/fabrics"
-              className={`hover:text-[#111827] transition-colors ${
-                isActive("/fabrics") ? "text-[#111827] font-semibold" : ""
-              }`}
+              className={`hover:text-[#111827] transition-colors ${isActive("/fabrics") ? "text-[#111827] font-semibold" : ""
+                }`}
               onClick={(e) => {
                 e.preventDefault();
                 navigate("/fabrics");
@@ -398,18 +366,16 @@ const Header = ({ currentPage = "" }) => {
             </a>
             <a
               href="/customer/order"
-              className={`hover:text-[#111827] transition-colors ${
-                isActive("/customer/order") ? "text-[#111827] font-semibold" : ""
-              }`}
+              className={`hover:text-[#111827] transition-colors ${isActive("/customer/order") ? "text-[#111827] font-semibold" : ""
+                }`}
               onClick={handleOrderClick}
             >
               ĐẶT MAY
             </a>
             <a
               href="/promotions"
-              className={`hover:text-[#111827] transition-colors ${
-                isActive("/promotions") ? "text-[#111827] font-semibold" : ""
-              }`}
+              className={`hover:text-[#111827] transition-colors ${isActive("/promotions") ? "text-[#111827] font-semibold" : ""
+                }`}
               onClick={(e) => {
                 e.preventDefault();
                 navigate("/promotions");
@@ -419,9 +385,8 @@ const Header = ({ currentPage = "" }) => {
             </a>
             <a
               href="/articles"
-              className={`hover:text-[#111827] transition-colors ${
-                isActive("/articles") ? "text-[#111827] font-semibold" : ""
-              }`}
+              className={`hover:text-[#111827] transition-colors ${isActive("/articles") ? "text-[#111827] font-semibold" : ""
+                }`}
               onClick={(e) => {
                 e.preventDefault();
                 navigate("/articles");
@@ -431,9 +396,8 @@ const Header = ({ currentPage = "" }) => {
             </a>
             <a
               href="/favorites"
-              className={`hover:text-[#111827] transition-colors ${
-                isActive("/favorites") ? "text-[#111827] font-semibold" : ""
-              }`}
+              className={`hover:text-[#111827] transition-colors ${isActive("/favorites") ? "text-[#111827] font-semibold" : ""
+                }`}
               onClick={(e) => {
                 e.preventDefault();
                 navigate("/favorites");
@@ -443,9 +407,8 @@ const Header = ({ currentPage = "" }) => {
             </a>
             <a
               href="/customer/dashboard"
-              className={`hover:text-[#111827] transition-colors ${
-                isActive("/customer/dashboard") ? "text-[#111827] font-semibold" : ""
-              }`}
+              className={`hover:text-[#111827] transition-colors ${isActive("/customer/dashboard") ? "text-[#111827] font-semibold" : ""
+                }`}
               onClick={(e) => {
                 e.preventDefault();
                 navigate("/customer/dashboard");
@@ -461,9 +424,8 @@ const Header = ({ currentPage = "" }) => {
             >
               <a
                 href="#"
-                className={`hover:text-[#111827] transition-colors flex items-center gap-1 ${
-                  isActive("/support") ? "text-[#111827] font-semibold" : ""
-                }`}
+                className={`hover:text-[#111827] transition-colors flex items-center gap-1 ${isActive("/support") ? "text-[#111827] font-semibold" : ""
+                  }`}
                 onClick={(e) => {
                   e.preventDefault();
                 }}
@@ -474,85 +436,85 @@ const Header = ({ currentPage = "" }) => {
               {showSupportDropdown && (
                 <div className="absolute top-full left-0 pt-1 w-56 bg-transparent z-50">
                   <div className="bg-white border border-[#E5E7EB] rounded-lg shadow-lg">
-                  <div className="py-1">
-                    <a
-                      href="/support/size-consultation"
-                      className="block px-4 py-2.5 text-[12px] text-[#374151] hover:bg-[#F9FAFB] transition-colors border-b border-[#E5E7EB] last:border-b-0"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        navigate("/support/size-consultation");
-                        setShowSupportDropdown(false);
-                      }}
-                    >
-                      Tư vấn size
-                    </a>
-                    <a
-                      href="/support/shopping-guide"
-                      className="block px-4 py-2.5 text-[12px] text-[#374151] hover:bg-[#F9FAFB] transition-colors border-b border-[#E5E7EB] last:border-b-0"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        navigate("/support/shopping-guide");
-                        setShowSupportDropdown(false);
-                      }}
-                    >
-                      Hướng dẫn mua hàng
-                    </a>
-                    <a
-                      href="/support/payment-policy"
-                      className="block px-4 py-2.5 text-[12px] text-[#374151] hover:bg-[#F9FAFB] transition-colors border-b border-[#E5E7EB] last:border-b-0"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        navigate("/support/payment-policy");
-                        setShowSupportDropdown(false);
-                      }}
-                    >
-                      Chính sách thanh toán
-                    </a>
-                    <a
-                      href="/support/shipping-policy"
-                      className="block px-4 py-2.5 text-[12px] text-[#374151] hover:bg-[#F9FAFB] transition-colors border-b border-[#E5E7EB] last:border-b-0"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        navigate("/support/shipping-policy");
-                        setShowSupportDropdown(false);
-                      }}
-                    >
-                      Chính sách vận chuyển
-                    </a>
-                    <a
-                      href="/support/warranty-return"
-                      className="block px-4 py-2.5 text-[12px] text-[#374151] hover:bg-[#F9FAFB] transition-colors border-b border-[#E5E7EB] last:border-b-0"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        navigate("/support/warranty-return");
-                        setShowSupportDropdown(false);
-                      }}
-                    >
-                      Bảo hành & Đổi trả
-                    </a>
-                    <a
-                      href="/support/membership-policy"
-                      className="block px-4 py-2.5 text-[12px] text-[#374151] hover:bg-[#F9FAFB] transition-colors border-b border-[#E5E7EB] last:border-b-0"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        navigate("/support/membership-policy");
-                        setShowSupportDropdown(false);
-                      }}
-                    >
-                      Chính sách hội viên
-                    </a>
-                    <a
-                      href="/support/privacy-policy"
-                      className="block px-4 py-2.5 text-[12px] text-[#374151] hover:bg-[#F9FAFB] transition-colors border-b border-[#E5E7EB] last:border-b-0"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        navigate("/support/privacy-policy");
-                        setShowSupportDropdown(false);
-                      }}
-                    >
-                      Chính sách quyền riêng tư
-                    </a>
-                  </div>
+                    <div className="py-1">
+                      <a
+                        href="/support/size-consultation"
+                        className="block px-4 py-2.5 text-[12px] text-[#374151] hover:bg-[#F9FAFB] transition-colors border-b border-[#E5E7EB] last:border-b-0"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          navigate("/support/size-consultation");
+                          setShowSupportDropdown(false);
+                        }}
+                      >
+                        Tư vấn size
+                      </a>
+                      <a
+                        href="/support/shopping-guide"
+                        className="block px-4 py-2.5 text-[12px] text-[#374151] hover:bg-[#F9FAFB] transition-colors border-b border-[#E5E7EB] last:border-b-0"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          navigate("/support/shopping-guide");
+                          setShowSupportDropdown(false);
+                        }}
+                      >
+                        Hướng dẫn mua hàng
+                      </a>
+                      <a
+                        href="/support/payment-policy"
+                        className="block px-4 py-2.5 text-[12px] text-[#374151] hover:bg-[#F9FAFB] transition-colors border-b border-[#E5E7EB] last:border-b-0"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          navigate("/support/payment-policy");
+                          setShowSupportDropdown(false);
+                        }}
+                      >
+                        Chính sách thanh toán
+                      </a>
+                      <a
+                        href="/support/shipping-policy"
+                        className="block px-4 py-2.5 text-[12px] text-[#374151] hover:bg-[#F9FAFB] transition-colors border-b border-[#E5E7EB] last:border-b-0"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          navigate("/support/shipping-policy");
+                          setShowSupportDropdown(false);
+                        }}
+                      >
+                        Chính sách vận chuyển
+                      </a>
+                      <a
+                        href="/support/warranty-return"
+                        className="block px-4 py-2.5 text-[12px] text-[#374151] hover:bg-[#F9FAFB] transition-colors border-b border-[#E5E7EB] last:border-b-0"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          navigate("/support/warranty-return");
+                          setShowSupportDropdown(false);
+                        }}
+                      >
+                        Bảo hành & Đổi trả
+                      </a>
+                      <a
+                        href="/support/membership-policy"
+                        className="block px-4 py-2.5 text-[12px] text-[#374151] hover:bg-[#F9FAFB] transition-colors border-b border-[#E5E7EB] last:border-b-0"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          navigate("/support/membership-policy");
+                          setShowSupportDropdown(false);
+                        }}
+                      >
+                        Chính sách hội viên
+                      </a>
+                      <a
+                        href="/support/privacy-policy"
+                        className="block px-4 py-2.5 text-[12px] text-[#374151] hover:bg-[#F9FAFB] transition-colors border-b border-[#E5E7EB] last:border-b-0"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          navigate("/support/privacy-policy");
+                          setShowSupportDropdown(false);
+                        }}
+                      >
+                        Chính sách quyền riêng tư
+                      </a>
+                    </div>
                   </div>
                 </div>
               )}
@@ -615,9 +577,8 @@ const Header = ({ currentPage = "" }) => {
                 handleHomeClick(e);
                 setShowMobileMenu(false);
               }}
-              className={`block px-4 py-3 rounded-lg transition-colors ${
-                isActive("/customer-home") ? "bg-[#111827] text-white" : "text-[#374151] hover:bg-[#F9FAFB]"
-              }`}
+              className={`block px-4 py-3 rounded-lg transition-colors ${isActive("/customer-home") ? "bg-[#111827] text-white" : "text-[#374151] hover:bg-[#F9FAFB]"
+                }`}
             >
               TRANG CHỦ
             </a>
@@ -628,9 +589,8 @@ const Header = ({ currentPage = "" }) => {
                 handleProductsClick(e);
                 setShowMobileMenu(false);
               }}
-              className={`block px-4 py-3 rounded-lg transition-colors ${
-                isActive("/products") ? "bg-[#111827] text-white" : "text-[#374151] hover:bg-[#F9FAFB]"
-              }`}
+              className={`block px-4 py-3 rounded-lg transition-colors ${isActive("/products") ? "bg-[#111827] text-white" : "text-[#374151] hover:bg-[#F9FAFB]"
+                }`}
             >
               SẢN PHẨM
             </a>
@@ -641,9 +601,8 @@ const Header = ({ currentPage = "" }) => {
                 navigate("/fabrics");
                 setShowMobileMenu(false);
               }}
-              className={`block px-4 py-3 rounded-lg transition-colors ${
-                isActive("/fabrics") ? "bg-[#111827] text-white" : "text-[#374151] hover:bg-[#F9FAFB]"
-              }`}
+              className={`block px-4 py-3 rounded-lg transition-colors ${isActive("/fabrics") ? "bg-[#111827] text-white" : "text-[#374151] hover:bg-[#F9FAFB]"
+                }`}
             >
               BÁN VẢI
             </a>
@@ -654,9 +613,8 @@ const Header = ({ currentPage = "" }) => {
                 handleOrderClick(e);
                 setShowMobileMenu(false);
               }}
-              className={`block px-4 py-3 rounded-lg transition-colors ${
-                isActive("/customer/order") ? "bg-[#111827] text-white" : "text-[#374151] hover:bg-[#F9FAFB]"
-              }`}
+              className={`block px-4 py-3 rounded-lg transition-colors ${isActive("/customer/order") ? "bg-[#111827] text-white" : "text-[#374151] hover:bg-[#F9FAFB]"
+                }`}
             >
               ĐẶT MAY
             </a>
@@ -678,9 +636,8 @@ const Header = ({ currentPage = "" }) => {
                 navigate("/favorites");
                 setShowMobileMenu(false);
               }}
-              className={`block px-4 py-3 rounded-lg transition-colors ${
-                isActive("/favorites") ? "bg-[#111827] text-white" : "text-[#374151] hover:bg-[#F9FAFB]"
-              }`}
+              className={`block px-4 py-3 rounded-lg transition-colors ${isActive("/favorites") ? "bg-[#111827] text-white" : "text-[#374151] hover:bg-[#F9FAFB]"
+                }`}
             >
               YÊU THÍCH
             </a>
@@ -692,9 +649,8 @@ const Header = ({ currentPage = "" }) => {
                   navigate("/customer/dashboard");
                   setShowMobileMenu(false);
                 }}
-                className={`block px-4 py-3 rounded-lg transition-colors ${
-                  isActive("/customer/dashboard") ? "bg-[#111827] text-white" : "text-[#374151] hover:bg-[#F9FAFB]"
-                }`}
+                className={`block px-4 py-3 rounded-lg transition-colors ${isActive("/customer/dashboard") ? "bg-[#111827] text-white" : "text-[#374151] hover:bg-[#F9FAFB]"
+                  }`}
               >
                 TÀI KHOẢN
               </a>

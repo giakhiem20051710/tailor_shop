@@ -134,7 +134,7 @@ const ArticlesPage = () => {
               {(() => {
                 const featured = articles.find(a => a.featured);
                 return (
-                  <article 
+                  <article
                     className="bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-shadow cursor-pointer"
                     onClick={() => {
                       if (featured.sourceUrl) {
@@ -145,8 +145,8 @@ const ArticlesPage = () => {
                     <div className="md:flex">
                       <div className="md:w-1/2">
                         <div className="relative h-64 md:h-full min-h-[300px] overflow-hidden">
-                          <img 
-                            src={featured.image} 
+                          <img
+                            src={featured.image}
                             alt={featured.title}
                             className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
                           />
@@ -213,8 +213,8 @@ const ArticlesPage = () => {
                   }}
                 >
                   <div className="relative h-48 overflow-hidden">
-                    <img 
-                      src={article.image} 
+                    <img
+                      src={article.image}
                       alt={article.title}
                       className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                     />
@@ -307,7 +307,7 @@ const ArticlesPage = () => {
             </div>
           </div>
           <div className="border-t border-[#1F2937] pt-4 flex justify-between items-center text-[#6B7280] text-[11px]">
-            <span>© 2025 Lavi Tailor</span>
+            <span>© 2025 Mỹ Hiền Tailor</span>
             <div className="flex gap-4">
               <a href="#">Privacy</a>
               <a href="#">Terms</a>

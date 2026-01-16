@@ -454,6 +454,9 @@ const ProductsPage = () => {
 
       if (search.trim()) {
         const q = search.toLowerCase();
+        // Handle materials/colors as potential arrays
+        const materialsStr = Array.isArray(p.materials) ? p.materials.join(" ") : (p.materials || "");
+        const colorsStr = Array.isArray(p.colors) ? p.colors.join(" ") : (p.colors || "");
         const text =
           (p.name || "").toLowerCase() +
           " " +
@@ -461,9 +464,9 @@ const ProductsPage = () => {
           " " +
           (p.tag || "").toLowerCase() +
           " " +
-          (p.materials || "").toLowerCase() +
+          materialsStr.toLowerCase() +
           " " +
-          (p.colors || "").toLowerCase();
+          colorsStr.toLowerCase();
         if (!text.includes(q)) return false;
       }
 
@@ -831,7 +834,7 @@ const ProductsPage = () => {
                   {/* Badge */}
                   <div className="inline-flex items-center gap-1.5 mb-3 px-2.5 py-1 bg-white/10 backdrop-blur-md rounded-full border border-white/20">
                     <span className="w-1.5 h-1.5 bg-[#D4AF37] rounded-full animate-pulse" />
-                    <span className="text-[#D4AF37] text-[9px] font-bold tracking-[0.15em] uppercase">Lavi Tailor · Exclusive Collection</span>
+                    <span className="text-[#D4AF37] text-[9px] font-bold tracking-[0.15em] uppercase">Mỹ Hiền Tailor · Exclusive Collection</span>
                   </div>
 
                   {/* Headline */}
@@ -1385,7 +1388,7 @@ const ProductsPage = () => {
             </div>
           </div>
           <div className="border-t border-[#1F2937] pt-4 flex justify-between items-center text-[#6B7280] text-[11px]">
-            <span>© 2025 Lavi Tailor</span>
+            <span>© 2025 Mỹ Hiền Tailor</span>
             <div className="flex gap-4">
               <a href="#">Privacy</a>
               <a href="#">Terms</a>

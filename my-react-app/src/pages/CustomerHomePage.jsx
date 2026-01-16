@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import Header from "../components/Header.jsx";
 import usePageMeta from "../hooks/usePageMeta";
 import { imageAssetService } from "../services/index.js";
+import FloatingCTA from "../components/FloatingCTA.jsx";
 
 const CustomerHomePage = () => {
   const navigate = useNavigate();
@@ -1185,6 +1186,17 @@ const CustomerHomePage = () => {
           </div>
         </div>
       </footer>
+
+      {/* Floating CTA Button */}
+      <FloatingCTA
+        primaryText="Đặt may nhanh"
+        primaryIcon="✂️"
+        primaryLink="/customer/order"
+        secondaryActions={[
+          { icon: "📞", label: "Hotline", href: "tel:0901134256", color: "bg-green-500" },
+          { icon: "💬", label: "Zalo", href: "https://zalo.me/0901134256", color: "bg-blue-500" },
+        ]}
+      />
     </div>
   );
 };

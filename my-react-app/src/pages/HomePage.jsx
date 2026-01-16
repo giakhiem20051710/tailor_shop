@@ -2,6 +2,8 @@ import React, { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import "./HomePage.css";
 import usePageMeta from "../hooks/usePageMeta";
+import { ScrollReveal } from "../hooks/useScrollAnimation.jsx";
+import { AnimatedCounter } from "../components/AnimatedCounter.jsx";
 
 const HomePage = () => {
   const navigate = useNavigate();
@@ -159,8 +161,8 @@ const HomePage = () => {
       <header className="brand-hero" id="home">
         <div className="brand-hero__nav">
           <div className="brand-hero__logo">
-            <span className="logo-mark">Lavi Tailor</span>
-            <span className="logo-tagline">Atelier since 1998</span>
+            <span className="logo-mark">Mỹ Hiền Tailor</span>
+            <span className="logo-tagline">Atelier since 2015</span>
           </div>
           <nav className="brand-hero__links">
             <button onClick={() => handleNavigation("/customer-home")}>Trang chủ</button>
@@ -202,7 +204,13 @@ const HomePage = () => {
             <div className="hero-highlights">
               {heroHighlights.map((item) => (
                 <div key={item.label}>
-                  <p>{item.value}</p>
+                  <p>
+                    <AnimatedCounter
+                      value={item.value}
+                      duration={2000}
+                      className="hero-stat-number"
+                    />
+                  </p>
                   <span>{item.label}</span>
                   <small>{item.description}</small>
                 </div>
@@ -265,25 +273,29 @@ const HomePage = () => {
         </div>
       </section>
 
-      <section className="service-pillar-section">
-        <div className="section-container">
-          <div className="section-heading">
-            <p className="eyebrow">Trải nghiệm atelier</p>
-            <h2>Thiết kế hướng đến niềm tin & sự đồng hành lâu dài</h2>
+      <ScrollReveal animation="slideUp">
+        <section className="service-pillar-section">
+          <div className="section-container">
+            <div className="section-heading">
+              <p className="eyebrow">Trải nghiệm atelier</p>
+              <h2>Thiết kế hướng đến niềm tin & sự đồng hành lâu dài</h2>
+            </div>
+            <div className="pillar-grid">
+              {servicePillars.map((pillar, index) => (
+                <ScrollReveal key={pillar.title} animation="scaleUp" delay={`delay${(index + 1) * 100}`}>
+                  <article className="pillar-card">
+                    <div className="pillar-card__icon">{pillar.icon}</div>
+                    <div className="pillar-card__tag">{pillar.tag}</div>
+                    <h3>{pillar.title}</h3>
+                    <p>{pillar.desc}</p>
+                    <button onClick={scrollToProducts}>Xem chi tiết</button>
+                  </article>
+                </ScrollReveal>
+              ))}
+            </div>
           </div>
-          <div className="pillar-grid">
-            {servicePillars.map((pillar) => (
-              <article key={pillar.title} className="pillar-card">
-                <div className="pillar-card__icon">{pillar.icon}</div>
-                <div className="pillar-card__tag">{pillar.tag}</div>
-                <h3>{pillar.title}</h3>
-                <p>{pillar.desc}</p>
-                <button onClick={scrollToProducts}>Xem chi tiết</button>
-              </article>
-            ))}
-          </div>
-        </div>
-      </section>
+        </section>
+      </ScrollReveal>
 
       <section className="products-section" id="products-section">
         <div className="section-container">
@@ -304,7 +316,7 @@ const HomePage = () => {
                   </div>
                   <div className="product-price">Từ {product.price.toLocaleString('vi-VN')} đ</div>
                   <div className="product-actions">
-                    <button 
+                    <button
                       className="btn-view-detail"
                       onClick={() =>
                         navigate("/product/homepage", {
@@ -325,7 +337,7 @@ const HomePage = () => {
                     >
                       Xem chi tiết
                     </button>
-                    <button 
+                    <button
                       className="btn-order"
                       onClick={() => window.location.href = '/orders/new'}
                     >
@@ -368,35 +380,39 @@ const HomePage = () => {
         </div>
       </section>
 
-      <section className="reviews-section">
-        <div className="section-container">
-          <div className="section-heading">
-            <p className="eyebrow">Testimonial</p>
-            <h2>Khách hàng tin tưởng Lavi Tailor vì sự tận tâm & chỉn chu.</h2>
-          </div>
-          <div className="reviews-grid">
-            {reviews.map((review, index) => (
-              <div key={index} className="review-card">
-                <div className="review-header">
-                  <img src={review.image} alt={review.name} className="review-avatar" />
-                  <div>
-                    <p className="review-name">{review.name}</p>
-                    <span>Verified client</span>
+      <ScrollReveal animation="slideUp">
+        <section className="reviews-section">
+          <div className="section-container">
+            <div className="section-heading">
+              <p className="eyebrow">Testimonial</p>
+              <h2>Khách hàng tin tưởng Mỹ Hiền Tailor vì sự tận tâm & chỉn chu.</h2>
+            </div>
+            <div className="reviews-grid">
+              {reviews.map((review, index) => (
+                <ScrollReveal key={index} animation="slideUp" delay={`delay${(index + 1) * 100}`}>
+                  <div className="review-card">
+                    <div className="review-header">
+                      <img src={review.image} alt={review.name} className="review-avatar" />
+                      <div>
+                        <p className="review-name">{review.name}</p>
+                        <span>Verified client</span>
+                      </div>
+                    </div>
+                    <p className="review-text">"{review.text}"</p>
                   </div>
-                </div>
-                <p className="review-text">"{review.text}"</p>
-              </div>
-            ))}
+                </ScrollReveal>
+              ))}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      </ScrollReveal>
 
       <footer className="home-footer" id="contact">
         <div className="footer-container">
           <div className="footer-brand">
-            <h3>Lavi Tailor</h3>
-            <p>Atelier 01: 123 Nguyễn Thị Minh Khai, Q.1, TP.HCM</p>
-            <p>Atelier 02: 45 Hai Bà Trưng, Hà Nội</p>
+            <h3>Mỹ Hiền Tailor</h3>
+            <p>Địa chỉ: 50 Tăng Nhơn Phú, Tăng Nhơn Phú B, TP. Thủ Đức</p>
+            <p>Hotline: 0901 134 256</p>
           </div>
           <div className="footer-links">
             <h4>Dịch vụ</h4>
@@ -427,7 +443,7 @@ const HomePage = () => {
           </div>
         </div>
         <div className="footer-bottom">
-          <span>© {new Date().getFullYear()} Lavi Tailor. Crafted with care.</span>
+          <span>© {new Date().getFullYear()} Mỹ Hiền Tailor. Crafted with care.</span>
           <button onClick={scrollToTop}>Về đầu trang ↑</button>
         </div>
       </footer>

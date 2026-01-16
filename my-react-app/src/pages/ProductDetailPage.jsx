@@ -753,7 +753,7 @@ const ProductDetailPage = () => {
             </div>
           </div>
           <div className="border-t border-[#1F2937] pt-4 flex justify-between items-center text-[#6B7280] text-[11px]">
-            <span>© 2025 Lavi Tailor</span>
+            <span>© 2025 Mỹ Hiền Tailor</span>
             <div className="flex gap-4">
               <a href="#">Privacy</a>
               <a href="#">Terms</a>
@@ -799,10 +799,10 @@ const ProductDetailPage = () => {
                             disabled={!hasSlot}
                             onClick={() => { setSelectedDate(dateStr); setSelectedSlotId(null); }}
                             className={`flex-shrink-0 px-4 py-3 rounded-xl border transition-all ${selectedDate === dateStr
-                                ? 'bg-[#1B4332] text-white border-[#1B4332] shadow-md'
-                                : hasSlot
-                                  ? 'bg-white text-gray-800 border-gray-200 hover:border-[#1B4332]'
-                                  : 'bg-gray-50 text-gray-300 border-gray-100 cursor-not-allowed'
+                              ? 'bg-[#1B4332] text-white border-[#1B4332] shadow-md'
+                              : hasSlot
+                                ? 'bg-white text-gray-800 border-gray-200 hover:border-[#1B4332]'
+                                : 'bg-gray-50 text-gray-300 border-gray-100 cursor-not-allowed'
                               }`}
                           >
                             <div className="text-xs opacity-80">{date.toLocaleDateString("vi-VN", { weekday: "short" })}</div>
@@ -823,8 +823,8 @@ const ProductDetailPage = () => {
                               key={slot.id}
                               onClick={() => setSelectedSlotId(slot.id)}
                               className={`py-2 rounded-lg text-sm font-medium transition-all ${selectedSlotId === slot.id
-                                  ? 'bg-[#1B4332] text-white shadow-md'
-                                  : 'bg-white border border-gray-200 text-gray-700 hover:border-[#1B4332]'
+                                ? 'bg-[#1B4332] text-white shadow-md'
+                                : 'bg-white border border-gray-200 text-gray-700 hover:border-[#1B4332]'
                                 }`}
                             >
                               {slot.startTime}

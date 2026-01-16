@@ -282,15 +282,15 @@ const SupportPage = () => {
                   backgroundPosition: 'center',
                 }}></div>
               </div>
-              
+
               {/* Content */}
               <div className="relative bg-[#FEF9F3]/95 backdrop-blur-sm p-8 md:p-12">
                 <div className="text-center mb-10">
                   <h2 className="text-[24px] md:text-[28px] font-bold text-[#D97706] mb-4 tracking-wide">
                     Bảng chọn size
                   </h2>
-                  <p className="text-[18px] md:text-[20px] italic text-[#D97706] font-serif" style={{ 
-                    fontFamily: 'Georgia, "Times New Roman", serif', 
+                  <p className="text-[18px] md:text-[20px] italic text-[#D97706] font-serif" style={{
+                    fontFamily: 'Georgia, "Times New Roman", serif',
                     fontStyle: 'italic',
                     fontWeight: 400
                   }}>
@@ -382,9 +382,9 @@ const SupportPage = () => {
                   <div className="inline-block">
                     <div className="relative flex items-center justify-center mb-3">
                       <span className="text-[32px] md:text-[36px] font-bold text-[#8B4513] tracking-tight">CAM</span>
-                      <span 
-                        className="absolute text-[16px] text-[#8B4513] leading-none" 
-                        style={{ 
+                      <span
+                        className="absolute text-[16px] text-[#8B4513] leading-none"
+                        style={{
                           transform: 'translate(-50%, -50%)',
                           top: '50%',
                           left: 'calc(50% + 20px)',
@@ -529,7 +529,7 @@ const SupportPage = () => {
                   className="px-6 py-3 bg-[#0068FF] hover:bg-[#0052CC] rounded-full transition-colors flex items-center justify-center gap-2 text-[13px] font-medium shadow-lg"
                 >
                   <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M12 2C6.48 2 2 5.58 2 10c0 2.5 1.5 4.75 3.8 6.24L4.5 21.5l5.5-1.2c1.4.38 2.9.6 4.5.6 5.52 0 10-3.58 10-8s-4.48-8-10-8zm0 14c-1.1 0-2.1-.2-3.1-.5l-.7-.2-1.5.3.3-1.5-.2-.7c-.3-1-.5-2-.5-3.1 0-3.31 2.69-6 6-6s6 2.69 6 6-2.69 6-6 6z"/>
+                    <path d="M12 2C6.48 2 2 5.58 2 10c0 2.5 1.5 4.75 3.8 6.24L4.5 21.5l5.5-1.2c1.4.38 2.9.6 4.5.6 5.52 0 10-3.58 10-8s-4.48-8-10-8zm0 14c-1.1 0-2.1-.2-3.1-.5l-.7-.2-1.5.3.3-1.5-.2-.7c-.3-1-.5-2-.5-3.1 0-3.31 2.69-6 6-6s6 2.69 6 6-2.69 6-6 6z" />
                   </svg>
                   Nhắn tin Zalo
                 </a>
@@ -540,7 +540,7 @@ const SupportPage = () => {
                   className="px-6 py-3 bg-[#1877F2] hover:bg-[#1565C0] rounded-full transition-colors flex items-center justify-center gap-2 text-[13px] font-medium shadow-lg"
                 >
                   <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                    <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
                   </svg>
                   Nhắn tin Facebook
                 </a>
@@ -558,7 +558,7 @@ const SupportPage = () => {
         <div className="max-w-7xl mx-auto px-5 lg:px-8">
           <div className="grid md:grid-cols-4 gap-8 mb-6">
             <div className="md:col-span-2">
-              <h3 className="heading-font text-[16px] mb-2">LAVI TAILOR</h3>
+              <h3 className="heading-font text-[16px] mb-2">MỸ HIỀN TAILOR</h3>
               <p className="text-[#9CA3AF] max-w-md">
                 Tiệm may đo nhỏ, nhưng cẩn thận trong từng đường kim mũi chỉ.
                 Chúng tôi mong bạn có thể mặc đồ may đo thường xuyên, không chỉ
@@ -589,7 +589,7 @@ const SupportPage = () => {
             </div>
           </div>
           <div className="border-t border-[#1F2937] pt-4 flex justify-between items-center text-[#6B7280] text-[11px]">
-            <span>© 2025 Lavi Tailor</span>
+            <span>© 2025 Mỹ Hiền Tailor</span>
             <div className="flex gap-4">
               <a href="#">Privacy</a>
               <a href="#">Terms</a>
