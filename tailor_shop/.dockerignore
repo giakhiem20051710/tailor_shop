@@ -1,0 +1,71 @@
+# Files to ignore when building Docker image
+# This speeds up the build and reduces image size
+
+# Build artifacts
+target/
+*.jar
+*.war
+*.class
+
+# IDE files
+.idea/
+*.iml
+.vscode/
+*.swp
+*.swo
+
+# Git
+.git/
+.gitignore
+
+# Logs
+*.log
+logs/
+
+# Environment files (security)
+.env
+*.env.local
+
+# Documentation (optional - uncomment if needed)
+# *.md
+# !README.md
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Test files
+src/test/
+
+# Docker files (not needed inside container)
+docker-compose*.yml
+Dockerfile*
+.dockerignore
+
+# Node modules (if any frontend exists)
+node_modules/
+
+# Maven wrapper (we use Maven from Docker image)
+.mvn/
+
+# Postman collections
+postman/
+
+# Database migrations (handled separately)
+database/
+
+# Scripts
+scripts/
+
+# Uploads (mounted as volume)
+uploads/
+
+# Cache directories
+.cache/
+*.cache
+

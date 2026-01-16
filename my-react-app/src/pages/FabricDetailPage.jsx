@@ -1,18 +1,119 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import Header from "../components/Header.jsx";
 import usePageMeta from "../hooks/usePageMeta.jsx";
-import { fabrics } from "./FabricsPage.jsx";
-import { addFabricVisit, addFabricHold } from "../utils/fabricHoldStorage.js";
-import { addToFabricCart } from "../utils/fabricCartStorage.js";
-import { getReviewsByFabricKey, getReviews } from "../utils/reviewStorage.js";
+import { fabricService, cartService, reviewService, appointmentService } from "../services";
+import { getCurrentUser } from "../utils/authStorage";
+import { showSuccess, showError } from "../components/NotificationToast.jsx";
+import ReviewSection from "../components/ReviewSection.jsx";
 
 export default function FabricDetailPage() {
   const { key } = useParams();
   const navigate = useNavigate();
-  const fabric =
-    fabrics.find((f) => f.key === key) ||
-    fabrics.find((f) => f.key === "lua-taffeta");
+
+  // Load fabric from API
+  const [fabric, setFabric] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [relatedFabricsList, setRelatedFabricsList] = useState([]);
+
+  useEffect(() => {
+    const loadFabric = async () => {
+      if (!key) {
+        setError("Fabric key is required");
+        setLoading(false);
+        return;
+      }
+
+      try {
+        setLoading(true);
+        setError(null);
+
+        // Try to load by slug/code first, then by ID
+        let fabricData = null;
+        let lastError = null;
+
+        // Try slug first (most common case for URLs like /fabrics/super-120s-wool-charcoal-gray)
+        try {
+          const response = await fabricService.getDetailBySlug(key);
+          fabricData = fabricService.parseResponse(response);
+          if (fabricData) {
+            console.log(`[FabricDetail] Loaded by slug: ${key}`);
+          }
+        } catch (e) {
+          // Only log if it's not a 404 (expected when trying different endpoints)
+          if (e?.status !== 404 && e?.response?.status !== 404) {
+            console.warn(`[FabricDetail] Failed to load by slug (${key}):`, e.message);
+          }
+          lastError = e;
+
+          // If slug fails (404), try code
+          try {
+            const response = await fabricService.getDetailByCode(key);
+            fabricData = fabricService.parseResponse(response);
+            if (fabricData) {
+              console.log(`[FabricDetail] Loaded by code: ${key}`);
+            }
+          } catch (e2) {
+            // Only log if it's not a 404
+            if (e2?.status !== 404 && e2?.response?.status !== 404) {
+              console.warn(`[FabricDetail] Failed to load by code (${key}):`, e2.message);
+            }
+            lastError = e2;
+
+            // If code fails, try ID (if key is numeric)
+            const id = parseInt(key);
+            if (!isNaN(id)) {
+              try {
+                const response = await fabricService.getDetail(id);
+                fabricData = fabricService.parseResponse(response);
+                if (fabricData) {
+                  console.log(`[FabricDetail] Loaded by ID: ${id}`);
+                }
+              } catch (e3) {
+                lastError = e3;
+              }
+            }
+          }
+        }
+
+        if (fabricData) {
+          setFabric(fabricData);
+
+          // Load related fabrics
+          try {
+            const relatedResponse = await fabricService.list({
+              category: fabricData.category,
+              page: 0,
+              size: 6
+            });
+            const relatedData = fabricService.parseResponse(relatedResponse);
+            if (relatedData?.content) {
+              setRelatedFabricsList(relatedData.content.filter(f => f.id !== fabricData.id).slice(0, 6));
+            }
+          } catch (e) {
+            console.warn("Failed to load related fabrics:", e);
+          }
+        } else {
+          // All attempts failed
+          const errorMessage = lastError?.response?.status === 404
+            ? `Không tìm thấy vải với mã/slug: ${key}`
+            : lastError?.message || "Không tìm thấy vải";
+          setError(errorMessage);
+        }
+      } catch (err) {
+        console.error("Error loading fabric:", err);
+        const errorMessage = err?.response?.status === 404
+          ? `Không tìm thấy vải với mã/slug: ${key}`
+          : err.message || "Không thể tải thông tin vải";
+        setError(errorMessage);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadFabric();
+  }, [key]);
 
   const today = new Date();
   const defaultDate = new Date(today.getTime() + 24 * 60 * 60 * 1000)
@@ -34,77 +135,124 @@ export default function FabricDetailPage() {
   const [showImageLightbox, setShowImageLightbox] = useState(null);
   const [sortBy, setSortBy] = useState("newest"); // "newest" | "oldest" | "highest" | "lowest"
 
+  // Image Zoom on Hover states
+  const [isZooming, setIsZooming] = useState(false);
+  const [zoomPosition, setZoomPosition] = useState({ x: 0, y: 0 });
+  const [lensPosition, setLensPosition] = useState({ x: 0, y: 0 });
+  const imageContainerRef = useRef(null);
+  const ZOOM_LEVEL = 2.5; // Magnification factor
+  const LENS_SIZE = 150; // Size of the lens box in px
+
+  // Handle mouse move for zoom
+  const handleImageMouseMove = (e) => {
+    if (!imageContainerRef.current) return;
+
+    const rect = imageContainerRef.current.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    // Calculate percentage position
+    const xPercent = (x / rect.width) * 100;
+    const yPercent = (y / rect.height) * 100;
+
+    // Calculate lens position (centered on cursor)
+    const lensX = Math.max(0, Math.min(x - LENS_SIZE / 2, rect.width - LENS_SIZE));
+    const lensY = Math.max(0, Math.min(y - LENS_SIZE / 2, rect.height - LENS_SIZE));
+
+    setZoomPosition({ x: xPercent, y: yPercent });
+    setLensPosition({ x: lensX, y: lensY });
+  };
+
+  const handleImageMouseEnter = () => {
+    setIsZooming(true);
+  };
+
+  const handleImageMouseLeave = () => {
+    setIsZooming(false);
+  };
+
   // SEO Meta Tags
   usePageMeta({
-    title: `${fabric.name} | Vải may đo chất lượng cao | My Hiền Tailor`,
-    description: `${fabric.description || fabric.name} - Vải ${fabric.category || "cao cấp"} tại My Hiền Tailor. Giá ${fabric.price}. ${fabric.material ? `Chất liệu: ${fabric.material}.` : ""} Đặt mua ngay hoặc hẹn xem tại tiệm.`,
-    ogImage: fabric.image || fabric.images?.[0],
+    title: fabric ? `${fabric.name} | Vải may đo chất lượng cao | My Hiền Tailor` : "Chi tiết vải | My Hiền Tailor",
+    description: fabric ? `${fabric.description || fabric.name} - Vải ${fabric.category || "cao cấp"} tại My Hiền Tailor. ${fabric.material ? `Chất liệu: ${fabric.material}.` : ""} Đặt mua ngay hoặc hẹn xem tại tiệm.` : "Chi tiết vải may đo chất lượng cao",
+    ogImage: fabric?.image || fabric?.images?.[0],
   });
 
   useEffect(() => {
     window.scrollTo({ top: 0 });
   }, [key]);
 
-  // Force re-render when reviews change (from localStorage)
+  // Load reviews from API
+  const [apiReviews, setApiReviews] = useState([]);
+
   useEffect(() => {
-    const handleReviewsUpdate = () => {
-      // Force component to re-render by updating refreshKey
-      setRefreshKey(prev => prev + 1);
+    const loadReviews = async () => {
+      if (!fabric?.id) return;
+      try {
+        // Try to find fabric ID from key or use fabric object
+        const fabricId = fabric.id || fabric.fabricId;
+        if (fabricId) {
+          const response = await reviewService.list({ productId: fabricId }, { page: 0, size: 100 });
+          const responseData = response?.data ?? response?.responseData ?? response;
+          const reviewsList = responseData?.content || responseData?.data || [];
+          setApiReviews(reviewsList);
+        }
+      } catch (error) {
+        // Silently handle 403 (forbidden) or other errors - reviews are optional
+        if (error?.status !== 403 && error?.response?.status !== 403) {
+          console.warn("Error loading reviews:", error);
+        }
+        setApiReviews([]);
+      }
     };
-    
-    window.addEventListener('storage', handleReviewsUpdate);
-    // Also listen for custom event if reviews are updated in same tab
-    window.addEventListener('reviewsUpdated', handleReviewsUpdate);
-    
-    return () => {
-      window.removeEventListener('storage', handleReviewsUpdate);
-      window.removeEventListener('reviewsUpdated', handleReviewsUpdate);
-    };
-  }, []);
 
-  if (!fabric) return null;
+    if (fabric?.id) {
+      loadReviews();
+    }
+  }, [fabric?.id]);
 
-  const gallery =
-    fabric.gallery && fabric.gallery.length ? fabric.gallery : [fabric.image];
-  const unit = fabric.unit || "đ/m";
-
-  // Lấy reviews từ localStorage (đánh giá từ customer) và merge với reviews từ fabric data
+  // All hooks must be called before any early return
+  // Reviews from API
   const customerReviews = useMemo(() => {
-    if (!fabric || !fabric.key) return [];
-    
-    // Lấy tất cả reviews và filter theo fabricKey
-    const allReviews = getReviews() || [];
-    const reviews = allReviews.filter((review) => {
-      if (!review.fabricKeys || !Array.isArray(review.fabricKeys)) return false;
-      return review.fabricKeys.includes(fabric.key);
-    });
-    
-    return reviews;
-  }, [fabric?.key, refreshKey]);
+    if (!apiReviews || !Array.isArray(apiReviews)) return [];
+    return apiReviews.map((review) => ({
+      id: review.id,
+      name: review.customer?.name || review.customerName || "Khách hàng",
+      comment: review.comment || review.content,
+      rating: review.rating || 5,
+      image: review.images?.[0] || null,
+      createdAt: review.createdAt,
+      updatedAt: review.updatedAt,
+      customerId: review.customer?.id || review.customerId,
+      orderId: review.order?.id || review.orderId,
+    }));
+  }, [apiReviews]);
 
   // Merge reviews: ưu tiên customer reviews, sau đó là fabric.reviews
   const reviews = useMemo(() => {
+    if (!fabric) return [];
     const staticReviews = fabric.reviews && fabric.reviews.length ? fabric.reviews : [];
     // Merge và loại bỏ duplicate (nếu có)
     const allReviews = [...customerReviews, ...staticReviews];
     // Loại bỏ duplicate dựa trên customerId và comment hoặc orderId
     const uniqueReviews = allReviews.filter((review, index, self) =>
-      index === self.findIndex((r) => 
+      index === self.findIndex((r) =>
         // Match bằng orderId (ưu tiên nhất)
         (r.orderId && review.orderId && r.orderId === review.orderId) ||
         // Hoặc match bằng customerId + comment + orderId
-        (r.customerId && review.customerId && r.customerId === review.customerId && 
-         r.comment === review.comment &&
-         r.orderId === review.orderId) ||
+        (r.customerId && review.customerId && r.customerId === review.customerId &&
+          r.comment === review.comment &&
+          r.orderId === review.orderId) ||
         // Hoặc match static reviews bằng name + comment
-        (!r.customerId && !review.customerId && !r.orderId && !review.orderId && 
-         r.comment === review.comment && r.name === review.name)
+        (!r.customerId && !review.customerId && !r.orderId && !review.orderId &&
+          r.comment === review.comment && r.name === review.name)
       )
     );
     return uniqueReviews;
-  }, [customerReviews, fabric.reviews]);
+  }, [customerReviews, fabric?.reviews]);
 
   const ratingSummary = useMemo(() => {
+    if (!fabric) return { avg: 0, counts: {} };
     if (!reviews.length) return { avg: fabric.rating || 0, counts: {} };
     const counts = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
     let total = 0;
@@ -117,7 +265,7 @@ export default function FabricDetailPage() {
       avg: total / reviews.length,
       counts,
     };
-  }, [reviews, fabric.rating]);
+  }, [reviews, fabric?.rating]);
 
   const sortedReviews = useMemo(() => {
     const sorted = [...reviews];
@@ -159,6 +307,11 @@ export default function FabricDetailPage() {
     });
   }, [sortedReviews, starFilter]);
 
+  // Lấy sản phẩm liên quan từ API (đã load trong useEffect)
+  const relatedFabrics = useMemo(() => {
+    return relatedFabricsList || [];
+  }, [relatedFabricsList]);
+
   const renderStars = (value) => {
     const full = Math.round(value || 0);
     return (
@@ -170,27 +323,100 @@ export default function FabricDetailPage() {
     );
   };
 
-  const handleVisit = () => {
-    addFabricVisit(fabric, { visitDate, visitTime });
-    setMessage(
-      `Đã ghi nhận lịch hẹn xem vải “${fabric.name}” vào ${visitDate} lúc ${visitTime}.`
-    );
+  const handleVisit = async () => {
+    try {
+      const user = getCurrentUser();
+      if (!user) {
+        showError("Vui lòng đăng nhập để đặt lịch xem vải.");
+        return;
+      }
+
+      const fabricId = fabric.id || fabric.fabricId;
+      if (!fabricId) {
+        showError("Không tìm thấy thông tin vải.");
+        return;
+      }
+
+      // Note: Backend gets userId from JWT principal, no need to send customerId
+      await fabricService.createHoldRequest({
+        fabricId: fabricId,
+        type: "VISIT",
+        requestedDate: visitDate, // Format: YYYY-MM-DD (LocalDate)
+        requestedTime: visitTime, // Format: HH:mm (LocalTime)
+        notes: `Hẹn xem vải: ${fabric.name}`,
+      });
+
+      showSuccess(
+        `Đã ghi nhận lịch hẹn xem vải "${fabric.name}" vào ${visitDate} lúc ${visitTime}.`
+      );
+    } catch (error) {
+      console.error("Error creating visit request:", error);
+      const errorMessage = error?.response?.data?.message || error?.message || "Không thể đặt lịch. Vui lòng thử lại.";
+      showError(errorMessage);
+    }
   };
 
-  const handleHold = () => {
-    addFabricHold(fabric);
-    setMessage(
-      `Đã đặt giữ cuộn vải “${fabric.name}”. Nhân viên sẽ liên hệ để xác nhận.`
-    );
+  const handleHold = async () => {
+    try {
+      const user = getCurrentUser();
+      if (!user) {
+        showError("Vui lòng đăng nhập để đặt giữ vải.");
+        return;
+      }
+
+      const fabricId = fabric.id || fabric.fabricId;
+      if (!fabricId) {
+        showError("Không tìm thấy thông tin vải.");
+        return;
+      }
+
+      // Note: Backend gets userId from JWT principal, no need to send customerId
+      await fabricService.createHoldRequest({
+        fabricId: fabricId,
+        type: "HOLD",
+        quantity: quantity || 1, // Quantity in meters
+        notes: `Đặt giữ cuộn vải: ${fabric.name}`,
+      });
+
+      showSuccess(
+        `Đã đặt giữ cuộn vải "${fabric.name}". Nhân viên sẽ liên hệ để xác nhận.`
+      );
+    } catch (error) {
+      console.error("Error creating hold request:", error);
+      const errorMessage = error?.response?.data?.message || error?.message || "Không thể đặt giữ vải. Vui lòng thử lại.";
+      showError(errorMessage);
+    }
   };
 
-  const handleAddToCart = () => {
-    addToFabricCart(fabric, quantity || 1);
-    setShowAddToCartSuccess(true);
-    // Tự động ẩn popup sau 3 giây
-    setTimeout(() => {
-      setShowAddToCartSuccess(false);
-    }, 3000);
+  const handleAddToCart = async () => {
+    try {
+      const user = getCurrentUser();
+      if (!user) {
+        showError("Vui lòng đăng nhập để thêm vào giỏ hàng.");
+        return;
+      }
+
+      const fabricId = fabric.id || fabric.fabricId;
+      if (!fabricId) {
+        showError("Không tìm thấy thông tin vải.");
+        return;
+      }
+
+      await cartService.addToCart({
+        itemType: "FABRIC",
+        itemId: fabricId,
+        quantity: quantity || 1,
+      });
+
+      setShowAddToCartSuccess(true);
+      setTimeout(() => {
+        setShowAddToCartSuccess(false);
+      }, 3000);
+    } catch (error) {
+      console.error("Error adding to cart:", error);
+      const errorMessage = error?.response?.data?.message || error?.message || "Không thể thêm vào giỏ hàng. Vui lòng thử lại.";
+      showError(errorMessage);
+    }
   };
 
   const handleBuyNow = () => {
@@ -198,27 +424,57 @@ export default function FabricDetailPage() {
     setShowBuyNowModal(true);
   };
 
-  const handleConfirmBuyNow = () => {
-    addToFabricCart(fabric, buyNowQuantity || 1);
-    setShowBuyNowModal(false);
-    navigate("/cart", {
-      state: {
-        justAdded: fabric.key, // Đánh dấu sản phẩm vừa thêm
-      },
-    });
+  const handleConfirmBuyNow = async () => {
+    try {
+      const user = getCurrentUser();
+      if (!user) {
+        showError("Vui lòng đăng nhập để mua ngay.");
+        return;
+      }
+
+      const fabricId = fabric.id || fabric.fabricId;
+      if (!fabricId) {
+        showError("Không tìm thấy thông tin vải.");
+        return;
+      }
+
+      await cartService.addToCart({
+        itemType: "FABRIC",
+        itemId: fabricId,
+        quantity: buyNowQuantity || 1,
+      });
+
+      setShowBuyNowModal(false);
+      navigate("/cart", {
+        state: {
+          justAdded: fabric.slug || fabric.code || fabricId,
+        },
+      });
+    } catch (error) {
+      console.error("Error adding to cart:", error);
+      const errorMessage = error?.response?.data?.message || error?.message || "Không thể thêm vào giỏ hàng. Vui lòng thử lại.";
+      showError(errorMessage);
+    }
   };
 
   // Tính giá từ price string (ví dụ: "Từ 380.000 đ/m" -> 380000)
-  const getPriceValue = (priceStr) => {
-    const match = priceStr?.match(/[\d.]+/);
-    if (match) {
-      return parseInt(match[0].replace(/\./g, ""), 10);
+  const getPriceValue = (price) => {
+    // If price is already a number (from API)
+    if (typeof price === 'number') {
+      return price;
+    }
+    // If price is a string (legacy format)
+    if (typeof price === 'string') {
+      const match = price.match(/[\d.]+/);
+      if (match) {
+        return parseInt(match[0].replace(/\./g, ""), 10);
+      }
     }
     return 0;
   };
 
   const calculateTotal = () => {
-    const pricePerMeter = getPriceValue(fabric.price);
+    const pricePerMeter = getPriceValue(fabric.pricePerMeter || fabric.price);
     return pricePerMeter * (buyNowQuantity || 1);
   };
 
@@ -226,31 +482,70 @@ export default function FabricDetailPage() {
     return new Intl.NumberFormat("vi-VN").format(price) + " ₫";
   };
 
-  // Lấy sản phẩm liên quan (cùng tag hoặc category tương tự)
-  const relatedFabrics = useMemo(() => {
-    if (!fabric) return [];
-    const currentTag = fabric.tag?.toLowerCase() || "";
-    const related = fabrics
-      .filter((f) => f.key !== fabric.key)
-      .filter((f) => {
-        const fTag = f.tag?.toLowerCase() || "";
-        // Lọc theo tag tương tự hoặc random nếu không có tag giống
-        return (
-          fTag.includes(currentTag.split(" ")[0]) ||
-          currentTag.includes(fTag.split(" ")[0])
-        );
-      })
-      .slice(0, 6); // Lấy tối đa 6 sản phẩm
-
-    // Nếu không đủ 6 sản phẩm, thêm random
-    if (related.length < 6) {
-      const remaining = fabrics
-        .filter((f) => f.key !== fabric.key && !related.find((r) => r.key === f.key))
-        .slice(0, 6 - related.length);
-      return [...related, ...remaining];
+  // Get display price (from API or legacy format)
+  const getDisplayPrice = () => {
+    if (fabric.pricePerMeter) {
+      return formatPrice(fabric.pricePerMeter) + "/m";
     }
-    return related;
-  }, [fabric]);
+    if (fabric.price) {
+      return fabric.price;
+    }
+    return "Liên hệ";
+  };
+
+  // Show loading state
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#F5F3EF] flex items-center justify-center">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-[#1B4332] mb-4"></div>
+          <p className="text-[#6B7280]">Đang tải chi tiết vải...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state
+  if (error || !fabric) {
+    return (
+      <div className="min-h-screen bg-[#F5F3EF] flex items-center justify-center">
+        <div className="text-center max-w-md px-5">
+          <p className="text-red-600 mb-4">{error || "Không tìm thấy vải"}</p>
+          <button
+            onClick={() => navigate("/fabrics")}
+            className="px-6 py-2 bg-[#1B4332] text-white rounded-lg hover:bg-[#14532d] transition"
+          >
+            Quay lại danh sách vải
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Calculate derived values after fabric is confirmed to exist
+  // Parse gallery - can be array or JSON string (same logic as FabricsPage)
+  let galleryArray = [];
+  if (fabric.gallery) {
+    if (Array.isArray(fabric.gallery)) {
+      galleryArray = fabric.gallery;
+    } else if (typeof fabric.gallery === 'string') {
+      try {
+        galleryArray = JSON.parse(fabric.gallery);
+      } catch (e) {
+        galleryArray = [fabric.gallery]; // Single image as string
+      }
+    }
+  }
+
+  // Get main image: fabric.image -> fabric.imageUrl -> gallery[0]
+  let mainImage = fabric.image || fabric.imageUrl;
+  if (!mainImage && galleryArray.length > 0) {
+    mainImage = galleryArray[0];
+  }
+
+  // Build final gallery array
+  const gallery = galleryArray.length > 0 ? galleryArray : (mainImage ? [mainImage] : []);
+  const unit = fabric.unit || "đ/m";
 
   return (
     <div className="min-h-screen bg-[#F5F3EF] text-[#1F2933] body-font antialiased">
@@ -283,44 +578,172 @@ export default function FabricDetailPage() {
           )}
 
           <section className="bg-white rounded-3xl border border-[#E4D8C3] shadow-[0_18px_40px_rgba(148,114,80,0.25)] overflow-hidden">
-            <div className="flex flex-col md:flex-row">
-              <div className="md:w-1/2 relative h-72 md:h-auto flex flex-col">
-                <img
-                  src={gallery[activeImageIndex]}
-                  alt={fabric.name}
-                  className="w-full h-full object-cover"
-                />
-                <div className="absolute bottom-4 left-5">
-                  <span className="inline-flex text-[10px] uppercase tracking-[0.22em] text-white/80">
-                    {fabric.tag}
-                  </span>
-                  <p className="heading-font text-[22px] text-white">
-                    {fabric.name}
-                  </p>
-                </div>
+            <div className="flex flex-col md:flex-row gap-8 p-6">
+              {/* Gallery Section */}
+              <div className="md:w-3/5 flex gap-4">
+                {/* Vertical Thumbnails (Desktop) */}
                 {gallery.length > 1 && (
-                  <div className="relative bg-white/90 p-3 border-t border-[#E5E7EB]">
-                    <div className="flex gap-2 overflow-x-auto">
-                      {gallery.map((img, idx) => (
-                        <button
-                          key={idx}
-                          onClick={() => setActiveImageIndex(idx)}
-                          className={`w-14 h-14 rounded-lg overflow-hidden border ${
-                            activeImageIndex === idx
-                              ? "border-[#1B4332]"
-                              : "border-[#E5E7EB]"
+                  <div className="hidden md:flex flex-col gap-4 w-20 h-[500px] overflow-y-auto no-scrollbar flex-shrink-0">
+                    {gallery.map((img, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => setActiveImageIndex(idx)}
+                        className={`w-20 h-24 rounded-lg overflow-hidden border-2 flex-shrink-0 transition-all duration-200 ${activeImageIndex === idx
+                          ? "border-[#1B4332] opacity-100"
+                          : "border-transparent opacity-70 hover:opacity-100 hover:border-[#E5E7EB]"
                           }`}
-                        >
-                          <img
-                            src={img}
-                            alt={`${fabric.name} ${idx + 1}`}
-                            className="w-full h-full object-cover"
-                          />
-                        </button>
-                      ))}
-                    </div>
+                      >
+                        <img
+                          src={img}
+                          alt={`${fabric.name} thumbnail ${idx + 1}`}
+                          className="w-full h-full object-cover"
+                        />
+                      </button>
+                    ))}
                   </div>
                 )}
+
+                {/* Main Image Area with Zoom on Hover */}
+                <div
+                  ref={imageContainerRef}
+                  className="flex-1 relative h-[400px] md:h-[500px] rounded-2xl overflow-visible bg-gray-100 group"
+                  onMouseEnter={handleImageMouseEnter}
+                  onMouseLeave={handleImageMouseLeave}
+                  onMouseMove={handleImageMouseMove}
+                >
+                  <img
+                    src={gallery[activeImageIndex]}
+                    alt={fabric.name}
+                    className="w-full h-full object-cover transition-transform duration-300 cursor-crosshair rounded-2xl"
+                    onClick={() => setShowImageLightbox(activeImageIndex)}
+                    draggable={false}
+                  />
+
+                  {/* Zoom Lens - Shows on hover (Desktop only) */}
+                  {isZooming && (
+                    <div
+                      className="hidden md:block absolute pointer-events-none border-2 border-[#1B4332]/50 bg-white/20 backdrop-blur-[1px] z-10 rounded-lg"
+                      style={{
+                        width: `${LENS_SIZE}px`,
+                        height: `${LENS_SIZE}px`,
+                        left: `${lensPosition.x}px`,
+                        top: `${lensPosition.y}px`,
+                        boxShadow: '0 0 0 9999px rgba(0,0,0,0.1)',
+                      }}
+                    >
+                      {/* Crosshair inside lens */}
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="w-full h-[1px] bg-[#1B4332]/30 absolute"></div>
+                        <div className="w-[1px] h-full bg-[#1B4332]/30 absolute"></div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Overlay Badges */}
+                  <div className="absolute top-4 left-4 flex flex-col gap-2">
+                    {fabric.salePrice && (
+                      <span className="bg-[#9333EA] text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider shadow-sm">
+                        Sale
+                      </span>
+                    )}
+                    {(new Date() - new Date(fabric.createdAt) < 7 * 24 * 60 * 60 * 1000) && (
+                      <span className="bg-[#CA8A04] text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider shadow-sm">
+                        New
+                      </span>
+                    )}
+                    {fabric.tag && (
+                      <span className="bg-black/50 backdrop-blur-sm text-white text-[10px] font-medium px-3 py-1 rounded-full uppercase tracking-wider">
+                        {fabric.tag}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Wishlist Button */}
+                  <button className="absolute top-4 right-4 w-10 h-10 bg-white/80 backdrop-blur-sm rounded-full flex items-center justify-center text-gray-500 hover:text-red-500 hover:bg-white transition-all shadow-sm">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                    </svg>
+                  </button>
+
+                  {/* Navigation Arrows */}
+                  {gallery.length > 1 && (
+                    <>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setActiveImageIndex((prev) => (prev === 0 ? gallery.length - 1 : prev - 1));
+                        }}
+                        className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/80 backdrop-blur-sm rounded-full flex items-center justify-center text-gray-700 hover:bg-white hover:shadow-md transition-all opacity-0 group-hover:opacity-100"
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setActiveImageIndex((prev) => (prev === gallery.length - 1 ? 0 : prev + 1));
+                        }}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/80 backdrop-blur-sm rounded-full flex items-center justify-center text-gray-700 hover:bg-white hover:shadow-md transition-all opacity-0 group-hover:opacity-100"
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+                      </button>
+                    </>
+                  )}
+
+                  {/* Mobile Pagination Dots */}
+                  {gallery.length > 1 && (
+                    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5 md:hidden">
+                      {gallery.map((_, idx) => (
+                        <div
+                          key={idx}
+                          className={`w-1.5 h-1.5 rounded-full transition-all ${idx === activeImageIndex ? 'bg-white w-3' : 'bg-white/50'}`}
+                        />
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Zoom Hint - Show on hover when not zooming */}
+                  {!isZooming && (
+                    <div className="hidden md:flex absolute bottom-4 left-1/2 -translate-x-1/2 items-center gap-2 px-4 py-2 bg-black/60 backdrop-blur-sm text-white text-xs rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" /></svg>
+                      Di chuột để phóng to
+                    </div>
+                  )}
+
+                  {/* Zoom Panel - Fixed overlay positioned to the right (Desktop only) */}
+                  {isZooming && (
+                    <div
+                      className="hidden md:block fixed z-[100] w-[450px] h-[550px] rounded-2xl overflow-hidden border-2 border-[#1B4332]/30 shadow-2xl bg-white"
+                      style={{
+                        top: '120px',
+                        left: 'calc(50% + 280px)',
+                        backgroundImage: `url(${gallery[activeImageIndex]})`,
+                        backgroundSize: `${100 * ZOOM_LEVEL}%`,
+                        backgroundPosition: `${zoomPosition.x}% ${zoomPosition.y}%`,
+                        backgroundRepeat: 'no-repeat',
+                      }}
+                    >
+                      {/* Zoom Info Badge */}
+                      <div className="absolute bottom-3 right-3 px-3 py-1.5 bg-black/60 backdrop-blur-sm text-white text-[11px] rounded-full flex items-center gap-1.5">
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" /></svg>
+                        {ZOOM_LEVEL}x zoom
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Mobile Horizontal Thumbnails (Visible only on mobile) */}
+              <div className="md:hidden flex gap-2 overflow-x-auto pb-2 px-6 no-scrollbar snap-x">
+                {gallery.map((img, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => setActiveImageIndex(idx)}
+                    className={`w-16 h-16 rounded-lg overflow-hidden border-2 flex-shrink-0 snap-start ${activeImageIndex === idx ? "border-[#1B4332]" : "border-transparent"
+                      }`}
+                  >
+                    <img src={img} alt="" className="w-full h-full object-cover" />
+                  </button>
+                ))}
               </div>
 
               <div className="md:w-1/2 p-6 space-y-4 text-[13px] text-[#4B5563]">
@@ -355,7 +778,7 @@ export default function FabricDetailPage() {
                       Giá bán tham khảo
                     </p>
                     <p className="text-[18px] font-semibold text-[#1B4332] mt-1">
-                      {fabric.price}{" "}
+                      {getDisplayPrice()}{" "}
                       <span className="text-[11px] font-normal">{unit}</span>
                     </p>
                   </div>
@@ -364,11 +787,11 @@ export default function FabricDetailPage() {
                       Gợi ý sử dụng
                     </p>
                     <p className="mt-1">
-                      {fabric.tag.includes("Suiting")
+                      {fabric.tag?.includes("Suiting")
                         ? "Vest, áo khoác mỏng, quần tây."
-                        : fabric.tag.includes("Cotton")
-                        ? "Áo sơ mi, đầm nhẹ, đồ mặc hằng ngày."
-                        : "Áo dài, đầm dạ hội, váy maxi."}
+                        : fabric.tag?.includes("Cotton")
+                          ? "Áo sơ mi, đầm nhẹ, đồ mặc hằng ngày."
+                          : "Áo dài, đầm dạ hội, váy maxi."}
                     </p>
                   </div>
                 </div>
@@ -411,9 +834,8 @@ export default function FabricDetailPage() {
                       })()}
                     </div>
                     <svg
-                      className={`w-4 h-4 text-[#6B7280] transition-transform ${
-                        showShippingDetails ? "rotate-180" : ""
-                      }`}
+                      className={`w-4 h-4 text-[#6B7280] transition-transform ${showShippingDetails ? "rotate-180" : ""
+                        }`}
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -506,19 +928,57 @@ export default function FabricDetailPage() {
                       <span>↔</span>
                       <span>
                         Co giãn:{" "}
-                        {fabric.properties?.stretch || "Vừa / Ít co giãn"}
+                        {fabric.stretch ?
+                          (fabric.stretch === 'NONE' ? 'Không co giãn' :
+                            fabric.stretch === 'LOW' ? 'Ít co giãn' :
+                              fabric.stretch === 'MEDIUM' ? 'Co giãn vừa' :
+                                fabric.stretch === 'HIGH' ? 'Co giãn nhiều' : fabric.stretch)
+                          : "Vừa / Ít co giãn"}
                       </span>
                     </span>
-                    <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-[#FEF3C7] text-[#92400E]">
-                      <span>▥</span>
-                      <span>
-                        Độ dày: {fabric.properties?.thickness || "Trung bình"}
+                    {fabric.weight && (
+                      <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-[#FEF3C7] text-[#92400E]">
+                        <span>▥</span>
+                        <span>
+                          Định lượng: {fabric.weight} gsm
+                        </span>
                       </span>
-                    </span>
-                    <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-[#ECFDF5] text-[#047857]">
-                      <span>〰</span>
-                      <span>Độ rủ: {fabric.properties?.drape || "Rủ vừa"}</span>
-                    </span>
+                    )}
+                    {fabric.width && (
+                      <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-[#ECFDF5] text-[#047857]">
+                        <span>📐</span>
+                        <span>Khổ vải: {fabric.width} cm</span>
+                      </span>
+                    )}
+                    {fabric.season && (
+                      <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-[#FFF7ED] text-[#C2410C]">
+                        <span>🌤</span>
+                        <span>
+                          Mùa:{" "}
+                          {fabric.season === 'SPRING' ? 'Xuân' :
+                            fabric.season === 'SUMMER' ? 'Hè' :
+                              fabric.season === 'AUTUMN' ? 'Thu' :
+                                fabric.season === 'WINTER' ? 'Đông' :
+                                  fabric.season === 'ALL_SEASON' ? '4 mùa' : fabric.season}
+                        </span>
+                      </span>
+                    )}
+                    {fabric.pattern && (
+                      <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-[#F5F3FF] text-[#7C3AED]">
+                        <span>🎨</span>
+                        <span>
+                          Họa tiết:{" "}
+                          {fabric.pattern === 'SOLID' ? 'Trơn' :
+                            fabric.pattern === 'STRIPED' ? 'Kẻ sọc' :
+                              fabric.pattern === 'CHECKED' ? 'Kẻ ca-rô' :
+                                fabric.pattern === 'FLORAL' ? 'Hoa văn' :
+                                  fabric.pattern === 'GEOMETRIC' ? 'Hình học' :
+                                    fabric.pattern === 'ABSTRACT' ? 'Trừu tượng' :
+                                      fabric.pattern === 'POLKA_DOT' ? 'Chấm bi' :
+                                        fabric.pattern === 'TEXTURED' ? 'Dệt vân' : fabric.pattern}
+                        </span>
+                      </span>
+                    )}
                   </div>
                 </div>
 
@@ -527,61 +987,84 @@ export default function FabricDetailPage() {
                   <div className="flex gap-4 border-b border-[#E5E7EB] text-[13px]">
                     <button
                       onClick={() => setActiveTab("description")}
-                      className={`pb-2 ${
-                        activeTab === "description"
-                          ? "border-b-2 border-[#1B4332] text-[#1B4332] font-semibold"
-                          : "text-[#6B7280]"
-                      }`}
+                      className={`pb-2 ${activeTab === "description"
+                        ? "border-b-2 border-[#1B4332] text-[#1B4332] font-semibold"
+                        : "text-[#6B7280]"
+                        }`}
                     >
                       Mô tả
                     </button>
                     <button
                       onClick={() => setActiveTab("reviews")}
-                      className={`pb-2 ${
-                        activeTab === "reviews"
-                          ? "border-b-2 border-[#1B4332] text-[#1B4332] font-semibold"
-                          : "text-[#6B7280]"
-                      }`}
+                      className={`pb-2 ${activeTab === "reviews"
+                        ? "border-b-2 border-[#1B4332] text-[#1B4332] font-semibold"
+                        : "text-[#6B7280]"
+                        }`}
                     >
                       Đánh giá ({reviews.length || 0})
                     </button>
                     <button
                       onClick={() => setActiveTab("qa")}
-                      className={`pb-2 ${
-                        activeTab === "qa"
-                          ? "border-b-2 border-[#1B4332] text-[#1B4332] font-semibold"
-                          : "text-[#6B7280]"
-                      }`}
+                      className={`pb-2 ${activeTab === "qa"
+                        ? "border-b-2 border-[#1B4332] text-[#1B4332] font-semibold"
+                        : "text-[#6B7280]"
+                        }`}
                     >
                       Hỏi đáp
                     </button>
                   </div>
 
                   {activeTab === "description" && (
-                    <div className="pt-3 space-y-1 text-[12px]">
+                    <div className="pt-3 space-y-3 text-[12px]">
                       <p className="font-semibold text-[#111827]">
                         Mô tả chi tiết & thông số vải
                       </p>
-                      <p>{fabric.desc}</p>
-                      <ul className="list-disc list-inside space-y-1 text-[#6B7280]">
+                      {fabric.description && (
+                        <p className="text-[#4B5563] leading-relaxed">{fabric.description}</p>
+                      )}
+                      <ul className="list-disc list-inside space-y-1.5 text-[#6B7280]">
                         <li>
                           Thành phần:{" "}
-                          <span className="font-medium">
-                            {fabric.specs?.composition || "Đang cập nhật"}
+                          <span className="font-medium text-[#111827]">
+                            {fabric.material || "Đang cập nhật"}
                           </span>
                         </li>
                         <li>
                           Khổ vải:{" "}
-                          <span className="font-medium">
-                            {fabric.specs?.width || "Khoảng 1m4 – 1m6"}
+                          <span className="font-medium text-[#111827]">
+                            {fabric.width ? `${fabric.width} cm` : "Đang cập nhật"}
                           </span>
                         </li>
                         <li>
                           Trọng lượng:{" "}
-                          <span className="font-medium">
-                            {fabric.specs?.weight || "Khoảng 120–220 gsm"}
+                          <span className="font-medium text-[#111827]">
+                            {fabric.weight ? `${fabric.weight} gsm` : "Đang cập nhật"}
                           </span>
                         </li>
+                        {fabric.color && (
+                          <li>
+                            Màu sắc:{" "}
+                            <span className="font-medium text-[#111827]">
+                              {fabric.color}
+                            </span>
+                          </li>
+                        )}
+                        {fabric.origin && (
+                          <li>
+                            Xuất xứ:{" "}
+                            <span className="font-medium text-[#111827]">
+                              {fabric.origin}
+                            </span>
+                          </li>
+                        )}
+                        {fabric.careInstructions && (
+                          <li>
+                            Bảo quản:{" "}
+                            <span className="font-medium text-[#111827]">
+                              {fabric.careInstructions}
+                            </span>
+                          </li>
+                        )}
                       </ul>
                     </div>
                   )}
@@ -601,11 +1084,10 @@ export default function FabricDetailPage() {
                         <div className="flex flex-wrap gap-2">
                           <button
                             onClick={() => setStarFilter(0)}
-                            className={`px-3 py-1 rounded-full border text-[11px] ${
-                              starFilter === 0
-                                ? "bg-[#1B4332] text-white border-[#1B4332]"
-                                : "border-[#E5E7EB] text-[#374151]"
-                            }`}
+                            className={`px-3 py-1 rounded-full border text-[11px] ${starFilter === 0
+                              ? "bg-[#1B4332] text-white border-[#1B4332]"
+                              : "border-[#E5E7EB] text-[#374151]"
+                              }`}
                           >
                             Tất cả
                           </button>
@@ -613,11 +1095,10 @@ export default function FabricDetailPage() {
                             <button
                               key={star}
                               onClick={() => setStarFilter(star)}
-                              className={`px-3 py-1 rounded-full border text-[11px] ${
-                                starFilter === star
-                                  ? "bg-[#1B4332] text-white border-[#1B4332]"
-                                  : "border-[#E5E7EB] text-[#374151]"
-                              }`}
+                              className={`px-3 py-1 rounded-full border text-[11px] ${starFilter === star
+                                ? "bg-[#1B4332] text-white border-[#1B4332]"
+                                : "border-[#E5E7EB] text-[#374151]"
+                                }`}
                             >
                               {star}★ ({ratingSummary.counts?.[star] || 0})
                             </button>
@@ -637,20 +1118,20 @@ export default function FabricDetailPage() {
                       <div className="space-y-3">
                         {(() => {
                           const reviewsToShow = filteredReviews;
-                          
+
                           if (!reviewsToShow || !Array.isArray(reviewsToShow) || reviewsToShow.length === 0) {
                             return (
                               <div className="text-center py-8 text-[#6B7280] text-[12px]">
                                 <p>Chưa có đánh giá nào cho sản phẩm này</p>
                                 <p className="text-[11px] text-[#9CA3AF] mt-1">
-                                  {starFilter > 0 
+                                  {starFilter > 0
                                     ? `Không có đánh giá ${starFilter} sao nào`
                                     : "Hãy là người đầu tiên đánh giá sản phẩm này"}
                                 </p>
                               </div>
                             );
                           }
-                          
+
                           return reviewsToShow.map((review, idx) => (
                             <div
                               key={review.id || `review-${idx}`}
@@ -670,7 +1151,7 @@ export default function FabricDetailPage() {
                                   </span>
                                 )}
                               </div>
-                              
+
                               {/* Review Content */}
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-2 mb-1">
@@ -691,7 +1172,7 @@ export default function FabricDetailPage() {
                                     {review.comment}
                                   </p>
                                 )}
-                                
+
                                 {/* Review Images */}
                                 {review.images && review.images.length > 0 && (
                                   <div className="grid grid-cols-4 gap-2 mt-2">
@@ -708,7 +1189,7 @@ export default function FabricDetailPage() {
                                     ))}
                                   </div>
                                 )}
-                                
+
                                 {/* Verified badge if from order */}
                                 {review.orderId && (
                                   <div className="flex items-center gap-1 mt-2">
@@ -858,7 +1339,7 @@ export default function FabricDetailPage() {
                         >
                           <div className="text-center mb-3">
                             <div className="w-32 h-32 mx-auto mb-3 relative cursor-pointer"
-                              onClick={() => navigate(`/fabrics/${relatedFabric.key}`)}
+                              onClick={() => navigate(`/fabrics/${relatedFabric.slug || relatedFabric.code || relatedFabric.id}`)}
                             >
                               <img
                                 src={relatedFabric.image}
@@ -867,7 +1348,7 @@ export default function FabricDetailPage() {
                               />
                             </div>
                             <p className="text-[13px] font-medium text-[#111827] mb-2 line-clamp-2 cursor-pointer hover:text-[#F97316]"
-                              onClick={() => navigate(`/fabrics/${relatedFabric.key}`)}
+                              onClick={() => navigate(`/fabrics/${relatedFabric.slug || relatedFabric.code || relatedFabric.id}`)}
                             >
                               {relatedFabric.name}
                             </p>
@@ -877,7 +1358,7 @@ export default function FabricDetailPage() {
                               </p>
                             </div>
                             <button
-                              onClick={() => navigate(`/fabrics/${relatedFabric.key}`)}
+                              onClick={() => navigate(`/fabrics/${relatedFabric.slug || relatedFabric.code || relatedFabric.id}`)}
                               className="text-[12px] text-[#1B4332] hover:text-[#F97316] font-medium flex items-center gap-1 mx-auto"
                             >
                               So sánh chi tiết{" "}
@@ -956,6 +1437,18 @@ export default function FabricDetailPage() {
             </section>
           )}
         </div>
+        {/* REVIEW SECTION */}
+        {fabric?.id && (
+          <div className="max-w-7xl mx-auto px-5 lg:px-8 py-8">
+            <ReviewSection
+              productId={fabric.id}
+              productName={fabric.name}
+              productImage={fabric.image}
+              type="PRODUCT"
+            />
+          </div>
+        )}
+
       </main>
 
       {/* Modal Mua ngay - FPT Shop style */}
@@ -1002,9 +1495,11 @@ export default function FabricDetailPage() {
                   <p className="text-[14px] font-medium text-[#111827] line-clamp-2 mb-1">
                     {fabric.name}
                   </p>
-                  <p className="text-[12px] text-[#6B7280] mb-2">
-                    {fabric.tag}
-                  </p>
+                  {fabric.tag && (
+                    <p className="text-[12px] text-[#6B7280] mb-2">
+                      {fabric.tag}
+                    </p>
+                  )}
                   <p className="text-[16px] font-semibold text-[#F97316]">
                     {fabric.price}
                   </p>
@@ -1106,7 +1601,7 @@ export default function FabricDetailPage() {
       {/* Popup thông báo thêm vào giỏ hàng thành công */}
       {showAddToCartSuccess && (
         <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
-          <div 
+          <div
             className="bg-white rounded-2xl shadow-2xl border border-[#E5E7EB] p-6 max-w-sm w-full mx-4 pointer-events-auto transform transition-all duration-300"
             style={{
               animation: 'slideUpFadeIn 0.3s ease-out',
@@ -1183,7 +1678,7 @@ export default function FabricDetailPage() {
 
       {/* Image Lightbox */}
       {showImageLightbox !== null && showImageLightbox.review?.images && (
-        <div 
+        <div
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90"
           onClick={() => setShowImageLightbox(null)}
         >

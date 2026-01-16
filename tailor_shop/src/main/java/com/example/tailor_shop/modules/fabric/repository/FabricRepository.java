@@ -14,54 +14,60 @@ import java.util.Optional;
 
 public interface FabricRepository extends JpaRepository<FabricEntity, Long> {
 
-    /**
-     * Tìm fabric theo code và không bị xóa
-     */
-    Optional<FabricEntity> findByCodeAndIsDeletedFalse(String code);
+        /**
+         * Tìm fabric theo code và không bị xóa
+         */
+        Optional<FabricEntity> findByCodeAndIsDeletedFalse(String code);
 
-    /**
-     * Tìm fabric theo slug và không bị xóa
-     */
-    Optional<FabricEntity> findBySlugAndIsDeletedFalse(String slug);
+        /**
+         * Tìm fabric theo code (kể cả đã xóa)
+         */
+        Optional<FabricEntity> findByCode(String code);
 
-    /**
-     * Search fabrics với filter
-     */
-    @Query("SELECT f FROM FabricEntity f WHERE f.isDeleted = false " +
-            "AND (:category IS NULL OR f.category = :category) " +
-            "AND (:color IS NULL OR f.color = :color) " +
-            "AND (:pattern IS NULL OR f.pattern = :pattern) " +
-            "AND (:material IS NULL OR f.material = :material) " +
-            "AND (:origin IS NULL OR f.origin = :origin) " +
-            "AND (:isAvailable IS NULL OR f.isAvailable = :isAvailable) " +
-            "AND (:isFeatured IS NULL OR f.isFeatured = :isFeatured) " +
-            "AND (:minPrice IS NULL OR f.pricePerMeter >= :minPrice) " +
-            "AND (:maxPrice IS NULL OR f.pricePerMeter <= :maxPrice) " +
-            "AND (:keyword IS NULL OR LOWER(f.name) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
-            "OR LOWER(f.description) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
-            "OR LOWER(f.code) LIKE LOWER(CONCAT('%', :keyword, '%')))")
-    Page<FabricEntity> searchFabrics(
-            @Param("category") FabricCategory category,
-            @Param("color") String color,
-            @Param("pattern") FabricPattern pattern,
-            @Param("material") String material,
-            @Param("origin") String origin,
-            @Param("isAvailable") Boolean isAvailable,
-            @Param("isFeatured") Boolean isFeatured,
-            @Param("minPrice") BigDecimal minPrice,
-            @Param("maxPrice") BigDecimal maxPrice,
-            @Param("keyword") String keyword,
-            Pageable pageable
-    );
+        /**
+         * Tìm fabric theo slug và không bị xóa
+         */
+        Optional<FabricEntity> findBySlugAndIsDeletedFalse(String slug);
 
-    /**
-     * Check code exists
-     */
-    boolean existsByCodeAndIsDeletedFalse(String code);
+        /**
+         * Search fabrics với filter
+         * Note: Với custom @Query, Spring Data JPA không tự động apply sort từ Pageable
+         * Nên cần xử lý sort trong service layer hoặc dùng Specification
+         */
+        @Query("SELECT f FROM FabricEntity f WHERE f.isDeleted = false " +
+                        "AND (:category IS NULL OR f.category = :category) " +
+                        "AND (:color IS NULL OR f.color = :color) " +
+                        "AND (:pattern IS NULL OR f.pattern = :pattern) " +
+                        "AND (:material IS NULL OR f.material = :material) " +
+                        "AND (:origin IS NULL OR f.origin = :origin) " +
+                        "AND (:isAvailable IS NULL OR f.isAvailable = :isAvailable) " +
+                        "AND (:isFeatured IS NULL OR f.isFeatured = :isFeatured) " +
+                        "AND (:minPrice IS NULL OR f.pricePerMeter >= :minPrice) " +
+                        "AND (:maxPrice IS NULL OR f.pricePerMeter <= :maxPrice) " +
+                        "AND (:keyword IS NULL OR LOWER(f.name) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
+                        "OR LOWER(f.description) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
+                        "OR LOWER(f.code) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
+                        "ORDER BY f.displayOrder ASC, f.id ASC")
+        Page<FabricEntity> searchFabrics(
+                        @Param("category") FabricCategory category,
+                        @Param("color") String color,
+                        @Param("pattern") FabricPattern pattern,
+                        @Param("material") String material,
+                        @Param("origin") String origin,
+                        @Param("isAvailable") Boolean isAvailable,
+                        @Param("isFeatured") Boolean isFeatured,
+                        @Param("minPrice") BigDecimal minPrice,
+                        @Param("maxPrice") BigDecimal maxPrice,
+                        @Param("keyword") String keyword,
+                        Pageable pageable);
 
-    /**
-     * Check slug exists
-     */
-    boolean existsBySlugAndIsDeletedFalse(String slug);
+        /**
+         * Check code exists
+         */
+        boolean existsByCodeAndIsDeletedFalse(String code);
+
+        /**
+         * Check slug exists
+         */
+        boolean existsBySlugAndIsDeletedFalse(String slug);
 }
-

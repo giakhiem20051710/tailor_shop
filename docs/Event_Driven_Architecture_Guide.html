@@ -1,0 +1,1613 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Event-Driven Architecture - Tài Liệu & Interview Guide</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0a1628 0%, #1a2d4a 50%, #0a1628 100%);
+            color: #eee;
+            min-height: 100vh;
+            padding: 20px;
+            line-height: 1.7;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: #00d4ff;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 0 0 20px rgba(0, 212, 255, 0.5);
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #888;
+            margin-bottom: 30px;
+        }
+
+        h2 {
+            color: #ffd700;
+            margin: 40px 0 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #ffd700;
+        }
+
+        h3 {
+            color: #00ff88;
+            margin: 25px 0 15px;
+        }
+
+        h4 {
+            color: #ff6b6b;
+            margin: 20px 0 10px;
+        }
+
+        .section {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 25px;
+            margin: 20px 0;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .mermaid {
+            background: #fff;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 15px 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+            font-size: 14px;
+        }
+
+        th,
+        td {
+            padding: 12px 15px;
+            text-align: left;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        th {
+            background: rgba(0, 212, 255, 0.2);
+            color: #00d4ff;
+        }
+
+        tr:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        code {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 2px 8px;
+            border-radius: 4px;
+            color: #00ff88;
+            font-family: 'Consolas', monospace;
+        }
+
+        pre {
+            background: rgba(0, 0, 0, 0.4);
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 10px 0;
+            font-size: 13px;
+        }
+
+        .good {
+            background: linear-gradient(135deg, rgba(0, 255, 136, 0.1), rgba(0, 200, 100, 0.1));
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 4px solid #00ff88;
+            margin: 15px 0;
+        }
+
+        .bad {
+            background: linear-gradient(135deg, rgba(255, 0, 0, 0.1), rgba(200, 0, 0, 0.1));
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 4px solid #ff4444;
+            margin: 15px 0;
+        }
+
+        .info {
+            background: linear-gradient(135deg, rgba(0, 212, 255, 0.1), rgba(0, 150, 200, 0.1));
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 4px solid #00d4ff;
+            margin: 15px 0;
+        }
+
+        .warning {
+            background: linear-gradient(135deg, rgba(255, 193, 7, 0.1), rgba(200, 150, 0, 0.1));
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 4px solid #ffc107;
+            margin: 15px 0;
+        }
+
+        .interview-q {
+            background: linear-gradient(135deg, rgba(138, 43, 226, 0.2), rgba(100, 30, 180, 0.2));
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 4px solid #9932cc;
+            margin: 20px 0;
+        }
+
+        .answer {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 10px;
+        }
+
+        .difficulty {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 15px;
+            font-size: 11px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+
+        .easy {
+            background: #28a745;
+        }
+
+        .medium {
+            background: #ffc107;
+            color: black;
+        }
+
+        .hard {
+            background: #dc3545;
+        }
+
+        ul,
+        ol {
+            padding-left: 25px;
+            margin: 10px 0;
+        }
+
+        li {
+            margin: 8px 0;
+        }
+
+        .compare {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .compare {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .toc {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+
+        .toc a {
+            color: #00d4ff;
+            text-decoration: none;
+        }
+
+        .toc a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>🚀 Event-Driven Architecture</h1>
+        <p class="subtitle">Tài liệu học tập & Câu hỏi phỏng vấn thường gặp</p>
+
+        <!-- Table of Contents -->
+        <div class="toc">
+            <h3>📑 Mục Lục</h3>
+            <ol>
+                <li><a href="#what-is">Event-Driven Architecture là gì?</a></li>
+                <li><a href="#why-use">Tại sao sử dụng Event-Driven?</a></li>
+                <li><a href="#components">Các thành phần chính</a></li>
+                <li><a href="#patterns">Các pattern phổ biến</a></li>
+                <li><a href="#spring-impl">Implement với Spring Boot</a></li>
+                <li><a href="#pros-cons">Ưu điểm và Nhược điểm</a></li>
+                <li><a href="#real-world">Ứng dụng thực tế</a></li>
+                <li><a href="#interview">Câu hỏi phỏng vấn (Q1-Q10)</a></li>
+                <li><a href="#retry-dlq">🆕 Retry Logic & Dead-Letter Queue</a></li>
+                <li><a href="#tailor-impl">🆕 Implementation trong Tailor Shop</a></li>
+            </ol>
+        </div>
+
+        <!-- Section 1: What is EDA -->
+        <div class="section" id="what-is">
+            <h2>1️⃣ Event-Driven Architecture là gì?</h2>
+
+            <div class="info">
+                <strong>Định nghĩa:</strong> Event-Driven Architecture (EDA) là một design pattern trong đó các thành
+                phần của hệ thống giao tiếp với nhau thông qua việc <strong>phát sinh (produce)</strong> và <strong>lắng
+                    nghe (consume)</strong> các sự kiện (events).
+            </div>
+
+            <h3>🔑 Khái niệm cốt lõi</h3>
+
+            <div class="mermaid">
+                flowchart LR
+                subgraph Producer["Producer (Nguồn phát)"]
+                A[Service A]
+                end
+
+                subgraph EventBus["Event Bus / Message Broker"]
+                E[📨 Event]
+                end
+
+                subgraph Consumers["Consumers (Người nghe)"]
+                B[Service B]
+                C[Service C]
+                D[Service D]
+                end
+
+                A -->|"publish"| E
+                E -->|"subscribe"| B
+                E -->|"subscribe"| C
+                E -->|"subscribe"| D
+
+                style A fill:#4CAF50,color:white
+                style E fill:#FF9800,color:white
+                style B fill:#2196F3,color:white
+                style C fill:#2196F3,color:white
+                style D fill:#2196F3,color:white
+            </div>
+
+            <h3>📖 Thuật ngữ quan trọng</h3>
+            <table>
+                <tr>
+                    <th>Thuật ngữ</th>
+                    <th>Định nghĩa</th>
+                    <th>Ví dụ</th>
+                </tr>
+                <tr>
+                    <td><code>Event</code></td>
+                    <td>Một sự kiện đã xảy ra trong hệ thống</td>
+                    <td>OrderCreatedEvent, UserRegisteredEvent</td>
+                </tr>
+                <tr>
+                    <td><code>Producer</code></td>
+                    <td>Service phát sinh event</td>
+                    <td>OrderService publish OrderCreatedEvent</td>
+                </tr>
+                <tr>
+                    <td><code>Consumer</code></td>
+                    <td>Service lắng nghe và xử lý event</td>
+                    <td>EmailService listen OrderCreatedEvent</td>
+                </tr>
+                <tr>
+                    <td><code>Event Bus</code></td>
+                    <td>Kênh truyền tải event</td>
+                    <td>ApplicationEventPublisher, Kafka, RabbitMQ</td>
+                </tr>
+                <tr>
+                    <td><code>Event Handler</code></td>
+                    <td>Logic xử lý event</td>
+                    <td>@EventListener method</td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- Section 2: Why use EDA -->
+        <div class="section" id="why-use">
+            <h2>2️⃣ Tại sao sử dụng Event-Driven?</h2>
+
+            <h3>❌ Vấn đề với Synchronous (Đồng bộ)</h3>
+
+            <div class="bad">
+                <h4>Ví dụ: Tạo đơn hàng đồng bộ</h4>
+                <pre><code>public OrderResponse createOrder(OrderRequest request) {
+    Order order = saveOrder(request);           // ⏱️ 50ms
+    invoiceService.createInvoice(order);        // ⏱️ 100ms (chờ)
+    appointmentService.createAppointment(order); // ⏱️ 80ms (chờ)
+    emailService.sendConfirmation(order);       // ⏱️ 2000ms (chờ SMTP!)
+    smsService.sendNotification(order);         // ⏱️ 1500ms (chờ API)
+    
+    return toResponse(order);
+    // TỔNG THỜI GIAN: 3730ms = 3.7 giây!
+}</code></pre>
+            </div>
+
+            <div class="mermaid">
+                sequenceDiagram
+                participant U as User
+                participant O as OrderService
+                participant I as InvoiceService
+                participant E as EmailService
+                participant S as SMSService
+
+                U->>O: createOrder()
+                O->>O: saveOrder (50ms)
+                O->>I: createInvoice (100ms)
+                I-->>O: done
+                O->>E: sendEmail (2000ms)
+                E-->>O: done
+                O->>S: sendSMS (1500ms)
+                S-->>O: done
+                O-->>U: response (3650ms total!)
+
+                Note over U,S: User phải CHỜ 3.7 giây!
+            </div>
+
+            <h3>✅ Giải pháp với Event-Driven</h3>
+
+            <div class="good">
+                <h4>Ví dụ: Tạo đơn hàng Event-Driven</h4>
+                <pre><code>public OrderResponse createOrder(OrderRequest request) {
+    Order order = saveOrder(request);           // ⏱️ 50ms
+    
+    // Publish event và RETURN NGAY
+    eventPublisher.publishEvent(new OrderCreatedEvent(order));
+    
+    return toResponse(order);
+    // TỔNG THỜI GIAN: ~100ms!
+}
+
+// Các listeners chạy ASYNC (background)
+@Async @EventListener
+public void onOrderCreated(OrderCreatedEvent event) {
+    emailService.sendConfirmation(event.getOrder());
+}</code></pre>
+            </div>
+
+            <div class="mermaid">
+                sequenceDiagram
+                participant U as User
+                participant O as OrderService
+                participant EB as Event Bus
+                participant I as InvoiceListener
+                participant E as EmailListener
+                participant S as SMSListener
+
+                U->>O: createOrder()
+                O->>O: saveOrder (50ms)
+                O->>EB: publish(OrderCreatedEvent)
+                O-->>U: response (100ms total!)
+
+                Note over U: User nhận response NGAY!
+
+                par Background Processing
+                EB->>I: OrderCreatedEvent
+                I->>I: createInvoice (async)
+                and
+                EB->>E: OrderCreatedEvent
+                E->>E: sendEmail (async)
+                and
+                EB->>S: OrderCreatedEvent
+                S->>S: sendSMS (async)
+                end
+            </div>
+
+            <h3>📊 So sánh hiệu năng</h3>
+            <table>
+                <tr>
+                    <th>Tiêu chí</th>
+                    <th>❌ Synchronous</th>
+                    <th>✅ Event-Driven</th>
+                </tr>
+                <tr>
+                    <td>Response time</td>
+                    <td>3730ms</td>
+                    <td>~100ms</td>
+                </tr>
+                <tr>
+                    <td>User experience</td>
+                    <td>Chờ lâu 😤</td>
+                    <td>Phản hồi nhanh 😊</td>
+                </tr>
+                <tr>
+                    <td>1 service fail</td>
+                    <td>Cả request fail</td>
+                    <td>Các service khác vẫn chạy</td>
+                </tr>
+                <tr>
+                    <td>Thêm feature mới</td>
+                    <td>Sửa OrderService</td>
+                    <td>Thêm 1 Listener mới</td>
+                </tr>
+                <tr>
+                    <td>Coupling</td>
+                    <td>Cao (biết tất cả)</td>
+                    <td>Thấp (chỉ biết Event)</td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- Section 3: Components -->
+        <div class="section" id="components">
+            <h2>3️⃣ Các thành phần chính</h2>
+
+            <div class="mermaid">
+                flowchart TB
+                subgraph EventComponents["Event-Driven Components"]
+                subgraph Event["1. Event Class"]
+                E1["OrderCreatedEvent<br />- orderId<br />- customerId<br />- timestamp"]
+                end
+
+                subgraph Publisher["2. Event Publisher"]
+                P1["ApplicationEventPublisher<br />eventPublisher.publishEvent()"]
+                end
+
+                subgraph Listeners["3. Event Listeners"]
+                L1["InvoiceListener<br />@EventListener"]
+                L2["EmailListener<br />@Async @EventListener"]
+                L3["AnalyticsListener<br />@TransactionalEventListener"]
+                end
+
+                subgraph Broker["4. Message Broker (Optional)"]
+                B1["Kafka / RabbitMQ<br />For distributed systems"]
+                end
+                end
+
+                E1 --> P1
+                P1 --> L1
+                P1 --> L2
+                P1 --> L3
+                P1 -.-> B1
+            </div>
+
+            <h3>🔹 1. Event Class</h3>
+            <pre><code>public class OrderCreatedEvent {
+    private final Long orderId;
+    private final Long customerId;
+    private final BigDecimal totalAmount;
+    private final LocalDateTime createdAt;
+    
+    public OrderCreatedEvent(Order order) {
+        this.orderId = order.getId();
+        this.customerId = order.getCustomerId();
+        this.totalAmount = order.getTotal();
+        this.createdAt = LocalDateTime.now();
+    }
+    // getters
+}</code></pre>
+
+            <h3>🔹 2. Event Publisher</h3>
+            <pre><code>@Service
+public class OrderService {
+    private final ApplicationEventPublisher eventPublisher;
+    
+    public void createOrder(OrderRequest request) {
+        Order order = orderRepository.save(toEntity(request));
+        
+        // Publish event
+        eventPublisher.publishEvent(new OrderCreatedEvent(order));
+    }
+}</code></pre>
+
+            <h3>🔹 3. Event Listeners</h3>
+            <pre><code>@Component
+public class OrderEventListeners {
+    
+    // Sync listener (cùng thread, cùng transaction)
+    @EventListener
+    public void handleSync(OrderCreatedEvent event) {
+        log.info("Sync: Order {} created", event.getOrderId());
+    }
+    
+    // Async listener (thread riêng, không block)
+    @Async
+    @EventListener
+    public void handleAsync(OrderCreatedEvent event) {
+        emailService.sendConfirmation(event);
+    }
+    
+    // Chạy SAU KHI transaction commit thành công
+    @TransactionalEventListener(phase = AFTER_COMMIT)
+    public void handleAfterCommit(OrderCreatedEvent event) {
+        notificationService.notify(event);
+    }
+}</code></pre>
+        </div>
+
+        <!-- Section 4: Patterns -->
+        <div class="section" id="patterns">
+            <h2>4️⃣ Các Pattern phổ biến</h2>
+
+            <h3>Pattern 1: Event Notification</h3>
+            <div class="info">
+                <strong>Mục đích:</strong> Thông báo rằng một sự kiện đã xảy ra. Consumer tự quyết định xử lý thế nào.
+            </div>
+            <pre><code>// Event chỉ chứa ID, consumer tự fetch data nếu cần
+public class OrderCreatedEvent {
+    private final Long orderId;  // Chỉ ID
+}</code></pre>
+
+            <h3>Pattern 2: Event-Carried State Transfer</h3>
+            <div class="info">
+                <strong>Mục đích:</strong> Event mang theo đầy đủ data, consumer không cần gọi lại producer.
+            </div>
+            <pre><code>// Event mang đầy đủ data
+public class OrderCreatedEvent {
+    private final Long orderId;
+    private final String customerName;
+    private final String customerEmail;
+    private final List<OrderItem> items;
+    private final BigDecimal total;
+    // Không cần fetch lại!
+}</code></pre>
+
+            <h3>Pattern 3: Event Sourcing</h3>
+            <div class="info">
+                <strong>Mục đích:</strong> Lưu TẤT CẢ events thay vì lưu state hiện tại. Có thể replay để rebuild state.
+            </div>
+            <div class="mermaid">
+                flowchart LR
+                subgraph Events["Event Store"]
+                E1["OrderCreated"]
+                E2["ItemAdded"]
+                E3["PaymentReceived"]
+                E4["OrderShipped"]
+                end
+
+                subgraph State["Current State (computed)"]
+                S["Order Status: SHIPPED<br />Total: 500k<br />Items: 3"]
+                end
+
+                E1 --> E2 --> E3 --> E4 --> S
+            </div>
+
+            <h3>Pattern 4: CQRS (Command Query Responsibility Segregation)</h3>
+            <div class="info">
+                <strong>Mục đích:</strong> Tách biệt Write (Command) và Read (Query) models.
+            </div>
+            <div class="mermaid">
+                flowchart TB
+                subgraph Commands["Write Side"]
+                C1["CreateOrder"]
+                C2["UpdateOrder"]
+                WD[(Write DB)]
+                end
+
+                subgraph Events["Event Bus"]
+                EV["Events"]
+                end
+
+                subgraph Queries["Read Side"]
+                Q1["GetOrderList"]
+                Q2["GetOrderDetails"]
+                RD[(Read DB - Optimized)]
+                end
+
+                C1 --> WD
+                C2 --> WD
+                WD --> EV
+                EV --> RD
+                RD --> Q1
+                RD --> Q2
+            </div>
+        </div>
+
+        <!-- Section 5: Spring Implementation -->
+        <div class="section" id="spring-impl">
+            <h2>5️⃣ Implement với Spring Boot</h2>
+
+            <h3>Step 1: Tạo Event Class</h3>
+            <pre><code>// events/OrderCreatedEvent.java
+public class OrderCreatedEvent {
+    private final Order order;
+    private final LocalDateTime timestamp;
+    
+    public OrderCreatedEvent(Order order) {
+        this.order = order;
+        this.timestamp = LocalDateTime.now();
+    }
+    
+    public Order getOrder() { return order; }
+    public LocalDateTime getTimestamp() { return timestamp; }
+}</code></pre>
+
+            <h3>Step 2: Publish Event từ Service</h3>
+            <pre><code>@Service
+@RequiredArgsConstructor
+public class OrderServiceImpl implements OrderService {
+    private final OrderRepository orderRepository;
+    private final ApplicationEventPublisher eventPublisher;
+    
+    @Transactional
+    public OrderResponse createOrder(OrderRequest request) {
+        // 1. Business logic
+        Order order = new Order();
+        order.setCustomerId(request.getCustomerId());
+        order.setStatus(OrderStatus.PENDING);
+        order = orderRepository.save(order);
+        
+        // 2. Publish event
+        eventPublisher.publishEvent(new OrderCreatedEvent(order));
+        
+        return toResponse(order);
+    }
+}</code></pre>
+
+            <h3>Step 3: Tạo Event Listeners</h3>
+            <pre><code>@Component
+@RequiredArgsConstructor
+@Slf4j
+public class OrderEventListeners {
+    private final InvoiceService invoiceService;
+    private final EmailService emailService;
+    
+    @Async
+    @EventListener
+    public void createInvoice(OrderCreatedEvent event) {
+        log.info("Creating invoice for order {}", event.getOrder().getId());
+        invoiceService.createForOrder(event.getOrder());
+    }
+    
+    @Async
+    @EventListener
+    public void sendConfirmationEmail(OrderCreatedEvent event) {
+        log.info("Sending confirmation for order {}", event.getOrder().getId());
+        emailService.sendOrderConfirmation(event.getOrder());
+    }
+    
+    // Chạy SAU KHI transaction commit
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void notifyAnalytics(OrderCreatedEvent event) {
+        log.info("Tracking order {} in analytics", event.getOrder().getId());
+        // analytics tracking...
+    }
+}</code></pre>
+
+            <h3>Step 4: Enable Async</h3>
+            <pre><code>@Configuration
+@EnableAsync
+public class AsyncConfig {
+    
+    @Bean
+    public Executor taskExecutor() {
+        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+        executor.setCorePoolSize(5);
+        executor.setMaxPoolSize(10);
+        executor.setQueueCapacity(500);
+        executor.setThreadNamePrefix("EventListener-");
+        executor.initialize();
+        return executor;
+    }
+}</code></pre>
+        </div>
+
+        <!-- Section 6: Pros and Cons -->
+        <div class="section" id="pros-cons">
+            <h2>6️⃣ Ưu điểm và Nhược điểm</h2>
+
+            <div class="compare">
+                <div class="good">
+                    <h3>✅ Ưu điểm</h3>
+                    <ul>
+                        <li><strong>Loose Coupling</strong>: Services không phụ thuộc trực tiếp</li>
+                        <li><strong>Scalability</strong>: Dễ scale từng service riêng</li>
+                        <li><strong>Flexibility</strong>: Thêm/xóa features không ảnh hưởng code cũ</li>
+                        <li><strong>Performance</strong>: Async processing, response nhanh</li>
+                        <li><strong>Fault Tolerance</strong>: 1 listener fail không ảnh hưởng listeners khác</li>
+                        <li><strong>Auditability</strong>: Events có thể lưu làm audit log</li>
+                    </ul>
+                </div>
+
+                <div class="bad">
+                    <h3>❌ Nhược điểm</h3>
+                    <ul>
+                        <li><strong>Complexity</strong>: Debug khó hơn (distributed tracing)</li>
+                        <li><strong>Eventual Consistency</strong>: Data không nhất quán ngay lập tức</li>
+                        <li><strong>Event Ordering</strong>: Không đảm bảo thứ tự events</li>
+                        <li><strong>Error Handling</strong>: Retry, dead-letter queue phức tạp</li>
+                        <li><strong>Testing</strong>: Integration testing phức tạp hơn</li>
+                        <li><strong>Monitoring</strong>: Cần tools chuyên dụng (Zipkin, Jaeger)</li>
+                    </ul>
+                </div>
+            </div>
+
+            <h3>⚠️ Khi nào KHÔNG nên dùng Event-Driven?</h3>
+            <div class="warning">
+                <ul>
+                    <li>Khi cần <strong>response đồng bộ</strong> ngay lập tức (VD: check stock trước khi order)</li>
+                    <li>Khi <strong>thứ tự xử lý</strong> rất quan trọng</li>
+                    <li>Khi hệ thống <strong>nhỏ, đơn giản</strong> (over-engineering)</li>
+                    <li>Khi cần <strong>strong consistency</strong> (VD: banking transactions)</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Section 7: Real World -->
+        <div class="section" id="real-world">
+            <h2>7️⃣ Ứng dụng thực tế</h2>
+
+            <h3>🏢 Các công ty lớn sử dụng EDA</h3>
+            <table>
+                <tr>
+                    <th>Công ty</th>
+                    <th>Use Case</th>
+                    <th>Technology</th>
+                </tr>
+                <tr>
+                    <td>Netflix</td>
+                    <td>User activity tracking, recommendations</td>
+                    <td>Apache Kafka</td>
+                </tr>
+                <tr>
+                    <td>Uber</td>
+                    <td>Trip events, driver matching</td>
+                    <td>Apache Kafka</td>
+                </tr>
+                <tr>
+                    <td>LinkedIn</td>
+                    <td>Activity feed, notifications</td>
+                    <td>Apache Kafka</td>
+                </tr>
+                <tr>
+                    <td>Shopee</td>
+                    <td>Order processing, inventory</td>
+                    <td>Kafka + RabbitMQ</td>
+                </tr>
+                <tr>
+                    <td>Grab</td>
+                    <td>Real-time tracking, payments</td>
+                    <td>Kafka</td>
+                </tr>
+            </table>
+
+            <h3>📦 Message Brokers phổ biến</h3>
+            <table>
+                <tr>
+                    <th>Broker</th>
+                    <th>Best for</th>
+                    <th>Đặc điểm</th>
+                </tr>
+                <tr>
+                    <td>Spring Events</td>
+                    <td>Single app, simple cases</td>
+                    <td>Built-in, easy, no infra</td>
+                </tr>
+                <tr>
+                    <td>RabbitMQ</td>
+                    <td>Task queues, microservices</td>
+                    <td>Flexible routing, reliable</td>
+                </tr>
+                <tr>
+                    <td>Apache Kafka</td>
+                    <td>High throughput, event streaming</td>
+                    <td>Scalable, persistent, replay</td>
+                </tr>
+                <tr>
+                    <td>AWS SQS/SNS</td>
+                    <td>AWS ecosystem</td>
+                    <td>Managed, serverless</td>
+                </tr>
+                <tr>
+                    <td>Redis Pub/Sub</td>
+                    <td>Real-time, simple pub/sub</td>
+                    <td>Fast, in-memory</td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- Section 8: Interview Questions -->
+        <div class="section" id="interview">
+            <h2>8️⃣ Câu hỏi phỏng vấn thường gặp</h2>
+
+            <!-- Question 1 -->
+            <div class="interview-q">
+                <h4>Q1: Event-Driven Architecture là gì? <span class="difficulty easy">Easy</span></h4>
+                <div class="answer">
+                    <strong>Trả lời:</strong><br>
+                    Event-Driven Architecture là một design pattern trong đó các components giao tiếp thông qua việc
+                    publish và subscribe các events. Thay vì gọi trực tiếp, service A publish một event khi có sự kiện
+                    xảy ra, và các services khác subscribe để lắng nghe và xử lý event đó một cách độc lập.
+                    <br><br>
+                    <strong>Ví dụ:</strong> Khi OrderService tạo đơn hàng, nó publish OrderCreatedEvent. EmailService,
+                    InvoiceService, InventoryService lắng nghe event này và xử lý async mà không cần OrderService biết
+                    về sự tồn tại của họ.
+                </div>
+            </div>
+
+            <!-- Question 2 -->
+            <div class="interview-q">
+                <h4>Q2: Phân biệt Synchronous vs Event-Driven? <span class="difficulty easy">Easy</span></h4>
+                <div class="answer">
+                    <table>
+                        <tr>
+                            <th>Tiêu chí</th>
+                            <th>Synchronous</th>
+                            <th>Event-Driven</th>
+                        </tr>
+                        <tr>
+                            <td>Coupling</td>
+                            <td>Tight - caller biết callee</td>
+                            <td>Loose - chỉ biết event</td>
+                        </tr>
+                        <tr>
+                            <td>Response</td>
+                            <td>Chờ tất cả xong</td>
+                            <td>Return ngay</td>
+                        </tr>
+                        <tr>
+                            <td>Failure</td>
+                            <td>1 fail = all fail</td>
+                            <td>Isolated failures</td>
+                        </tr>
+                        <tr>
+                            <td>Scale</td>
+                            <td>Khó scale riêng</td>
+                            <td>Dễ scale từng listener</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Question 3 -->
+            <div class="interview-q">
+                <h4>Q3: @EventListener vs @TransactionalEventListener khác nhau thế nào? <span
+                        class="difficulty medium">Medium</span></h4>
+                <div class="answer">
+                    <ul>
+                        <li><code>@EventListener</code>: Chạy NGAY khi event được publish, trong cùng transaction.</li>
+                        <li><code>@TransactionalEventListener</code>: Chạy SAU KHI transaction kết thúc.</li>
+                    </ul>
+                    <pre><code>// Chạy ngay, nếu exception → rollback cả transaction
+@EventListener
+public void handleSync(OrderCreatedEvent e) { }
+
+// Chạy SAU COMMIT, đảm bảo order đã lưu thành công
+@TransactionalEventListener(phase = AFTER_COMMIT)
+public void handleAfterCommit(OrderCreatedEvent e) { }
+
+// Chạy khi transaction ROLLBACK
+@TransactionalEventListener(phase = AFTER_ROLLBACK)
+public void handleRollback(OrderCreatedEvent e) { }</code></pre>
+                </div>
+            </div>
+
+            <!-- Question 4 -->
+            <div class="interview-q">
+                <h4>Q4: Eventual Consistency là gì? Làm sao xử lý? <span class="difficulty medium">Medium</span></h4>
+                <div class="answer">
+                    <strong>Định nghĩa:</strong> Trong EDA, data giữa các services có thể không đồng bộ ngay lập tức,
+                    nhưng sẽ nhất quán SAU MỘT KHOẢNG THỜI GIAN.
+                    <br><br>
+                    <strong>Ví dụ:</strong> Sau khi tạo order, inventory có thể mất vài giây để cập nhật. Trong thời
+                    gian đó, stock hiển thị có thể chưa chính xác.
+                    <br><br>
+                    <strong>Cách xử lý:</strong>
+                    <ul>
+                        <li>UI hiển thị trạng thái "Processing..." thay vì dữ liệu cũ</li>
+                        <li>Optimistic UI: cập nhật UI trước, sync sau</li>
+                        <li>Compensating transactions: rollback nếu downstream fail</li>
+                        <li>Idempotent consumers: xử lý duplicate events an toàn</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Question 5 -->
+            <div class="interview-q">
+                <h4>Q5: Làm sao đảm bảo event được xử lý đúng 1 lần (Exactly-Once)? <span
+                        class="difficulty hard">Hard</span></h4>
+                <div class="answer">
+                    <strong>Vấn đề:</strong> Network issues có thể gây duplicate events hoặc lost events.
+                    <br><br>
+                    <strong>3 delivery semantics:</strong>
+                    <ul>
+                        <li><strong>At-most-once</strong>: Có thể mất event (fire and forget)</li>
+                        <li><strong>At-least-once</strong>: Event có thể xử lý nhiều lần (retry on failure)</li>
+                        <li><strong>Exactly-once</strong>: Mỗi event xử lý đúng 1 lần (khó nhất)</li>
+                    </ul>
+                    <br>
+                    <strong>Cách đạt Exactly-Once:</strong>
+                    <pre><code>// 1. Idempotent Consumer: check nếu đã xử lý
+@EventListener
+public void handle(OrderCreatedEvent e) {
+    if (processedEventRepository.exists(e.getEventId())) {
+        return; // Skip duplicate
+    }
+    // Process...
+    processedEventRepository.save(e.getEventId());
+}
+
+// 2. Outbox Pattern: lưu event vào DB cùng transaction
+@Transactional
+public void createOrder() {
+    orderRepo.save(order);
+    outboxRepo.save(new OutboxEvent(orderCreatedEvent));
+    // Scheduler picks up and publishes
+}</code></pre>
+                </div>
+            </div>
+
+            <!-- Question 6 -->
+            <div class="interview-q">
+                <h4>Q6: Event Sourcing là gì? Khác gì CRUD thông thường? <span class="difficulty hard">Hard</span></h4>
+                <div class="answer">
+                    <strong>CRUD thông thường:</strong> Lưu STATE hiện tại của entity.
+                    <pre><code>// Chỉ biết state hiện tại
+Order { id: 1, status: SHIPPED, total: 500k }</code></pre>
+
+                    <strong>Event Sourcing:</strong> Lưu TẤT CẢ events đã xảy ra, rebuild state từ events.
+                    <pre><code>// Có full history
+OrderCreated { orderId: 1, total: 500k }
+ItemAdded { orderId: 1, item: "Shirt" }
+PaymentReceived { orderId: 1, amount: 500k }
+OrderShipped { orderId: 1, trackingNo: "VN123" }
+
+// State = replay tất cả events</code></pre>
+
+                    <strong>Ưu điểm Event Sourcing:</strong>
+                    <ul>
+                        <li>Full audit trail</li>
+                        <li>Time travel (xem state tại bất kỳ thời điểm)</li>
+                        <li>Debug production issues dễ hơn</li>
+                        <li>Rebuild read models khác nhau từ cùng events</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Question 7 -->
+            <div class="interview-q">
+                <h4>Q7: Saga Pattern là gì? Dùng khi nào? <span class="difficulty hard">Hard</span></h4>
+                <div class="answer">
+                    <strong>Định nghĩa:</strong> Saga là pattern quản lý distributed transactions qua nhiều services
+                    bằng cách sử dụng sequence of local transactions + compensating transactions.
+                    <br><br>
+                    <strong>Ví dụ Order Saga:</strong>
+                    <div class="mermaid">
+                        sequenceDiagram
+                        participant O as OrderService
+                        participant I as InventoryService
+                        participant P as PaymentService
+                        participant S as ShippingService
+
+                        O->>I: ReserveStock
+                        I-->>O: StockReserved
+                        O->>P: ProcessPayment
+                        P-->>O: PaymentFailed ❌
+                        O->>I: CompensateStock (rollback)
+                        I-->>O: StockReleased
+                        O->>O: OrderFailed
+                    </div>
+
+                    <strong>2 loại Saga:</strong>
+                    <ul>
+                        <li><strong>Choreography</strong>: Mỗi service lắng nghe events và quyết định bước tiếp</li>
+                        <li><strong>Orchestration</strong>: Có 1 Saga Orchestrator điều phối tất cả steps</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Question 8 -->
+            <div class="interview-q">
+                <h4>Q8: So sánh Kafka vs RabbitMQ? <span class="difficulty medium">Medium</span></h4>
+                <div class="answer">
+                    <table>
+                        <tr>
+                            <th>Tiêu chí</th>
+                            <th>Kafka</th>
+                            <th>RabbitMQ</th>
+                        </tr>
+                        <tr>
+                            <td>Architecture</td>
+                            <td>Distributed log</td>
+                            <td>Message broker</td>
+                        </tr>
+                        <tr>
+                            <td>Throughput</td>
+                            <td>Rất cao (millions/sec)</td>
+                            <td>Cao (tens of thousands)</td>
+                        </tr>
+                        <tr>
+                            <td>Message retention</td>
+                            <td>Configurable (days/weeks)</td>
+                            <td>Deleted after consumed</td>
+                        </tr>
+                        <tr>
+                            <td>Consumer model</td>
+                            <td>Pull-based</td>
+                            <td>Push-based</td>
+                        </tr>
+                        <tr>
+                            <td>Replay</td>
+                            <td>Có thể replay messages</td>
+                            <td>Không thể</td>
+                        </tr>
+                        <tr>
+                            <td>Ordering</td>
+                            <td>Per partition</td>
+                            <td>Per queue</td>
+                        </tr>
+                        <tr>
+                            <td>Best for</td>
+                            <td>Event streaming, big data</td>
+                            <td>Task queues, RPC</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Question 9 -->
+            <div class="interview-q">
+                <h4>Q9: Làm sao debug Event-Driven system? <span class="difficulty medium">Medium</span></h4>
+                <div class="answer">
+                    <strong>Challenges:</strong> Events async, distributed, không có call stack rõ ràng.
+                    <br><br>
+                    <strong>Solutions:</strong>
+                    <ul>
+                        <li><strong>Correlation ID</strong>: Mỗi request có 1 ID duy nhất, truyền qua tất cả events</li>
+                        <li><strong>Distributed Tracing</strong>: Zipkin, Jaeger, AWS X-Ray</li>
+                        <li><strong>Centralized Logging</strong>: ELK Stack (Elasticsearch, Logstash, Kibana)</li>
+                        <li><strong>Event Store</strong>: Lưu tất cả events để replay và debug</li>
+                    </ul>
+                    <pre><code>// Correlation ID trong mỗi event
+public class OrderCreatedEvent {
+    private String correlationId;  // TraceID
+    private Long orderId;
+    // ...
+}
+
+// Log với correlation ID
+log.info("[{}] Order created: {}", correlationId, orderId);</code></pre>
+                </div>
+            </div>
+
+            <!-- Question 10 -->
+            <div class="interview-q">
+                <h4>Q10: Trong project của bạn, bạn sẽ áp dụng EDA ở đâu? <span class="difficulty medium">Medium</span>
+                </h4>
+                <div class="answer">
+                    <strong>Ví dụ với Tailor Shop:</strong>
+                    <ul>
+                        <li><strong>OrderCreatedEvent</strong>: Trigger tạo invoice, appointment, gửi email, reserve
+                            fabric</li>
+                        <li><strong>OrderStatusChangedEvent</strong>: Notify customer qua email/SMS</li>
+                        <li><strong>FlashSalePurchaseEvent</strong>: Update stock, send confirmation, track analytics
+                        </li>
+                        <li><strong>UserRegisteredEvent</strong>: Send welcome email, create first-time discount</li>
+                        <li><strong>FabricLowStockEvent</strong>: Alert admin, trigger auto-reorder</li>
+                    </ul>
+                    <br>
+                    <strong>Lợi ích cụ thể:</strong>
+                    <ul>
+                        <li>Response time giảm từ 3-4 giây xuống ~100ms</li>
+                        <li>Thêm notification channel mới (Zalo, Telegram) không sửa OrderService</li>
+                        <li>Email service down không ảnh hưởng tạo order</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 9: Retry Logic & Dead-Letter Queue (NEW!) -->
+        <div class="section" id="retry-dlq">
+            <h2>9️⃣ Retry Logic & Dead-Letter Queue (DLQ)</h2>
+
+            <div class="info">
+                <strong>Vấn đề:</strong> Event listeners có thể fail do network issues, service unavailable, database
+                timeout...
+                Nếu không có retry mechanism, event sẽ bị mất!
+            </div>
+
+            <h3>🔄 Retry Pattern với Exponential Backoff</h3>
+
+            <div class="mermaid">
+                flowchart LR
+                subgraph Attempt["Retry Attempts"]
+                A1["Attempt 1<br />Delay: 0ms"]
+                A2["Attempt 2<br />Delay: 100ms"]
+                A3["Attempt 3<br />Delay: 500ms"]
+                A4["Attempt 4<br />Delay: 2000ms"]
+                end
+
+                subgraph Result["Result"]
+                S["✅ Success"]
+                DLQ["📥 Dead-Letter Queue"]
+                end
+
+                A1 -->|fail| A2
+                A2 -->|fail| A3
+                A3 -->|fail| A4
+                A4 -->|fail| DLQ
+                A1 -->|success| S
+                A2 -->|success| S
+                A3 -->|success| S
+                A4 -->|success| S
+
+                style S fill:#4CAF50,color:white
+                style DLQ fill:#f44336,color:white
+            </div>
+
+            <h3>📥 Dead-Letter Queue là gì?</h3>
+            <div class="info">
+                <strong>Định nghĩa:</strong> DLQ là nơi lưu trữ các events đã fail sau max retries.
+                Events trong DLQ có thể được retry thủ công hoặc analyze để fix bugs.
+            </div>
+
+            <h3>🏗️ Implementation trong Tailor Shop</h3>
+
+            <h4>1. @RetryableEvent Annotation</h4>
+            <pre><code>@Target(ElementType.METHOD)
+@Retention(RetentionPolicy.RUNTIME)
+public @interface RetryableEvent {
+    int maxRetries() default 3;      // Số lần retry tối đa
+    boolean saveToDlq() default true; // Lưu vào DLQ khi fail
+    Class<? extends Exception>[] retryOn() default { Exception.class };
+    Class<? extends Exception>[] noRetryOn() default {};
+}</code></pre>
+
+            <h4>2. Sử dụng @RetryableEvent</h4>
+            <pre><code>@Component
+public class OrderEventListener {
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    @Async("eventExecutor")
+    @RetryableEvent(maxRetries = 3, saveToDlq = true)
+    public void handleOrderCreated(OrderCreatedEvent event) {
+        // Nếu throw exception:
+        // 1. Retry 3 lần với exponential backoff
+        // 2. Nếu vẫn fail -> Save to DLQ
+        invoiceService.createForOrder(event.getOrderId());
+    }
+    
+    // Critical operation - more retries
+    @RetryableEvent(maxRetries = 5, saveToDlq = true)
+    public void handleOrderCancelled(OrderCancelledEvent event) {
+        inventoryService.releaseReservation(event.getOrderId());
+        refundService.processRefund(event);
+    }
+}</code></pre>
+
+            <h4>3. DLQ Entity (Database Table)</h4>
+            <pre><code>@Entity
+@Table(name = "failed_events")
+public class FailedEventEntity {
+    @Id
+    private Long id;
+    
+    private String correlationId;    // Tracking ID
+    private String eventType;        // "OrderCreatedEvent"
+    private String eventPayload;     // JSON serialized event
+    private String handlerClass;     // "OrderEventListener"
+    private String handlerMethod;    // "handleOrderCreated"
+    private String errorMessage;     // Exception message
+    private String stackTrace;       // Full stack trace
+    private Integer retryCount;      // Current retry count
+    private Integer maxRetries;      // Max allowed retries
+    
+    @Enumerated
+    private FailedEventStatus status; // PENDING, RETRYING, DEAD, PROCESSED
+    
+    private LocalDateTime nextRetryAt; // Scheduled retry time
+    private LocalDateTime createdAt;
+    private LocalDateTime processedAt;
+}</code></pre>
+
+            <h4>4. Exponential Backoff Schedule</h4>
+            <table>
+                <tr>
+                    <th>Retry #</th>
+                    <th>Delay</th>
+                    <th>Tổng chờ</th>
+                </tr>
+                <tr>
+                    <td>1</td>
+                    <td>1 phút</td>
+                    <td>1 phút</td>
+                </tr>
+                <tr>
+                    <td>2</td>
+                    <td>5 phút</td>
+                    <td>6 phút</td>
+                </tr>
+                <tr>
+                    <td>3</td>
+                    <td>15 phút</td>
+                    <td>21 phút</td>
+                </tr>
+                <tr>
+                    <td>4</td>
+                    <td>30 phút</td>
+                    <td>51 phút</td>
+                </tr>
+                <tr>
+                    <td>5</td>
+                    <td>60 phút</td>
+                    <td>~2 giờ</td>
+                </tr>
+                <tr>
+                    <td>6+</td>
+                    <td>120 phút</td>
+                    <td>...</td>
+                </tr>
+            </table>
+
+            <h4>5. Admin API cho DLQ Management</h4>
+            <table>
+                <tr>
+                    <th>Endpoint</th>
+                    <th>Method</th>
+                    <th>Mô tả</th>
+                </tr>
+                <tr>
+                    <td><code>/api/v1/admin/dlq/stats</code></td>
+                    <td>GET</td>
+                    <td>Thống kê DLQ (pending, dead, processed)</td>
+                </tr>
+                <tr>
+                    <td><code>/api/v1/admin/dlq/dead</code></td>
+                    <td>GET</td>
+                    <td>Danh sách events cần xử lý thủ công</td>
+                </tr>
+                <tr>
+                    <td><code>/api/v1/admin/dlq/{id}/retry</code></td>
+                    <td>POST</td>
+                    <td>Retry thủ công một event</td>
+                </tr>
+                <tr>
+                    <td><code>/api/v1/admin/dlq/{id}/skip</code></td>
+                    <td>POST</td>
+                    <td>Bỏ qua event (đánh dấu đã xử lý)</td>
+                </tr>
+            </table>
+
+            <h3>🔧 AOP Aspect xử lý Retry</h3>
+            <pre><code>@Aspect
+@Component
+public class RetryableEventAspect {
+    
+    @Around("@annotation(retryableEvent)")
+    public Object handleRetry(ProceedingJoinPoint joinPoint, 
+                              RetryableEvent retryableEvent) throws Throwable {
+        int maxRetries = retryableEvent.maxRetries();
+        int attempt = 0;
+        Exception lastException = null;
+        
+        while (attempt <= maxRetries) {
+            try {
+                return joinPoint.proceed();
+            } catch (Exception e) {
+                lastException = e;
+                attempt++;
+                
+                if (attempt <= maxRetries) {
+                    long delay = calculateBackoff(attempt);
+                    Thread.sleep(delay);
+                }
+            }
+        }
+        
+        // All retries failed - save to DLQ
+        if (retryableEvent.saveToDlq()) {
+            eventRetryService.saveFailedEvent(event, handler, lastException);
+        }
+        return null;
+    }
+    
+    private long calculateBackoff(int attempt) {
+        // Exponential: 100ms, 200ms, 400ms, 800ms... max 5000ms
+        long delay = (long) (100 * Math.pow(2, attempt - 1));
+        return Math.min(delay, 5000);
+    }
+}</code></pre>
+
+            <h3>⏰ Scheduled Retry Job</h3>
+            <pre><code>@Service
+public class EventRetryService {
+
+    @Scheduled(fixedDelay = 60000) // Every 1 minute
+    @Transactional
+    public void processRetryQueue() {
+        List<FailedEventEntity> events = 
+            failedEventRepository.findEventsReadyForRetry(LocalDateTime.now());
+        
+        for (FailedEventEntity event : events) {
+            try {
+                retryEvent(event);
+                event.markProcessed();
+            } catch (Exception e) {
+                event.scheduleNextRetry(); // Exponential backoff
+                if (event.getStatus() == DEAD) {
+                    // Alert admin - manual intervention needed
+                    alertService.sendDlqAlert(event);
+                }
+            }
+            failedEventRepository.save(event);
+        }
+    }
+    
+    @Scheduled(cron = "0 0 3 * * *") // 3 AM daily
+    public void cleanupOldEvents() {
+        // Delete processed events older than 7 days
+        failedEventRepository.deleteProcessedEventsBefore(
+            LocalDateTime.now().minusDays(7)
+        );
+    }
+}</code></pre>
+        </div>
+
+        <!-- Section 10: Tailor Shop Implementation -->
+        <div class="section" id="tailor-impl">
+            <h2>🔟 Implementation trong Tailor Shop</h2>
+
+            <h3>📁 Cấu trúc thư mục</h3>
+            <pre><code>modules/
+├── order/
+│   ├── event/
+│   │   ├── OrderCreatedEvent.java
+│   │   ├── OrderStatusChangedEvent.java
+│   │   └── OrderCancelledEvent.java
+│   └── listener/
+│       └── OrderEventListener.java
+├── flashsale/
+│   ├── event/
+│   │   ├── FlashSalePurchaseEvent.java
+│   │   └── ReservationExpiredEvent.java
+│   └── listener/
+│       └── FlashSaleEventListener.java
+├── notification/
+│   └── listener/
+│       └── NotificationEventListener.java
+├── event/  (Core module)
+│   ├── domain/
+│   │   └── FailedEventEntity.java
+│   ├── repository/
+│   │   └── FailedEventRepository.java
+│   ├── service/
+│   │   └── EventRetryService.java
+│   ├── annotation/
+│   │   └── @RetryableEvent.java
+│   ├── aspect/
+│   │   └── RetryableEventAspect.java
+│   └── controller/
+│       └── DlqAdminController.java
+└── config/
+    └── AsyncEventConfig.java</code></pre>
+
+            <h3>🔑 Key Events trong Tailor Shop</h3>
+            <table>
+                <tr>
+                    <th>Event</th>
+                    <th>Trigger</th>
+                    <th>Listeners</th>
+                </tr>
+                <tr>
+                    <td><code>OrderCreatedEvent</code></td>
+                    <td>Tạo order mới</td>
+                    <td>Invoice, Appointment, Email, SMS</td>
+                </tr>
+                <tr>
+                    <td><code>OrderStatusChangedEvent</code></td>
+                    <td>Đổi status order</td>
+                    <td>Email, SMS, Dashboard</td>
+                </tr>
+                <tr>
+                    <td><code>OrderCancelledEvent</code></td>
+                    <td>Hủy order</td>
+                    <td>Inventory, Refund, Email</td>
+                </tr>
+                <tr>
+                    <td><code>FlashSalePurchaseEvent</code></td>
+                    <td>Mua flash sale</td>
+                    <td>Email, Analytics</td>
+                </tr>
+                <tr>
+                    <td><code>ReservationExpiredEvent</code></td>
+                    <td>Hết hạn reservation</td>
+                    <td>Inventory, Email</td>
+                </tr>
+            </table>
+
+            <h3>📊 Event Flow Diagram</h3>
+            <div class="mermaid">
+                flowchart TB
+                subgraph OrderService["OrderService"]
+                O1["createOrder()"]
+                end
+
+                subgraph EventPublisher["Event Publisher"]
+                EP["publishEvent(OrderCreatedEvent)"]
+                end
+
+                subgraph EventBus["Spring Event Bus"]
+                EB["OrderCreatedEvent"]
+                end
+
+                subgraph Listeners["Event Listeners (@Async)"]
+                L1["OrderEventListener<br />→ Create Invoice"]
+                L2["OrderEventListener<br />→ Create Appointment"]
+                L3["NotificationEventListener<br />→ Send Email"]
+                L4["NotificationEventListener<br />→ Send SMS"]
+                end
+
+                subgraph DLQ["Dead-Letter Queue"]
+                D1["FailedEventEntity"]
+                D2["Scheduled Retry"]
+                D3["Admin Dashboard"]
+                end
+
+                O1 --> EP --> EB
+                EB --> L1
+                EB --> L2
+                EB --> L3
+                EB --> L4
+
+                L1 -.->|"@RetryableEvent"| D1
+                L2 -.->|"on failure"| D1
+                L3 -.->|"after max retries"| D1
+
+                D1 --> D2
+                D1 --> D3
+
+                style O1 fill:#4CAF50,color:white
+                style EB fill:#FF9800,color:white
+                style D1 fill:#f44336,color:white
+            </div>
+        </div>
+
+        <!-- Additional Interview Questions about Retry/DLQ -->
+        <div class="section">
+            <h2>📝 Interview Questions bổ sung (Retry & DLQ)</h2>
+
+            <div class="interview-q">
+                <h4>Q11: Exponential Backoff là gì? Tại sao dùng? <span class="difficulty medium">Medium</span></h4>
+                <div class="answer">
+                    <strong>Định nghĩa:</strong> Exponential Backoff là chiến lược retry trong đó delay tăng theo cấp số
+                    nhân sau mỗi lần fail.
+                    <br><br>
+                    <strong>Ví dụ:</strong> 100ms → 200ms → 400ms → 800ms → 1600ms...
+                    <br><br>
+                    <strong>Tại sao dùng:</strong>
+                    <ul>
+                        <li>Tránh "thundering herd" - nhiều requests retry cùng lúc làm overwhelm service</li>
+                        <li>Cho service time to recover</li>
+                        <li>Giảm load lên failing service</li>
+                        <li>Thường kết hợp với jitter (random delay) để tránh synchronized retries</li>
+                    </ul>
+                    <pre><code>long delay = (long) (baseDelay * Math.pow(2, attempt));
+double jitter = 0.8 + Math.random() * 0.4; // ±20%
+delay = (long) (delay * jitter);</code></pre>
+                </div>
+            </div>
+
+            <div class="interview-q">
+                <h4>Q12: Dead-Letter Queue (DLQ) là gì? Dùng khi nào? <span class="difficulty medium">Medium</span></h4>
+                <div class="answer">
+                    <strong>Định nghĩa:</strong> DLQ là queue/storage lưu trữ các messages/events không thể xử lý sau
+                    nhiều lần retry.
+                    <br><br>
+                    <strong>Dùng khi:</strong>
+                    <ul>
+                        <li>Event processing fail sau max retries</li>
+                        <li>Message format invalid (poison message)</li>
+                        <li>Business logic error không thể auto-recover</li>
+                    </ul>
+                    <br>
+                    <strong>Xử lý DLQ:</strong>
+                    <ul>
+                        <li>Monitor và alert khi có events trong DLQ</li>
+                        <li>Analyze để tìm root cause</li>
+                        <li>Fix bug và replay events</li>
+                        <li>Manual intervention cho edge cases</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="interview-q">
+                <h4>Q13: @TransactionalEventListener vs @EventListener? <span class="difficulty medium">Medium</span>
+                </h4>
+                <div class="answer">
+                    <table>
+                        <tr>
+                            <th>Aspect</th>
+                            <th>@EventListener</th>
+                            <th>@TransactionalEventListener</th>
+                        </tr>
+                        <tr>
+                            <td>Timing</td>
+                            <td>Ngay khi publish</td>
+                            <td>Sau transaction phase</td>
+                        </tr>
+                        <tr>
+                            <td>Transaction</td>
+                            <td>Cùng transaction</td>
+                            <td>Có thể AFTER_COMMIT, AFTER_ROLLBACK</td>
+                        </tr>
+                        <tr>
+                            <td>Rollback</td>
+                            <td>Exception → rollback cả transaction</td>
+                            <td>Exception không ảnh hưởng transaction gốc</td>
+                        </tr>
+                        <tr>
+                            <td>Use case</td>
+                            <td>Validation, sync processing</td>
+                            <td>Notifications, external calls</td>
+                        </tr>
+                    </table>
+                    <pre><code>// Chạy NGAY, nếu throw → rollback order!
+@EventListener
+public void validate(OrderCreatedEvent e) { }
+
+// Chạy SAU COMMIT, order đã được lưu chắc chắn
+@TransactionalEventListener(phase = AFTER_COMMIT)
+public void sendEmail(OrderCreatedEvent e) { }</code></pre>
+                </div>
+            </div>
+
+            <div class="interview-q">
+                <h4>Q14: Làm sao handle Idempotency trong event processing? <span class="difficulty hard">Hard</span>
+                </h4>
+                <div class="answer">
+                    <strong>Vấn đề:</strong> Do retry, một event có thể được xử lý NHIỀU LẦN. Phải đảm bảo xử lý N lần =
+                    xử lý 1 lần.
+                    <br><br>
+                    <strong>Solutions:</strong>
+                    <pre><code>// 1. Track processed events
+@EventListener
+public void handle(OrderCreatedEvent e) {
+    String eventId = e.getCorrelationId();
+    if (processedEventCache.contains(eventId)) {
+        return; // Already processed
+    }
+    // Process...
+    processedEventCache.add(eventId);
+}
+
+// 2. Database unique constraint
+@Transactional
+public void createInvoice(Long orderId) {
+    if (invoiceRepository.existsByOrderId(orderId)) {
+        return; // Already exists
+    }
+    invoiceRepository.save(new Invoice(orderId));
+}
+
+// 3. Optimistic locking
+@Version
+private Long version;</code></pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="section" style="text-align: center; margin-top: 40px;">
+            <p style="color: #888;">Created for Tailor Shop Project</p>
+            <p style="color: #666; font-size: 12px;">Event-Driven Architecture Guide - 2024 | Updated with Retry & DLQ
+            </p>
+            <a href="index.html" style="color: #00d4ff;">← Quay lại danh sách</a>
+        </div>
+    </div>
+
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            securityLevel: 'loose'
+        });
+    </script>
+</body>
+
+</html>

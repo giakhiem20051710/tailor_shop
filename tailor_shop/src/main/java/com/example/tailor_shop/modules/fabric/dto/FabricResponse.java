@@ -2,6 +2,8 @@ package com.example.tailor_shop.modules.fabric.dto;
 
 import com.example.tailor_shop.modules.fabric.domain.FabricCategory;
 import com.example.tailor_shop.modules.fabric.domain.FabricPattern;
+import com.example.tailor_shop.modules.fabric.domain.FabricSeason;
+import com.example.tailor_shop.modules.fabric.domain.FabricStretch;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -47,5 +49,12 @@ public class FabricResponse {
     private String createdByName;
     private OffsetDateTime createdAt;
     private OffsetDateTime updatedAt;
-}
 
+    // New enhancement fields
+    private FabricStretch stretch;
+    private FabricSeason season;
+    private Integer soldCount;
+    private BigDecimal ratingAvg;
+    private Integer ratingCount;
+    private List<String> tags;
+}

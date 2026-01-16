@@ -1,0 +1,1023 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Redis Deep Dive - Hướng dẫn chi tiết & Câu hỏi phỏng vấn</title>
+    <style>
+        :root {
+            --primary: #DC382D;
+            --primary-dark: #A52A2A;
+            --secondary: #00D4AA;
+            --bg-dark: #0D1117;
+            --bg-card: #161B22;
+            --bg-code: #1E2328;
+            --text: #E6EDF3;
+            --text-muted: #8B949E;
+            --border: #30363D;
+            --success: #3FB950;
+            --warning: #D29922;
+            --info: #58A6FF;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text);
+            line-height: 1.7;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        header {
+            text-align: center;
+            padding: 60px 20px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            border-radius: 16px;
+            margin-bottom: 40px;
+        }
+
+        header h1 {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .toc {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 40px;
+            border: 1px solid var(--border);
+        }
+
+        .toc h2 {
+            color: var(--secondary);
+            margin-bottom: 20px;
+        }
+
+        .toc ul {
+            list-style: none;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 10px;
+        }
+
+        .toc a {
+            color: var(--info);
+            text-decoration: none;
+            padding: 8px 12px;
+            display: block;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+
+        .toc a:hover {
+            background: rgba(88, 166, 255, 0.1);
+        }
+
+        section {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+            border: 1px solid var(--border);
+        }
+
+        section h2 {
+            color: var(--primary);
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--border);
+        }
+
+        section h3 {
+            color: var(--secondary);
+            font-size: 1.3rem;
+            margin: 25px 0 15px;
+        }
+
+        section h4 {
+            color: var(--info);
+            font-size: 1.1rem;
+            margin: 20px 0 10px;
+        }
+
+        p {
+            margin-bottom: 15px;
+        }
+
+        ul,
+        ol {
+            margin: 15px 0 15px 25px;
+        }
+
+        li {
+            margin: 8px 0;
+        }
+
+        code {
+            background: var(--bg-code);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            color: var(--secondary);
+        }
+
+        pre {
+            background: var(--bg-code);
+            padding: 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 15px 0;
+            border: 1px solid var(--border);
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+            color: var(--text);
+        }
+
+        .highlight {
+            color: var(--secondary);
+        }
+
+        .command {
+            color: var(--warning);
+        }
+
+        .string {
+            color: #A5D6FF;
+        }
+
+        .number {
+            color: #79C0FF;
+        }
+
+        .comment {
+            color: var(--text-muted);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        th,
+        td {
+            padding: 12px 15px;
+            border: 1px solid var(--border);
+            text-align: left;
+        }
+
+        th {
+            background: var(--bg-code);
+            color: var(--secondary);
+        }
+
+        tr:nth-child(even) {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .card {
+            background: var(--bg-code);
+            border-radius: 10px;
+            padding: 20px;
+            border: 1px solid var(--border);
+        }
+
+        .card h4 {
+            margin-top: 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .badge-easy {
+            background: var(--success);
+            color: #000;
+        }
+
+        .badge-medium {
+            background: var(--warning);
+            color: #000;
+        }
+
+        .badge-hard {
+            background: var(--primary);
+            color: #fff;
+        }
+
+        .interview-q {
+            background: var(--bg-code);
+            border-left: 4px solid var(--info);
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .interview-q h4 {
+            color: var(--info);
+            margin-top: 0;
+        }
+
+        .interview-q .answer {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px dashed var(--border);
+        }
+
+        .company-logo {
+            width: 60px;
+            height: 60px;
+            background: var(--bg-card);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        .use-case {
+            display: flex;
+            gap: 20px;
+            align-items: flex-start;
+            padding: 20px;
+            background: var(--bg-code);
+            border-radius: 10px;
+            margin: 15px 0;
+        }
+
+        .alert {
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+
+        .alert-info {
+            background: rgba(88, 166, 255, 0.1);
+            border: 1px solid var(--info);
+        }
+
+        .alert-warning {
+            background: rgba(210, 153, 34, 0.1);
+            border: 1px solid var(--warning);
+        }
+
+        .alert-success {
+            background: rgba(63, 185, 80, 0.1);
+            border: 1px solid var(--success);
+        }
+
+        .diagram {
+            text-align: center;
+            padding: 30px;
+            background: var(--bg-code);
+            border-radius: 10px;
+            margin: 20px 0;
+            font-family: monospace;
+            white-space: pre;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>🔴 Redis Deep Dive</h1>
+            <p>Hướng dẫn chi tiết, Ví dụ thực tế & Câu hỏi phỏng vấn</p>
+        </header>
+
+        <nav class="toc">
+            <h2>📚 Mục lục</h2>
+            <ul>
+                <li><a href="#what-is-redis">1. Redis là gì?</a></li>
+                <li><a href="#data-structures">2. Cấu trúc dữ liệu Redis</a></li>
+                <li><a href="#commands">3. Các lệnh Redis thường dùng</a></li>
+                <li><a href="#use-cases">4. Các trường hợp sử dụng thực tế</a></li>
+                <li><a href="#enterprise">5. Doanh nghiệp sử dụng Redis</a></li>
+                <li><a href="#architecture">6. Kiến trúc Redis</a></li>
+                <li><a href="#best-practices">7. Best Practices</a></li>
+                <li><a href="#interview">8. Câu hỏi phỏng vấn</a></li>
+                <li><a href="#tailor-shop">9. Redis trong Tailor Shop</a></li>
+            </ul>
+        </nav>
+
+        <!-- Section 1: What is Redis -->
+        <section id="what-is-redis">
+            <h2>1. Redis là gì?</h2>
+
+            <p><strong>Redis</strong> (Remote Dictionary Server) là một <span class="highlight">in-memory data
+                    store</span> mã nguồn mở, được sử dụng như:</p>
+
+            <ul>
+                <li><strong>Database</strong> - Lưu trữ dữ liệu trong bộ nhớ</li>
+                <li><strong>Cache</strong> - Tăng tốc độ truy xuất dữ liệu</li>
+                <li><strong>Message Broker</strong> - Pub/Sub messaging</li>
+                <li><strong>Queue</strong> - Hàng đợi xử lý tác vụ</li>
+            </ul>
+
+            <h3>🎯 Đặc điểm nổi bật</h3>
+
+            <table>
+                <tr>
+                    <th>Đặc điểm</th>
+                    <th>Mô tả</th>
+                </tr>
+                <tr>
+                    <td><strong>Cực nhanh</strong></td>
+                    <td>100,000+ operations/giây (in-memory)</td>
+                </tr>
+                <tr>
+                    <td><strong>Data Structures</strong></td>
+                    <td>Strings, Lists, Sets, Hashes, Sorted Sets, Streams...</td>
+                </tr>
+                <tr>
+                    <td><strong>Persistence</strong></td>
+                    <td>RDB snapshots + AOF logs</td>
+                </tr>
+                <tr>
+                    <td><strong>Replication</strong></td>
+                    <td>Master-Slave với automatic failover</td>
+                </tr>
+                <tr>
+                    <td><strong>Atomic Operations</strong></td>
+                    <td>Đảm bảo thread-safe cho concurrent access</td>
+                </tr>
+                <tr>
+                    <td><strong>TTL (Time To Live)</strong></td>
+                    <td>Tự động xóa key sau thời gian định trước</td>
+                </tr>
+            </table>
+
+            <div class="alert alert-info">
+                <strong>💡 Tại sao Redis nhanh?</strong><br>
+                Redis lưu toàn bộ dữ liệu trong RAM (không phải disk), sử dụng single-threaded I/O multiplexing,
+                và có các data structures được tối ưu hóa cao.
+            </div>
+        </section>
+
+        <!-- Section 2: Data Structures -->
+        <section id="data-structures">
+            <h2>2. Cấu trúc dữ liệu Redis</h2>
+
+            <div class="card-grid">
+                <div class="card">
+                    <h4>📝 Strings</h4>
+                    <p>Kiểu dữ liệu cơ bản nhất. Lưu text, số, hoặc binary data (max 512MB).</p>
+                    <pre><code><span class="command">SET</span> user:1:name <span class="string">"Nguyễn Văn A"</span>
+<span class="command">GET</span> user:1:name
+<span class="command">INCR</span> page:views  <span class="comment"># Atomic increment</span></code></pre>
+                </div>
+
+                <div class="card">
+                    <h4>📋 Lists</h4>
+                    <p>Danh sách linked list, có thể push/pop từ 2 đầu.</p>
+                    <pre><code><span class="command">LPUSH</span> queue:orders <span class="string">"order-123"</span>
+<span class="command">RPOP</span> queue:orders
+<span class="command">LRANGE</span> queue:orders <span class="number">0</span> <span class="number">10</span></code></pre>
+                </div>
+
+                <div class="card">
+                    <h4>🔢 Sets</h4>
+                    <p>Tập hợp các phần tử unique, không có thứ tự.</p>
+                    <pre><code><span class="command">SADD</span> user:1:tags <span class="string">"vip"</span> <span class="string">"member"</span>
+<span class="command">SMEMBERS</span> user:1:tags
+<span class="command">SINTER</span> user:1:tags user:2:tags</code></pre>
+                </div>
+
+                <div class="card">
+                    <h4>🗂️ Hashes</h4>
+                    <p>Lưu object dưới dạng field-value pairs.</p>
+                    <pre><code><span class="command">HSET</span> product:1 name <span class="string">"Vest"</span> price <span class="number">5000000</span>
+<span class="command">HGET</span> product:1 name
+<span class="command">HGETALL</span> product:1</code></pre>
+                </div>
+
+                <div class="card">
+                    <h4>📊 Sorted Sets</h4>
+                    <p>Như Sets nhưng mỗi phần tử có score để sắp xếp.</p>
+                    <pre><code><span class="command">ZADD</span> leaderboard <span class="number">1500</span> <span class="string">"player:1"</span>
+<span class="command">ZRANK</span> leaderboard <span class="string">"player:1"</span>
+<span class="command">ZREVRANGE</span> leaderboard <span class="number">0</span> <span class="number">9</span></code></pre>
+                </div>
+
+                <div class="card">
+                    <h4>📡 Streams</h4>
+                    <p>Log data structure cho event sourcing, message queues.</p>
+                    <pre><code><span class="command">XADD</span> orders * product vest qty <span class="number">2</span>
+<span class="command">XREAD</span> STREAMS orders <span class="number">0</span>
+<span class="command">XGROUP</span> CREATE orders mygroup $</code></pre>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 3: Commands -->
+        <section id="commands">
+            <h2>3. Các lệnh Redis thường dùng</h2>
+
+            <h3>🔑 Key Management</h3>
+            <pre><code><span class="command">KEYS</span> user:*              <span class="comment"># Tìm keys theo pattern (KHÔNG dùng production!)</span>
+<span class="command">SCAN</span> <span class="number">0</span> MATCH user:*      <span class="comment"># Tìm keys an toàn cho production</span>
+<span class="command">EXISTS</span> key               <span class="comment"># Kiểm tra key tồn tại</span>
+<span class="command">DEL</span> key                  <span class="comment"># Xóa key</span>
+<span class="command">EXPIRE</span> key <span class="number">3600</span>          <span class="comment"># Set TTL 1 giờ</span>
+<span class="command">TTL</span> key                  <span class="comment"># Xem thời gian còn lại</span>
+<span class="command">PERSIST</span> key              <span class="comment"># Xóa TTL, key sẽ tồn tại mãi</span></code></pre>
+
+            <h3>💾 Transactions</h3>
+            <pre><code><span class="command">MULTI</span>                    <span class="comment"># Bắt đầu transaction</span>
+<span class="command">SET</span> balance:<span class="number">1</span> <span class="number">100</span>
+<span class="command">DECRBY</span> balance:<span class="number">1</span> <span class="number">30</span>
+<span class="command">INCRBY</span> balance:<span class="number">2</span> <span class="number">30</span>
+<span class="command">EXEC</span>                     <span class="comment"># Thực thi tất cả commands</span></code></pre>
+
+            <h3>🔒 Distributed Locking</h3>
+            <pre><code><span class="comment"># Acquire lock</span>
+<span class="command">SET</span> lock:order:<span class="number">123</span> <span class="string">"worker-1"</span> NX EX <span class="number">10</span>
+
+<span class="comment"># Release lock (Lua script để đảm bảo atomic)</span>
+<span class="command">EVAL</span> <span class="string">"if redis.call('get',KEYS[1]) == ARGV[1] then
+    return redis.call('del',KEYS[1])
+else
+    return 0
+end"</span> <span class="number">1</span> lock:order:<span class="number">123</span> <span class="string">"worker-1"</span></code></pre>
+
+            <h3>📢 Pub/Sub</h3>
+            <pre><code><span class="comment"># Subscriber</span>
+<span class="command">SUBSCRIBE</span> order:created
+
+<span class="comment"># Publisher</span>
+<span class="command">PUBLISH</span> order:created <span class="string">'{"orderId": 123, "total": 5000000}'</span></code></pre>
+        </section>
+
+        <!-- Section 4: Use Cases -->
+        <section id="use-cases">
+            <h2>4. Các trường hợp sử dụng thực tế</h2>
+
+            <div class="card-grid">
+                <div class="card">
+                    <h4>⚡ Caching</h4>
+                    <p><strong>Vấn đề:</strong> Database query chậm, tốn tài nguyên</p>
+                    <p><strong>Giải pháp:</strong> Cache kết quả query trong Redis</p>
+                    <pre><code><span class="comment">// Java Spring</span>
+@Cacheable("products")
+public List&lt;Product&gt; getProducts() {
+    return productRepo.findAll();
+}</code></pre>
+                </div>
+
+                <div class="card">
+                    <h4>🔐 Session Storage</h4>
+                    <p><strong>Vấn đề:</strong> Nhiều server, session không chia sẻ</p>
+                    <p><strong>Giải pháp:</strong> Lưu session trong Redis</p>
+                    <pre><code><span class="command">HSET</span> session:abc123 
+    userId <span class="number">1</span>
+    role <span class="string">"admin"</span>
+    expires <span class="number">1706400000</span></code></pre>
+                </div>
+
+                <div class="card">
+                    <h4>🚦 Rate Limiting</h4>
+                    <p><strong>Vấn đề:</strong> Chống spam, DDoS</p>
+                    <p><strong>Giải pháp:</strong> Đếm requests với TTL</p>
+                    <pre><code>key = "rate:" + ip
+count = <span class="command">INCR</span> key
+if count == <span class="number">1</span>:
+    <span class="command">EXPIRE</span> key <span class="number">60</span>  <span class="comment"># 1 phút</span>
+if count > <span class="number">100</span>:
+    return <span class="number">429</span>  <span class="comment"># Too Many Requests</span></code></pre>
+                </div>
+
+                <div class="card">
+                    <h4>📊 Leaderboards</h4>
+                    <p><strong>Vấn đề:</strong> Xếp hạng real-time</p>
+                    <p><strong>Giải pháp:</strong> Sorted Sets</p>
+                    <pre><code><span class="comment"># Thêm điểm</span>
+<span class="command">ZINCRBY</span> leaderboard <span class="number">10</span> <span class="string">"player:1"</span>
+
+<span class="comment"># Top 10</span>
+<span class="command">ZREVRANGE</span> leaderboard <span class="number">0</span> <span class="number">9</span> WITHSCORES</code></pre>
+                </div>
+
+                <div class="card">
+                    <h4>🛒 Shopping Cart</h4>
+                    <p><strong>Vấn đề:</strong> Giỏ hàng nhanh, không cần persist</p>
+                    <p><strong>Giải pháp:</strong> Hashes với TTL</p>
+                    <pre><code><span class="command">HSET</span> cart:user:1 
+    product:vest <span class="number">2</span>
+    product:shirt <span class="number">1</span>
+<span class="command">EXPIRE</span> cart:user:1 <span class="number">86400</span>  <span class="comment"># 24h</span></code></pre>
+                </div>
+
+                <div class="card">
+                    <h4>🔒 Flash Sale Inventory</h4>
+                    <p><strong>Vấn đề:</strong> Concurrent purchases, overselling</p>
+                    <p><strong>Giải pháp:</strong> Atomic DECR</p>
+                    <pre><code><span class="comment"># Check và giảm stock atomic</span>
+stock = <span class="command">DECR</span> flash:product:<span class="number">123</span>:stock
+if stock < <span class="number">0</span>:
+    <span class="command">INCR</span> flash:product:<span class="number">123</span>:stock
+    return <span class="string">"OUT_OF_STOCK"</span></code></pre>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 5: Enterprise Usage -->
+        <section id="enterprise">
+            <h2>5. Doanh nghiệp sử dụng Redis</h2>
+
+            <div class="use-case">
+                <div class="company-logo">🐦</div>
+                <div>
+                    <h4>Twitter</h4>
+                    <p><strong>Use case:</strong> Timeline caching, rate limiting</p>
+                    <p><strong>Scale:</strong> 10 tỷ+ cache operations/ngày</p>
+                    <p><strong>Chi tiết:</strong> Cache timeline của users, trending topics, rate limit API calls</p>
+                </div>
+            </div>
+
+            <div class="use-case">
+                <div class="company-logo">📺</div>
+                <div>
+                    <h4>Netflix</h4>
+                    <p><strong>Use case:</strong> Session management, buffering</p>
+                    <p><strong>Scale:</strong> 200M+ subscribers</p>
+                    <p><strong>Chi tiết:</strong> Lưu user preferences, watch history, video metadata caching</p>
+                </div>
+            </div>
+
+            <div class="use-case">
+                <div class="company-logo">🎮</div>
+                <div>
+                    <h4>PUBG / Game Studios</h4>
+                    <p><strong>Use case:</strong> Real-time leaderboards, matchmaking</p>
+                    <p><strong>Scale:</strong> Millions concurrent players</p>
+                    <p><strong>Chi tiết:</strong> Sorted Sets cho rankings, Pub/Sub cho real-time events</p>
+                </div>
+            </div>
+
+            <div class="use-case">
+                <div class="company-logo">🛒</div>
+                <div>
+                    <h4>Shopee / Lazada</h4>
+                    <p><strong>Use case:</strong> Flash sales, cart, session</p>
+                    <p><strong>Scale:</strong> 11.11 sales với millions of requests/sec</p>
+                    <p><strong>Chi tiết:</strong> Inventory locking, countdown timers, real-time stock updates</p>
+                </div>
+            </div>
+
+            <div class="use-case">
+                <div class="company-logo">💬</div>
+                <div>
+                    <h4>Slack / Discord</h4>
+                    <p><strong>Use case:</strong> Presence, message queues</p>
+                    <p><strong>Scale:</strong> Billions of messages/day</p>
+                    <p><strong>Chi tiết:</strong> Online/offline status, typing indicators, unread counts</p>
+                </div>
+            </div>
+
+            <div class="alert alert-success">
+                <strong>📈 Thống kê:</strong> Redis được sử dụng bởi:
+                <ul>
+                    <li>72% of Fortune 500 companies</li>
+                    <li>Top 10 global banks</li>
+                    <li>Healthcare, Gaming, E-commerce, FinTech...</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- Section 6: Architecture -->
+        <section id="architecture">
+            <h2>6. Kiến trúc Redis</h2>
+
+            <h3>🔄 Replication (Master-Slave)</h3>
+            <div class="diagram">
+                ┌─────────────┐
+                │ MASTER │ ← Writes
+                │ (Primary) │
+                └──────┬──────┘
+                │ Replication
+                ┌───┴───┐
+                ▼ ▼
+                ┌──────┐ ┌──────┐
+                │SLAVE │ │SLAVE │ ← Reads
+                │ 1 │ │ 2 │
+                └──────┘ └──────┘
+            </div>
+
+            <h3>🏢 Redis Cluster</h3>
+            <div class="diagram">
+                ┌─────────────────────────────────────────────────────┐
+                │ REDIS CLUSTER │
+                │ │
+                │ ┌─────────┐ ┌─────────┐ ┌─────────┐ │
+                │ │ Node 1 │ │ Node 2 │ │ Node 3 │ │
+                │ │Slot 0-5k│ │Slot 5k-10k│ │Slot 10k-16k│ │
+                │ └────┬────┘ └────┬────┘ └────┬────┘ │
+                │ │ │ │ │
+                │ ┌────▼────┐ ┌────▼────┐ ┌────▼────┐ │
+                │ │ Replica │ │ Replica │ │ Replica │ │
+                │ └─────────┘ └─────────┘ └─────────┘ │
+                └─────────────────────────────────────────────────────┘
+            </div>
+
+            <h3>💾 Persistence Options</h3>
+            <table>
+                <tr>
+                    <th>Option</th>
+                    <th>Mô tả</th>
+                    <th>Ưu điểm</th>
+                    <th>Nhược điểm</th>
+                </tr>
+                <tr>
+                    <td><strong>RDB</strong></td>
+                    <td>Snapshot định kỳ</td>
+                    <td>Nhanh khi restore, file nhỏ</td>
+                    <td>Có thể mất data giữa 2 snapshots</td>
+                </tr>
+                <tr>
+                    <td><strong>AOF</strong></td>
+                    <td>Log mọi write operation</td>
+                    <td>Durability cao hơn</td>
+                    <td>File lớn, restore chậm</td>
+                </tr>
+                <tr>
+                    <td><strong>RDB + AOF</strong></td>
+                    <td>Kết hợp cả 2</td>
+                    <td>Cân bằng tốc độ & durability</td>
+                    <td>Phức tạp hơn</td>
+                </tr>
+            </table>
+        </section>
+
+        <!-- Section 7: Best Practices -->
+        <section id="best-practices">
+            <h2>7. Best Practices</h2>
+
+            <div class="card-grid">
+                <div class="card">
+                    <h4>✅ DO</h4>
+                    <ul>
+                        <li>Sử dụng <code>SCAN</code> thay vì <code>KEYS</code> trong production</li>
+                        <li>Đặt TTL cho cache keys</li>
+                        <li>Sử dụng connection pooling</li>
+                        <li>Monitor memory usage</li>
+                        <li>Sử dụng pipeline cho batch operations</li>
+                        <li>Naming convention: <code>entity:id:field</code></li>
+                    </ul>
+                </div>
+
+                <div class="card">
+                    <h4>❌ DON'T</h4>
+                    <ul>
+                        <li>Lưu data quá lớn (>100KB per key)</li>
+                        <li>Sử dụng Redis như primary database</li>
+                        <li>Dùng <code>KEYS *</code> trong production</li>
+                        <li>Ignore persistence configuration</li>
+                        <li>Store sensitive data without encryption</li>
+                        <li>Rely on Redis for transactional integrity</li>
+                    </ul>
+                </div>
+            </div>
+
+            <h3>📏 Naming Convention</h3>
+            <pre><code><span class="comment"># Good naming patterns</span>
+user:<span class="number">123</span>:profile
+product:<span class="number">456</span>:details
+session:<span class="string">abc123</span>
+rate_limit:<span class="number">192.168.1.1</span>
+cache:products:category:vest:page:<span class="number">1</span>
+lock:order:<span class="number">789</span></code></pre>
+        </section>
+
+        <!-- Section 8: Interview Questions -->
+        <section id="interview">
+            <h2>8. Câu hỏi phỏng vấn Redis</h2>
+
+            <h3><span class="badge badge-easy">Easy</span> Cơ bản</h3>
+
+            <div class="interview-q">
+                <h4>Q1: Redis là gì? Tại sao nó nhanh?</h4>
+                <div class="answer">
+                    <p><strong>Trả lời:</strong></p>
+                    <ul>
+                        <li>Redis là in-memory data store, dùng làm cache, database, message broker</li>
+                        <li><strong>Nhanh vì:</strong>
+                            <ul>
+                                <li>Lưu data trong RAM (không phải disk)</li>
+                                <li>Single-threaded với I/O multiplexing</li>
+                                <li>Data structures được tối ưu hóa</li>
+                                <li>Không có SQL parsing overhead</li>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="interview-q">
+                <h4>Q2: Sự khác nhau giữa Redis và Memcached?</h4>
+                <div class="answer">
+                    <table>
+                        <tr>
+                            <th>Feature</th>
+                            <th>Redis</th>
+                            <th>Memcached</th>
+                        </tr>
+                        <tr>
+                            <td>Data types</td>
+                            <td>Nhiều (Strings, Lists, Sets, Hashes...)</td>
+                            <td>Chỉ Strings</td>
+                        </tr>
+                        <tr>
+                            <td>Persistence</td>
+                            <td>RDB, AOF</td>
+                            <td>Không có</td>
+                        </tr>
+                        <tr>
+                            <td>Replication</td>
+                            <td>Master-Slave native</td>
+                            <td>Cần 3rd party</td>
+                        </tr>
+                        <tr>
+                            <td>Transactions</td>
+                            <td>MULTI/EXEC</td>
+                            <td>CAS only</td>
+                        </tr>
+                        <tr>
+                            <td>Pub/Sub</td>
+                            <td>Built-in</td>
+                            <td>Không có</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <h3><span class="badge badge-medium">Medium</span> Trung bình</h3>
+
+            <div class="interview-q">
+                <h4>Q3: Giải thích Cache Invalidation strategies?</h4>
+                <div class="answer">
+                    <p><strong>3 strategies chính:</strong></p>
+                    <ol>
+                        <li><strong>TTL (Time To Live):</strong> Cache tự hết hạn sau thời gian định trước</li>
+                        <li><strong>Write-Through:</strong> Mỗi lần write DB → update cache ngay lập tức</li>
+                        <li><strong>Write-Behind (Write-Back):</strong> Update cache trước → async write DB</li>
+                    </ol>
+                    <pre><code><span class="comment">// TTL example</span>
+<span class="command">SET</span> product:<span class="number">123</span> <span class="string">"data"</span> EX <span class="number">300</span>  <span class="comment"># 5 minutes</span>
+
+<span class="comment">// Write-Through (Spring)</span>
+@CachePut(value = "products", key = "#product.id")
+public Product updateProduct(Product product) {
+    return productRepo.save(product);
+}</code></pre>
+                </div>
+            </div>
+
+            <div class="interview-q">
+                <h4>Q4: Cache Penetration, Cache Breakdown, Cache Avalanche là gì?</h4>
+                <div class="answer">
+                    <table>
+                        <tr>
+                            <th>Vấn đề</th>
+                            <th>Mô tả</th>
+                            <th>Giải pháp</th>
+                        </tr>
+                        <tr>
+                            <td><strong>Penetration</strong></td>
+                            <td>Query data không tồn tại → luôn hit DB</td>
+                            <td>Cache null values, Bloom Filter</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Breakdown</strong></td>
+                            <td>Hot key hết hạn → nhiều requests cùng query DB</td>
+                            <td>Mutex lock, Never expire + background refresh</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Avalanche</strong></td>
+                            <td>Nhiều keys hết hạn cùng lúc</td>
+                            <td>Random TTL, Staggered expiration</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <div class="interview-q">
+                <h4>Q5: Làm thế nào implement Distributed Lock với Redis?</h4>
+                <div class="answer">
+                    <p><strong>Algorithm: Redlock</strong></p>
+                    <pre><code><span class="comment">// Acquire lock</span>
+SET lock:resource:<span class="number">123</span> <span class="string">"unique-token"</span> NX EX <span class="number">30</span>
+<span class="comment">// NX = Only if Not eXists</span>
+<span class="comment">// EX 30 = Expire in 30 seconds (safety)</span>
+
+<span class="comment">// Release lock (Lua script - atomic)</span>
+EVAL <span class="string">"
+if redis.call('get', KEYS[1]) == ARGV[1] then
+    return redis.call('del', KEYS[1])
+else
+    return 0
+end
+"</span> <span class="number">1</span> lock:resource:<span class="number">123</span> <span class="string">"unique-token"</span></code></pre>
+                    <p><strong>Lưu ý:</strong> Phải dùng Lua script để đảm bảo atomic delete - chỉ xóa nếu token đúng.
+                    </p>
+                </div>
+            </div>
+
+            <h3><span class="badge badge-hard">Hard</span> Nâng cao</h3>
+
+            <div class="interview-q">
+                <h4>Q6: Redis single-threaded nhưng vẫn nhanh như thế nào?</h4>
+                <div class="answer">
+                    <p><strong>Giải thích chi tiết:</strong></p>
+                    <ul>
+                        <li><strong>I/O Multiplexing:</strong> Sử dụng epoll/kqueue để handle nhiều connections trong 1
+                            thread</li>
+                        <li><strong>No context switching:</strong> Single-threaded = không có overhead từ thread
+                            switching</li>
+                        <li><strong>No lock contention:</strong> Không cần locks vì chỉ 1 thread</li>
+                        <li><strong>Memory-bound:</strong> Bottleneck thường là memory bandwidth, không phải CPU</li>
+                        <li><strong>Redis 6.0+:</strong> Multi-threaded I/O cho network, nhưng command execution vẫn
+                            single-threaded</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="interview-q">
+                <h4>Q7: Thiết kế hệ thống Rate Limiting với Redis?</h4>
+                <div class="answer">
+                    <p><strong>Sliding Window Algorithm:</strong></p>
+                    <pre><code><span class="comment">// Sliding Window Counter</span>
+String key = "rate:" + userId + ":" + currentMinute;
+Long count = redis.incr(key);
+
+if (count == 1) {
+    redis.expire(key, 60);  // 1 minute window
+}
+
+// Combine current + previous window
+String prevKey = "rate:" + userId + ":" + (currentMinute - 1);
+Long prevCount = redis.get(prevKey) ?? 0;
+
+// Weighted average based on time elapsed in current window
+double weight = (60 - secondsInCurrentMinute) / 60.0;
+double effectiveCount = count + (prevCount * weight);
+
+if (effectiveCount > LIMIT) {
+    return HTTP 429;
+}</code></pre>
+                </div>
+            </div>
+
+            <div class="interview-q">
+                <h4>Q8: Redis Cluster hoạt động như thế nào?</h4>
+                <div class="answer">
+                    <p><strong>Key concepts:</strong></p>
+                    <ul>
+                        <li><strong>Hash Slots:</strong> 16384 slots, mỗi key được hash vào 1 slot:
+                            <code>CRC16(key) % 16384</code></li>
+                        <li><strong>Sharding:</strong> Mỗi node chịu trách nhiệm một range of slots</li>
+                        <li><strong>Replication:</strong> Mỗi master có slaves để failover</li>
+                        <li><strong>Gossip Protocol:</strong> Nodes communicate trạng thái với nhau</li>
+                        <li><strong>MOVED/ASK:</strong> Client được redirect nếu key ở node khác</li>
+                    </ul>
+                    <pre><code><span class="comment"># Hash slot calculation</span>
+<span class="command">CLUSTER KEYSLOT</span> <span class="string">"mykey"</span>  <span class="comment"># Returns slot number</span>
+
+<span class="comment"># View cluster slots</span>
+<span class="command">CLUSTER SLOTS</span></code></pre>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 9: Tailor Shop Implementation -->
+        <section id="tailor-shop">
+            <h2>9. Redis trong Tailor Shop</h2>
+
+            <p>Dưới đây là implementation Redis trong dự án Tailor Shop:</p>
+
+            <h3>📁 Cấu trúc files</h3>
+            <pre><code>config/
+├── redis/
+│   ├── <a href="file:///E:/Tailor_shop/tailor_shop/tailor_shop/src/main/java/com/example/tailor_shop/config/redis/RedisConfig.java">RedisConfig.java</a>      <span class="comment"># Template configuration</span>
+│   └── <a href="file:///E:/Tailor_shop/tailor_shop/tailor_shop/src/main/java/com/example/tailor_shop/config/redis/CacheConfig.java">CacheConfig.java</a>      <span class="comment"># Cache manager + TTL</span>
+└── ratelimit/
+    ├── <a href="file:///E:/Tailor_shop/tailor_shop/tailor_shop/src/main/java/com/example/tailor_shop/config/ratelimit/RateLimitProperties.java">RateLimitProperties.java</a>  <span class="comment"># Config properties</span>
+    └── <a href="file:///E:/Tailor_shop/tailor_shop/tailor_shop/src/main/java/com/example/tailor_shop/config/ratelimit/RateLimitFilter.java">RateLimitFilter.java</a>      <span class="comment"># Request filter</span></code></pre>
+
+            <h3>⚙️ Configuration (application.yml)</h3>
+            <pre><code><span class="highlight">spring:</span>
+  <span class="highlight">data:</span>
+    <span class="highlight">redis:</span>
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      timeout: 2000ms
+
+<span class="highlight">rate-limit:</span>
+  enabled: true
+  requests-per-minute: 100
+  whitelist:
+    - 127.0.0.1</code></pre>
+
+            <h3>🎯 Caching Implementation</h3>
+            <pre><code><span class="comment">// ProductServiceImpl.java</span>
+@Cacheable(value = "products", 
+           key = "'list:' + #filter?.category",
+           condition = "#currentUserId == null")
+public Page&lt;ProductListItemResponse&gt; list(...) {
+    // Database query only on cache miss
+}
+
+@Caching(evict = {
+    @CacheEvict(value = "products", allEntries = true),
+    @CacheEvict(value = "product-detail", key = "#key")
+})
+public ProductDetailResponse update(String key, ...) {
+    // Invalidate cache on update
+}</code></pre>
+
+            <h3>🚦 Rate Limiting Flow</h3>
+            <div class="diagram">
+                Request → RateLimitFilter
+                │
+                ▼
+                Is API endpoint?
+                │
+                ┌────┴────┐
+                │ No │ Yes
+                ▼ ▼
+                Pass Check Redis
+                Through │
+                ┌───┴───┐
+                │ │
+                count ≤ 100 count > 100
+                │ │
+                ▼ ▼
+                Continue Return 429
+                │ Too Many
+                ▼ Requests
+                Add Headers
+                X-RateLimit-*
+            </div>
+
+            <div class="alert alert-info">
+                <strong>🏃 Chạy thử:</strong>
+                <pre><code><span class="comment"># Start Redis container</span>
+docker-compose -f docker-compose.local-db.yml up -d redis
+
+<span class="comment"># Start backend</span>
+mvn spring-boot:run
+
+<span class="comment"># Test caching</span>
+curl http://localhost:8083/api/v1/products</code></pre>
+            </div>
+        </section>
+
+        <footer style="text-align: center; padding: 40px; color: var(--text-muted);">
+            <p>📚 Redis Deep Dive Documentation | Tailor Shop Project</p>
+            <p>Last updated: January 2026</p>
+        </footer>
+    </div>
+</body>
+
+</html>

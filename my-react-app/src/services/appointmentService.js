@@ -41,6 +41,15 @@ class AppointmentService {
   }
 
   /**
+   * Create appointment by customer (for fabric visit, etc. - orderId is optional)
+   * @param {Object} appointmentData - Appointment data { workingSlotId, type, orderId?, notes? }
+   * @returns {Promise<Object>} Created appointment
+   */
+  async createByCustomer(appointmentData) {
+    return httpClient.post(API_ENDPOINTS.APPOINTMENT.CREATE_BY_CUSTOMER, appointmentData);
+  }
+
+  /**
    * Update appointment
    * @param {number} id - Appointment ID
    * @param {Object} appointmentData - Appointment data
@@ -97,94 +106,6 @@ class AppointmentService {
     return httpClient.get(`${API_ENDPOINTS.APPOINTMENT.AVAILABLE_SLOTS}?${queryString}`);
   }
 
-  // Working Slots
-  /**
-   * List working slots
-   * @param {Object} filters - { staffId?, date? }
-   * @param {Object} pagination - Pagination
-   * @returns {Promise<Object>} Paginated working slots
-   */
-  async listWorkingSlots(filters = {}, pagination = {}) {
-    const params = { ...filters, ...pagination };
-    const queryString = new URLSearchParams(params).toString();
-    const endpoint = queryString
-      ? `${API_ENDPOINTS.APPOINTMENT.WORKING_SLOTS}?${queryString}`
-      : API_ENDPOINTS.APPOINTMENT.WORKING_SLOTS;
-    return httpClient.get(endpoint);
-  }
-
-  /**
-   * Get working slot detail
-   * @param {number} id - Working slot ID
-   * @returns {Promise<Object>} Working slot detail
-   */
-  async getWorkingSlot(id) {
-    return httpClient.get(API_ENDPOINTS.APPOINTMENT.WORKING_SLOT_DETAIL(id));
-  }
-
-  /**
-   * Create working slot
-   * @param {Object} slotData - Working slot data
-   * @returns {Promise<Object>} Created working slot
-   */
-  async createWorkingSlot(slotData) {
-    return httpClient.post(API_ENDPOINTS.APPOINTMENT.WORKING_SLOTS, slotData);
-  }
-
-  /**
-   * Update working slot
-   * @param {number} id - Working slot ID
-   * @param {Object} slotData - Working slot data
-   * @returns {Promise<Object>} Updated working slot
-   */
-  async updateWorkingSlot(id, slotData) {
-    return httpClient.put(API_ENDPOINTS.APPOINTMENT.WORKING_SLOT_DETAIL(id), slotData);
-  }
-
-  /**
-   * Delete working slot
-   * @param {number} id - Working slot ID
-   * @returns {Promise<Object>} Response
-   */
-  async deleteWorkingSlot(id) {
-    return httpClient.delete(API_ENDPOINTS.APPOINTMENT.WORKING_SLOT_DETAIL(id));
-  }
-
-  /**
-   * Create bulk working slots
-   * @param {Object} bulkData - Bulk working slots data
-   * @returns {Promise<Array>} Created working slots
-   */
-  async createBulkWorkingSlots(bulkData) {
-    return httpClient.post(API_ENDPOINTS.APPOINTMENT.BULK_WORKING_SLOTS, bulkData);
-  }
-
-  /**
-   * Reset to default working hours
-   * @param {number} staffId - Staff ID
-   * @returns {Promise<Object>} Response
-   */
-  async resetToDefaultWorkingHours(staffId) {
-    return httpClient.post(API_ENDPOINTS.APPOINTMENT.RESET_WORKING_HOURS(staffId));
-  }
-
-  /**
-   * Get working hours
-   * @param {number} staffId - Staff ID
-   * @returns {Promise<Object>} Working hours
-   */
-  async getWorkingHours(staffId) {
-    return httpClient.get(API_ENDPOINTS.APPOINTMENT.WORKING_HOURS(staffId));
-  }
-
-  /**
-   * Close dates
-   * @param {Object} closeData - Close dates data
-   * @returns {Promise<Array>} Closed working slots
-   */
-  async closeDates(closeData) {
-    return httpClient.post(API_ENDPOINTS.APPOINTMENT.CLOSE_DATES, closeData);
-  }
 }
 
 export default new AppointmentService();

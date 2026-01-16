@@ -1,0 +1,955 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OrderService - Tài Liệu Chi Tiết</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f0f23 0%, #1a1a3e 100%);
+            color: #eee;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: #00d9ff;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+            text-shadow: 0 0 20px rgba(0, 217, 255, 0.3);
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #888;
+            margin-bottom: 30px;
+        }
+
+        h2 {
+            color: #ffd700;
+            margin: 40px 0 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #ffd700;
+        }
+
+        h3 {
+            color: #00ff88;
+            margin: 25px 0 15px;
+        }
+
+        h4 {
+            color: #ff6b9d;
+            margin: 20px 0 10px;
+        }
+
+        .section {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 25px;
+            margin: 20px 0;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .mermaid {
+            background: #fff;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 15px 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+            font-size: 14px;
+        }
+
+        th,
+        td {
+            padding: 12px 15px;
+            text-align: left;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        th {
+            background: rgba(0, 217, 255, 0.2);
+            color: #00d9ff;
+        }
+
+        tr:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        code {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 2px 8px;
+            border-radius: 4px;
+            color: #00ff88;
+            font-family: 'Consolas', monospace;
+        }
+
+        pre {
+            background: rgba(0, 0, 0, 0.4);
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 10px 0;
+        }
+
+        pre code {
+            padding: 0;
+            background: transparent;
+        }
+
+        .highlight-box {
+            background: linear-gradient(135deg, rgba(255, 107, 107, 0.1), rgba(255, 107, 157, 0.1));
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 4px solid #ff6b6b;
+            margin: 15px 0;
+        }
+
+        .success-box {
+            background: linear-gradient(135deg, rgba(0, 255, 136, 0.1), rgba(0, 217, 255, 0.1));
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 4px solid #00ff88;
+            margin: 15px 0;
+        }
+
+        .warning-box {
+            background: linear-gradient(135deg, rgba(255, 193, 7, 0.1), rgba(255, 152, 0, 0.1));
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 4px solid #ffc107;
+            margin: 15px 0;
+        }
+
+        .info-box {
+            background: linear-gradient(135deg, rgba(0, 123, 255, 0.1), rgba(0, 217, 255, 0.1));
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 4px solid #007bff;
+            margin: 15px 0;
+        }
+
+        ul,
+        ol {
+            padding-left: 25px;
+            margin: 10px 0;
+        }
+
+        li {
+            margin: 8px 0;
+            line-height: 1.6;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+            margin: 2px;
+        }
+
+        .badge-primary {
+            background: #007bff;
+            color: white;
+        }
+
+        .badge-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .badge-warning {
+            background: #ffc107;
+            color: black;
+        }
+
+        .badge-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .badge-info {
+            background: #17a2b8;
+            color: white;
+        }
+
+        .flow-step {
+            display: inline-block;
+            background: rgba(0, 217, 255, 0.2);
+            padding: 8px 15px;
+            border-radius: 20px;
+            margin: 5px;
+        }
+
+        .arrow {
+            color: #ffd700;
+            margin: 0 10px;
+        }
+
+        .toc {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+
+        .toc a {
+            color: #00d9ff;
+            text-decoration: none;
+        }
+
+        .toc a:hover {
+            text-decoration: underline;
+        }
+
+        .stats {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin: 20px 0;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.08);
+            padding: 20px;
+            border-radius: 10px;
+            flex: 1;
+            min-width: 150px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #00ff88;
+        }
+
+        .stat-label {
+            color: #888;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>📦 OrderService - Tài Liệu Chi Tiết</h1>
+        <p class="subtitle">Module quản lý đơn hàng may đo - Core Business Service</p>
+
+        <!-- Stats -->
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-value">868</div>
+                <div class="stat-label">Dòng code</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">10</div>
+                <div class="stat-label">Methods chính</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">11</div>
+                <div class="stat-label">Dependencies</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">6</div>
+                <div class="stat-label">Entities liên quan</div>
+            </div>
+        </div>
+
+        <!-- TOC -->
+        <div class="toc">
+            <h3>📑 Mục Lục</h3>
+            <ol>
+                <li><a href="#overview">Tổng Quan</a></li>
+                <li><a href="#architecture">Kiến Trúc & Dependencies</a></li>
+                <li><a href="#entities">Entity Relationships</a></li>
+                <li><a href="#order-status">Order Status Flow</a></li>
+                <li><a href="#methods">Chi Tiết Methods</a></li>
+                <li><a href="#create-flow">Luồng Tạo Đơn Hàng</a></li>
+                <li><a href="#wizard-flow">Luồng Tạo Wizard</a></li>
+                <li><a href="#auto-invoice">Tự Động Tạo Hóa Đơn</a></li>
+                <li><a href="#error-handling">Xử Lý Lỗi</a></li>
+            </ol>
+        </div>
+
+        <!-- 1. Overview -->
+        <div class="section" id="overview">
+            <h2>1. Tổng Quan</h2>
+            <p><code>OrderServiceImpl</code> là service chính quản lý toàn bộ lifecycle của đơn hàng may đo trong hệ
+                thống Tailor Shop.</p>
+
+            <div class="success-box">
+                <strong>✅ Chức năng chính:</strong>
+                <ul>
+                    <li>Tạo đơn hàng (thủ công và wizard)</li>
+                    <li>Quản lý trạng thái đơn hàng (Status Transition)</li>
+                    <li>Lưu số đo khách hàng (Measurements)</li>
+                    <li>Upload attachments lên S3</li>
+                    <li>Tự động tạo hóa đơn (Invoice)</li>
+                    <li>Tự động tạo lịch hẹn (Appointment)</li>
+                </ul>
+            </div>
+
+            <div class="info-box">
+                <strong>📍 Đường dẫn file:</strong><br>
+                <code>modules/order/service/impl/OrderServiceImpl.java</code>
+            </div>
+        </div>
+
+        <!-- 2. Architecture -->
+        <div class="section" id="architecture">
+            <h2>2. Kiến Trúc & Dependencies</h2>
+
+            <div class="mermaid">
+                graph TB
+                subgraph "Controllers"
+                OC[OrderController]
+                end
+
+                subgraph "OrderServiceImpl"
+                OS[OrderServiceImpl]
+                OS --> LIST[list - Tìm kiếm đơn hàng]
+                OS --> DETAIL[detail - Chi tiết đơn hàng]
+                OS --> CREATE[create - Tạo thủ công]
+                OS --> WIZARD[createWizard - Tạo wizard]
+                OS --> STATUS[updateStatus - Cập nhật trạng thái]
+                OS --> TRACKING[tracking - Theo dõi]
+                OS --> UPLOAD[uploadAttachment - Upload file]
+                OS --> UPDATE[update - Cập nhật]
+                end
+
+                subgraph "Repositories"
+                OR[OrderRepository]
+                OIR[OrderItemRepository]
+                OTR[OrderTimelineRepository]
+                OPR[OrderPaymentRepository]
+                OAR[OrderAttachmentRepository]
+                MR[MeasurementRepository]
+                UR[UserRepository]
+                IR[InvoiceRepository]
+                end
+
+                subgraph "External Services"
+                S3[S3StorageService]
+                AS[AppointmentService]
+                IS[InvoiceService]
+                end
+
+                subgraph "Database"
+                DB[(MySQL)]
+                end
+
+                OC --> OS
+                LIST --> OR
+                DETAIL --> OR
+                CREATE --> OR
+                CREATE --> OIR
+                CREATE --> S3
+                CREATE --> MR
+                CREATE --> IS
+                WIZARD --> AS
+                STATUS --> OTR
+                UPLOAD --> S3
+                OR --> DB
+            </div>
+
+            <h3>Dependencies Injection</h3>
+            <table>
+                <tr>
+                    <th>#</th>
+                    <th>Dependency</th>
+                    <th>Mục đích</th>
+                </tr>
+                <tr>
+                    <td>1</td>
+                    <td><code>OrderRepository</code></td>
+                    <td>CRUD đơn hàng</td>
+                </tr>
+                <tr>
+                    <td>2</td>
+                    <td><code>OrderItemRepository</code></td>
+                    <td>Quản lý items trong đơn</td>
+                </tr>
+                <tr>
+                    <td>3</td>
+                    <td><code>OrderTimelineRepository</code></td>
+                    <td>Lịch sử trạng thái</td>
+                </tr>
+                <tr>
+                    <td>4</td>
+                    <td><code>OrderPaymentRepository</code></td>
+                    <td>Thanh toán</td>
+                </tr>
+                <tr>
+                    <td>5</td>
+                    <td><code>OrderAttachmentRepository</code></td>
+                    <td>Files đính kèm</td>
+                </tr>
+                <tr>
+                    <td>6</td>
+                    <td><code>UserRepository</code></td>
+                    <td>Thông tin khách hàng, thợ may</td>
+                </tr>
+                <tr>
+                    <td>7</td>
+                    <td><code>MeasurementRepository</code></td>
+                    <td>Số đo</td>
+                </tr>
+                <tr>
+                    <td>8</td>
+                    <td><code>S3StorageService</code></td>
+                    <td>Upload ảnh lên AWS S3</td>
+                </tr>
+                <tr>
+                    <td>9</td>
+                    <td><code>AppointmentService</code></td>
+                    <td>Tạo lịch hẹn tự động</td>
+                </tr>
+                <tr>
+                    <td>10</td>
+                    <td><code>InvoiceService</code></td>
+                    <td>Tạo hóa đơn tự động</td>
+                </tr>
+                <tr>
+                    <td>11</td>
+                    <td><code>InvoiceRepository</code></td>
+                    <td>Truy vấn hóa đơn</td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- 3. Entities -->
+        <div class="section" id="entities">
+            <h2>3. Entity Relationships</h2>
+
+            <div class="mermaid">
+                erDiagram
+                OrderEntity ||--o{ OrderItemEntity : "has many"
+                OrderEntity ||--o{ OrderTimelineEntity : "has many"
+                OrderEntity ||--o{ OrderPaymentEntity : "has many"
+                OrderEntity ||--o{ OrderAttachmentEntity : "has many"
+                OrderEntity ||--o{ MeasurementEntity : "has many"
+                OrderEntity ||--o| InvoiceEntity : "has one"
+                OrderEntity }o--|| UserEntity : "customer"
+                OrderEntity }o--o| UserEntity : "tailor"
+
+                OrderEntity {
+                Long id PK
+                String code UK
+                OrderStatus status
+                BigDecimal total
+                BigDecimal depositAmount
+                BigDecimal expectedBudget
+                LocalDate appointmentDate
+                LocalDate dueDate
+                String note
+                Long customerId FK
+                Long tailorId FK
+                }
+
+                OrderItemEntity {
+                Long id PK
+                Long orderId FK
+                Long productId FK
+                Long fabricId FK
+                Integer quantity
+                BigDecimal unitPrice
+                BigDecimal subtotal
+                String productName
+                }
+
+                OrderTimelineEntity {
+                Long id PK
+                Long orderId FK
+                OrderStatus status
+                String note
+                Instant createdAt
+                Long createdById FK
+                }
+            </div>
+        </div>
+
+        <!-- 4. Order Status -->
+        <div class="section" id="order-status">
+            <h2>4. Order Status Flow (State Machine)</h2>
+
+            <div class="mermaid">
+                stateDiagram-v2
+                [*] --> DRAFT : Tạo mới
+                [*] --> WAITING_FOR_QUOTE : Tạo từ Wizard
+
+                DRAFT --> WAITING_FOR_QUOTE : Gửi báo giá
+                DRAFT --> CANCELLED : Hủy
+
+                WAITING_FOR_QUOTE --> CONFIRMED : Khách xác nhận
+                WAITING_FOR_QUOTE --> CANCELLED : Hủy
+
+                CONFIRMED --> IN_PROGRESS : Bắt đầu may
+                CONFIRMED --> CANCELLED : Hủy
+
+                IN_PROGRESS --> FITTING : Thử đồ
+                IN_PROGRESS --> CANCELLED : Hủy
+
+                FITTING --> COMPLETED : Hoàn thành
+                FITTING --> IN_PROGRESS : Cần chỉnh sửa
+                FITTING --> CANCELLED : Hủy
+
+                COMPLETED --> [*]
+                CANCELLED --> [*]
+            </div>
+
+            <h3>Status Transition Rules</h3>
+            <div class="highlight-box">
+                <strong>⚠️ Quan trọng:</strong> Không phải mọi chuyển đổi trạng thái đều được phép.
+                Hệ thống sử dụng <code>isTransitionAllowed()</code> để validate.
+            </div>
+
+            <table>
+                <tr>
+                    <th>From Status</th>
+                    <th>Allowed Transitions</th>
+                </tr>
+                <tr>
+                    <td><span class="badge badge-info">DRAFT</span></td>
+                    <td>WAITING_FOR_QUOTE, CANCELLED</td>
+                </tr>
+                <tr>
+                    <td><span class="badge badge-warning">WAITING_FOR_QUOTE</span></td>
+                    <td>CONFIRMED, CANCELLED</td>
+                </tr>
+                <tr>
+                    <td><span class="badge badge-primary">CONFIRMED</span></td>
+                    <td>IN_PROGRESS, CANCELLED</td>
+                </tr>
+                <tr>
+                    <td><span class="badge badge-info">IN_PROGRESS</span></td>
+                    <td>FITTING, CANCELLED</td>
+                </tr>
+                <tr>
+                    <td><span class="badge badge-warning">FITTING</span></td>
+                    <td>COMPLETED, IN_PROGRESS (revision), CANCELLED</td>
+                </tr>
+                <tr>
+                    <td><span class="badge badge-success">COMPLETED</span></td>
+                    <td>❌ Không cho phép</td>
+                </tr>
+                <tr>
+                    <td><span class="badge badge-danger">CANCELLED</span></td>
+                    <td>❌ Không cho phép</td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- 5. Methods -->
+        <div class="section" id="methods">
+            <h2>5. Chi Tiết Methods</h2>
+
+            <h3>5.1. list() - Tìm kiếm đơn hàng</h3>
+            <table>
+                <tr>
+                    <th>Parameter</th>
+                    <th>Type</th>
+                    <th>Mô tả</th>
+                </tr>
+                <tr>
+                    <td>status</td>
+                    <td>OrderStatus</td>
+                    <td>Lọc theo trạng thái</td>
+                </tr>
+                <tr>
+                    <td>customerId</td>
+                    <td>Long</td>
+                    <td>Lọc theo khách hàng</td>
+                </tr>
+                <tr>
+                    <td>tailorId</td>
+                    <td>Long</td>
+                    <td>Lọc theo thợ may</td>
+                </tr>
+                <tr>
+                    <td>fromDate</td>
+                    <td>Instant</td>
+                    <td>Từ ngày</td>
+                </tr>
+                <tr>
+                    <td>toDate</td>
+                    <td>Instant</td>
+                    <td>Đến ngày</td>
+                </tr>
+                <tr>
+                    <td>appointmentDate</td>
+                    <td>LocalDate</td>
+                    <td>Ngày hẹn</td>
+                </tr>
+                <tr>
+                    <td>dueDate</td>
+                    <td>LocalDate</td>
+                    <td>Ngày giao</td>
+                </tr>
+                <tr>
+                    <td>search</td>
+                    <td>String</td>
+                    <td>Tìm kiếm text</td>
+                </tr>
+                <tr>
+                    <td>pageable</td>
+                    <td>Pageable</td>
+                    <td>Phân trang</td>
+                </tr>
+            </table>
+            <div class="info-box">
+                <strong>Return:</strong> <code>Page&lt;OrderResponse&gt;</code> - Danh sách đơn hàng có phân trang
+            </div>
+
+            <h3>5.2. create() - Tạo đơn hàng thủ công</h3>
+            <div class="success-box">
+                <strong>Xử lý tự động:</strong>
+                <ul>
+                    <li>Generate order code: <code>ORD-XXXXXXXX</code></li>
+                    <li>Set initial status: <code>DRAFT</code></li>
+                    <li>Calculate total từ items</li>
+                    <li>Upload files to S3</li>
+                    <li>Save measurements</li>
+                    <li>Add timeline entry</li>
+                    <li><strong>Tự động tạo Invoice</strong></li>
+                </ul>
+            </div>
+
+            <h3>5.3. createWizard() - Tạo đơn từ Wizard</h3>
+            <div class="success-box">
+                <strong>Khác biệt so với create():</strong>
+                <ul>
+                    <li>Initial status: <code>WAITING_FOR_QUOTE</code> (thay vì DRAFT)</li>
+                    <li>Tự động tạo <strong>Appointment</strong></li>
+                    <li>Xử lý productName từ form</li>
+                    <li>Build note từ wizard data</li>
+                </ul>
+            </div>
+
+            <h3>5.4. updateStatus() - Cập nhật trạng thái</h3>
+            <div class="warning-box">
+                <strong>Validation:</strong> Kiểm tra transition hợp lệ bằng <code>isTransitionAllowed()</code>
+            </div>
+            <ul>
+                <li>Update status</li>
+                <li>Update total nếu có (cho quote confirmation)</li>
+                <li>Auto-calculate deposit 30% nếu chưa set</li>
+                <li>Add timeline entry</li>
+            </ul>
+
+            <h3>5.5. tracking() - Theo dõi đơn hàng</h3>
+            <ul>
+                <li>Kiểm tra quyền truy cập (customer ownership)</li>
+                <li>Return timeline history</li>
+                <li>Basic order info</li>
+            </ul>
+
+            <h3>5.6. uploadAttachment() - Upload file</h3>
+            <ul>
+                <li>Upload to S3: <code>orders/{orderId}/{filename}</code></li>
+                <li>Save metadata to OrderAttachmentEntity</li>
+            </ul>
+        </div>
+
+        <!-- 6. Create Flow -->
+        <div class="section" id="create-flow">
+            <h2>6. Luồng Tạo Đơn Hàng Chi Tiết</h2>
+
+            <div class="mermaid">
+                sequenceDiagram
+                participant C as Client
+                participant Ctrl as OrderController
+                participant Svc as OrderServiceImpl
+                participant UR as UserRepository
+                participant OR as OrderRepository
+                participant OIR as OrderItemRepository
+                participant S3 as S3StorageService
+                participant MR as MeasurementRepository
+                participant IS as InvoiceService
+                participant DB as Database
+
+                C->>Ctrl: POST /api/orders
+                Ctrl->>Svc: create(request, files, currentUserId)
+
+                Note over Svc: 1. Validate Users
+                Svc->>UR: findById(customerId)
+                UR-->>Svc: CustomerEntity
+                Svc->>UR: findById(tailorId)
+                UR-->>Svc: TailorEntity
+
+                Note over Svc: 2. Create Order
+                Svc->>Svc: generateCode() -> ORD-XXXXXXXX
+                Svc->>OR: save(order)
+                OR->>DB: INSERT orders
+                DB-->>OR: order with ID
+
+                Note over Svc: 3. Create Order Items
+                loop For each item
+                Svc->>OIR: save(item)
+                Svc->>Svc: Calculate subtotal
+                end
+                Svc->>Svc: Update order.total
+                Svc->>OR: save(order)
+
+                Note over Svc: 4. Upload Files
+                alt Files provided
+                loop For each file
+                Svc->>S3: upload(orders/orderId, file)
+                S3-->>Svc: URL
+                Svc->>DB: Save attachment
+                end
+                end
+
+                Note over Svc: 5. Save Measurements
+                alt Measurement provided
+                Svc->>MR: save(measurement)
+                end
+
+                Note over Svc: 6. Add Timeline
+                Svc->>DB: Save timeline DRAFT
+
+                Note over Svc: 7. Auto Create Invoice
+                Svc->>IS: createInvoiceForOrder(order)
+                IS-->>Svc: Invoice created
+
+                Svc-->>Ctrl: OrderResponse
+                Ctrl-->>C: 200 OK + JSON
+            </div>
+        </div>
+
+        <!-- 7. Wizard Flow -->
+        <div class="section" id="wizard-flow">
+            <h2>7. Luồng Tạo Wizard (Frontend Multi-step Form)</h2>
+
+            <div class="mermaid">
+                sequenceDiagram
+                participant C as Client
+                participant Svc as OrderServiceImpl
+                participant AS as AppointmentService
+                participant IS as InvoiceService
+                participant DB as Database
+
+                C->>Svc: createWizard(request, currentUserId)
+
+                Note over Svc: 1. Create Order
+                Svc->>Svc: Set status = WAITING_FOR_QUOTE
+                Svc->>DB: Save order
+
+                Note over Svc: 2. Create Order Item
+                Svc->>Svc: Build item from product info
+                Svc->>DB: Save item
+
+                Note over Svc: 3. Save Measurements
+                Svc->>DB: Save measurement
+
+                Note over Svc: 4. Add Timeline
+                Svc->>DB: Save timeline
+
+                Note over Svc: 5. Auto Create Invoice
+                Svc->>IS: createInvoiceForOrder()
+
+                Note over Svc: 6. Auto Create Appointment
+                alt Has appointmentDate
+                Svc->>AS: create(appointmentRequest)
+                Note over AS: Type: fitting/consultation
+                Note over AS: Time: 09:00 default
+                end
+
+                Svc-->>C: OrderResponse
+            </div>
+
+            <h3>Wizard Request Structure</h3>
+            <pre><code>{
+  "customerId": 123,
+  "tailorId": 456,
+  "product": {
+    "productName": "Áo dài cưới",
+    "description": "Áo dài trắng thêu hoa",
+    "budget": 5000000,
+    "dueDate": "2024-03-15",
+    "appointmentType": "fitting",
+    "appointmentTime": "09:00",
+    "notes": "Khách cần gấp"
+  },
+  "measurement": {
+    "chest": 95.5,
+    "waist": 75.0,
+    "hip": 98.0,
+    "shoulder": 42.0,
+    "height": 165.0,
+    "weight": 55.0,
+    "note": "Dáng thon"
+  }
+}</code></pre>
+        </div>
+
+        <!-- 8. Auto Invoice -->
+        <div class="section" id="auto-invoice">
+            <h2>8. Tự Động Tạo Hóa Đơn</h2>
+
+            <div class="mermaid">
+                flowchart TD
+                A[Order Created] --> B{Has Items?}
+                B -->|No| C[Skip Invoice]
+                B -->|Yes| D[Find Staff ID]
+
+                D --> E{Tailor exists?}
+                E -->|Yes| F[Use Tailor ID]
+                E -->|No| G{Current User is Staff?}
+                G -->|Yes| H[Use Current User ID]
+                G -->|No| I[Find Default Admin/Staff]
+
+                F --> J[Build Invoice Request]
+                H --> J
+                I --> J
+
+                J --> K[Create Invoice]
+                K --> L{Success?}
+                L -->|Yes| M[Log Success]
+                L -->|No| N[Log Error - Don't Block Order]
+
+                M --> O[Order Completed]
+                N --> O
+                C --> O
+            </div>
+
+            <div class="warning-box">
+                <strong>⚠️ Quan trọng:</strong> Lỗi tạo Invoice <strong>KHÔNG</strong> rollback transaction của Order.
+                Order vẫn được tạo thành công, Invoice có thể tạo thủ công sau.
+            </div>
+
+            <h3>Invoice Auto-fill Fields</h3>
+            <table>
+                <tr>
+                    <th>Field</th>
+                    <th>Value</th>
+                </tr>
+                <tr>
+                    <td>orderId</td>
+                    <td>Order ID vừa tạo</td>
+                </tr>
+                <tr>
+                    <td>customerId</td>
+                    <td>Từ order.customer</td>
+                </tr>
+                <tr>
+                    <td>staffId</td>
+                    <td>Tailor → Current User → Default Admin</td>
+                </tr>
+                <tr>
+                    <td>currency</td>
+                    <td>"VND" (mặc định)</td>
+                </tr>
+                <tr>
+                    <td>dueDate</td>
+                    <td>Order.dueDate hoặc +30 ngày</td>
+                </tr>
+                <tr>
+                    <td>items</td>
+                    <td>Convert từ OrderItems</td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- 9. Error Handling -->
+        <div class="section" id="error-handling">
+            <h2>9. Xử Lý Lỗi & Exceptions</h2>
+
+            <table>
+                <tr>
+                    <th>Scenario</th>
+                    <th>Exception</th>
+                    <th>Message</th>
+                </tr>
+                <tr>
+                    <td>Order không tồn tại</td>
+                    <td><code>NotFoundException</code></td>
+                    <td>"Order not found"</td>
+                </tr>
+                <tr>
+                    <td>Customer không tồn tại</td>
+                    <td><code>NotFoundException</code></td>
+                    <td>"Customer not found"</td>
+                </tr>
+                <tr>
+                    <td>Tailor không tồn tại</td>
+                    <td><code>NotFoundException</code></td>
+                    <td>"Tailor not found"</td>
+                </tr>
+                <tr>
+                    <td>Không có items</td>
+                    <td><code>BadRequestException</code></td>
+                    <td>"Order items is required"</td>
+                </tr>
+                <tr>
+                    <td>Status transition không hợp lệ</td>
+                    <td><code>BadRequestException</code></td>
+                    <td>"Invalid status transition"</td>
+                </tr>
+                <tr>
+                    <td>File rỗng</td>
+                    <td><code>BadRequestException</code></td>
+                    <td>"File is empty"</td>
+                </tr>
+                <tr>
+                    <td>Upload lỗi</td>
+                    <td><code>BadRequestException</code></td>
+                    <td>"Failed to upload file: {name}"</td>
+                </tr>
+                <tr>
+                    <td>Customer xem order người khác</td>
+                    <td><code>BadRequestException</code></td>
+                    <td>"Access denied"</td>
+                </tr>
+            </table>
+
+            <h3>Logging</h3>
+            <ul>
+                <li>✅ <code>Creating order via wizard for customerId: {}, currentUserId: {}</code></li>
+                <li>✅ <code>Order saved successfully with id: {}</code></li>
+                <li>✅ <code>Successfully created invoice for order {}</code></li>
+                <li>✅ <code>Order creation completed successfully. Order ID: {}, Code: {}</code></li>
+                <li>⚠️ <code>Failed to create invoice for order {}: {}</code></li>
+                <li>⚠️ <code>Error fetching invoice for order {}: {}</code></li>
+            </ul>
+        </div>
+
+        <!-- Footer -->
+        <div class="section" style="text-align: center; margin-top: 40px;">
+            <p style="color: #888;">Generated by Antigravity AI Assistant</p>
+            <p style="color: #666; font-size: 12px;">Last updated: 2024</p>
+        </div>
+    </div>
+
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            securityLevel: 'loose',
+            flowchart: { useMaxWidth: true, htmlLabels: true }
+        });
+    </script>
+</body>
+
+</html>

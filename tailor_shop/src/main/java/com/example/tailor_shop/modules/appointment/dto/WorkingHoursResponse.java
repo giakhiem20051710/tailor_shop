@@ -19,6 +19,7 @@ public class WorkingHoursResponse {
         private LocalTime breakEndTime;
         private Boolean isCustom; // true if custom slot, false if using default
         private String source; // "custom" or "default"
+        private Boolean isWorking; // true if working, false if day off
 
         public DayOfWeek getDayOfWeek() {
             return dayOfWeek;
@@ -75,6 +76,19 @@ public class WorkingHoursResponse {
         public void setSource(String source) {
             this.source = source;
         }
+
+        public Boolean getIsWorking() {
+            return isWorking;
+        }
+
+        // Alias for getIsWorking to match service usage if needed, or update service
+        public void setWorking(Boolean working) {
+            isWorking = working;
+        }
+
+        public Boolean isWorking() {
+            return isWorking;
+        }
     }
 
     public Long getStaffId() {
@@ -109,4 +123,3 @@ public class WorkingHoursResponse {
         this.workingHours = workingHours;
     }
 }
-

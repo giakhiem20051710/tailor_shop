@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "../components/Header.jsx";
 import usePageMeta from "../hooks/usePageMeta";
+import { imageAssetService } from "../services/index.js";
 
 const CustomerHomePage = () => {
   const navigate = useNavigate();
@@ -18,12 +19,41 @@ const CustomerHomePage = () => {
       "https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?w=1200&auto=format&fit=crop&q=80",
   });
 
-  const heroImages = [
-    "https://watermark.lovepik.com/photo/20211124/large/lovepik-fashion-womens-summer-shopping-image-picture_500961857.jpg",
-    "https://images.unsplash.com/photo-1594938291221-94f18cbb566b?w=1200&auto=format&fit=crop&q=80",
-    "https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?w=1200&auto=format&fit=crop&q=80",
-    "https://images.unsplash.com/photo-1601925260368-ae2f83d34b08?w=1200&auto=format&fit=crop&q=80",
-  ];
+  const [heroImages, setHeroImages] = useState([
+    "https://watermark.lovepik.com/photo/20211124/large/lovepik-fashion-womens-summer-shopping-image-picture_500961857.jpg"
+  ]);
+
+  useEffect(() => {
+    const fetchHeroImages = async () => {
+      try {
+        const response = await imageAssetService.filter({
+          category: "template",
+          page: 0,
+          size: 6, // Fetch 6 images as requested
+          sort: "createdDate,desc"
+        });
+        const data = imageAssetService.parseResponse(response);
+        const items = data?.content || data?.data || (Array.isArray(data) ? data : []);
+
+        if (items.length > 0) {
+          const fetchedUrls = items
+            .map(item => item.url || item.thumbnailUrl)
+            .filter(url => url); // Ensure no nulls
+
+          // Keep the first static image (Lovepik one) and append fetched images
+          setHeroImages(prev => {
+            const firstImage = "https://watermark.lovepik.com/photo/20211124/large/lovepik-fashion-womens-summer-shopping-image-picture_500961857.jpg";
+            // Avoid duplicates if this runs multiple times or hot reloads
+            const newImages = [firstImage, ...fetchedUrls];
+            return newImages;
+          });
+        }
+      } catch (error) {
+        console.error("Failed to fetch hero images:", error);
+      }
+    };
+    fetchHeroImages();
+  }, []);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -50,7 +80,7 @@ const CustomerHomePage = () => {
     }
   }, []);
 
-  const collections = [
+  const [collections, setCollections] = useState([
     {
       key: "wedding",
       name: "Wedding Collection",
@@ -87,7 +117,7 @@ const CustomerHomePage = () => {
       price: "Từ 800.000 ₫",
       tag: "Hằng ngày",
     },
-  ];
+  ]);
 
   const activeCollection =
     collections.find((c) => c.key === activeStyle) || collections[0];
@@ -150,7 +180,7 @@ const CustomerHomePage = () => {
     },
   ];
 
-  const newArrivals = [
+  const [newArrivals, setNewArrivals] = useState([
     {
       name: "Áo dài lụa tông kem",
       desc: "Form suông nhẹ, tay lửng, hợp chụp ảnh cưới & lễ hỏi.",
@@ -175,7 +205,90 @@ const CustomerHomePage = () => {
       image:
         "https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=900&auto=format&fit=crop&q=80",
     },
-  ];
+  ]);
+
+  useEffect(() => {
+    const fetchCollections = async () => {
+      try {
+        // Fetch enough items to find suitable ones for each category
+        const response = await imageAssetService.filter({
+          category: "template",
+          page: 0,
+          size: 50, // Increase size to find matches
+          sort: "createdDate,desc"
+        });
+        const data = imageAssetService.parseResponse(response);
+        const items = data?.content || data?.data || (Array.isArray(data) ? data : []);
+
+        if (items.length > 0) {
+          setCollections(prevCollections => {
+            return prevCollections.map(col => {
+              let match = null;
+              if (col.key === 'wedding') {
+                match = items.find(i => (i.occasion === 'wedding' || i.type?.includes('cuoi') || i.type?.includes('ao_dai')));
+              } else if (col.key === 'office') {
+                match = items.find(i => (i.occasion === 'work' || i.occasion === 'office' || i.type === 'vest' || i.type === 'blazer' || i.type === 'ao_so_mi'));
+              } else if (col.key === 'evening') {
+                match = items.find(i => (i.occasion === 'party' || i.type?.includes('da_hoi') || i.type?.includes('dam')));
+              } else if (col.key === 'daily') {
+                match = items.find(i => (i.occasion === 'daily' || i.occasion === 'casual' || !i.occasion));
+              }
+
+              // Fallback to any item if no specific match, but try to avoid duplicates if possible (simple version for now)
+              if (!match) match = items.find(i => i.url || i.thumbnailUrl);
+
+              if (match && (match.url || match.thumbnailUrl)) {
+                return {
+                  ...col,
+                  image: match.url || match.thumbnailUrl
+                };
+              }
+              return col;
+            });
+          });
+        }
+
+        // Also map new arrivals from the same fetched batch to save a call, 
+        // OR keep the separate efficient call for new arrivals. 
+        // We already have a separate effect for new arrivals, so we'll keep that or merge them.
+        // For simplicity and separation of concerns, I will keep them separate or just let them run.
+        // Actually, the previous effect fetches 3 items. This one fetches 50. 
+        // We could optimize, but for now let's just add this effect.
+      } catch (error) {
+        console.error("Failed to fetch collection images:", error);
+      }
+    };
+    fetchCollections();
+  }, []);
+
+  useEffect(() => {
+    const fetchNewArrivals = async () => {
+      try {
+        const response = await imageAssetService.filter({
+          category: "template",
+          page: 0,
+          size: 3,
+          sort: "createdDate,desc"
+        });
+        const data = imageAssetService.parseResponse(response);
+        const items = data?.content || data?.data || (Array.isArray(data) ? data : []);
+
+        if (items.length > 0) {
+          const mappedItems = items.map(item => ({
+            name: item.type ? item.type.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase()) : "Sản phẩm mới",
+            desc: item.description || "Thiết kế mới nhất từ Mỹ Hiền Tailor",
+            price: "Liên hệ",
+            tag: "New Arrival",
+            image: item.url || item.thumbnailUrl
+          }));
+          setNewArrivals(mappedItems);
+        }
+      } catch (error) {
+        console.error("Failed to fetch new arrivals:", error);
+      }
+    };
+    fetchNewArrivals();
+  }, []);
 
   const trustBadges = [
     {
@@ -253,7 +366,7 @@ const CustomerHomePage = () => {
         </div>
 
         <div className="max-w-7xl mx-auto px-5 lg:px-8 w-full relative z-10">
-            <div className="grid lg:grid-cols-12 gap-10 items-center">
+          <div className="grid lg:grid-cols-12 gap-10 items-center">
             {/* Left text */}
             <div className="lg:col-span-5 space-y-5">
               <span className="inline-flex items-center text-[10px] tracking-[0.25em] uppercase text-[#854D0E] font-semibold bg-white/80 backdrop-blur px-3 py-1 rounded-full border border-[#FACC15]/40">
@@ -318,11 +431,10 @@ const CustomerHomePage = () => {
                 {heroImages.map((img, index) => (
                   <div
                     key={index}
-                    className={`absolute inset-0 transition-opacity duration-700 ${
-                      index === currentImageIndex
-                        ? "opacity-100"
-                        : "opacity-0"
-                    }`}
+                    className={`absolute inset-0 transition-opacity duration-700 ${index === currentImageIndex
+                      ? "opacity-100"
+                      : "opacity-0"
+                      }`}
                   >
                     <img
                       src={img}
@@ -541,11 +653,11 @@ const CustomerHomePage = () => {
                 key={index}
                 className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow flex flex-col border border-[#FDEFC2]"
               >
-                <div className="relative h-40 md:h-44 w-full overflow-hidden bg-gray-200">
+                <div className="relative h-[400px] w-full overflow-hidden bg-gray-200">
                   <img
                     src={item.image}
                     alt={item.name}
-                    className="w-full h-full object-cover object-center"
+                    className="w-full h-full object-cover object-top"
                     loading="lazy"
                   />
                   {/* góc NEW */}
@@ -613,11 +725,10 @@ const CustomerHomePage = () => {
               <button
                 key={c.key}
                 onClick={() => setActiveStyle(c.key)}
-                className={`px-4 py-2 text-[12px] rounded-full border transition-colors ${
-                  activeStyle === c.key
-                    ? "bg-[#B45309] text-white border-[#B45309]"
-                    : "bg-white text-[#374151] border-[#FDEFC2] hover:border-[#B45309]"
-                }`}
+                className={`px-4 py-2 text-[12px] rounded-full border transition-colors ${activeStyle === c.key
+                  ? "bg-[#B45309] text-white border-[#B45309]"
+                  : "bg-white text-[#374151] border-[#FDEFC2] hover:border-[#B45309]"
+                  }`}
               >
                 {c.tag}
               </button>
@@ -626,11 +737,11 @@ const CustomerHomePage = () => {
 
           {/* Active style card */}
           <div className="grid md:grid-cols-2 gap-6 items-center">
-            <div className="rounded-2xl overflow-hidden bg-gray-200 h-[220px] md:h-[260px]">
+            <div className="rounded-2xl overflow-hidden bg-gray-200 h-[400px] md:h-[550px] shadow-lg">
               <img
                 src={activeCollection.image}
                 alt={activeCollection.name}
-                className="w-full h-full object-cover object-center"
+                className="w-full h-full object-cover object-center md:object-top"
                 loading="lazy"
               />
             </div>
@@ -707,8 +818,8 @@ const CustomerHomePage = () => {
             <p className="text-[11px] tracking-[0.25em] uppercase text-[#6B7280] mb-1">
               Bộ sưu tập
             </p>
-              <h2 className="heading-font text-[20px] md:text-[22px] text-[#111827]">
-                Một vài dòng sản phẩm tại My Hiền
+            <h2 className="heading-font text-[20px] md:text-[22px] text-[#111827]">
+              Một vài dòng sản phẩm tại My Hiền
             </h2>
           </div>
 

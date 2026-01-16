@@ -1,5 +1,6 @@
 package com.example.tailor_shop.config.security;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -16,6 +17,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.header.writers.XXssProtectionHeaderWriter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -30,6 +32,10 @@ public class SecurityConfig {
     private final JwtService jwtService;
     private final UserDetailsService userDetailsService;
 
+    // Read CORS origins from application.yml (comma-separated)
+    @Value("${cors.allowed-origins:http://localhost,http://localhost:3000,http://localhost:5173}")
+    private String allowedOriginsConfig;
+
     public SecurityConfig(JwtService jwtService, UserDetailsService userDetailsService) {
         this.jwtService = jwtService;
         this.userDetailsService = userDetailsService;
@@ -38,20 +44,51 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
+                // === CSRF: Disabled for stateless REST API ===
                 .csrf(csrf -> csrf.disable())
+                
+                // === CORS: Use configurable origins ===
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                
+                // === Session: Stateless (JWT-based) ===
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                
+                // === Security Headers (IMPORTANT for production) ===
+                .headers(headers -> headers
+                        // Prevent MIME type sniffing
+                        .contentTypeOptions(contentTypeOptions -> {})
+                        // Prevent clickjacking
+                        .frameOptions(frameOptions -> frameOptions.deny())
+                        // XSS protection
+                        .xssProtection(xss -> xss.headerValue(XXssProtectionHeaderWriter.HeaderValue.ENABLED_MODE_BLOCK))
+                        // Cache control for security
+                        .cacheControl(cacheControl -> {})
+                )
+                
+                // === Authorization Rules ===
                 .authorizeHttpRequests(auth -> auth
+                        // Public: Auth endpoints
                         .requestMatchers("/api/v1/auth/**").permitAll()
+                        // Public: Health check only (not all actuator!)
                         .requestMatchers("/actuator/health").permitAll()
+                        .requestMatchers("/actuator/info").permitAll()
+                        // Secure other actuator endpoints
+                        .requestMatchers("/actuator/**").hasRole("ADMIN")
+                        // Public: CORS preflight
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        // Public catalog endpoints (allow anonymous browsing)
+                        // Public: Catalog browsing (GET only)
                         .requestMatchers(HttpMethod.GET, "/api/v1/products/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/styles/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/fabrics/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/product-configurations/templates/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/image-assets/**").permitAll()
+                        // Protected: Modify operations require authentication
+                        .requestMatchers(HttpMethod.DELETE, "/api/v1/image-assets/**").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/image-assets/**").authenticated()
+                        // All other requests require authentication
                         .anyRequest().authenticated())
+                
+                // === Authentication ===
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(jwtAuthFilter(), UsernamePasswordAuthenticationFilter.class);
 
@@ -84,15 +121,11 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of(
-                "http://localhost:3000",
-                "http://localhost:5173",
-                "http://localhost:5174",
-                "http://localhost:5175",
-                "http://127.0.0.1:3000",
-                "http://127.0.0.1:5173",
-                "http://127.0.0.1:5174",
-                "http://127.0.0.1:5175"));
+        
+        // Parse origins from config (comma-separated string)
+        List<String> origins = Arrays.asList(allowedOriginsConfig.split(","));
+        configuration.setAllowedOrigins(origins.stream().map(String::trim).toList());
+        
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);

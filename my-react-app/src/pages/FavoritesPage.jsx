@@ -4,6 +4,7 @@ import Header from "../components/Header.jsx";
 import { favoriteService, authService } from "../services";
 import usePageMeta from "../hooks/usePageMeta";
 import { showError } from "../components/NotificationToast.jsx";
+import { getFavorites as getLocalFavorites } from "../utils/favoriteStorage.js";
 
 const getSlug = (product, index = 0) => {
   if (product?.key) return product.key;
@@ -33,6 +34,9 @@ export default function FavoritesPage() {
     if (authService.isAuthenticated()) {
       loadFavorites();
     } else {
+      // Guest mode: load favorites từ localStorage
+      const local = getLocalFavorites();
+      setFavorites(local);
       setLoading(false);
     }
   }, []);
@@ -41,12 +45,43 @@ export default function FavoritesPage() {
     try {
       setLoading(true);
       const response = await favoriteService.list({ page: 0, size: 100 });
-      if (response.success && response.data) {
-        setFavorites(response.data.content || []);
+
+      // Debug: log response để kiểm tra
+      console.log("[FavoritesPage] Raw API response:", response);
+
+      // Parse response từ backend
+      const data = favoriteService.parseResponse(response);
+      console.log("[FavoritesPage] Parsed data:", data);
+
+      // Extract items từ paginated response
+      const items = data?.content ?? data?.data ?? (Array.isArray(data) ? data : []);
+      console.log("[FavoritesPage] Extracted items:", items);
+
+      if (items && items.length > 0) {
+        setFavorites(items);
+      } else {
+        // Nếu backend chưa có favorites, fallback sang localStorage
+        console.log("[FavoritesPage] No favorites from API, falling back to localStorage");
+        const local = getLocalFavorites();
+        setFavorites(local);
       }
     } catch (error) {
-      console.error("Error loading favorites:", error);
-      showError("Không thể tải danh sách yêu thích");
+      console.error("[FavoritesPage] Error loading favorites:", error);
+      console.error("[FavoritesPage] Error details:", {
+        message: error?.message,
+        status: error?.status,
+        response: error?.response,
+        data: error?.data
+      });
+
+      // Fallback to localStorage on error
+      const local = getLocalFavorites();
+      setFavorites(local);
+
+      // Only show error if not authenticated (expected behavior)
+      if (error?.status !== 403 && error?.status !== 401) {
+        showError("Không thể tải danh sách yêu thích");
+      }
     } finally {
       setLoading(false);
     }
@@ -160,8 +195,11 @@ export default function FavoritesPage() {
             <section className="grid md:grid-cols-2 gap-6">
               {favorites.map((favorite, index) => {
                 const product = favorite.product || favorite;
-                const productKey = favorite.itemKey || product?.key || getSlug(product, index);
-                
+                // Force safe key for IMAGE_ASSET to avoid routing issues with slashes in S3 keys
+                const productKey = (favorite.itemType === 'IMAGE_ASSET' && favorite.itemId)
+                  ? `image-${favorite.itemId}`
+                  : (favorite.itemKey || product?.key || getSlug(product, index));
+
                 return (
                   <article
                     key={favorite.id || index}
@@ -204,7 +242,7 @@ export default function FavoritesPage() {
                             Giá tham khảo
                           </p>
                           <p className="text-[18px] font-semibold text-[#1B4332]">
-                            {favorite.itemPrice 
+                            {favorite.itemPrice
                               ? new Intl.NumberFormat("vi-VN").format(favorite.itemPrice) + " ₫"
                               : product?.price || "Liên hệ"}
                           </p>
@@ -217,7 +255,7 @@ export default function FavoritesPage() {
                       <div className="flex flex-col sm:flex-row gap-3 mt-auto">
                         <button
                           onClick={() => {
-                            if (favorite.itemType === 'PRODUCT') {
+                            if (favorite.itemType === 'PRODUCT' || favorite.itemType === 'IMAGE_ASSET') {
                               navigate(`/product/${productKey}`, { state: { product } });
                             } else if (favorite.itemType === 'FABRIC') {
                               navigate(`/fabrics/${favorite.itemId}`);

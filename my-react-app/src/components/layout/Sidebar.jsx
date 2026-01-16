@@ -10,8 +10,10 @@ export default function Sidebar({ onNavigate }) {
     { label: "Khách hàng", path: "/customers" },
     { label: "Thợ may", path: "/tailors" },
     { label: "Mẫu thiết kế", path: "/styles" },
+    { label: "🖼 Quản lý ảnh", path: "/images" },
     { label: "Hóa đơn", path: "/invoice" },
     { label: "🎟️ Mã giảm giá", path: "/admin/promotions" },
+    { label: "⚡ Flash Sale", path: "/admin/flash-sales" },
     { label: "Giao dịch", path: "/transactions" },
     { label: "Kho vải", path: "/fabric-inventory" },
     { label: "Vải / Booking", path: "/fabric-requests" },
@@ -31,8 +33,7 @@ export default function Sidebar({ onNavigate }) {
               if (onNavigate) onNavigate();
             }}
             className={({ isActive }) =>
-              `px-4 py-2 rounded-lg transition ${
-                isActive ? "bg-green-700 font-semibold" : "hover:bg-green-800"
+              `px-4 py-2 rounded-lg transition ${isActive ? "bg-green-700 font-semibold" : "hover:bg-green-800"
               }`
             }
           >

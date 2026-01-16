@@ -67,7 +67,7 @@ public interface ReviewService {
     /**
      * Get review statistics (giống Shopee)
      */
-    ReviewStatisticsResponse getStatistics(Long productId, Long orderId, ReviewType type);
+    ReviewStatisticsResponse getStatistics(Long productId, Long imageAssetId, Long orderId, ReviewType type);
 
     /**
      * Check user đã review product chưa
@@ -78,5 +78,14 @@ public interface ReviewService {
      * Check user đã review order chưa
      */
     boolean hasReviewedOrder(Long orderId, Long userId);
-}
 
+    /**
+     * Create image asset review
+     */
+    ReviewResponse createImageAssetReview(Long imageAssetId, ReviewRequest request, Long userId);
+
+    /**
+     * Check user đã review image asset chưa
+     */
+    boolean hasReviewedImageAsset(Long imageAssetId, Long userId);
+}

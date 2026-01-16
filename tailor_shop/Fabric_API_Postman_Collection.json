@@ -1,0 +1,672 @@
+{
+	"info": {
+		"name": "Fabric API Collection",
+		"description": "API collection cho module Fabric - Quản lý vải (giống Shopee)",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:8080",
+			"type": "string"
+		},
+		{
+			"key": "token",
+			"value": "",
+			"type": "string"
+		}
+	],
+	"item": [
+		{
+			"name": "Fabric Management",
+			"item": [
+				{
+					"name": "List Fabrics (Public)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/fabrics?page=0&size=20&sort=displayOrder,asc",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "fabrics"],
+							"query": [
+								{
+									"key": "page",
+									"value": "0",
+									"description": "Page number (0-indexed)"
+								},
+								{
+									"key": "size",
+									"value": "20",
+									"description": "Page size"
+								},
+								{
+									"key": "sort",
+									"value": "displayOrder,asc",
+									"description": "Sort field and direction"
+								},
+								{
+									"key": "category",
+									"value": "COTTON",
+									"description": "Filter by category: COTTON, SILK, WOOL, POLYESTER, LINEN, DENIM, LEATHER, SYNTHETIC, BLEND, OTHER",
+									"disabled": true
+								},
+								{
+									"key": "color",
+									"value": "",
+									"description": "Filter by color",
+									"disabled": true
+								},
+								{
+									"key": "pattern",
+									"value": "SOLID",
+									"description": "Filter by pattern: SOLID, STRIPED, CHECKED, FLORAL, GEOMETRIC, ABSTRACT, POLKA_DOT, ANIMAL_PRINT, TEXTURED, OTHER",
+									"disabled": true
+								},
+								{
+									"key": "material",
+									"value": "",
+									"description": "Filter by material",
+									"disabled": true
+								},
+								{
+									"key": "origin",
+									"value": "",
+									"description": "Filter by origin",
+									"disabled": true
+								},
+								{
+									"key": "isAvailable",
+									"value": "true",
+									"description": "Filter by availability",
+									"disabled": true
+								},
+								{
+									"key": "isFeatured",
+									"value": "false",
+									"description": "Filter featured fabrics",
+									"disabled": true
+								},
+								{
+									"key": "isLowStock",
+									"value": "false",
+									"description": "Filter low stock fabrics",
+									"disabled": true
+								},
+								{
+									"key": "minPrice",
+									"value": "",
+									"description": "Minimum price",
+									"disabled": true
+								},
+								{
+									"key": "maxPrice",
+									"value": "",
+									"description": "Maximum price",
+									"disabled": true
+								},
+								{
+									"key": "keyword",
+									"value": "",
+									"description": "Search keyword (name, description, code)",
+									"disabled": true
+								}
+							]
+						},
+						"description": "Lấy danh sách vải với filter và pagination (public - không cần auth)"
+					}
+				},
+				{
+					"name": "Get Fabric Detail by ID (Public)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/fabrics/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "fabrics", "1"]
+						},
+						"description": "Lấy chi tiết vải theo ID (public - không cần auth)"
+					}
+				},
+				{
+					"name": "Get Fabric Detail by Code (Public)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/fabrics/code/FAB001",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "fabrics", "code", "FAB001"]
+						},
+						"description": "Lấy chi tiết vải theo code (public - không cần auth)"
+					}
+				},
+				{
+					"name": "Get Fabric Detail by Slug (Public)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/fabrics/slug/cotton-fabric-001",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "fabrics", "slug", "cotton-fabric-001"]
+						},
+						"description": "Lấy chi tiết vải theo slug (public - không cần auth)"
+					}
+				},
+				{
+					"name": "Create Fabric (Admin/Staff)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"code\": \"FAB001\",\n    \"name\": \"Cotton Fabric Premium\",\n    \"slug\": \"cotton-fabric-premium\",\n    \"description\": \"High quality cotton fabric, soft and durable\",\n    \"category\": \"COTTON\",\n    \"material\": \"100% Cotton\",\n    \"color\": \"White\",\n    \"pattern\": \"SOLID\",\n    \"width\": 1.5,\n    \"weight\": 0.2,\n    \"pricePerMeter\": 150000,\n    \"image\": \"https://example.com/fabric1.jpg\",\n    \"gallery\": [\n        \"https://example.com/fabric1-1.jpg\",\n        \"https://example.com/fabric1-2.jpg\"\n    ],\n    \"origin\": \"Vietnam\",\n    \"careInstructions\": \"Machine wash cold, tumble dry low\",\n    \"isAvailable\": true,\n    \"isFeatured\": false,\n    \"displayOrder\": 1\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/fabrics",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "fabrics"]
+						},
+						"description": "Tạo mới vải (chỉ Admin/Staff)"
+					}
+				},
+				{
+					"name": "Update Fabric (Admin/Staff)",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"code\": \"FAB001\",\n    \"name\": \"Cotton Fabric Premium Updated\",\n    \"slug\": \"cotton-fabric-premium\",\n    \"description\": \"Updated description\",\n    \"category\": \"COTTON\",\n    \"material\": \"100% Cotton\",\n    \"color\": \"White\",\n    \"pattern\": \"SOLID\",\n    \"width\": 1.5,\n    \"weight\": 0.2,\n    \"pricePerMeter\": 160000,\n    \"image\": \"https://example.com/fabric1.jpg\",\n    \"gallery\": [\n        \"https://example.com/fabric1-1.jpg\"\n    ],\n    \"origin\": \"Vietnam\",\n    \"careInstructions\": \"Machine wash cold\",\n    \"isAvailable\": true,\n    \"isFeatured\": true,\n    \"displayOrder\": 1\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/fabrics/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "fabrics", "1"]
+						},
+						"description": "Cập nhật vải (chỉ Admin/Staff)"
+					}
+				},
+				{
+					"name": "Delete Fabric (Admin/Staff)",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/fabrics/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "fabrics", "1"]
+						},
+						"description": "Xóa vải (chỉ Admin/Staff)"
+					}
+				},
+				{
+					"name": "Get Fabric Inventory (Admin/Staff)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/fabrics/1/inventory?page=0&size=20",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "fabrics", "1", "inventory"],
+							"query": [
+								{
+									"key": "page",
+									"value": "0"
+								},
+								{
+									"key": "size",
+									"value": "20"
+								}
+							]
+						},
+						"description": "Lấy danh sách inventory của vải (chỉ Admin/Staff)"
+					}
+				},
+				{
+					"name": "Update Fabric Inventory (Admin/Staff)",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"quantity\": 100.5,\n    \"unit\": \"METER\",\n    \"location\": \"Kho A - Kệ 1\",\n    \"notes\": \"New stock arrived\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/fabrics/1/inventory",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "fabrics", "1", "inventory"]
+						},
+						"description": "Cập nhật inventory của vải (chỉ Admin/Staff)"
+					}
+				}
+			]
+		},
+		{
+			"name": "Fabric Hold Requests",
+			"item": [
+				{
+					"name": "Create Hold Request (Customer)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"fabricId\": 1,\n    \"type\": \"HOLD\",\n    \"quantity\": 5.0,\n    \"expiryDate\": \"2025-01-07\",\n    \"notes\": \"Please hold this fabric for me\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/fabrics/hold-requests",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "fabrics", "hold-requests"]
+						},
+						"description": "Tạo yêu cầu giữ vải (Customer)"
+					}
+				},
+				{
+					"name": "Create Visit Request (Customer)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"fabricId\": 1,\n    \"type\": \"VISIT\",\n    \"requestedDate\": \"2025-01-05\",\n    \"requestedTime\": \"14:00:00\",\n    \"notes\": \"I want to see this fabric in person\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/fabrics/hold-requests",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "fabrics", "hold-requests"]
+						},
+						"description": "Tạo yêu cầu đặt lịch đến xem vải (Customer)"
+					}
+				},
+				{
+					"name": "List Hold Requests (Customer/Admin/Staff)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/fabrics/hold-requests?page=0&size=20&sort=createdAt,desc",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "fabrics", "hold-requests"],
+							"query": [
+								{
+									"key": "fabricId",
+									"value": "",
+									"description": "Filter by fabric ID",
+									"disabled": true
+								},
+								{
+									"key": "userId",
+									"value": "",
+									"description": "Filter by user ID (Admin/Staff only)",
+									"disabled": true
+								},
+								{
+									"key": "page",
+									"value": "0"
+								},
+								{
+									"key": "size",
+									"value": "20"
+								},
+								{
+									"key": "sort",
+									"value": "createdAt,desc"
+								}
+							]
+						},
+						"description": "Lấy danh sách hold requests (Customer: chỉ thấy của mình, Admin/Staff: thấy tất cả)"
+					}
+				},
+				{
+					"name": "Get Hold Request Detail",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/fabrics/hold-requests/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "fabrics", "hold-requests", "1"]
+						},
+						"description": "Lấy chi tiết hold request"
+					}
+				},
+				{
+					"name": "Update Hold Request Status (Admin/Staff)",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"status\": \"APPROVED\",\n    \"notes\": \"Approved by staff\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/fabrics/hold-requests/1/status",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "fabrics", "hold-requests", "1", "status"]
+						},
+						"description": "Cập nhật trạng thái hold request (chỉ Admin/Staff). Status: PENDING, APPROVED, REJECTED, COMPLETED, CANCELLED"
+					}
+				},
+				{
+					"name": "Cancel Hold Request (Customer)",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/fabrics/hold-requests/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "fabrics", "hold-requests", "1"]
+						},
+						"description": "Hủy hold request (chỉ Customer - chỉ hủy được của chính mình)"
+					}
+				}
+			]
+		},
+		{
+			"name": "Fabric Orders",
+			"item": [
+				{
+					"name": "Checkout (Customer)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"cartItemIds\": [1, 2, 3],\n    \"promoCode\": \"FABRIC10\",\n    \"shippingName\": \"Nguyễn Văn A\",\n    \"shippingPhone\": \"0901234567\",\n    \"shippingAddress\": \"123 Đường ABC, Phường XYZ, Quận 1, TP.HCM\",\n    \"paymentMethod\": \"COD\",\n    \"notes\": \"Giao hàng vào buổi sáng\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/fabric-orders/checkout",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "fabric-orders", "checkout"]
+						},
+						"description": "Checkout - Tạo đơn hàng từ giỏ hàng (Customer). PaymentMethod: COD, BANK_TRANSFER, CREDIT_CARD, DEBIT_CARD, E_WALLET, INSTALLMENT"
+					}
+				},
+				{
+					"name": "List My Orders (Customer)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/fabric-orders?page=0&size=20",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "fabric-orders"],
+							"query": [
+								{
+									"key": "page",
+									"value": "0"
+								},
+								{
+									"key": "size",
+									"value": "20"
+								}
+							]
+						},
+						"description": "Lấy danh sách đơn hàng của tôi (Customer)"
+					}
+				},
+				{
+					"name": "Get Order Detail (Customer)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/fabric-orders/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "fabric-orders", "1"]
+						},
+						"description": "Lấy chi tiết đơn hàng (Customer)"
+					}
+				},
+				{
+					"name": "Cancel Order (Customer)",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/fabric-orders/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "fabric-orders", "1"]
+						},
+						"description": "Hủy đơn hàng (Customer)"
+					}
+				},
+				{
+					"name": "Process Payment (Customer)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"orderId\": 1,\n    \"provider\": \"VNPAY\",\n    \"amount\": 500000,\n    \"callbackUrl\": \"http://localhost:5173/payment/callback\",\n    \"returnUrl\": \"http://localhost:5173/payment/return\",\n    \"extraData\": \"{}\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/fabric-orders/payment",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "fabric-orders", "payment"]
+						},
+						"description": "Thanh toán đơn hàng (Customer). Provider: VNPAY, MOMO, ZALOPAY, etc."
+					}
+				}
+			]
+		},
+		{
+			"name": "Fabric Promo",
+			"item": [
+				{
+					"name": "Apply Promo Code (Customer)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"cartItemIds\": [1, 2, 3],\n    \"promoCode\": \"FABRIC10\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/fabrics/apply-promo",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "fabrics", "apply-promo"]
+						},
+						"description": "Áp dụng mã giảm giá khi mua vải (Customer)"
+					}
+				}
+			]
+		}
+	]
+}
+

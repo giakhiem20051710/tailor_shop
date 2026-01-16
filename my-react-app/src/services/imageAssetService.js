@@ -25,7 +25,7 @@ class ImageAssetService {
   async upload(file, options = {}) {
     const formData = new FormData();
     formData.append('file', file);
-    
+
     if (options.description) {
       formData.append('description', options.description);
     }
@@ -97,7 +97,7 @@ class ImageAssetService {
   async filter(filters = {}) {
     const { category, type, gender, page = 0, size = 20 } = filters;
     const params = new URLSearchParams();
-    
+
     if (category) params.append('category', category);
     if (type) params.append('type', type);
     if (gender) params.append('gender', gender);
@@ -115,6 +115,94 @@ class ImageAssetService {
    */
   async getByTemplateId(templateId) {
     return httpClient.get(API_ENDPOINTS.IMAGE_ASSET.BY_TEMPLATE(templateId));
+  }
+
+  /**
+   * Xóa Image Asset
+   * @param {number} id - Image Asset ID
+   * @returns {Promise<void>}
+   */
+  async delete(id) {
+    return httpClient.delete(API_ENDPOINTS.IMAGE_ASSET.DELETE(id));
+  }
+
+  /**
+   * Xóa nhiều Image Assets cùng lúc
+   * @param {Array<number>} ids - Array of Image Asset IDs
+   * @returns {Promise<Object>} { total, successCount, failedCount, successIds, failedIds }
+   */
+  async bulkDelete(ids) {
+    return httpClient.delete(API_ENDPOINTS.IMAGE_ASSET.BULK_DELETE, ids);
+  }
+
+  /**
+   * Cleanup các checksum orphan (không có ImageAsset tương ứng)
+   * Dùng để xử lý các checksum còn sót lại sau khi xóa ImageAsset trước khi có code cleanup
+   * @returns {Promise<Object>} { deletedCount, message }
+   */
+  async cleanupOrphanChecksums() {
+    return httpClient.post(API_ENDPOINTS.IMAGE_ASSET.CLEANUP_ORPHAN_CHECKSUMS);
+  }
+
+  /**
+   * Phân tích ảnh với Gemini AI và upload lên S3
+   * @param {File} file - File ảnh
+   * @returns {Promise<Object>} ProductAnalysisResult với thông tin chi tiết + URL ảnh
+   */
+  async analyzeWithAI(file) {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    return httpClient.post(`${API_ENDPOINTS.IMAGE_ASSET.BASE}/analyze`, formData, {
+      headers: {}, // Let browser set Content-Type for FormData
+    });
+  }
+
+  /**
+   * Chỉ phân tích ảnh với AI, không upload (dùng cho preview/edit trước khi lưu)
+   * @param {File} file - File ảnh
+   * @returns {Promise<Object>} ProductAnalysisResult
+   */
+  async analyzeOnly(file) {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    return httpClient.post(`${API_ENDPOINTS.IMAGE_ASSET.BASE}/analyze-only`, formData, {
+      headers: {}, // Let browser set Content-Type for FormData
+    });
+  }
+
+  /**
+   * Lưu ảnh với metadata đã được user chỉnh sửa
+   * @param {File} file - File ảnh
+   * @param {Object} editedMetadata - Metadata đã chỉnh sửa (ProductAnalysisResult)
+   * @returns {Promise<Object>} ProductAnalysisResult với URL ảnh đã upload
+   */
+  async saveWithMetadata(file, editedMetadata) {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('metadata', JSON.stringify(editedMetadata));
+
+    return httpClient.post(`${API_ENDPOINTS.IMAGE_ASSET.BASE}/save-with-metadata`, formData, {
+      headers: {}, // Let browser set Content-Type for FormData
+    });
+  }
+
+  /**
+   * Phân tích nhiều ảnh với Gemini AI cùng lúc (Bulk Analysis)
+   * @param {File[]} files - Mảng các file ảnh
+   * @returns {Promise<Object>} Mảng ProductAnalysisResult
+   */
+  async analyzeBulkWithAI(files) {
+    const formData = new FormData();
+    files.forEach((file) => {
+      formData.append('files', file);
+    });
+
+    return httpClient.post(API_ENDPOINTS.IMAGE_ASSET.ANALYZE_BULK, formData, {
+      headers: {}, // Let browser set Content-Type for FormData
+      timeout: 300000, // 5 minutes timeout for bulk processing
+    });
   }
 
   /**

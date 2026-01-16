@@ -3,9 +3,9 @@ spring:
     name: tailor-shop
 
   datasource:
-    url: jdbc:mysql://localhost:3306/tailor_shop?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&createDatabaseIfNotExist=true
-    username: root
-    password: victoryac7
+    url: ${DB_URL:jdbc:mysql://localhost:3306/tailor_shop?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&createDatabaseIfNotExist=true}
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:}
     driver-class-name: com.mysql.cj.jdbc.Driver
 
   jpa:
@@ -23,11 +23,23 @@ spring:
     baseline-on-migrate: true
     validate-on-migrate: true
 
+  # Redis Configuration
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      timeout: 2000ms
+  cache:
+    type: redis
+    redis:
+      time-to-live: 300000  # 5 minutes default TTL
+
   mail:
-    host: smtp.gmail.com
-    port: 587
-    username: hoang106408@donga.edu.vn
-    password: vzzvzqynxjyvouvr
+    host: ${MAIL_HOST:smtp.gmail.com}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
     properties:
       mail:
         smtp:
@@ -57,16 +69,19 @@ image-processing:
   convert-to-webp: false           # Chuyển đổi sang WebP (cần thư viện webp-imageio)
 
 jwt:
-  secret: change-me-256-bit-secret-key-min-length-32-bytes!!!
-  expiration: 86400000
+  secret: ${JWT_SECRET:change-me-256-bit-secret-key-min-length-32-bytes!!!}
+  # Access token: 30 minutes (for security)
+  expiration: ${JWT_EXPIRATION:1800000}
+  # Refresh token: 7 days
+  refresh-expiration: ${JWT_REFRESH_EXPIRATION:604800000}
 
 aws:
   s3:
-    bucket:
-    region:
-    access-key: 
-    secret-key: 
-    base-url: 
+    bucket: ${AWS_S3_BUCKET:carbonx-storagee}
+    region: ${AWS_S3_REGION:ap-southeast-2}
+    access-key: ${AWS_ACCESS_KEY:}
+    secret-key: ${AWS_SECRET_KEY:}
+    base-url: ${AWS_S3_BASE_URL:https://carbonx-storagee.s3.ap-southeast-2.amazonaws.com}
 
 bulk-upload:
   async:
@@ -83,3 +98,58 @@ bulk-upload:
   s3:
     presigned-url-expiration-hours: 1
     max-file-size-mb: 50
+
+# Gemini AI Configuration
+gemini:
+  api:
+    key: ${GEMINI_API_KEY:}
+    url: https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent
+  model: gemini-2.5-pro
+  enabled: true
+
+# CORS Configuration (for production)
+cors:
+  allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost,http://localhost:80,http://localhost:3000,http://localhost:5173,http://localhost:5174,http://localhost:5175,http://127.0.0.1,http://127.0.0.1:80,http://127.0.0.1:3000,http://127.0.0.1:5173}
+
+# Actuator Configuration (SECURED)
+management:
+  endpoints:
+    web:
+      exposure:
+        # Only expose necessary endpoints - NOT "*"
+        include: health,info,prometheus
+      base-path: /actuator
+
+  endpoint:
+    prometheus:
+      enabled: true
+    health:
+      # Only show details to authenticated users
+      show-details: when-authorized
+    env:
+      enabled: false
+    beans:
+      enabled: false
+    mappings:
+      enabled: false
+
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+    tags:
+      application: ${spring.application.name}
+      environment: ${ENVIRONMENT:dev}
+
+  health:
+    mail:
+      enabled: false
+
+# Rate Limiting Configuration
+rate-limit:
+  enabled: ${RATE_LIMIT_ENABLED:true}
+  requests-per-minute: ${RATE_LIMIT_RPM:100}
+  requests-per-second: ${RATE_LIMIT_RPS:10}
+  whitelist:
+    - 127.0.0.1
+    - localhost

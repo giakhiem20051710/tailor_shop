@@ -6,7 +6,11 @@ import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
+import java.util.Set;
+import java.util.HashSet;
 import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.OffsetDateTime;
 
@@ -34,6 +38,12 @@ public class AppointmentEntity {
     @Column(nullable = false, length = 20)
     private AppointmentType type;
 
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "appointment_secondary_types", joinColumns = @JoinColumn(name = "appointment_id"))
+    @Enumerated(EnumType.STRING)
+    @Column(name = "type")
+    private Set<AppointmentType> secondaryTypes = new HashSet<>();
+
     @Column(name = "appointment_date", nullable = false)
     private LocalDate appointmentDate;
 
@@ -47,6 +57,12 @@ public class AppointmentEntity {
     @Column(length = 255)
     private String notes;
 
+    @Column(name = "duration_minutes")
+    private Integer durationMinutes;
+
+    @Column(name = "estimated_end_time")
+    private LocalTime estimatedEndTime;
+
     @Column(name = "is_deleted", nullable = false)
     private Boolean isDeleted = false;
 
@@ -57,6 +73,15 @@ public class AppointmentEntity {
     @UpdateTimestamp
     @Column(name = "updated_at", nullable = false)
     private OffsetDateTime updatedAt;
+
+    @Column(name = "reschedule_count")
+    private Integer rescheduleCount = 0;
+
+    @Column(name = "last_rescheduled_at")
+    private LocalDateTime lastRescheduledAt;
+
+    @Column(name = "reschedule_history", columnDefinition = "TEXT")
+    private String rescheduleHistory;
 
     public Long getId() {
         return id;
@@ -90,8 +115,17 @@ public class AppointmentEntity {
         return type;
     }
 
+
     public void setType(AppointmentType type) {
         this.type = type;
+    }
+
+    public Set<AppointmentType> getSecondaryTypes() {
+        return secondaryTypes;
+    }
+
+    public void setSecondaryTypes(Set<AppointmentType> secondaryTypes) {
+        this.secondaryTypes = secondaryTypes;
     }
 
     public LocalDate getAppointmentDate() {
@@ -141,5 +175,44 @@ public class AppointmentEntity {
     public OffsetDateTime getUpdatedAt() {
         return updatedAt;
     }
-}
 
+    public Integer getDurationMinutes() {
+        return durationMinutes;
+    }
+
+    public void setDurationMinutes(Integer durationMinutes) {
+        this.durationMinutes = durationMinutes;
+    }
+
+    public LocalTime getEstimatedEndTime() {
+        return estimatedEndTime;
+    }
+
+    public void setEstimatedEndTime(LocalTime estimatedEndTime) {
+        this.estimatedEndTime = estimatedEndTime;
+    }
+
+    public Integer getRescheduleCount() {
+        return rescheduleCount;
+    }
+
+    public void setRescheduleCount(Integer rescheduleCount) {
+        this.rescheduleCount = rescheduleCount;
+    }
+
+    public LocalDateTime getLastRescheduledAt() {
+        return lastRescheduledAt;
+    }
+
+    public void setLastRescheduledAt(LocalDateTime lastRescheduledAt) {
+        this.lastRescheduledAt = lastRescheduledAt;
+    }
+
+    public String getRescheduleHistory() {
+        return rescheduleHistory;
+    }
+
+    public void setRescheduleHistory(String rescheduleHistory) {
+        this.rescheduleHistory = rescheduleHistory;
+    }
+}

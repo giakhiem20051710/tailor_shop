@@ -1,26 +1,37 @@
 package com.example.tailor_shop.modules.appointment.service.impl;
 
 import com.example.tailor_shop.config.exception.BadRequestException;
+import com.example.tailor_shop.config.AppointmentConfig;
 import com.example.tailor_shop.config.exception.NotFoundException;
-import com.example.tailor_shop.modules.appointment.domain.*;
+import com.example.tailor_shop.modules.appointment.domain.AppointmentEntity;
+import com.example.tailor_shop.modules.appointment.domain.AppointmentStatus;
+import com.example.tailor_shop.modules.appointment.domain.AppointmentType;
+import com.example.tailor_shop.modules.appointment.domain.WorkingSlotEntity;
 import com.example.tailor_shop.modules.appointment.dto.*;
 import com.example.tailor_shop.modules.appointment.repository.AppointmentRepository;
 import com.example.tailor_shop.modules.appointment.repository.WorkingSlotRepository;
 import com.example.tailor_shop.modules.appointment.service.AppointmentService;
+import com.example.tailor_shop.modules.appointment.service.WorkingSlotService;
 import com.example.tailor_shop.modules.order.domain.OrderEntity;
+import com.example.tailor_shop.modules.order.domain.OrderStatus;
 import com.example.tailor_shop.modules.order.repository.OrderRepository;
 import com.example.tailor_shop.modules.user.domain.UserEntity;
+import com.example.tailor_shop.modules.user.domain.RoleEntity;
 import com.example.tailor_shop.modules.user.repository.UserRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -32,25 +43,28 @@ public class AppointmentServiceImpl implements AppointmentService {
     private static final LocalTime DEFAULT_END_TIME = LocalTime.of(23, 0);
 
     private final AppointmentRepository appointmentRepository;
-    private final WorkingSlotRepository workingSlotRepository;
     private final OrderRepository orderRepository;
     private final UserRepository userRepository;
+    private final WorkingSlotService workingSlotService;
+    private final WorkingSlotRepository workingSlotRepository; // Added this as it's used in the original code
 
     public AppointmentServiceImpl(AppointmentRepository appointmentRepository,
-                                 WorkingSlotRepository workingSlotRepository,
-                                 OrderRepository orderRepository,
-                                 UserRepository userRepository) {
+            UserRepository userRepository,
+            OrderRepository orderRepository,
+            WorkingSlotService workingSlotService,
+            WorkingSlotRepository workingSlotRepository) { // Added WorkingSlotRepository to constructor
         this.appointmentRepository = appointmentRepository;
-        this.workingSlotRepository = workingSlotRepository;
-        this.orderRepository = orderRepository;
         this.userRepository = userRepository;
+        this.orderRepository = orderRepository; // Added this as it was missing
+        this.workingSlotService = workingSlotService;
+        this.workingSlotRepository = workingSlotRepository; // Initialized WorkingSlotRepository
     }
 
     @Override
     @Transactional(readOnly = true)
     public Page<AppointmentResponse> list(Long staffId, Long customerId, LocalDate date,
-                                          AppointmentStatus status, AppointmentType type,
-                                          Long currentUserId, boolean isCustomer, Pageable pageable) {
+            AppointmentStatus status, AppointmentType type,
+            Long currentUserId, boolean isCustomer, Pageable pageable) {
         Long effectiveCustomer = customerId;
         if (isCustomer) {
             effectiveCustomer = currentUserId;
@@ -63,16 +77,17 @@ public class AppointmentServiceImpl implements AppointmentService {
             sortedPageable = org.springframework.data.domain.PageRequest.of(
                     pageable.getPageNumber(),
                     pageable.getPageSize(),
-                    org.springframework.data.domain.Sort.by("appointmentDate").ascending()
-            );
+                    org.springframework.data.domain.Sort.by("appointmentDate").ascending());
         }
-        Page<AppointmentEntity> page = appointmentRepository.search(staffId, effectiveCustomer, date, status, type, sortedPageable);
+        Page<AppointmentEntity> page = appointmentRepository.search(staffId, effectiveCustomer, date, status, type,
+                sortedPageable);
         // Sort results in memory by appointmentDate then appointmentTime
         List<AppointmentResponse> content = page.getContent().stream()
                 .map(this::toResponse)
                 .sorted((a1, a2) -> {
                     int dateCompare = a1.getAppointmentDate().compareTo(a2.getAppointmentDate());
-                    if (dateCompare != 0) return dateCompare;
+                    if (dateCompare != 0)
+                        return dateCompare;
                     return a1.getAppointmentTime().compareTo(a2.getAppointmentTime());
                 })
                 .collect(java.util.stream.Collectors.toList());
@@ -93,6 +108,17 @@ public class AppointmentServiceImpl implements AppointmentService {
 
     @Override
     public AppointmentResponse create(AppointmentRequest request, Long currentUserId) {
+        // Validate IDs
+        if (request.getOrderId() == null || request.getOrderId() <= 0) {
+            throw new BadRequestException("Order ID is required and must be greater than 0.");
+        }
+        if (request.getCustomerId() == null || request.getCustomerId() <= 0) {
+            throw new BadRequestException("Customer ID is required and must be greater than 0.");
+        }
+        if (request.getStaffId() != null && request.getStaffId() <= 0) {
+            throw new BadRequestException("Staff ID must be greater than 0 if provided.");
+        }
+
         OrderEntity order = orderRepository.findById(request.getOrderId())
                 .orElseThrow(() -> new NotFoundException("Order not found"));
         UserEntity customer = userRepository.findById(request.getCustomerId())
@@ -104,27 +130,127 @@ public class AppointmentServiceImpl implements AppointmentService {
         UserEntity staff = null;
         if (request.getStaffId() != null) {
             staff = userRepository.findById(request.getStaffId())
-                    .orElseThrow(() -> new NotFoundException("User with ID " + request.getStaffId() + " not found. Please check if the user exists and has STAFF role."));
+                    .orElseThrow(() -> new NotFoundException("User with ID " + request.getStaffId()
+                            + " not found. Please check if the user exists and has STAFF role."));
             String roleCode = staff.getRole() != null ? staff.getRole().getCode().toLowerCase() : "";
             if (!roleCode.equals("staff") && !roleCode.equals("admin")) {
-                throw new BadRequestException("User with ID " + request.getStaffId() + " must have STAFF or ADMIN role. Current role: " + roleCode);
+                throw new BadRequestException("User with ID " + request.getStaffId()
+                        + " must have STAFF or ADMIN role. Current role: " + roleCode);
             }
-            validateAppointmentTime(staff.getId(), request.getAppointmentDate(), request.getAppointmentTime(), null);
-            checkConflict(staff.getId(), request.getAppointmentDate(), request.getAppointmentTime(), null);
+
+            // Calculate duration and end time
+            int duration = calculateDuration(request.getType(), request.getSecondaryTypes(),
+                    request.getDurationMinutes());
+            LocalTime startTime = request.getAppointmentTime();
+            LocalTime endTime = startTime.plusMinutes(duration);
+
+            // Calculate effective range with buffer
+            LocalTime effectiveStart = startTime.minusMinutes(AppointmentConfig.BUFFER_MINUTES);
+            LocalTime effectiveEnd = endTime.plusMinutes(AppointmentConfig.BUFFER_MINUTES);
+
+            validateAppointmentTime(staff.getId(), request.getAppointmentDate(), startTime, endTime, null);
+            checkConflict(staff.getId(), request.getAppointmentDate(), effectiveStart, effectiveEnd, null);
+
+            request.setDurationMinutes(duration); // Store calculated duration back to request if needed or just use in
+                                                  // entity
         }
+
+        int duration = calculateDuration(request.getType(), request.getSecondaryTypes(), request.getDurationMinutes());
+        LocalTime startTime = request.getAppointmentTime();
+        LocalTime endTime = startTime.plusMinutes(duration);
 
         AppointmentEntity entity = new AppointmentEntity();
         entity.setOrder(order);
         entity.setCustomer(customer);
         entity.setStaff(staff);
         entity.setType(request.getType());
+        if (request.getSecondaryTypes() != null) {
+            entity.setSecondaryTypes(new HashSet<>(request.getSecondaryTypes()));
+        }
         entity.setAppointmentDate(request.getAppointmentDate());
-        entity.setAppointmentTime(request.getAppointmentTime());
+        entity.setAppointmentTime(startTime);
+        entity.setDurationMinutes(duration);
+        entity.setEstimatedEndTime(endTime);
         entity.setStatus(AppointmentStatus.scheduled);
         entity.setNotes(request.getNotes());
         entity.setIsDeleted(false);
 
         entity = appointmentRepository.save(entity);
+        return toResponse(entity);
+    }
+
+    @Override
+    public AppointmentResponse createByCustomer(CustomerAppointmentRequest request, Long customerId) {
+        // Validate customerId
+        if (customerId == null || customerId <= 0) {
+            throw new BadRequestException("Customer ID is required and must be greater than 0. Please login first.");
+        }
+
+        UserEntity customer = userRepository.findById(customerId)
+                .orElseThrow(() -> new NotFoundException("Customer not found"));
+
+        // Get working slot
+        WorkingSlotEntity workingSlot = workingSlotRepository.findById(request.getWorkingSlotId())
+                .orElseThrow(() -> new NotFoundException("Working slot not found"));
+
+        // Validate working slot is available
+        if (!workingSlot.getIsActive()) {
+            throw new BadRequestException("Working slot is not active");
+        }
+
+        // Get order if provided, otherwise create a dummy order for fabric visit
+        OrderEntity order;
+        if (request.getOrderId() != null) {
+            order = orderRepository.findById(request.getOrderId())
+                    .orElseThrow(() -> new NotFoundException("Order not found"));
+            if (!order.getCustomer().getId().equals(customerId)) {
+                throw new BadRequestException("Order does not belong to customer");
+            }
+        } else {
+            // Create a dummy order for fabric visit/appointment without order
+            order = new OrderEntity();
+            order.setCustomer(customer);
+            order.setStatus(OrderStatus.DRAFT);
+            order.setCode("FABRIC_VISIT_" + System.currentTimeMillis());
+            order.setNote(request.getNotes() != null ? request.getNotes() : "Lịch hẹn xem vải");
+            order.setTotal(java.math.BigDecimal.ZERO);
+            order = orderRepository.save(order);
+        }
+
+        // Create appointment
+        // Calculate duration (handle null durationMinutes)
+        int duration = calculateDuration(request.getType(),
+                request.getSecondaryTypes(),
+                request.getDurationMinutes());
+
+        LocalTime startTime = workingSlot.getStartTime();
+        LocalTime endTime = startTime.plusMinutes(duration);
+
+        AppointmentEntity entity = new AppointmentEntity();
+        entity.setOrder(order);
+        entity.setCustomer(customer);
+        entity.setStaff(workingSlot.getStaff());
+        entity.setType(request.getType());
+        if (request.getSecondaryTypes() != null) {
+            entity.setSecondaryTypes(new HashSet<>(request.getSecondaryTypes()));
+        }
+        entity.setAppointmentDate(
+                workingSlot.getEffectiveFrom() != null ? workingSlot.getEffectiveFrom() : LocalDate.now());
+        entity.setAppointmentTime(startTime);
+        entity.setDurationMinutes(duration);
+        entity.setEstimatedEndTime(endTime);
+        entity.setStatus(AppointmentStatus.scheduled);
+        entity.setNotes(request.getNotes());
+        entity.setIsDeleted(false);
+
+        entity = appointmentRepository.save(entity);
+
+        // Update working slot booked count (if needed)
+        // Note: WorkingSlotEntity doesn't have bookedCount field, so we skip this for
+        // now
+        // In a real implementation, you might want to add this field or track it
+        // separately
+
         return toResponse(entity);
     }
 
@@ -142,21 +268,47 @@ public class AppointmentServiceImpl implements AppointmentService {
         UserEntity staff = null;
         if (request.getStaffId() != null) {
             staff = userRepository.findById(request.getStaffId())
-                    .orElseThrow(() -> new NotFoundException("User with ID " + request.getStaffId() + " not found. Please check if the user exists and has STAFF role."));
+                    .orElseThrow(() -> new NotFoundException("User with ID " + request.getStaffId()
+                            + " not found. Please check if the user exists and has STAFF role."));
             String roleCode = staff.getRole() != null ? staff.getRole().getCode().toLowerCase() : "";
             if (!roleCode.equals("staff") && !roleCode.equals("admin")) {
-                throw new BadRequestException("User with ID " + request.getStaffId() + " must have STAFF or ADMIN role. Current role: " + roleCode);
+                throw new BadRequestException("User with ID " + request.getStaffId()
+                        + " must have STAFF or ADMIN role. Current role: " + roleCode);
             }
-            validateAppointmentTime(staff.getId(), request.getAppointmentDate(), request.getAppointmentTime(), id);
-            checkConflict(staff.getId(), request.getAppointmentDate(), request.getAppointmentTime(), id);
+
+            // Calculate duration and end time
+            int duration = calculateDuration(request.getType(), request.getSecondaryTypes(),
+                    request.getDurationMinutes());
+            LocalTime startTime = request.getAppointmentTime();
+            LocalTime endTime = startTime.plusMinutes(duration);
+
+            // Calculate effective range with buffer
+            LocalTime effectiveStart = startTime.minusMinutes(AppointmentConfig.BUFFER_MINUTES);
+            LocalTime effectiveEnd = endTime.plusMinutes(AppointmentConfig.BUFFER_MINUTES);
+
+            validateAppointmentTime(staff.getId(), request.getAppointmentDate(), startTime, endTime, id);
+            checkConflict(staff.getId(), request.getAppointmentDate(), effectiveStart, effectiveEnd, id);
+
+            request.setDurationMinutes(duration);
         }
+
+        int duration = calculateDuration(request.getType(), request.getSecondaryTypes(), request.getDurationMinutes());
+        LocalTime startTime = request.getAppointmentTime();
+        LocalTime endTime = startTime.plusMinutes(duration);
 
         entity.setOrder(order);
         entity.setCustomer(customer);
         entity.setStaff(staff);
         entity.setType(request.getType());
+        if (request.getSecondaryTypes() != null) {
+            entity.setSecondaryTypes(new HashSet<>(request.getSecondaryTypes()));
+        } else {
+            entity.getSecondaryTypes().clear();
+        }
         entity.setAppointmentDate(request.getAppointmentDate());
-        entity.setAppointmentTime(request.getAppointmentTime());
+        entity.setAppointmentTime(startTime);
+        entity.setDurationMinutes(duration);
+        entity.setEstimatedEndTime(endTime);
         entity.setNotes(request.getNotes());
 
         entity = appointmentRepository.save(entity);
@@ -188,6 +340,67 @@ public class AppointmentServiceImpl implements AppointmentService {
     }
 
     @Override
+    public AppointmentResponse reschedule(Long id, RescheduleRequest request, Long currentUserId) {
+        AppointmentEntity apt = appointmentRepository.findById(id)
+                .filter(a -> !a.getIsDeleted())
+                .orElseThrow(() -> new NotFoundException("Appointment not found"));
+
+        if (apt.getRescheduleCount() >= 3) {
+            throw new BadRequestException("Đã vượt quá số lần đổi lịch cho phép (3 lần)");
+        }
+
+        String oldSchedule = apt.getAppointmentDate() + " " + apt.getAppointmentTime();
+
+        // Calculate duration and end time
+        int duration = apt.getDurationMinutes() != null ? apt.getDurationMinutes() : 30;
+        LocalTime newStartTime = request.getNewTime();
+        LocalTime newEndTime = newStartTime.plusMinutes(duration);
+
+        // Calculate buffer
+        LocalTime effectiveStart = newStartTime.minusMinutes(AppointmentConfig.BUFFER_MINUTES);
+        LocalTime effectiveEnd = newEndTime.plusMinutes(AppointmentConfig.BUFFER_MINUTES);
+
+        // Validate
+        Long staffId = request.getStaffId() != null ? request.getStaffId() : apt.getStaff().getId();
+        validateAppointmentTime(staffId, request.getNewDate(), newStartTime, newEndTime, id);
+        checkConflict(staffId, request.getNewDate(), effectiveStart, effectiveEnd, id);
+
+        // Update
+        if (request.getStaffId() != null) {
+            apt.setStaff(userRepository.findById(request.getStaffId())
+                    .orElseThrow(() -> new NotFoundException("Staff not found")));
+        }
+        apt.setAppointmentDate(request.getNewDate());
+        apt.setAppointmentTime(request.getNewTime());
+        apt.setEstimatedEndTime(newEndTime);
+        apt.setRescheduleCount(apt.getRescheduleCount() + 1);
+        apt.setLastRescheduledAt(LocalDateTime.now());
+
+        // Log history
+        appendRescheduleHistory(apt, oldSchedule, request.getNewDate() + " " + request.getNewTime(),
+                request.getReason());
+
+        return toResponse(appointmentRepository.save(apt));
+    }
+
+    private void appendRescheduleHistory(AppointmentEntity apt, String from, String to, String reason) {
+        String entry = String.format("{\"from\":\"%s\",\"to\":\"%s\",\"reason\":\"%s\",\"at\":\"%s\"}",
+                from, to, reason != null ? reason : "", LocalDateTime.now());
+
+        String history = apt.getRescheduleHistory();
+        if (history == null || history.isEmpty()) {
+            history = "[" + entry + "]";
+        } else {
+            if (history.endsWith("]")) {
+                history = history.substring(0, history.length() - 1) + "," + entry + "]";
+            } else {
+                history = "[" + entry + "]";
+            }
+        }
+        apt.setRescheduleHistory(history);
+    }
+
+    @Override
     @Transactional(readOnly = true)
     public List<AppointmentResponse> getSchedule(Long staffId, LocalDate date, AppointmentType type) {
         List<AppointmentEntity> appointments = appointmentRepository.findByStaffAndDate(staffId, date);
@@ -200,277 +413,28 @@ public class AppointmentServiceImpl implements AppointmentService {
     @Override
     @Transactional(readOnly = true)
     public List<AvailableSlotResponse> getAvailableSlots(Long staffId, LocalDate date, Integer durationMinutes) {
+        // Simple implementation: List working slots as available blocks
+        // In a real implementation, we would subtract existing appointments
+        Page<WorkingSlotResponse> workingSlots = workingSlotService.listAll(date, Pageable.unpaged());
+        List<AvailableSlotResponse> available = new ArrayList<>();
+
+        for (WorkingSlotResponse ws : workingSlots.getContent()) {
+            if (staffId != null && !staffId.equals(ws.getStaffId()))
+                continue;
+            // Basic mapping
+            AvailableSlotResponse slot = new AvailableSlotResponse();
+            slot.setStartTime(ws.getStartTime());
+            slot.setEndTime(ws.getEndTime());
+            slot.setAvailable(true); // Simplified
+            available.add(slot);
+        }
+        return available;
+    }
+
+    private void validateAppointmentTime(Long staffId, LocalDate date, LocalTime startTime, LocalTime endTime,
+            Long excludeAppointmentId) {
         DayOfWeek dayOfWeek = date.getDayOfWeek();
-        
-        // Check if it's Sunday (not available)
-        if (dayOfWeek == DayOfWeek.SUNDAY) {
-            return new ArrayList<>();
-        }
 
-        // Check if the date is closed
-        List<WorkingSlotEntity> closedSlots = workingSlotRepository.findClosedByStaffAndDay(staffId, dayOfWeek, date);
-        if (!closedSlots.isEmpty()) {
-            // Ngày này đóng cửa, không có slot nào available
-            return new ArrayList<>();
-        }
-
-        List<AppointmentEntity> appointments = appointmentRepository.findByStaffAndDate(staffId, date);
-        List<LocalTime> bookedTimes = appointments.stream()
-                .map(AppointmentEntity::getAppointmentTime)
-                .collect(Collectors.toList());
-
-        List<AvailableSlotResponse> availableSlots = new ArrayList<>();
-        int duration = durationMinutes != null ? durationMinutes : 30; // default 30 minutes
-
-        // Check if tailor has custom working slots
-        List<WorkingSlotEntity> customSlots = workingSlotRepository.findActiveByStaffAndDay(staffId, dayOfWeek, date);
-        
-        if (!customSlots.isEmpty()) {
-            // Use custom working slots
-            for (WorkingSlotEntity slot : customSlots) {
-                LocalTime current = slot.getStartTime();
-                LocalTime end = slot.getEndTime();
-
-                while (current.plusMinutes(duration).isBefore(end) || current.plusMinutes(duration).equals(end)) {
-                    boolean isInBreak = slot.getBreakStartTime() != null && slot.getBreakEndTime() != null
-                            && !current.isBefore(slot.getBreakStartTime()) && current.isBefore(slot.getBreakEndTime());
-                    boolean isBooked = bookedTimes.contains(current);
-
-                    if (!isInBreak && !isBooked) {
-                        availableSlots.add(new AvailableSlotResponse(current, current.plusMinutes(duration), true));
-                    } else {
-                        availableSlots.add(new AvailableSlotResponse(current, current.plusMinutes(duration), false));
-                    }
-
-                    current = current.plusMinutes(duration);
-                }
-            }
-        } else {
-            // Use default working hours (7:00 - 23:00)
-            LocalTime current = DEFAULT_START_TIME;
-            LocalTime end = DEFAULT_END_TIME;
-
-            while (current.plusMinutes(duration).isBefore(end) || current.plusMinutes(duration).equals(end)) {
-                boolean isBooked = bookedTimes.contains(current);
-
-                if (!isBooked) {
-                    availableSlots.add(new AvailableSlotResponse(current, current.plusMinutes(duration), true));
-                } else {
-                    availableSlots.add(new AvailableSlotResponse(current, current.plusMinutes(duration), false));
-                }
-
-                current = current.plusMinutes(duration);
-            }
-        }
-
-        return availableSlots;
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public Page<WorkingSlotResponse> listWorkingSlots(Long staffId, LocalDate date, Pageable pageable) {
-        return workingSlotRepository.findByStaffIdAndIsActiveTrue(staffId, pageable)
-                .map(this::toWorkingSlotResponse);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public Page<WorkingSlotResponse> listAllWorkingSlots(LocalDate date, Pageable pageable) {
-        return workingSlotRepository.findByIsActiveTrue(pageable)
-                .map(this::toWorkingSlotResponse);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public WorkingSlotResponse getWorkingSlot(Long id) {
-        WorkingSlotEntity entity = workingSlotRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Working slot not found"));
-        return toWorkingSlotResponse(entity);
-    }
-
-    @Override
-    public WorkingSlotResponse createWorkingSlot(WorkingSlotRequest request, Long currentUserId) {
-        UserEntity staff = userRepository.findById(request.getStaffId())
-                .orElseThrow(() -> new NotFoundException("Staff not found"));
-
-        if (request.getStartTime().isAfter(request.getEndTime()) || request.getStartTime().equals(request.getEndTime())) {
-            throw new BadRequestException("Start time must be before end time");
-        }
-
-        if (request.getBreakStartTime() != null && request.getBreakEndTime() != null) {
-            if (request.getBreakStartTime().isAfter(request.getBreakEndTime()) || request.getBreakStartTime().equals(request.getBreakEndTime())) {
-                throw new BadRequestException("Break start time must be before break end time");
-            }
-            if (request.getBreakStartTime().isBefore(request.getStartTime()) || request.getBreakEndTime().isAfter(request.getEndTime())) {
-                throw new BadRequestException("Break time must be within working hours");
-            }
-        }
-
-        WorkingSlotEntity entity = new WorkingSlotEntity();
-        entity.setStaff(staff);
-        entity.setDayOfWeek(request.getDayOfWeek());
-        entity.setStartTime(request.getStartTime());
-        entity.setEndTime(request.getEndTime());
-        entity.setBreakStartTime(request.getBreakStartTime());
-        entity.setBreakEndTime(request.getBreakEndTime());
-        entity.setIsActive(request.getIsActive() != null ? request.getIsActive() : true);
-        entity.setEffectiveFrom(request.getEffectiveFrom());
-        entity.setEffectiveTo(request.getEffectiveTo());
-
-        entity = workingSlotRepository.save(entity);
-        return toWorkingSlotResponse(entity);
-    }
-
-    @Override
-    public WorkingSlotResponse updateWorkingSlot(Long id, WorkingSlotRequest request, Long currentUserId) {
-        WorkingSlotEntity entity = workingSlotRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Working slot not found"));
-
-        UserEntity staff = userRepository.findById(request.getStaffId())
-                .orElseThrow(() -> new NotFoundException("Staff not found"));
-
-        if (request.getStartTime().isAfter(request.getEndTime()) || request.getStartTime().equals(request.getEndTime())) {
-            throw new BadRequestException("Start time must be before end time");
-        }
-
-        if (request.getBreakStartTime() != null && request.getBreakEndTime() != null) {
-            if (request.getBreakStartTime().isAfter(request.getBreakEndTime()) || request.getBreakStartTime().equals(request.getBreakEndTime())) {
-                throw new BadRequestException("Break start time must be before break end time");
-            }
-            if (request.getBreakStartTime().isBefore(request.getStartTime()) || request.getBreakEndTime().isAfter(request.getEndTime())) {
-                throw new BadRequestException("Break time must be within working hours");
-            }
-        }
-
-        entity.setStaff(staff);
-        entity.setDayOfWeek(request.getDayOfWeek());
-        entity.setStartTime(request.getStartTime());
-        entity.setEndTime(request.getEndTime());
-        entity.setBreakStartTime(request.getBreakStartTime());
-        entity.setBreakEndTime(request.getBreakEndTime());
-        entity.setIsActive(request.getIsActive() != null ? request.getIsActive() : true);
-        entity.setEffectiveFrom(request.getEffectiveFrom());
-        entity.setEffectiveTo(request.getEffectiveTo());
-
-        entity = workingSlotRepository.save(entity);
-        return toWorkingSlotResponse(entity);
-    }
-
-    @Override
-    public void deleteWorkingSlot(Long id, Long currentUserId) {
-        WorkingSlotEntity entity = workingSlotRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Working slot not found"));
-        workingSlotRepository.delete(entity);
-    }
-
-    @Override
-    @Transactional
-    public List<WorkingSlotResponse> createBulkWorkingSlots(BulkWorkingSlotRequest request, Long currentUserId) {
-        UserEntity staff = userRepository.findById(request.getStaffId())
-                .orElseThrow(() -> new NotFoundException("User not found"));
-
-        if (request.getStartTime().isAfter(request.getEndTime()) || request.getStartTime().equals(request.getEndTime())) {
-            throw new BadRequestException("Start time must be before end time");
-        }
-
-        if (request.getBreakStartTime() != null && request.getBreakEndTime() != null) {
-            if (request.getBreakStartTime().isAfter(request.getBreakEndTime()) || 
-                    request.getBreakStartTime().equals(request.getBreakEndTime())) {
-                throw new BadRequestException("Break start time must be before break end time");
-            }
-            if (request.getBreakStartTime().isBefore(request.getStartTime()) || 
-                    request.getBreakEndTime().isAfter(request.getEndTime())) {
-                throw new BadRequestException("Break time must be within working hours");
-            }
-        }
-
-        List<WorkingSlotResponse> results = new ArrayList<>();
-        for (DayOfWeek dayOfWeek : request.getDaysOfWeek()) {
-            WorkingSlotEntity entity = new WorkingSlotEntity();
-            entity.setStaff(staff);
-            entity.setDayOfWeek(dayOfWeek);
-            entity.setStartTime(request.getStartTime());
-            entity.setEndTime(request.getEndTime());
-            entity.setBreakStartTime(request.getBreakStartTime());
-            entity.setBreakEndTime(request.getBreakEndTime());
-            entity.setIsActive(request.getIsActive() != null ? request.getIsActive() : true);
-            entity.setEffectiveFrom(request.getEffectiveFrom());
-            entity.setEffectiveTo(request.getEffectiveTo());
-
-            entity = workingSlotRepository.save(entity);
-            results.add(toWorkingSlotResponse(entity));
-        }
-
-        return results;
-    }
-
-    @Override
-    @Transactional
-    public void resetToDefaultWorkingHours(Long staffId, Long currentUserId) {
-        UserEntity staff = userRepository.findById(staffId)
-                .orElseThrow(() -> new NotFoundException("User not found"));
-
-        // Delete all custom working slots for this staff
-        List<WorkingSlotEntity> customSlots = workingSlotRepository
-                .findByStaffIdAndIsActiveTrue(staffId, org.springframework.data.domain.Pageable.unpaged())
-                .getContent();
-        workingSlotRepository.deleteAll(customSlots);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public WorkingHoursResponse getWorkingHours(Long staffId) {
-        UserEntity staff = userRepository.findById(staffId)
-                .orElseThrow(() -> new NotFoundException("User not found"));
-
-        WorkingHoursResponse response = new WorkingHoursResponse();
-        response.setStaffId(staff.getId());
-        response.setStaffName(staff.getName());
-        response.setStaffRole(staff.getRole() != null ? staff.getRole().getCode() : null);
-
-        List<WorkingHoursResponse.DayWorkingHours> workingHours = new ArrayList<>();
-        
-        // Days Monday to Saturday
-        DayOfWeek[] workDays = {DayOfWeek.MONDAY, DayOfWeek.TUESDAY, DayOfWeek.WEDNESDAY, 
-                DayOfWeek.THURSDAY, DayOfWeek.FRIDAY, DayOfWeek.SATURDAY};
-
-        for (DayOfWeek day : workDays) {
-            WorkingHoursResponse.DayWorkingHours dayHours = new WorkingHoursResponse.DayWorkingHours();
-            dayHours.setDayOfWeek(day);
-
-            // Check if there are custom working slots for this day
-            List<WorkingSlotEntity> customSlots = workingSlotRepository.findActiveByStaffAndDay(
-                    staffId, day, LocalDate.now());
-
-            if (!customSlots.isEmpty()) {
-                // Use first custom slot (assuming one slot per day)
-                WorkingSlotEntity slot = customSlots.get(0);
-                dayHours.setStartTime(slot.getStartTime());
-                dayHours.setEndTime(slot.getEndTime());
-                dayHours.setBreakStartTime(slot.getBreakStartTime());
-                dayHours.setBreakEndTime(slot.getBreakEndTime());
-                dayHours.setIsCustom(true);
-                dayHours.setSource("custom");
-            } else {
-                // Use default hours
-                dayHours.setStartTime(DEFAULT_START_TIME);
-                dayHours.setEndTime(DEFAULT_END_TIME);
-                dayHours.setBreakStartTime(null);
-                dayHours.setBreakEndTime(null);
-                dayHours.setIsCustom(false);
-                dayHours.setSource("default");
-            }
-
-            workingHours.add(dayHours);
-        }
-
-        response.setWorkingHours(workingHours);
-        return response;
-    }
-
-    private void validateAppointmentTime(Long staffId, LocalDate date, LocalTime time, Long excludeAppointmentId) {
-        DayOfWeek dayOfWeek = date.getDayOfWeek();
-        
         // Check if it's Sunday (not allowed)
         if (dayOfWeek == DayOfWeek.SUNDAY) {
             throw new BadRequestException("Appointments cannot be scheduled on Sunday");
@@ -483,32 +447,68 @@ public class AppointmentServiceImpl implements AppointmentService {
         }
 
         // Check if time is within default working hours (7:00 - 23:00)
-        if (time.isBefore(DEFAULT_START_TIME) || !time.isBefore(DEFAULT_END_TIME)) {
-            throw new BadRequestException("Appointment time must be between 07:00 and 23:00");
+        // Check both start and end time
+        if (startTime.isBefore(DEFAULT_START_TIME)
+                || !endTime.isBefore(DEFAULT_END_TIME) && !endTime.equals(DEFAULT_END_TIME)) {
+            // Allowing endTime to be exactly 23:00
+            if (startTime.isBefore(DEFAULT_START_TIME) || endTime.isAfter(DEFAULT_END_TIME)) {
+                throw new BadRequestException("Appointment time must be between 07:00 and 23:00");
+            }
         }
 
         // If staff has custom working slots, validate against them
         List<WorkingSlotEntity> slots = workingSlotRepository.findActiveByStaffAndDay(staffId, dayOfWeek, date);
         if (!slots.isEmpty()) {
             boolean isValid = slots.stream().anyMatch(slot -> {
-                boolean inWorkingHours = !time.isBefore(slot.getStartTime()) && time.isBefore(slot.getEndTime());
-                boolean notInBreak = slot.getBreakStartTime() == null || slot.getBreakEndTime() == null
-                        || time.isBefore(slot.getBreakStartTime()) || !time.isBefore(slot.getBreakEndTime());
+                boolean startsInSlot = !startTime.isBefore(slot.getStartTime())
+                        && startTime.isBefore(slot.getEndTime());
+                boolean endsInSlot = !endTime.isBefore(slot.getStartTime())
+                        && (endTime.isBefore(slot.getEndTime()) || endTime.equals(slot.getEndTime()));
+
+                boolean inWorkingHours = startsInSlot && endsInSlot;
+
+                boolean notInBreak = true;
+                if (slot.getBreakStartTime() != null && slot.getBreakEndTime() != null) {
+                    // Check if appointment overlaps with break
+                    // Conflict if (StartApp < EndBreak) AND (EndApp > StartBreak)
+                    if (startTime.isBefore(slot.getBreakEndTime()) && endTime.isAfter(slot.getBreakStartTime())) {
+                        notInBreak = false;
+                    }
+                }
                 return inWorkingHours && notInBreak;
             });
 
             if (!isValid) {
-                throw new BadRequestException("Appointment time is outside staff custom working hours");
+                throw new BadRequestException(
+                        "Appointment time is outside staff custom working hours or overlaps with break time");
             }
         }
         // If no custom working slots, use default hours (already validated above)
     }
 
-    private void checkConflict(Long staffId, LocalDate date, LocalTime time, Long excludeAppointmentId) {
-        List<AppointmentEntity> conflicts = appointmentRepository.findConflicts(staffId, date, time, excludeAppointmentId);
+    private void checkConflict(Long staffId, LocalDate date, LocalTime effectiveStart, LocalTime effectiveEnd,
+            Long excludeAppointmentId) {
+        List<AppointmentEntity> conflicts = appointmentRepository.findOverlappingAppointments(staffId, date,
+                effectiveStart, effectiveEnd,
+                excludeAppointmentId);
         if (!conflicts.isEmpty()) {
-            throw new BadRequestException("Appointment time conflicts with existing appointment");
+            // Can add more details about conflicting appointment here
+            throw new BadRequestException("Appointment time conflicts with an existing appointment (including "
+                    + AppointmentConfig.BUFFER_MINUTES + "m buffer)");
         }
+    }
+
+    private int calculateDuration(AppointmentType type, List<AppointmentType> secondaryTypes, Integer requestDuration) {
+        if (requestDuration != null && requestDuration > 0) {
+            return requestDuration;
+        }
+        int total = AppointmentConfig.TYPE_DURATIONS.getOrDefault(type, 30);
+        if (secondaryTypes != null) {
+            for (AppointmentType st : secondaryTypes) {
+                total += AppointmentConfig.TYPE_DURATIONS.getOrDefault(st, 0);
+            }
+        }
+        return total;
     }
 
     private AppointmentResponse toResponse(AppointmentEntity entity) {
@@ -516,34 +516,38 @@ public class AppointmentServiceImpl implements AppointmentService {
         dto.setId(entity.getId());
         dto.setOrderId(entity.getOrder().getId());
         dto.setOrderCode(entity.getOrder().getCode());
-        
+
         // Customer với role
-        String customerRole = entity.getCustomer().getRole() != null 
-                ? entity.getCustomer().getRole().getCode() : null;
+        String customerRole = entity.getCustomer().getRole() != null
+                ? entity.getCustomer().getRole().getCode()
+                : null;
         AppointmentResponse.Party customer = new AppointmentResponse.Party(
-                entity.getCustomer().getId(), 
+                entity.getCustomer().getId(),
                 entity.getCustomer().getName(),
-                customerRole
-        );
+                customerRole);
         customer.setPhone(entity.getCustomer().getPhone());
         dto.setCustomer(customer);
-        
+
         // Staff/Admin với role (nếu có)
         if (entity.getStaff() != null) {
-            String assignedRole = entity.getStaff().getRole() != null 
-                    ? entity.getStaff().getRole().getCode() : null;
+            String assignedRole = entity.getStaff().getRole() != null
+                    ? entity.getStaff().getRole().getCode()
+                    : null;
             AppointmentResponse.Party staff = new AppointmentResponse.Party(
-                    entity.getStaff().getId(), 
+                    entity.getStaff().getId(),
                     entity.getStaff().getName(),
-                    assignedRole
-            );
+                    assignedRole);
             staff.setPhone(entity.getStaff().getPhone());
             dto.setStaff(staff);
         }
-        
+
         dto.setType(entity.getType());
+        dto.setSecondaryTypes(entity.getSecondaryTypes());
+        dto.setChecklist(AppointmentConfig.TYPE_CHECKLISTS.getOrDefault(entity.getType(), List.of()));
         dto.setAppointmentDate(entity.getAppointmentDate());
         dto.setAppointmentTime(entity.getAppointmentTime());
+        dto.setDurationMinutes(entity.getDurationMinutes());
+        dto.setEstimatedEndTime(entity.getEstimatedEndTime());
         dto.setStatus(entity.getStatus());
         dto.setNotes(entity.getNotes());
         dto.setCreatedAt(entity.getCreatedAt());
@@ -551,94 +555,4 @@ public class AppointmentServiceImpl implements AppointmentService {
         return dto;
     }
 
-    private WorkingSlotResponse toWorkingSlotResponse(WorkingSlotEntity entity) {
-        WorkingSlotResponse dto = new WorkingSlotResponse();
-        dto.setId(entity.getId());
-        dto.setStaff(new WorkingSlotResponse.Party(entity.getStaff().getId(), entity.getStaff().getName()));
-        dto.setDayOfWeek(entity.getDayOfWeek());
-        dto.setStartTime(entity.getStartTime());
-        dto.setEndTime(entity.getEndTime());
-        dto.setBreakStartTime(entity.getBreakStartTime());
-        dto.setBreakEndTime(entity.getBreakEndTime());
-        dto.setIsActive(entity.getIsActive());
-        dto.setEffectiveFrom(entity.getEffectiveFrom());
-        dto.setEffectiveTo(entity.getEffectiveTo());
-        dto.setCreatedAt(entity.getCreatedAt());
-        dto.setUpdatedAt(entity.getUpdatedAt());
-        return dto;
-    }
-
-    @Override
-    @Transactional
-    public List<WorkingSlotResponse> closeDates(CloseDateRequest request, Long currentUserId) {
-        UserEntity staff = userRepository.findById(request.getStaffId())
-                .orElseThrow(() -> new NotFoundException("User not found"));
-
-        List<WorkingSlotResponse> results = new ArrayList<>();
-        List<LocalDate> datesToClose = new ArrayList<>();
-
-        // Xác định các ngày cần đóng cửa
-        if (request.getSingleDate() != null) {
-            // Đóng cửa một ngày
-            datesToClose.add(request.getSingleDate());
-        } else if (request.getDates() != null && !request.getDates().isEmpty()) {
-            // Đóng cửa nhiều ngày
-            datesToClose.addAll(request.getDates());
-        } else if (request.getWeekStart() != null && request.getWeekEnd() != null) {
-            // Đóng cửa một tuần
-            LocalDate current = request.getWeekStart();
-            while (!current.isAfter(request.getWeekEnd())) {
-                datesToClose.add(current);
-                current = current.plusDays(1);
-            }
-        } else if (request.getYear() != null && request.getMonth() != null) {
-            // Đóng cửa một tháng
-            LocalDate startOfMonth = LocalDate.of(request.getYear(), request.getMonth(), 1);
-            LocalDate endOfMonth = startOfMonth.withDayOfMonth(startOfMonth.lengthOfMonth());
-            LocalDate current = startOfMonth;
-            while (!current.isAfter(endOfMonth)) {
-                datesToClose.add(current);
-                current = current.plusDays(1);
-            }
-        } else {
-            throw new BadRequestException("Must specify singleDate, dates, weekStart/weekEnd, or year/month");
-        }
-
-        // Tạo working slot đóng cửa cho từng ngày
-        for (LocalDate date : datesToClose) {
-            DayOfWeek dayOfWeek = date.getDayOfWeek();
-            
-            // Bỏ qua Chủ nhật (đã không làm việc)
-            if (dayOfWeek == DayOfWeek.SUNDAY) {
-                continue;
-            }
-
-            // Kiểm tra xem đã có working slot đóng cửa cho ngày này chưa
-            List<WorkingSlotEntity> existingClosed = workingSlotRepository.findClosedByStaffAndDay(
-                    request.getStaffId(), dayOfWeek, date);
-            
-            if (!existingClosed.isEmpty()) {
-                // Đã có, bỏ qua hoặc có thể update
-                continue;
-            }
-
-            // Tạo working slot đóng cửa (isActive = false)
-            WorkingSlotEntity closedSlot = new WorkingSlotEntity();
-            closedSlot.setStaff(staff);
-            closedSlot.setDayOfWeek(dayOfWeek);
-            closedSlot.setStartTime(DEFAULT_START_TIME);
-            closedSlot.setEndTime(DEFAULT_END_TIME);
-            closedSlot.setBreakStartTime(null);
-            closedSlot.setBreakEndTime(null);
-            closedSlot.setIsActive(false); // Đóng cửa
-            closedSlot.setEffectiveFrom(date);
-            closedSlot.setEffectiveTo(date);
-
-            closedSlot = workingSlotRepository.save(closedSlot);
-            results.add(toWorkingSlotResponse(closedSlot));
-        }
-
-        return results;
-    }
 }
-

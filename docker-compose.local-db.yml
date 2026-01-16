@@ -1,0 +1,100 @@
+# Docker Compose cho môi trường phát triển
+# Backend và Frontend chạy trong Docker, nhưng connect tới MySQL LOCAL
+# Điều này cho phép dùng data thực từ MySQL Workbench của bạn
+
+services:
+  # Redis for Caching & Rate Limiting
+  redis:
+    image: redis:7-alpine
+    container_name: tailor-shop-redis
+    restart: unless-stopped
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    networks:
+      - tailor-shop-network
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  # Spring Boot Backend - Kết nối tới MySQL LOCAL
+  backend:
+    build:
+      context: ./tailor_shop
+      dockerfile: Dockerfile
+    container_name: tailor-shop-backend
+    restart: unless-stopped
+    depends_on:
+      - redis
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      # Kết nối tới MySQL LOCAL thay vì container
+      # host.docker.internal = địa chỉ máy host từ trong Docker
+      DB_URL: jdbc:mysql://host.docker.internal:3306/tailor_shop?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&createDatabaseIfNotExist=true
+      DB_USERNAME: ${MYSQL_USER:-root}
+      DB_PASSWORD: ${MYSQL_PASSWORD:-victoryac7}
+      JWT_SECRET: ${JWT_SECRET:-change-me-256-bit-secret-key-min-length-32-bytes!!!}
+      # Redis Configuration
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-}
+      RATE_LIMIT_ENABLED: ${RATE_LIMIT_ENABLED:-true}
+      RATE_LIMIT_RPM: ${RATE_LIMIT_RPM:-100}
+      MAIL_HOST: ${MAIL_HOST:-smtp.gmail.com}
+      MAIL_PORT: ${MAIL_PORT:-587}
+      MAIL_USERNAME: ${MAIL_USERNAME:-}
+      MAIL_PASSWORD: ${MAIL_PASSWORD:-}
+      AWS_ACCESS_KEY: ${AWS_ACCESS_KEY:-}
+      AWS_SECRET_KEY: ${AWS_SECRET_KEY:-}
+      AWS_S3_BUCKET: ${AWS_S3_BUCKET:-carbonx-storagee}
+      AWS_S3_REGION: ${AWS_S3_REGION:-ap-southeast-2}
+      AWS_S3_BASE_URL: ${AWS_S3_BASE_URL:-https://carbonx-storagee.s3.ap-southeast-2.amazonaws.com}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+    ports:
+      - "${BACKEND_PORT:-8083}:8083"
+    networks:
+      - tailor-shop-network
+    extra_hosts:
+      - "host.docker.internal:host-gateway" # Cho phép Docker access host
+    healthcheck:
+      test: [ "CMD", "sh", "-c", "curl -f http://localhost:8083/api/v1/health || curl -f http://localhost:8083/ || exit 1" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    volumes:
+      - ./tailor_shop/uploads:/app/uploads
+    command: [ "java", "-jar", "app.jar", "--spring.profiles.active=docker" ]
+
+  # React Frontend
+  frontend:
+    build:
+      context: ./my-react-app
+      dockerfile: Dockerfile
+    container_name: tailor-shop-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "${FRONTEND_PORT:-80}:80"
+    networks:
+      - tailor-shop-network
+    healthcheck:
+      test: [ "CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health || exit 1" ]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+    environment:
+      - VITE_API_BASE_URL=${VITE_API_BASE_URL:-http://localhost:8083/api/v1}
+
+networks:
+  tailor-shop-network:
+    driver: bridge
+
+volumes:
+  redis_data:

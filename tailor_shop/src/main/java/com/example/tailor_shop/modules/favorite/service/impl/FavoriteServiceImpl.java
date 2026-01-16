@@ -23,9 +23,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-
 /**
- * Favorite Service Implementation - Module riêng, có thể tái sử dụng cho nhiều loại sản phẩm
+ * Favorite Service Implementation - Module riêng, có thể tái sử dụng cho nhiều
+ * loại sản phẩm
  */
 @Service
 @RequiredArgsConstructor
@@ -34,10 +34,11 @@ public class FavoriteServiceImpl implements FavoriteService {
 
     private final FavoriteRepository favoriteRepository;
     private final UserRepository userRepository;
-    
+
     // Dependencies cho các loại sản phẩm (có thể inject thêm ServiceService, etc.)
     private final ProductRepository productRepository;
     private final FabricRepository fabricRepository;
+    private final com.example.tailor_shop.modules.product.repository.ImageAssetRepository imageAssetRepository;
 
     @Override
     @Transactional(readOnly = true)
@@ -67,11 +68,20 @@ public class FavoriteServiceImpl implements FavoriteService {
             throw new BadRequestException("Item already in favorites");
         }
 
+        // Ensure itemKey is not null (database may require it)
+        String itemKey = request.getItemKey();
+        if (itemKey == null || itemKey.trim().isEmpty()) {
+            // Generate a default key if not provided
+            itemKey = request.getItemType().name() + "-" + request.getItemId();
+        }
+
         FavoriteEntity favorite = FavoriteEntity.builder()
                 .user(user)
+                .customerId(user.getId()) // Set customer_id cùng giá trị với user.id (database yêu cầu)
                 .itemType(request.getItemType())
                 .itemId(request.getItemId())
-                .itemKey(request.getItemKey())
+                .itemKey(itemKey)
+                .productKey(itemKey) // Set product_key cùng giá trị với item_key (database yêu cầu)
                 .build();
 
         FavoriteEntity saved = favoriteRepository.save(favorite);
@@ -133,6 +143,9 @@ public class FavoriteServiceImpl implements FavoriteService {
             case SERVICE:
                 // TODO: Validate service when ServiceService is available
                 break;
+            case IMAGE_ASSET:
+                validateImageAssetItem(itemId);
+                break;
             default:
                 throw new BadRequestException("Unsupported item type: " + itemType);
         }
@@ -148,6 +161,13 @@ public class FavoriteServiceImpl implements FavoriteService {
         fabricRepository.findById(fabricId)
                 .filter(f -> Boolean.FALSE.equals(f.getIsDeleted()))
                 .orElseThrow(() -> new NotFoundException("Fabric not found"));
+    }
+
+    private void validateImageAssetItem(Long imageAssetId) {
+        // ImageAsset không có isDeleted flag (hoặc chưa check), chỉ cần check tồn tại
+        if (!imageAssetRepository.existsById(imageAssetId)) {
+            throw new NotFoundException("Image Asset not found");
+        }
     }
 
     private FavoriteResponse toFavoriteResponse(FavoriteEntity entity) {
@@ -168,6 +188,9 @@ public class FavoriteServiceImpl implements FavoriteService {
                 break;
             case SERVICE:
                 // TODO: Enrich service item when ServiceService is available
+                break;
+            case IMAGE_ASSET:
+                enrichImageAssetItem(builder, entity.getItemId());
                 break;
         }
 
@@ -202,5 +225,25 @@ public class FavoriteServiceImpl implements FavoriteService {
                     .isAvailable(Boolean.TRUE.equals(fabric.getIsAvailable()));
         }
     }
-}
 
+    private void enrichImageAssetItem(FavoriteResponse.FavoriteResponseBuilder builder, Long imageAssetId) {
+        com.example.tailor_shop.modules.product.domain.ImageAssetEntity imageAsset = imageAssetRepository
+                .findById(imageAssetId)
+                .orElse(null);
+
+        if (imageAsset != null) {
+            // Tạm dùng Description hoặc Category/Type làm tên vì không có field Name
+            String name = imageAsset.getDescription() != null
+                    ? (imageAsset.getDescription().length() > 50 ? imageAsset.getDescription().substring(0, 50) + "..."
+                            : imageAsset.getDescription())
+                    : (imageAsset.getType() != null ? imageAsset.getType() : "Image Asset");
+
+            builder.itemName(name)
+                    .itemCode(imageAsset.getS3Key())
+                    .itemImage(
+                            imageAsset.getThumbnailUrl() != null ? imageAsset.getThumbnailUrl() : imageAsset.getUrl())
+                    .itemPrice(null)
+                    .isAvailable(true);
+        }
+    }
+}

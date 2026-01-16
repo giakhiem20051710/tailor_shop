@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import invoiceService from "../services/invoiceService";
 import promotionService from "../services/promotionService";
 import { showSuccess, showError, showWarning, showInfo } from "../components/NotificationToast.jsx";
+import { StatCard, StatusBadge, InfoRow, QrCard, InvoiceList, formatCurrency } from "../components/invoice";
 
 const bankConfig = {
   bankName: "Vietcombank",
@@ -59,23 +61,7 @@ const mapPaymentMethod = (method) => {
   return methodMap[method] || "vnpay";
 };
 
-const STATUS_META = {
-  pending: {
-    label: "Chưa thanh toán",
-    className: "bg-rose-50 text-rose-600 border border-rose-100",
-  },
-  processing: {
-    label: "Đang thanh toán",
-    className: "bg-amber-50 text-amber-600 border border-amber-100",
-  },
-  paid: {
-    label: "Đã thanh toán",
-    className: "bg-emerald-50 text-emerald-600 border border-emerald-100",
-  },
-};
-
-const formatCurrency = (value) =>
-  `${Number(value || 0).toLocaleString("vi-VN")} đ`;
+// STATUS_META and formatCurrency are imported from components/invoice
 
 const buildVietQRUrl = (amount, transferContent) => {
   const base = `https://img.vietqr.io/image/${bankConfig.bankCode}-${bankConfig.accountNumber}-qr_only.png`;
@@ -98,6 +84,8 @@ const buildMomoQrUrl = (amount, transferContent) => {
 
 
 export default function InvoicePage() {
+  const { id: invoiceIdFromUrl } = useParams();
+  const navigate = useNavigate();
   const [invoices, setInvoices] = useState([]);
   const [selectedInvoiceId, setSelectedInvoiceId] = useState(null);
   const [filterStatus, setFilterStatus] = useState("all");
@@ -123,9 +111,93 @@ export default function InvoicePage() {
   });
 
   const [loading, setLoading] = useState(true);
+  const [detailMode, setDetailMode] = useState(false); // Mode chỉ hiển thị chi tiết một hóa đơn
 
-  // Load invoices from API
+  // Load invoice detail if ID is in URL
   useEffect(() => {
+    if (invoiceIdFromUrl) {
+      const loadInvoiceDetail = async () => {
+        try {
+          setLoading(true);
+          setDetailMode(true);
+          console.log('[InvoicePage] Loading invoice detail for ID:', invoiceIdFromUrl);
+
+          // Try to get invoice by code or ID
+          let invoiceData = null;
+          try {
+            // First try: assume it's a backend ID (number)
+            const numericId = parseInt(invoiceIdFromUrl);
+            if (!isNaN(numericId)) {
+              const response = await invoiceService.getDetail(numericId);
+              invoiceData = response?.data ?? response?.responseData ?? response;
+            }
+          } catch (err) {
+            console.warn('[InvoicePage] Failed to load by numeric ID, trying to find by code...', err);
+          }
+
+          // If not found, try to find in list by code
+          if (!invoiceData) {
+            const listResponse = await invoiceService.list({}, { page: 0, size: 100 });
+            const invoicesData = listResponse?.responseData?.content ||
+              listResponse?.data?.content ||
+              listResponse?.content ||
+              listResponse?.data ||
+              [];
+            const found = invoicesData.find(inv =>
+              inv.code === invoiceIdFromUrl ||
+              inv.id?.toString() === invoiceIdFromUrl ||
+              `INV-${inv.id}` === invoiceIdFromUrl
+            );
+            if (found) {
+              invoiceData = found;
+            }
+          }
+
+          if (invoiceData) {
+            // Map to frontend format
+            const mappedInvoice = {
+              id: invoiceData.code || `INV-${invoiceData.id}`,
+              customerName: invoiceData.customer?.name || "",
+              phone: invoiceData.customer?.phone || "",
+              product: invoiceData.items?.[0]?.name || "Dịch vụ may",
+              dueDate: invoiceData.dueDate || "",
+              total: invoiceData.total ? Number(invoiceData.total) : 0,
+              note: invoiceData.notes || "",
+              status: mapBackendStatus(invoiceData.status),
+              createdAt: invoiceData.createdAt || invoiceData.issuedAt || "",
+              transactions: (invoiceData.transactions || []).map(tx => ({
+                id: tx.id,
+                amount: tx.amount ? Number(tx.amount) : 0,
+                method: mapPaymentProvider(tx.provider),
+                reference: tx.providerRef || "",
+                note: "",
+                createdAt: tx.paidAt || tx.createdAt || "",
+              })),
+              _backendId: invoiceData.id,
+              _backendData: invoiceData,
+            };
+            setInvoices([mappedInvoice]);
+            setSelectedInvoiceId(mappedInvoice.id);
+          } else {
+            showError("Không tìm thấy hóa đơn với mã: " + invoiceIdFromUrl);
+            navigate("/invoice");
+          }
+        } catch (error) {
+          console.error("Error loading invoice detail:", error);
+          showError("Không thể tải chi tiết hóa đơn");
+          navigate("/invoice");
+        } finally {
+          setLoading(false);
+        }
+      };
+      loadInvoiceDetail();
+    }
+  }, [invoiceIdFromUrl, navigate]);
+
+  // Load invoices from API (only if not in detail mode)
+  useEffect(() => {
+    if (invoiceIdFromUrl) return; // Skip if loading detail
+
     const loadInvoices = async () => {
       try {
         setLoading(true);
@@ -133,7 +205,7 @@ export default function InvoicePage() {
         const response = await invoiceService.list({}, { page: 0, size: 100 });
         console.log('[InvoicePage] Raw API response:', response);
         console.log('[InvoicePage] Response keys:', Object.keys(response || {}));
-        
+
         // Backend trả về CommonResponse<Page<InvoiceResponse>> với cấu trúc:
         // { 
         //   responseStatus: {...}, 
@@ -145,17 +217,17 @@ export default function InvoicePage() {
         //   } 
         // }
         let invoicesData = [];
-        
+
         // Ưu tiên responseData.content (cấu trúc chuẩn từ CommonResponse)
         if (response?.responseData?.content && Array.isArray(response.responseData.content)) {
           invoicesData = response.responseData.content;
           console.log('[InvoicePage] ✅ Found in responseData.content, count:', invoicesData.length);
-        } 
+        }
         // Fallback: data.content
         else if (response?.data?.content && Array.isArray(response.data.content)) {
           invoicesData = response.data.content;
           console.log('[InvoicePage] ✅ Found in data.content, count:', invoicesData.length);
-        } 
+        }
         // Fallback: responseData là Page object trực tiếp
         else if (response?.responseData && Array.isArray(response.responseData)) {
           invoicesData = response.responseData;
@@ -165,17 +237,17 @@ export default function InvoicePage() {
         else if (Array.isArray(response?.content)) {
           invoicesData = response.content;
           console.log('[InvoicePage] ✅ Found in content (direct array), count:', invoicesData.length);
-        } 
+        }
         // Fallback: data trực tiếp
         else if (Array.isArray(response?.data)) {
           invoicesData = response.data;
           console.log('[InvoicePage] ✅ Found in data (direct array), count:', invoicesData.length);
-        } 
+        }
         // Fallback: response là array trực tiếp
         else if (Array.isArray(response)) {
           invoicesData = response;
           console.log('[InvoicePage] ✅ Response is direct array, count:', invoicesData.length);
-        } 
+        }
         // Không tìm thấy
         else {
           console.warn('[InvoicePage] ⚠️ Unknown response structure:', response);
@@ -189,43 +261,43 @@ export default function InvoicePage() {
           }
           invoicesData = [];
         }
-        
+
         // Map backend invoices to frontend format
         // Backend InvoiceResponse structure:
         // { id, code, customer: {id, name, phone}, status, total, items: [{name, ...}], transactions: [{provider, amount, ...}], ... }
-        const mappedInvoices = Array.isArray(invoicesData) 
+        const mappedInvoices = Array.isArray(invoicesData)
           ? invoicesData.map(inv => {
-              console.log('[InvoicePage] Mapping invoice:', inv.code || inv.id);
-              return {
-                id: inv.code || `INV-${inv.id}`,
-                customerName: inv.customer?.name || "",
-                phone: inv.customer?.phone || "",
-                product: inv.items?.[0]?.name || "Dịch vụ may",
-                dueDate: inv.dueDate || "",
-                total: inv.total ? Number(inv.total) : 0,
-                note: inv.notes || "",
-                status: mapBackendStatus(inv.status),
-                createdAt: inv.createdAt || inv.issuedAt || "",
-                transactions: (inv.transactions || []).map(tx => ({
-                  id: tx.id,
-                  amount: tx.amount ? Number(tx.amount) : 0,
-                  method: mapPaymentProvider(tx.provider),
-                  reference: tx.providerRef || "",
-                  note: "",
-                  createdAt: tx.paidAt || tx.createdAt || "",
-                })),
-                // Store backend data for updates
-                _backendId: inv.id,
-                _backendData: inv,
-              };
-            })
+            console.log('[InvoicePage] Mapping invoice:', inv.code || inv.id);
+            return {
+              id: inv.code || `INV-${inv.id}`,
+              customerName: inv.customer?.name || "",
+              phone: inv.customer?.phone || "",
+              product: inv.items?.[0]?.name || "Dịch vụ may",
+              dueDate: inv.dueDate || "",
+              total: inv.total ? Number(inv.total) : 0,
+              note: inv.notes || "",
+              status: mapBackendStatus(inv.status),
+              createdAt: inv.createdAt || inv.issuedAt || "",
+              transactions: (inv.transactions || []).map(tx => ({
+                id: tx.id,
+                amount: tx.amount ? Number(tx.amount) : 0,
+                method: mapPaymentProvider(tx.provider),
+                reference: tx.providerRef || "",
+                note: "",
+                createdAt: tx.paidAt || tx.createdAt || "",
+              })),
+              // Store backend data for updates
+              _backendId: inv.id,
+              _backendData: inv,
+            };
+          })
           : [];
-        
+
         console.log('[InvoicePage] Mapped invoices count:', mappedInvoices.length);
         if (mappedInvoices.length > 0) {
           console.log('[InvoicePage] First mapped invoice:', mappedInvoices[0]);
         }
-        
+
         setInvoices(mappedInvoices);
         if (mappedInvoices.length > 0) {
           setSelectedInvoiceId(mappedInvoices[0].id);
@@ -238,7 +310,7 @@ export default function InvoicePage() {
       }
     };
     loadInvoices();
-  }, []);
+  }, [invoiceIdFromUrl]);
 
   const selectedInvoice =
     invoices.find((inv) => inv.id === selectedInvoiceId) || null;
@@ -250,8 +322,8 @@ export default function InvoicePage() {
       const term = searchTerm.trim().toLowerCase();
       const matchesSearch = term
         ? inv.id.toLowerCase().includes(term) ||
-          inv.customerName.toLowerCase().includes(term) ||
-          inv.phone.includes(term)
+        inv.customerName.toLowerCase().includes(term) ||
+        inv.phone.includes(term)
         : true;
       return matchesStatus && matchesSearch;
     });
@@ -290,7 +362,7 @@ export default function InvoicePage() {
 
   const handleMarkPaid = async () => {
     if (!selectedInvoice || !selectedInvoice._backendId) return;
-    
+
     try {
       setLoading(true);
       // Calculate remaining amount
@@ -299,7 +371,7 @@ export default function InvoicePage() {
         0
       );
       const remainingAmount = Math.max((selectedInvoice.total || 0) - paid, 0);
-      
+
       if (remainingAmount > 0) {
         await invoiceService.addPayment({
           invoiceId: selectedInvoice._backendId,
@@ -308,11 +380,11 @@ export default function InvoicePage() {
           providerRef: `MANUAL_${Date.now()}`,
         });
       }
-      
+
       // Reload invoice detail to get updated status
       const invoiceResponse = await invoiceService.getDetail(selectedInvoice._backendId);
       const invoiceData = invoiceResponse?.data ?? invoiceResponse?.responseData ?? invoiceResponse;
-      
+
       // Update the invoice in the list
       const updatedInvoice = {
         id: invoiceData.code || `INV-${invoiceData.id}`,
@@ -335,7 +407,7 @@ export default function InvoicePage() {
         _backendId: invoiceData.id,
         _backendData: invoiceData,
       };
-      
+
       setInvoices((prev) =>
         prev.map((inv) => (inv.id === updatedInvoice.id ? updatedInvoice : inv))
       );
@@ -356,11 +428,11 @@ export default function InvoicePage() {
       showWarning("Vui lòng điền đầy đủ thông tin bắt buộc (Tên khách hàng và Tổng tiền)");
       return;
     }
-    
+
     try {
       setLoading(true);
       const totalAmount = Number(newInvoice.total.toString().replace(/,/g, "")) || 0;
-      
+
       if (totalAmount <= 0) {
         showWarning("Tổng tiền phải lớn hơn 0");
         return;
@@ -368,7 +440,7 @@ export default function InvoicePage() {
 
       // Validate product name
       const productName = newInvoice.product?.trim() || "Dịch vụ may";
-      
+
       // Create invoice via API - match backend InvoiceRequest structure
       const invoiceData = {
         orderId: null, // Manual invoice, no order
@@ -390,71 +462,71 @@ export default function InvoicePage() {
           taxRate: 0
         }]
       };
-      
+
       console.log('[InvoicePage] Creating invoice with data:', invoiceData);
       const response = await invoiceService.create(invoiceData);
       console.log('[InvoicePage] Invoice creation response:', response);
-      
+
       const createdInvoice = response?.data ?? response?.responseData ?? response;
-      
+
       if (!createdInvoice) {
         throw new Error("Không nhận được phản hồi từ server");
       }
-      
+
       // Reload invoices
       const listResponse = await invoiceService.list({}, { page: 0, size: 100 });
-      const invoicesData = listResponse?.data?.content || 
-                          listResponse?.content || 
-                          listResponse?.responseData?.content ||
-                          listResponse?.data || 
-                          [];
-      
-      const mappedInvoices = Array.isArray(invoicesData) 
+      const invoicesData = listResponse?.data?.content ||
+        listResponse?.content ||
+        listResponse?.responseData?.content ||
+        listResponse?.data ||
+        [];
+
+      const mappedInvoices = Array.isArray(invoicesData)
         ? invoicesData.map(inv => ({
-            id: inv.code || `INV-${inv.id}`,
-            customerName: inv.customer?.name || "",
-            phone: inv.customer?.phone || "",
-            product: inv.items?.[0]?.name || "",
-            dueDate: inv.dueDate || "",
-            total: inv.total || 0,
-            note: inv.notes || "",
-            status: mapBackendStatus(inv.status),
-            createdAt: inv.createdAt || inv.issuedAt || "",
-            transactions: (inv.transactions || []).map(tx => ({
-              id: tx.id,
-              amount: tx.amount,
-              method: mapPaymentProvider(tx.provider),
-              reference: tx.providerRef || "",
-              note: "",
-              createdAt: tx.paidAt || tx.createdAt || "",
-            })),
-            _backendId: inv.id,
-            _backendData: inv,
-          }))
+          id: inv.code || `INV-${inv.id}`,
+          customerName: inv.customer?.name || "",
+          phone: inv.customer?.phone || "",
+          product: inv.items?.[0]?.name || "",
+          dueDate: inv.dueDate || "",
+          total: inv.total || 0,
+          note: inv.notes || "",
+          status: mapBackendStatus(inv.status),
+          createdAt: inv.createdAt || inv.issuedAt || "",
+          transactions: (inv.transactions || []).map(tx => ({
+            id: tx.id,
+            amount: tx.amount,
+            method: mapPaymentProvider(tx.provider),
+            reference: tx.providerRef || "",
+            note: "",
+            createdAt: tx.paidAt || tx.createdAt || "",
+          })),
+          _backendId: inv.id,
+          _backendData: inv,
+        }))
         : [];
-      
+
       setInvoices(mappedInvoices);
       if (createdInvoice?.code || createdInvoice?.id) {
         const newId = createdInvoice.code || `INV-${createdInvoice.id}`;
         setSelectedInvoiceId(newId);
       }
-    setShowCreateModal(false);
-    setNewInvoice({
-      customerName: "",
-      phone: "",
-      product: "",
-      dueDate: "",
-      total: "",
-      note: "",
-    });
-      
+      setShowCreateModal(false);
+      setNewInvoice({
+        customerName: "",
+        phone: "",
+        product: "",
+        dueDate: "",
+        total: "",
+        note: "",
+      });
+
       showSuccess("Tạo hóa đơn thành công!");
     } catch (error) {
       console.error("Error creating invoice:", error);
-      const errorMessage = error.response?.data?.message || 
-                          error.response?.data?.error || 
-                          error.message || 
-                          "Không thể tạo hóa đơn";
+      const errorMessage = error.response?.data?.message ||
+        error.response?.data?.error ||
+        error.message ||
+        "Không thể tạo hóa đơn";
       showError("Lỗi: " + errorMessage);
     } finally {
       setLoading(false);
@@ -472,23 +544,23 @@ export default function InvoicePage() {
       showWarning("Vui lòng nhập số tiền hợp lệ (lớn hơn 0)");
       return;
     }
-    
+
     try {
       setLoading(true);
       const paymentPayload = {
         invoiceId: selectedInvoice._backendId,
         provider: mapPaymentMethod(transactionForm.method),
-      amount: amountNumber,
+        amount: amountNumber,
         providerRef: transactionForm.reference || "",
         notes: transactionForm.note || "",
       };
-      
+
       await invoiceService.addPayment(paymentPayload);
-      
+
       // Reload invoice to get updated data
       const invoiceResponse = await invoiceService.getDetail(selectedInvoice._backendId);
       const invoiceData = invoiceResponse?.data ?? invoiceResponse?.responseData ?? invoiceResponse;
-      
+
       const updated = {
         id: invoiceData.code || `INV-${invoiceData.id}`,
         customerName: invoiceData.customer?.name || "",
@@ -510,7 +582,7 @@ export default function InvoicePage() {
         _backendId: invoiceData.id,
         _backendData: invoiceData,
       };
-      
+
       setInvoices((prev) =>
         prev.map((inv) => (inv.id === updated.id ? updated : inv))
       );
@@ -530,11 +602,11 @@ export default function InvoicePage() {
     }
   };
 
-  const paidAmount = selectedInvoice 
+  const paidAmount = selectedInvoice
     ? (selectedInvoice.transactions || []).reduce(
-        (sum, tx) => sum + (Number(tx.amount) || 0),
-        0
-      )
+      (sum, tx) => sum + (Number(tx.amount) || 0),
+      0
+    )
     : 0;
   const remainingAmount = Math.max(
     (selectedInvoice?.total || 0) - paidAmount,
@@ -567,74 +639,106 @@ export default function InvoicePage() {
         <header className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <p className="text-xs uppercase tracking-[0.3em] text-[#AD7A2A]">
-              Quản lý hóa đơn
+              {detailMode ? "Chi tiết hóa đơn" : "Quản lý hóa đơn"}
             </p>
             <h1 className="text-3xl font-semibold text-[#1F2A37]">
-              Invoices & Transactions
+              {detailMode ? selectedInvoice?.id || "Hóa đơn" : "Invoices & Transactions"}
             </h1>
             <p className="text-sm text-[#6B7280]">
-              Theo dõi tiền khách đã chuyển và trạng thái hóa đơn khách hàng.
+              {detailMode
+                ? "Xem chi tiết và quản lý thanh toán cho hóa đơn này."
+                : "Theo dõi tiền khách đã chuyển và trạng thái hóa đơn khách hàng."}
             </p>
           </div>
-          <button
-            onClick={() => setShowCreateModal(true)}
-            className="px-5 py-3 rounded-full bg-[#0F172A] text-white text-sm font-semibold hover:bg-[#111827]"
-          >
-            + Tạo hóa đơn mới
-          </button>
+          <div className="flex gap-3">
+            {detailMode && (
+              <button
+                onClick={() => navigate("/invoice")}
+                className="px-5 py-3 rounded-full bg-slate-600 text-white text-sm font-semibold hover:bg-slate-700"
+              >
+                ← Quay lại danh sách
+              </button>
+            )}
+            {!detailMode && (
+              <button
+                onClick={() => setShowCreateModal(true)}
+                className="px-5 py-3 rounded-full bg-[#0F172A] text-white text-sm font-semibold hover:bg-[#111827]"
+              >
+                + Tạo hóa đơn mới
+              </button>
+            )}
+          </div>
         </header>
 
-        <section className="grid gap-4 sm:grid-cols-3">
-          <StatCard
-            label="Tổng số hóa đơn"
-            value={stats.totalInvoices}
-            sub="Đã phát hành"
-          />
-          <StatCard
-            label="Đã thanh toán"
-            value={stats.paidInvoices}
-            sub="Hoàn tất"
-            color="from-emerald-500 to-emerald-600"
-          />
-          <StatCard
-            label="Còn phải thu"
-            value={formatCurrency(stats.outstandingAmount)}
-            sub="Chưa thanh toán"
-            color="from-amber-500 to-amber-600"
-          />
-        </section>
-
-        <section className="bg-white rounded-3xl border border-[#ECE7DD] p-6 space-y-4 shadow-sm">
-          <div className="flex flex-wrap items-center gap-3">
-            <div className="flex items-center gap-2 text-sm">
-              <label className="text-[#6B7280]">Trạng thái</label>
-              <select
-                value={filterStatus}
-                onChange={(e) => setFilterStatus(e.target.value)}
-                className="px-3 py-2 rounded-full border border-[#E5E7EB] text-sm"
-              >
-                <option value="all">Tất cả</option>
-                <option value="pending">Chưa thanh toán</option>
-                <option value="processing">Đang thanh toán</option>
-                <option value="paid">Đã thanh toán</option>
-              </select>
-            </div>
-            <div className="flex-1">
-              <input
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Tìm theo mã, khách hàng, số điện thoại..."
-                className="w-full px-4 py-2 rounded-full border border-[#E5E7EB] text-sm"
+        {!detailMode && (
+          <>
+            <section className="grid gap-4 sm:grid-cols-3">
+              <StatCard
+                label="Tổng số hóa đơn"
+                value={stats.totalInvoices}
+                sub="Đã phát hành"
               />
-            </div>
-          </div>
+              <StatCard
+                label="Đã thanh toán"
+                value={stats.paidInvoices}
+                sub="Hoàn tất"
+                color="from-emerald-500 to-emerald-600"
+              />
+              <StatCard
+                label="Còn phải thu"
+                value={formatCurrency(stats.outstandingAmount)}
+                sub="Chưa thanh toán"
+                color="from-amber-500 to-amber-600"
+              />
+            </section>
 
-          <div className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
-            <InvoiceList
-              invoices={filteredInvoices}
-              selectedId={selectedInvoiceId}
-              onSelect={handleSelectInvoice}
-            />
+            <section className="bg-white rounded-3xl border border-[#ECE7DD] p-6 space-y-4 shadow-sm">
+              <div className="flex flex-wrap items-center gap-3">
+                <div className="flex items-center gap-2 text-sm">
+                  <label className="text-[#6B7280]">Trạng thái</label>
+                  <select
+                    value={filterStatus}
+                    onChange={(e) => setFilterStatus(e.target.value)}
+                    className="px-3 py-2 rounded-full border border-[#E5E7EB] text-sm"
+                  >
+                    <option value="all">Tất cả</option>
+                    <option value="pending">Chưa thanh toán</option>
+                    <option value="processing">Đang thanh toán</option>
+                    <option value="paid">Đã thanh toán</option>
+                  </select>
+                </div>
+                <div className="flex-1">
+                  <input
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    placeholder="Tìm theo mã, khách hàng, số điện thoại..."
+                    className="w-full px-4 py-2 rounded-full border border-[#E5E7EB] text-sm"
+                  />
+                </div>
+              </div>
+
+              <div className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
+                <InvoiceList
+                  invoices={filteredInvoices}
+                  selectedId={selectedInvoiceId}
+                  onSelect={handleSelectInvoice}
+                />
+                <InvoiceDetail
+                  invoice={selectedInvoice}
+                  paidAmount={paidAmount}
+                  remainingAmount={remainingAmount}
+                  onStartPayment={handleStartPayment}
+                  transactionForm={transactionForm}
+                  setTransactionForm={setTransactionForm}
+                  onAddTransaction={handleAddTransaction}
+                />
+              </div>
+            </section>
+          </>
+        )}
+
+        {detailMode && selectedInvoice && (
+          <section className="bg-white rounded-3xl border border-[#ECE7DD] p-6 shadow-sm">
             <InvoiceDetail
               invoice={selectedInvoice}
               paidAmount={paidAmount}
@@ -644,8 +748,8 @@ export default function InvoicePage() {
               setTransactionForm={setTransactionForm}
               onAddTransaction={handleAddTransaction}
             />
-          </div>
-        </section>
+          </section>
+        )}
 
       </div>
 
@@ -674,89 +778,7 @@ export default function InvoicePage() {
   );
 }
 
-function StatCard({ label, value, sub, color = "from-slate-900 to-slate-800" }) {
-  return (
-    <div className="rounded-2xl border border-[#ECE7DD] bg-white p-5">
-      <p className="text-xs uppercase tracking-[0.25em] text-[#9CA3AF]">
-        {label}
-      </p>
-      <p className="mt-3 text-3xl font-semibold text-[#111827]">{value}</p>
-      <p className="text-sm text-[#6B7280]">{sub}</p>
-      <div
-        className={`mt-4 h-2 rounded-full bg-gradient-to-r ${color}`}
-      ></div>
-    </div>
-  );
-}
 
-function StatusBadge({ status, pill = false }) {
-  if (!status) return null;
-  const meta = STATUS_META[status] || STATUS_META.pending;
-  return (
-    <span
-      className={`inline-flex items-center justify-center ${
-        pill ? "px-4 py-1.5 text-xs font-semibold" : "px-3 py-1 text-[11px]"
-      } rounded-full ${meta.className}`}
-    >
-      {meta.label}
-    </span>
-  );
-}
-
-function InvoiceList({ invoices, selectedId, onSelect }) {
-  return (
-    <div className="bg-[#F9FAFB] rounded-2xl border border-[#E5E7EB] overflow-hidden">
-      <table className="w-full text-sm">
-        <thead className="bg-[#111827] text-white uppercase text-[11px] tracking-[0.2em]">
-          <tr>
-            <th className="px-4 py-3 text-left">Hóa đơn</th>
-            <th className="px-4 py-3 text-left">Khách hàng</th>
-            <th className="px-4 py-3 text-right">Tổng</th>
-            <th className="px-4 py-3 text-center">Trạng thái</th>
-          </tr>
-        </thead>
-        <tbody>
-          {invoices.length ? (
-            invoices.map((invoice) => (
-              <tr
-                key={invoice.id}
-                onClick={() => onSelect(invoice.id)}
-                className={`cursor-pointer border-b border-[#E5E7EB] last:border-0 ${
-                  invoice.id === selectedId ? "bg-white" : "hover:bg-white/70"
-                }`}
-              >
-                <td className="px-4 py-3">
-                  <p className="font-semibold text-[#111827]">{invoice.id}</p>
-                  <p className="text-[12px] text-[#6B7280]">
-                    Đến hạn: {invoice.dueDate || "—"}
-                  </p>
-                </td>
-                <td className="px-4 py-3">
-                  <p className="font-medium text-[#111827]">
-                    {invoice.customerName}
-                  </p>
-                  <p className="text-[12px] text-[#6B7280]">{invoice.phone}</p>
-                </td>
-                <td className="px-4 py-3 text-right font-semibold text-[#111827]">
-                  {formatCurrency(invoice.total)}
-                </td>
-                <td className="px-4 py-3 text-center">
-                  <StatusBadge status={invoice.status} />
-                </td>
-              </tr>
-            ))
-          ) : (
-            <tr>
-              <td colSpan={4} className="px-4 py-6 text-center text-[#6B7280]">
-                Không tìm thấy hóa đơn phù hợp.
-              </td>
-            </tr>
-          )}
-        </tbody>
-      </table>
-    </div>
-  );
-}
 
 function InvoiceDetail({
   invoice,
@@ -847,8 +869,8 @@ function InvoiceDetail({
                     {tx.method === "MOMO"
                       ? "MoMo"
                       : tx.method === "CASH"
-                      ? "Cash"
-                      : "Bank"}
+                        ? "Cash"
+                        : "Bank"}
                   </span>
                 </div>
                 <p className="mt-1 text-lg font-semibold text-[#111827]">
@@ -1033,11 +1055,10 @@ function PaymentModal({
             <button
               key={tab.key}
               onClick={() => onMethodChange(tab.key)}
-              className={`px-4 py-2 rounded-full text-sm font-semibold border transition ${
-                paymentMethod === tab.key
-                  ? "bg-[#111827] text-white border-[#111827]"
-                  : "border-[#E5E7EB] text-[#111827] hover:bg-[#F3F4F6]"
-              }`}
+              className={`px-4 py-2 rounded-full text-sm font-semibold border transition ${paymentMethod === tab.key
+                ? "bg-[#111827] text-white border-[#111827]"
+                : "border-[#E5E7EB] text-[#111827] hover:bg-[#F3F4F6]"
+                }`}
             >
               {tab.label}
             </button>
@@ -1080,7 +1101,7 @@ function CreateInvoiceModal({ formData, onClose, onChange, onSubmit }) {
   const [availablePromos, setAvailablePromos] = useState([]);
   const [loadingPromos, setLoadingPromos] = useState(false);
   const [selectedPromo, setSelectedPromo] = useState(null);
-  
+
   const updateField = (field, value) => {
     onChange((prev) => ({ ...prev, [field]: value }));
   };
@@ -1095,20 +1116,20 @@ function CreateInvoiceModal({ formData, onClose, onChange, onSubmit }) {
     try {
       setLoadingPromos(true);
       const orderAmount = Number(formData.total.toString().replace(/,/g, "")) || 0;
-      
+
       // Load active promotions
       const response = await promotionService.listActivePublic({ page: 0, size: 20 });
-      const promosData = response?.data?.content || 
-                        response?.responseData?.content || 
-                        response?.content || 
-                        [];
-      
+      const promosData = response?.data?.content ||
+        response?.responseData?.content ||
+        response?.content ||
+        [];
+
       // Filter promotions that can be applied to this order amount
       const applicablePromos = promosData.filter(promo => {
         if (!promo.minOrderValue) return true;
         return orderAmount >= promo.minOrderValue;
       });
-      
+
       setAvailablePromos(applicablePromos);
       setShowPromoList(true);
     } catch (error) {
@@ -1129,7 +1150,7 @@ function CreateInvoiceModal({ formData, onClose, onChange, onSubmit }) {
       setApplyingPromo(true);
       setSelectedPromo(promo);
       const orderAmount = Number(formData.total.toString().replace(/,/g, "")) || 0;
-      
+
       const applyData = {
         code: promo.code,
         orderAmount: orderAmount,
@@ -1139,7 +1160,7 @@ function CreateInvoiceModal({ formData, onClose, onChange, onSubmit }) {
 
       const response = await promotionService.applyPromoCode(applyData);
       const promoResponse = response?.data ?? response?.responseData ?? response;
-      
+
       if (promoResponse && promoResponse.discountAmount) {
         onChange((prev) => ({
           ...prev,
@@ -1153,9 +1174,9 @@ function CreateInvoiceModal({ formData, onClose, onChange, onSubmit }) {
       }
     } catch (error) {
       console.error('[CreateInvoiceModal] Failed to apply promo code:', error);
-      const errorMsg = error?.response?.data?.responseMessage || 
-                       error?.message || 
-                       "Mã giảm giá không hợp lệ hoặc đã hết hạn";
+      const errorMsg = error?.response?.data?.responseMessage ||
+        error?.message ||
+        "Mã giảm giá không hợp lệ hoặc đã hết hạn";
       showError(errorMsg);
       setSelectedPromo(null);
       onChange((prev) => ({
@@ -1172,7 +1193,7 @@ function CreateInvoiceModal({ formData, onClose, onChange, onSubmit }) {
       showWarning("Vui lòng nhập mã giảm giá");
       return;
     }
-    
+
     if (!formData.total || Number(formData.total) <= 0) {
       showWarning("Vui lòng nhập tổng tiền trước khi áp dụng mã giảm giá");
       return;
@@ -1181,7 +1202,7 @@ function CreateInvoiceModal({ formData, onClose, onChange, onSubmit }) {
     try {
       setApplyingPromo(true);
       const orderAmount = Number(formData.total.toString().replace(/,/g, "")) || 0;
-      
+
       const applyData = {
         code: formData.promoCode.trim().toUpperCase(),
         orderAmount: orderAmount,
@@ -1191,7 +1212,7 @@ function CreateInvoiceModal({ formData, onClose, onChange, onSubmit }) {
 
       const response = await promotionService.applyPromoCode(applyData);
       const promoResponse = response?.data ?? response?.responseData ?? response;
-      
+
       if (promoResponse && promoResponse.discountAmount) {
         onChange((prev) => ({
           ...prev,
@@ -1203,9 +1224,9 @@ function CreateInvoiceModal({ formData, onClose, onChange, onSubmit }) {
       }
     } catch (error) {
       console.error('[CreateInvoiceModal] Failed to apply promo code:', error);
-      const errorMsg = error?.response?.data?.responseMessage || 
-                       error?.message || 
-                       "Mã giảm giá không hợp lệ hoặc đã hết hạn";
+      const errorMsg = error?.response?.data?.responseMessage ||
+        error?.message ||
+        "Mã giảm giá không hợp lệ hoặc đã hết hạn";
       showError(errorMsg);
       onChange((prev) => ({
         ...prev,
@@ -1245,47 +1266,47 @@ function CreateInvoiceModal({ formData, onClose, onChange, onSubmit }) {
             <label className="block text-xs text-[#6B7280] mb-1">
               Tên khách hàng <span className="text-red-500">*</span>
             </label>
-          <input
-            required
+            <input
+              required
               placeholder="Nhập tên khách hàng"
-            value={formData.customerName}
-            onChange={(e) => updateField("customerName", e.target.value)}
+              value={formData.customerName}
+              onChange={(e) => updateField("customerName", e.target.value)}
               className="w-full px-4 py-3 rounded-2xl border border-[#E5E7EB] text-sm"
-          />
+            />
           </div>
           <div>
             <label className="block text-xs text-[#6B7280] mb-1">
               Số điện thoại
             </label>
-          <input
+            <input
               type="tel"
               placeholder="Nhập số điện thoại"
-            value={formData.phone}
-            onChange={(e) => updateField("phone", e.target.value)}
+              value={formData.phone}
+              onChange={(e) => updateField("phone", e.target.value)}
               className="w-full px-4 py-3 rounded-2xl border border-[#E5E7EB] text-sm"
-          />
+            />
           </div>
           <div>
             <label className="block text-xs text-[#6B7280] mb-1">
               Tên sản phẩm / Dịch vụ
             </label>
-          <input
+            <input
               placeholder="Ví dụ: Áo sơ mi, Quần âu..."
-            value={formData.product}
-            onChange={(e) => updateField("product", e.target.value)}
+              value={formData.product}
+              onChange={(e) => updateField("product", e.target.value)}
               className="w-full px-4 py-3 rounded-2xl border border-[#E5E7EB] text-sm"
-          />
+            />
           </div>
           <div>
             <label className="block text-xs text-[#6B7280] mb-1">
               Ngày đến hạn
             </label>
-          <input
-            type="date"
-            value={formData.dueDate}
-            onChange={(e) => updateField("dueDate", e.target.value)}
+            <input
+              type="date"
+              value={formData.dueDate}
+              onChange={(e) => updateField("dueDate", e.target.value)}
               className="w-full px-4 py-3 rounded-2xl border border-[#E5E7EB] text-sm"
-          />
+            />
           </div>
         </div>
 
@@ -1293,16 +1314,16 @@ function CreateInvoiceModal({ formData, onClose, onChange, onSubmit }) {
           <label className="block text-xs text-[#6B7280] mb-1">
             Tổng tiền (VND) <span className="text-red-500">*</span>
           </label>
-        <input
-          required
-          type="number"
+          <input
+            required
+            type="number"
             min="1000"
             step="1000"
             placeholder="Nhập tổng tiền"
-          value={formData.total}
-          onChange={(e) => updateField("total", e.target.value)}
-          className="w-full px-4 py-3 rounded-2xl border border-[#E5E7EB] text-sm"
-        />
+            value={formData.total}
+            onChange={(e) => updateField("total", e.target.value)}
+            className="w-full px-4 py-3 rounded-2xl border border-[#E5E7EB] text-sm"
+          />
         </div>
 
         <div>
@@ -1341,7 +1362,7 @@ function CreateInvoiceModal({ formData, onClose, onChange, onSubmit }) {
               {applyingPromo ? "Đang kiểm tra..." : "Áp dụng"}
             </button>
           </div>
-          
+
           {/* Promo List Dropdown */}
           {showPromoList && availablePromos.length > 0 && (
             <div className="mt-2 border border-[#E5E7EB] rounded-2xl bg-white shadow-lg max-h-64 overflow-y-auto">
@@ -1349,9 +1370,8 @@ function CreateInvoiceModal({ formData, onClose, onChange, onSubmit }) {
                 <div
                   key={promo.id}
                   onClick={() => handleSelectPromo(promo)}
-                  className={`p-4 border-b border-[#E5E7EB] last:border-0 cursor-pointer hover:bg-[#F9FAFB] transition-colors ${
-                    selectedPromo?.id === promo.id ? 'bg-[#FEF3E2] border-l-4 border-l-[#EE4D2D]' : ''
-                  }`}
+                  className={`p-4 border-b border-[#E5E7EB] last:border-0 cursor-pointer hover:bg-[#F9FAFB] transition-colors ${selectedPromo?.id === promo.id ? 'bg-[#FEF3E2] border-l-4 border-l-[#EE4D2D]' : ''
+                    }`}
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex-1">
@@ -1395,7 +1415,7 @@ function CreateInvoiceModal({ formData, onClose, onChange, onSubmit }) {
               ))}
             </div>
           )}
-          
+
           {formData.promoDiscount && formData.promoDiscount > 0 && (
             <div className="mt-2 p-3 bg-green-50 border border-green-200 rounded-xl">
               <div className="flex items-center justify-between">
@@ -1427,14 +1447,14 @@ function CreateInvoiceModal({ formData, onClose, onChange, onSubmit }) {
           <label className="block text-xs text-[#6B7280] mb-1">
             Ghi chú
           </label>
-        <textarea
+          <textarea
             placeholder="Nhập ghi chú (nếu có)"
-          value={formData.note}
-          onChange={(e) => updateField("note", e.target.value)}
-          rows={3}
+            value={formData.note}
+            onChange={(e) => updateField("note", e.target.value)}
+            rows={3}
             maxLength={500}
-          className="w-full px-4 py-3 rounded-2xl border border-[#E5E7EB] text-sm"
-        />
+            className="w-full px-4 py-3 rounded-2xl border border-[#E5E7EB] text-sm"
+          />
           <p className="text-xs text-[#9CA3AF] mt-1">
             {formData.note?.length || 0}/500 ký tự
           </p>
@@ -1448,41 +1468,5 @@ function CreateInvoiceModal({ formData, onClose, onChange, onSubmit }) {
   );
 }
 
-function InfoRow({ label, value }) {
-  return (
-    <div className="flex items-center justify-between text-sm">
-      <span className="text-[#6B7280]">{label}</span>
-      <span className="font-medium text-[#111827] text-right">
-        {value || "—"}
-      </span>
-    </div>
-  );
-}
 
-function QrCard({ title, subtitle, qrUrl, meta = [] }) {
-  return (
-    <div className="rounded-2xl border border-[#E5E7EB] p-5">
-      <div className="text-center mb-4">
-        <p className="text-sm font-semibold text-[#111827]">{title}</p>
-        <p className="text-xs text-[#6B7280] mt-1">{subtitle}</p>
-      </div>
-      <div className="aspect-square bg-white rounded-2xl border border-dashed border-[#E5E7EB] p-4 flex items-center justify-center">
-        <img
-          src={qrUrl}
-          alt={title}
-          className="w-full h-full object-contain rounded-xl"
-        />
-      </div>
-      <div className="mt-4 space-y-1 text-sm text-[#4B5563]">
-        {meta.map((item) => (
-          <div key={item.label} className="flex justify-between">
-            <span>{item.label}</span>
-            <span className="font-medium text-[#111827]">
-              {item.value || "—"}
-            </span>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
+

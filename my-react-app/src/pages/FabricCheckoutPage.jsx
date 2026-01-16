@@ -3,8 +3,9 @@ import { useNavigate, useLocation } from "react-router-dom";
 import Header from "../components/Header.jsx";
 import usePageMeta from "../hooks/usePageMeta.jsx";
 import { vietnamWardsData } from "../data/vietnamWardsData.js";
-import { addOrder } from "../utils/orderStorage";
+import { fabricOrderService } from "../services";
 import { getCurrentUser } from "../utils/authStorage";
+import { showSuccess, showError } from "../components/NotificationToast.jsx";
 
 export default function FabricCheckoutPage() {
   const navigate = useNavigate();
@@ -180,7 +181,7 @@ export default function FabricCheckoutPage() {
   // Lấy danh sách phường/xã cho tỉnh đã chọn
   const getWardsForProvince = (province) => {
     if (!province) return [];
-    
+
     // Normalize tên tỉnh (bỏ "Tỉnh ", "Thành Phố ", "TP. ")
     const normalizeProvince = (name) => {
       return name
@@ -189,9 +190,9 @@ export default function FabricCheckoutPage() {
         .replace(/^TP\.\s*/i, "")
         .trim();
     };
-    
+
     const normalizedProvince = normalizeProvince(province);
-    
+
     // Tìm key trong wardsData
     const key = Object.keys(wardsData).find((k) => {
       const normalizedKey = normalizeProvince(k);
@@ -202,7 +203,7 @@ export default function FabricCheckoutPage() {
         normalizedKey.toLowerCase().includes(normalizedProvince.toLowerCase())
       );
     });
-    
+
     return key ? wardsData[key] : [];
   };
 
@@ -216,7 +217,7 @@ export default function FabricCheckoutPage() {
     if (!address || !address.trim() || !province || wards.length === 0) {
       return [];
     }
-    
+
     const addressTrimmed = address.trim();
     // Tạo danh sách gợi ý với format: "[địa chỉ], [Phường/Xã], [Tỉnh/Thành phố]"
     return wards.map((ward) => ({
@@ -250,85 +251,82 @@ export default function FabricCheckoutPage() {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handlePlaceOrder = () => {
+  // Map frontend payment method to backend PaymentMethod enum
+  const mapPaymentMethod = (method) => {
+    const mapping = {
+      'cod': 'COD',
+      'bank_qr': 'BANK_TRANSFER',
+      'vnpay': 'BANK_TRANSFER',
+      'international': 'CREDIT_CARD',
+      'mbbank': 'BANK_TRANSFER',
+      'zalopay': 'E_WALLET',
+      'momo': 'E_WALLET',
+    };
+    return mapping[method] || 'COD';
+  };
+
+  const handlePlaceOrder = async () => {
     if (!formData.fullName || !formData.phone) {
-      alert("Vui lòng điền đầy đủ thông tin người đặt hàng");
+      showError("Vui lòng điền đầy đủ thông tin người đặt hàng");
       return;
     }
     if (formData.deliveryMethod === "home" && !formData.address) {
-      alert("Vui lòng nhập địa chỉ giao hàng");
+      showError("Vui lòng nhập địa chỉ giao hàng");
       return;
     }
 
-    // Tạo đơn hàng vải trong hệ thống chung để hiển thị ở Customer Dashboard
     const currentUser = getCurrentUser();
-    const shippingAddress =
+    if (!currentUser) {
+      showError("Vui lòng đăng nhập để đặt hàng");
+      return;
+    }
+
+    // Build full shipping address string
+    const shippingAddressStr =
       formData.deliveryMethod === "home"
-        ? `${formData.address || ""}${
-            formData.province ? `, ${formData.province}` : ""
-          }`.trim()
+        ? `${formData.address || ""}${formData.ward ? `, ${formData.ward}` : ""
+          }${formData.province ? `, ${formData.province}` : ""}`.trim()
         : "Nhận tại cửa hàng";
 
-    const fabricDescription = (orderData.items || [])
-      .map((item) => `${item.name} x${item.quantity || 1}`)
-      .join("; ");
+    try {
+      // Backend expects flat fields matching CheckoutRequest DTO:
+      // - cartItemIds: List<Long>
+      // - promoCode: String (optional)
+      // - shippingName: String (required)
+      // - shippingPhone: String (required)
+      // - shippingAddress: String (required)
+      // - paymentMethod: PaymentMethod enum (COD, BANK_TRANSFER, CREDIT_CARD, E_WALLET, etc.)
+      // - notes: String (optional)
+      const checkoutData = {
+        cartItemIds: orderData.cartItemIds || orderData.items?.map(item => item.id) || [],
+        promoCode: orderData.promoCode || null,
+        shippingName: formData.fullName,
+        shippingPhone: formData.phone,
+        shippingAddress: shippingAddressStr,
+        paymentMethod: mapPaymentMethod(formData.paymentMethod),
+        notes: formData.note || null,
+      };
 
-    addOrder({
-      name: formData.fullName,
-      phone: formData.phone,
-      email: formData.email,
-      address: shippingAddress,
-      productName:
-        orderData.items && orderData.items.length > 0
-          ? `Đơn mua vải (${orderData.items.length} sản phẩm)`
-          : "Đơn mua vải",
-      productType: "fabric",
-      description: fabricDescription,
-      budget: finalTotal.toString(),
-      dueDate: "",
-      notes: formData.note,
-      measurements: null,
-      appointmentType: formData.deliveryMethod === "store" ? "pickup" : "delivery",
-      appointmentTime: null,
-      appointmentDate: "",
-      promoCode: null,
-      receive: new Date().toISOString().split("T")[0],
-      due: "",
-      total: finalTotal,
-      status: "Mới",
-      sampleImages: null,
-      customerId: currentUser?.username,
-      isFabricOrder: true,
-      items: orderData.items || [], // Lưu items để có thể lấy hình ảnh
-    });
+      const response = await fabricOrderService.checkout(checkoutData);
+      const order = response?.data ?? response?.responseData ?? response;
 
-    // Điều hướng đến trang thanh toán tương ứng với phương thức đã chọn
-    const paymentRoutes = {
-      cod: "/payment/cod",
-      bank_qr: "/payment/qr",
-      vnpay: "/payment/vnpay",
-      international: "/payment/international",
-      mbbank: "/payment/mbbank",
-      zalopay: "/payment/zalopay",
-      momo: "/payment/momo",
-    };
+      showSuccess("Đặt hàng thành công!");
 
-    const paymentRoute = paymentRoutes[formData.paymentMethod];
-    
-    if (paymentRoute) {
-      navigate(paymentRoute, {
-        state: {
-          ...orderData,
-          formData: formData,
-          paymentMethod: formData.paymentMethod
-        }
-      });
-      return;
+      // Navigate to payment page or order detail
+      if (formData.paymentMethod === "cod") {
+        navigate(`/payment/cod?orderId=${order.id || order.orderId}`);
+      } else if (formData.paymentMethod === "bank_qr") {
+        navigate(`/payment/qr?orderId=${order.id || order.orderId}`);
+      } else if (formData.paymentMethod === "vnpay") {
+        navigate(`/payment/vnpay?orderId=${order.id || order.orderId}`);
+      } else {
+        navigate(`/customer/orders/${order.id || order.orderId}`);
+      }
+    } catch (error) {
+      console.error("Error placing order:", error);
+      const errorMessage = error?.response?.data?.message || error?.message || "Không thể đặt hàng. Vui lòng thử lại.";
+      showError(errorMessage);
     }
-    
-    // Fallback cho các phương thức khác
-    alert("Đặt hàng thành công! Đơn hàng của bạn đang được xử lý.");
-    navigate("/customer/dashboard");
   };
 
   if (!orderData.items || orderData.items.length === 0) {
@@ -386,32 +384,47 @@ export default function FabricCheckoutPage() {
                 </h2>
                 <div className="space-y-4">
                   {orderData.items.map((item) => {
-                    const priceValue = getPriceValue(item.price);
-                    const originalPrice = Math.round(priceValue * 1.5);
+                    // Handle both cart format (itemPrice, itemName, itemImage) and legacy format (price, name, image)
+                    const itemName = item.itemName || item.name || "Sản phẩm";
+                    const itemImage = item.itemImage || item.image;
+                    const rawPrice = item.itemPrice || item.price;
+                    const priceValue = typeof rawPrice === 'number' ? rawPrice : getPriceValue(rawPrice);
+                    const quantity = parseFloat(item.quantity) || 1;
+                    const itemTotal = priceValue * quantity;
+
                     return (
-                      <div key={item.key} className="flex gap-4 pb-4 border-b border-[#E5E7EB] last:border-b-0">
-                        <div className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0">
-                          <img
-                            src={item.image}
-                            alt={item.name}
-                            className="w-full h-full object-cover"
-                          />
+                      <div key={item.id || item.key} className="flex gap-4 pb-4 border-b border-[#E5E7EB] last:border-b-0">
+                        <div className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 bg-gray-100">
+                          {itemImage ? (
+                            <img
+                              src={itemImage}
+                              alt={itemName}
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                e.target.onerror = null;
+                                e.target.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Crect fill='%23f3f4f6' width='400' height='400'/%3E%3Ctext x='50%25' y='50%25' font-family='Arial' font-size='16' fill='%239ca3af' text-anchor='middle' dominant-baseline='middle'%3EVải%3C/text%3E%3C/svg%3E";
+                              }}
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-[#9CA3AF] text-[10px]">
+                              No Image
+                            </div>
+                          )}
                         </div>
                         <div className="flex-1 min-w-0">
                           <h3 className="text-[14px] font-medium text-[#111827] mb-1 line-clamp-2">
-                            {item.name}
+                            {itemName}
                           </h3>
-                          <p className="text-[12px] text-[#6B7280] mb-2">Màu: Mặc định</p>
+                          <p className="text-[12px] text-[#6B7280] mb-2">
+                            Loại: {item.itemType || "FABRIC"}
+                          </p>
                           <div className="flex items-center justify-between">
                             <div>
                               <span className="text-[14px] font-semibold text-[#F97316]">
                                 {formatPrice(priceValue)}
                               </span>
-                              <span className="text-[12px] text-[#9CA3AF] line-through ml-2">
-                                {formatPrice(originalPrice)}
-                              </span>
                             </div>
-                            <span className="text-[13px] text-[#6B7280]">x{item.quantity || 1}</span>
+                            <span className="text-[13px] text-[#6B7280]">x{quantity}m</span>
                           </div>
                         </div>
                       </div>
@@ -874,21 +887,19 @@ export default function FabricCheckoutPage() {
               <div className="flex border-b border-[#E5E7EB] px-4">
                 <button
                   onClick={() => setAddressTab("after")}
-                  className={`px-4 py-3 text-[14px] font-medium border-b-2 transition-colors ${
-                    addressTab === "after"
-                      ? "border-[#F97316] text-[#F97316]"
-                      : "border-transparent text-[#6B7280] hover:text-[#111827]"
-                  }`}
+                  className={`px-4 py-3 text-[14px] font-medium border-b-2 transition-colors ${addressTab === "after"
+                    ? "border-[#F97316] text-[#F97316]"
+                    : "border-transparent text-[#6B7280] hover:text-[#111827]"
+                    }`}
                 >
                   Sau sáp nhập
                 </button>
                 <button
                   onClick={() => setAddressTab("before")}
-                  className={`px-4 py-3 text-[14px] font-medium border-b-2 transition-colors ${
-                    addressTab === "before"
-                      ? "border-[#F97316] text-[#F97316]"
-                      : "border-transparent text-[#6B7280] hover:text-[#111827]"
-                  }`}
+                  className={`px-4 py-3 text-[14px] font-medium border-b-2 transition-colors ${addressTab === "before"
+                    ? "border-[#F97316] text-[#F97316]"
+                    : "border-transparent text-[#6B7280] hover:text-[#111827]"
+                    }`}
                 >
                   Trước sáp nhập
                 </button>
@@ -983,8 +994,8 @@ export default function FabricCheckoutPage() {
                                 setSelectedProvince("");
                                 setSelectedWard("");
                                 setDetailedAddress("");
-                            setSuggestedWards([]);
-                            setSelectedSuggestedWard("");
+                                setSuggestedWards([]);
+                                setSelectedSuggestedWard("");
                               }
                             }}
                             className="w-full text-left px-3 py-2 text-[13px] text-[#111827] hover:bg-[#F9FAFB] rounded-lg transition-colors"
@@ -1015,8 +1026,8 @@ export default function FabricCheckoutPage() {
                                 setSelectedProvince("");
                                 setSelectedWard("");
                                 setDetailedAddress("");
-                            setSuggestedWards([]);
-                            setSelectedSuggestedWard("");
+                                setSuggestedWards([]);
+                                setSelectedSuggestedWard("");
                               }
                             }}
                             className="w-full text-left px-3 py-2 text-[13px] text-[#111827] hover:bg-[#F9FAFB] rounded-lg transition-colors"
@@ -1244,10 +1255,10 @@ export default function FabricCheckoutPage() {
                   <button
                     onClick={() => {
                       // Nếu đã chọn từ danh sách gợi ý, sử dụng địa chỉ đầy đủ từ đó
-                      const fullAddress = selectedSuggestedWard 
-                        ? selectedSuggestedWard 
+                      const fullAddress = selectedSuggestedWard
+                        ? selectedSuggestedWard
                         : `${detailedAddress}, ${selectedWard}, ${selectedProvince}`.trim();
-                      
+
                       if (fullAddress.startsWith(",")) {
                         handleInputChange("address", fullAddress.substring(1).trim());
                       } else {

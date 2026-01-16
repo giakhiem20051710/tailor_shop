@@ -4,7 +4,13 @@
  */
 
 export const API_CONFIG = {
-  BASE_URL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8083/api/v1',
+  // In Docker/production, use relative path to proxy through nginx
+  // In dev, use full URL
+  // Check if running in Docker by checking if VITE_API_BASE_URL is set or use relative path
+  BASE_URL: import.meta.env.VITE_API_BASE_URL ||
+    (window.location.hostname === 'localhost' && window.location.port !== '80'
+      ? 'http://localhost:8083/api/v1'
+      : '/api/v1'),
   TIMEOUT: 30000, // 30 seconds
   RETRY_ATTEMPTS: 3,
   RETRY_DELAY: 1000, // 1 second
@@ -52,17 +58,19 @@ export const API_ENDPOINTS = {
     LIST: '/appointments',
     DETAIL: (id) => `/appointments/${id}`,
     CREATE: '/appointments',
+    CREATE_BY_CUSTOMER: '/appointments/customer',
     UPDATE: (id) => `/appointments/${id}`,
     UPDATE_STATUS: (id) => `/appointments/${id}/status`,
     DELETE: (id) => `/appointments/${id}`,
     SCHEDULE: '/appointments/schedule',
     AVAILABLE_SLOTS: '/appointments/available-slots',
-    WORKING_SLOTS: '/appointments/working-slots',
-    WORKING_SLOT_DETAIL: (id) => `/appointments/working-slots/${id}`,
-    BULK_WORKING_SLOTS: '/appointments/working-slots/bulk',
-    RESET_WORKING_HOURS: (staffId) => `/appointments/working-slots/${staffId}/reset`,
-    WORKING_HOURS: (staffId) => `/appointments/working-slots/${staffId}/hours`,
-    CLOSE_DATES: '/appointments/working-slots/close-dates',
+    WORKING_SLOTS: '/working-slots',
+    WORKING_SLOT_DETAIL: (id) => `/working-slots/${id}`,
+    UPDATE_WORKING_SLOT_BOOK: (id) => `/working-slots/${id}/book`,
+    BULK_WORKING_SLOTS: '/working-slots/bulk',
+    RESET_WORKING_HOURS: (staffId) => `/working-slots/${staffId}/reset`,
+    WORKING_HOURS: (staffId) => `/working-slots/${staffId}/hours`,
+    CLOSE_DATES: '/working-slots/close-dates',
   },
   // Invoice
   INVOICE: {
@@ -97,6 +105,7 @@ export const API_ENDPOINTS = {
     DETAIL: (id) => `/reviews/${id}`,
     PRODUCT_REVIEW: (productId) => `/reviews/products/${productId}`,
     ORDER_REVIEW: (orderId) => `/reviews/orders/${orderId}`,
+    IMAGE_ASSET_REVIEW: (imageAssetId) => `/reviews/image-assets/${imageAssetId}`,
     UPDATE: (id) => `/reviews/${id}`,
     DELETE: (id) => `/reviews/${id}`,
     REPLY: (id) => `/reviews/${id}/reply`,
@@ -105,6 +114,7 @@ export const API_ENDPOINTS = {
     STATISTICS: '/reviews/statistics',
     CHECK_PRODUCT: (productId) => `/reviews/products/${productId}/check`,
     CHECK_ORDER: (orderId) => `/reviews/orders/${orderId}/check`,
+    CHECK_IMAGE_ASSET: (imageAssetId) => `/reviews/image-assets/${imageAssetId}/check`,
   },
   // Fabric
   FABRIC: {
@@ -167,9 +177,17 @@ export const API_ENDPOINTS = {
   },
   // Image Assets
   IMAGE_ASSET: {
+    BASE: '/image-assets',
     CREATE: '/image-assets',
     UPLOAD: '/image-assets/upload',
+    ANALYZE: '/image-assets/analyze',
+    ANALYZE_ONLY: '/image-assets/analyze-only',
+    ANALYZE_BULK: '/image-assets/analyze-bulk',
+    SAVE_WITH_METADATA: '/image-assets/save-with-metadata',
     DETAIL: (id) => `/image-assets/${id}`,
+    DELETE: (id) => `/image-assets/${id}`,
+    BULK_DELETE: '/image-assets/bulk',
+    CLEANUP_ORPHAN_CHECKSUMS: '/image-assets/cleanup-orphan-checksums',
     LIST: '/image-assets',
     BY_CATEGORY: (category) => `/image-assets/category/${category}`,
     BY_CATEGORY_AND_TYPE: (category, type) => `/image-assets/category/${category}/type/${type}`,

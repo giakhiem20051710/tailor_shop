@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { useState, useMemo, useEffect } from "react";
+import { productService } from "../services/index.js";
 import Header from "../components/Header.jsx";
 import usePageMeta from "../hooks/usePageMeta";
 
@@ -13,7 +14,7 @@ const PromotionsPage = () => {
   });
 
   // ====== DATA ƯU ĐÃI THEO DỊP LỄ ======
-  const promotions = [
+  const [promotions, setPromotions] = useState([
     {
       id: 1,
       title: "Tết Nguyên Đán – Sale may đo 20%",
@@ -116,10 +117,10 @@ const PromotionsPage = () => {
       occasionKey: "birthday",
       type: "personal",
     },
-  ];
+  ]);
 
   // ====== 5 BANNER SỰ KIỆN CHO POPUP (ÍT NHẤT 5 ẢNH) ======
-  const eventBanners = [
+  const [eventBanners, setEventBanners] = useState([
     {
       id: "popup-tet",
       title: "Tết Nguyên Đán 2025",
@@ -160,7 +161,7 @@ const PromotionsPage = () => {
       image:
         "https://images.pexels.com/photos/1204595/pexels-photo-1204595.jpeg?auto=compress&cs=tinysrgb&w=1200",
     },
-  ];
+  ]);
 
   const filters = [
     { key: "all", label: "Tất cả dịp" },
@@ -172,7 +173,7 @@ const PromotionsPage = () => {
     { key: "birthday", label: "Sinh nhật" },
   ];
 
-  const trendCampaigns = [
+  const [trendCampaigns, setTrendCampaigns] = useState([
     {
       id: "capsule",
       title: "Capsule Wardrobe Combo",
@@ -209,9 +210,9 @@ const PromotionsPage = () => {
       hashtags: ["#sleepoverfit", "#bridesquad", "#trybeforebuy"],
       channel: "Online & showroom",
     },
-  ];
+  ]);
 
-  const animatedShots = [
+  const [animatedShots, setAnimatedShots] = useState([
     {
       id: "motion-01",
       label: "Live fitting",
@@ -233,12 +234,87 @@ const PromotionsPage = () => {
       image:
         "https://images.pexels.com/photos/1771383/pexels-photo-1771383.jpeg?auto=compress&cs=tinysrgb&w=1200",
     },
-  ];
+  ]);
 
   const fallbackImage =
     "https://images.pexels.com/photos/3735641/pexels-photo-3735641.jpeg?auto=compress&cs=tinysrgb&w=1200";
 
   const [activeFilter, setActiveFilter] = useState("all");
+
+  useEffect(() => {
+    const fetchDynamicImages = async () => {
+      try {
+        const response = await productService.list({}, {
+          page: 0,
+          size: 100,
+          sort: "createdAt,desc"
+        });
+        const data = productService.parseResponse(response);
+        const items = data?.content || data?.data || (Array.isArray(data) ? data : []);
+
+        if (items.length > 0) {
+          // Helper to find matching images
+          const findImages = (keywords, count = 1) => {
+            return items.filter(i =>
+              keywords.some(k =>
+                (i.name && i.name.toLowerCase().includes(k)) ||
+                (i.category && i.category.toLowerCase().includes(k)) ||
+                (i.occasion && i.occasion.toLowerCase().includes(k)) ||
+                (i.tag && i.tag.toLowerCase().includes(k))
+              )
+            ).slice(0, count);
+          };
+
+          const getRandom = (arr) => arr[Math.floor(Math.random() * arr.length)];
+          const getValidImage = (img) => img?.image || img?.url || img?.thumbnailUrl;
+
+          // 1. Update Promotions
+          setPromotions(prev => prev.map(p => {
+            let keywords = [];
+            if (p.occasionKey === 'tet') keywords = ['tet', 'ao_dai', 'áo dài'];
+            else if (p.occasionKey === 'wedding-season') keywords = ['wedding', 'cuoi', 'vest'];
+            else if (p.occasionKey === 'back-to-work') keywords = ['work', 'office', 'vest', 'công sở'];
+            else if (p.occasionKey === 'women-day') keywords = ['daily', 'party', 'dress', 'đầm'];
+            else if (p.occasionKey === 'year-end') keywords = ['party', 'da_hoi', 'dạ hội'];
+            else if (p.occasionKey === 'birthday') keywords = ['party', 'casual', 'vest'];
+
+            const matches = findImages(keywords, 5);
+            const match = getRandom(matches) || getRandom(items);
+            return match ? { ...p, image: getValidImage(match) || p.image } : p;
+          }));
+
+          // 2. Update Event Banners
+          setEventBanners(prev => prev.map(p => {
+            let keywords = [];
+            if (p.tag.includes('Tết')) keywords = ['tet', 'ao_dai'];
+            else if (p.tag.includes('Wedding')) keywords = ['wedding', 'cuoi'];
+            else if (p.tag.includes('Office')) keywords = ['work', 'office'];
+            else if (p.tag.includes('Lễ hội')) keywords = ['party', 'da_hoi'];
+            else keywords = ['daily', 'casual'];
+
+            const matches = findImages(keywords, 5);
+            const match = getRandom(matches) || getRandom(items);
+            return match ? { ...p, image: getValidImage(match) || p.image } : p;
+          }));
+
+          // 3. Update Trend Campaigns
+          setTrendCampaigns(prev => prev.map(p => {
+            const match = getRandom(items);
+            return match ? { ...p, image: getValidImage(match) || p.image } : p;
+          }));
+
+          // 4. Update Animated Shots
+          setAnimatedShots(prev => prev.map(p => {
+            const match = getRandom(items);
+            return match ? { ...p, image: getValidImage(match) || p.image } : p;
+          }));
+        }
+      } catch (error) {
+        console.error("Failed to fetch dynamic images:", error);
+      }
+    };
+    fetchDynamicImages();
+  }, []);
 
   // popup state
   const [showPopup, setShowPopup] = useState(true);
@@ -296,8 +372,8 @@ const PromotionsPage = () => {
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-md p-4 transition-all duration-300">
           <div
             className="relative bg-white rounded-[32px] shadow-2xl w-full max-w-6xl overflow-hidden flex flex-col md:flex-row max-h-[90vh]"
-            // max-w-6xl giúp popup rộng hơn nhiều
-            // max-h-[90vh] đảm bảo không bị tràn màn hình
+          // max-w-6xl giúp popup rộng hơn nhiều
+          // max-h-[90vh] đảm bảo không bị tràn màn hình
           >
             {/* Nút Close nằm góc ngoài hoặc trong tùy ý, ở đây để absolute góc phải */}
             <button
@@ -328,7 +404,7 @@ const PromotionsPage = () => {
                 alt={currentBanner.title}
                 className="w-full h-full object-cover transition-transform duration-[4000ms] ease-linear scale-100 group-hover:scale-105"
                 onError={handleImageError}
-                // Hiệu ứng zoom nhẹ khi hover
+              // Hiệu ứng zoom nhẹ khi hover
               />
               {/* Overlay gradient để text trên ảnh (nếu có) dễ đọc, hoặc tạo chiều sâu */}
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent md:bg-gradient-to-r md:from-transparent md:to-black/10" />
@@ -343,13 +419,13 @@ const PromotionsPage = () => {
 
             {/* Cột 2: Nội dung (Chiếm 40%) */}
             <div className="flex-1 flex flex-col p-6 md:p-10 lg:p-12 justify-center bg-white relative">
-              
+
               {/* Progress Bar nhỏ thể hiện slide đang chạy */}
               <div className="absolute top-0 left-0 right-0 h-1 bg-gray-100 overflow-hidden">
-                 <div 
-                    key={activeBannerIndex}
-                    className="h-full bg-[#B45309] animate-progress-bar" 
-                 ></div>
+                <div
+                  key={activeBannerIndex}
+                  className="h-full bg-[#B45309] animate-progress-bar"
+                ></div>
               </div>
 
               <div className="space-y-6">
@@ -367,7 +443,7 @@ const PromotionsPage = () => {
                     key={currentBanner.subtitle}
                     className="text-[16px] text-[#4B5563] mt-3 leading-relaxed animate-fade-in-up delay-75"
                   >
-                    {currentBanner.subtitle}. <br className="hidden md:block"/>
+                    {currentBanner.subtitle}. <br className="hidden md:block" />
                     Chương trình áp dụng tự động tại Lavi Tailor.
                   </p>
                 </div>
@@ -378,11 +454,10 @@ const PromotionsPage = () => {
                     <button
                       key={banner.id}
                       onClick={() => setActiveBannerIndex(idx)}
-                      className={`relative flex-shrink-0 w-16 h-16 md:w-20 md:h-20 rounded-xl overflow-hidden border-2 transition-all ${
-                        idx === activeBannerIndex
-                          ? "border-[#B45309] ring-2 ring-[#B45309]/20"
-                          : "border-transparent opacity-60 hover:opacity-100 grayscale hover:grayscale-0"
-                      }`}
+                      className={`relative flex-shrink-0 w-16 h-16 md:w-20 md:h-20 rounded-xl overflow-hidden border-2 transition-all ${idx === activeBannerIndex
+                        ? "border-[#B45309] ring-2 ring-[#B45309]/20"
+                        : "border-transparent opacity-60 hover:opacity-100 grayscale hover:grayscale-0"
+                        }`}
                     >
                       <img
                         src={banner.image}
@@ -617,11 +692,10 @@ const PromotionsPage = () => {
                 <button
                   key={trend.id}
                   onClick={() => setActiveTrendIndex(idx)}
-                  className={`w-full rounded-3xl overflow-hidden border relative text-left transition-all promo-trend-card ${
-                    idx === activeTrendIndex
-                      ? "promo-trend-card--active"
-                      : "promo-trend-card--muted"
-                  }`}
+                  className={`w-full rounded-3xl overflow-hidden border relative text-left transition-all promo-trend-card ${idx === activeTrendIndex
+                    ? "promo-trend-card--active"
+                    : "promo-trend-card--muted"
+                    }`}
                 >
                   <div className="grid grid-cols-[1.2fr_minmax(0,0.8fr)] gap-4 p-4 md:p-5 items-center">
                     <div>
@@ -721,11 +795,10 @@ const PromotionsPage = () => {
                 <button
                   key={f.key}
                   onClick={() => setActiveFilter(f.key)}
-                  className={`px-3.5 py-1.5 rounded-full text-[11px] border transition-colors ${
-                    activeFilter === f.key
-                      ? "bg-[#111827] text-white border-[#111827]"
-                      : "bg-white text-[#374151] border-[#D1D5DB] hover:border-[#111827]"
-                  }`}
+                  className={`px-3.5 py-1.5 rounded-full text-[11px] border transition-colors ${activeFilter === f.key
+                    ? "bg-[#111827] text-white border-[#111827]"
+                    : "bg-white text-[#374151] border-[#D1D5DB] hover:border-[#111827]"
+                    }`}
                 >
                   {f.label}
                 </button>
@@ -742,11 +815,11 @@ const PromotionsPage = () => {
                   className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-shadow border border-[#E5E7EB] flex flex-col"
                 >
                   {/* Image */}
-                  <div className="relative h-48 w-full overflow-hidden bg-gray-200">
+                  <div className="relative h-[400px] w-full overflow-hidden bg-gray-200">
                     <img
                       src={promo.image}
                       alt={promo.title}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-cover object-top"
                       onError={handleImageError}
                       loading="lazy"
                     />

@@ -1,0 +1,46 @@
+name: 📚 Generate Documentation
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'tailor_shop/src/**'
+      - 'docs/**'
+  workflow_dispatch:
+
+jobs:
+  docs:
+    name: 📚 Build Documentation
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: ☕ Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: 📖 Generate Javadoc
+        working-directory: ./tailor_shop
+        run: mvn javadoc:javadoc -B
+
+      - name: 📁 Prepare docs folder
+        run: |
+          mkdir -p docs/javadoc
+          cp -r tailor_shop/target/site/apidocs/* docs/javadoc/ || true
+
+      - name: 📤 Upload documentation
+        uses: actions/upload-artifact@v4
+        with:
+          name: documentation
+          path: docs/
+
+      # Uncomment to deploy to GitHub Pages
+      # - name: 🚀 Deploy to GitHub Pages
+      #   uses: peaceiris/actions-gh-pages@v3
+      #   with:
+      #     github_token: ${{ secrets.GITHUB_TOKEN }}
+      #     publish_dir: ./docs

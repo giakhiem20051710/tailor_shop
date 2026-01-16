@@ -161,6 +161,70 @@ class FabricService {
   async applyPromoCode(promoData) {
     return httpClient.post(API_ENDPOINTS.FABRIC.APPLY_PROMO, promoData);
   }
+
+  /**
+   * Upload fabric image to S3
+   * @param {File} file - Image file to upload
+   * @returns {Promise<Object>} Upload result with S3 URL
+   */
+  async uploadImage(file) {
+    const formData = new FormData();
+    formData.append('file', file);
+    return httpClient.post('/api/v1/fabrics/upload-image', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+  }
+
+  /**
+   * Parse response từ backend (xử lý CommonResponse structure)
+   * @param {Object} response - Response từ API
+   * @returns {*} Parsed data
+   */
+  parseResponse(response) {
+    // Backend trả về CommonResponse<T> với structure:
+    // { requestTrace, responseDateTime, responseStatus, responseData }
+    if (response?.responseData !== undefined) {
+      return response.responseData;
+    }
+    // Fallback cho các trường hợp khác
+    if (response?.data?.responseData !== undefined) {
+      return response.data.responseData;
+    }
+    if (response?.data !== undefined) {
+      return response.data;
+    }
+    return response;
+  }
+
+  /**
+   * Get reviews for a fabric
+   * @param {number} fabricId - Fabric ID
+   * @param {Object} pagination - Pagination
+   * @returns {Promise<Object>} Paginated reviews
+   */
+  async getReviews(fabricId, pagination = {}) {
+    const queryString = new URLSearchParams(pagination).toString();
+    const endpoint = queryString
+      ? `${API_ENDPOINTS.FABRIC.DETAIL(fabricId)}/reviews?${queryString}`
+      : `${API_ENDPOINTS.FABRIC.DETAIL(fabricId)}/reviews`;
+    return httpClient.get(endpoint);
+  }
+
+  /**
+   * Submit a review for a fabric
+   * @param {number} fabricId - Fabric ID
+   * @param {Object} reviewData - Review data (rating, title, comment, images)
+   * @returns {Promise<Object>} Created review
+   */
+  async submitReview(fabricId, reviewData) {
+    return httpClient.post(`${API_ENDPOINTS.FABRIC.DETAIL(fabricId)}/reviews`, {
+      ...reviewData,
+      type: 'FABRIC',
+      fabricId: fabricId
+    });
+  }
 }
 
 export default new FabricService();

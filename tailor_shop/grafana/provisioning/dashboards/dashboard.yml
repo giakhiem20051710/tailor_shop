@@ -1,0 +1,16 @@
+# Grafana Dashboard Provisioning Configuration
+
+apiVersion: 1
+
+providers:
+  - name: 'Tailor Shop Dashboards'
+    orgId: 1
+    folder: 'Tailor Shop'
+    folderUid: 'tailor-shop'
+    type: file
+    disableDeletion: false
+    editable: true
+    allowUiUpdates: true
+    options:
+      path: /etc/grafana/provisioning/dashboards
+

@@ -1,6 +1,5 @@
 import { useMemo, useState, useEffect } from "react";
-import { getFabricHolds } from "../utils/fabricHoldStorage.js";
-import { getWorkingSlots } from "../utils/workingSlotStorage.js";
+import { fabricService, appointmentService, workingSlotService } from "../services";
 
 const formatDateTime = (iso) => {
   if (!iso) return "—";
@@ -36,10 +35,69 @@ export default function FabricRequestsPage() {
   const [requests, setRequests] = useState([]);
   const [filterType, setFilterType] = useState("all");
   const [slots, setSlots] = useState([]);
+  const [loading, setLoading] = useState(true);
 
+  // Load fabric hold requests and working slots from API
   useEffect(() => {
-    setRequests(getFabricHolds());
-    setSlots(getWorkingSlots());
+    const loadData = async () => {
+      try {
+        setLoading(true);
+
+        // Load fabric hold requests
+        const holdsResponse = await fabricService.listHoldRequests({}, { page: 0, size: 1000 });
+        const holdsResponseData = holdsResponse?.data ?? holdsResponse?.responseData ?? holdsResponse;
+        const holdsList = holdsResponseData?.content || holdsResponseData?.data || [];
+
+        // Map to expected format using backend FabricHoldRequestResponse fields:
+        // id, fabricId, fabricName, fabricImage, userId, userName, type, quantity,
+        // requestedDate, requestedTime, status, expiryDate, notes, staffNotes, etc.
+        const mappedRequests = holdsList.map((req) => ({
+          id: req.id,
+          type: req.type === "HOLD" ? "hold" : "visit",
+          key: req.fabricId || req.fabric?.id,
+          name: req.fabricName || req.fabric?.name || "Vải",
+          tag: req.fabric?.category || "",
+          price: req.fabric?.pricePerMeter ? `${req.fabric.pricePerMeter.toLocaleString("vi-VN")} đ/m` : "—",
+          image: req.fabricImage || req.fabric?.image,
+          customerName: req.userName || req.customer?.name || "Khách lẻ",
+          customerPhone: req.customer?.phone,
+          slotId: req.workingSlot?.id,
+          visitDate: req.requestedDate, // Backend uses requestedDate
+          visitTime: req.requestedTime, // Backend uses requestedTime
+          createdAt: req.createdAt,
+          status: req.status,
+          notes: req.notes,
+        }));
+
+        setRequests(mappedRequests);
+
+        // Load working slots
+        const slotsResponse = await workingSlotService.list({}, { page: 0, size: 500 });
+        const slotsResponseData = slotsResponse?.data ?? slotsResponse?.responseData ?? slotsResponse;
+        const slotsList = slotsResponseData?.content || slotsResponseData?.data || [];
+
+        const mappedSlots = slotsList.map((s) => ({
+          id: s.id,
+          date: s.date,
+          startTime: s.startTime,
+          endTime: s.endTime,
+          type: s.type || "consult",
+          status: s.status,
+          capacity: s.capacity || 1,
+          bookedCount: s.bookedCount || 0,
+        }));
+
+        setSlots(mappedSlots);
+      } catch (error) {
+        console.error("Error loading fabric requests:", error);
+        setRequests([]);
+        setSlots([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
   }, []);
 
   const filtered = useMemo(() => {
@@ -108,7 +166,13 @@ export default function FabricRequestsPage() {
                 </tr>
               </thead>
               <tbody>
-                {filtered.length ? (
+                {loading ? (
+                  <tr>
+                    <td colSpan={6} className="px-3 py-6 text-center text-slate-500">
+                      Đang tải dữ liệu...
+                    </td>
+                  </tr>
+                ) : filtered.length ? (
                   filtered.map((req) => {
                     // Tìm slot nếu có slotId
                     const slot = req.slotId
@@ -118,13 +182,13 @@ export default function FabricRequestsPage() {
                     const appointmentTime = req.visitTime || (slot ? `${slot.startTime}–${slot.endTime}` : null);
 
                     return (
-                    <tr
-                      key={`${req.type}-${req.key}-${req.createdAt}`}
+                      <tr
+                        key={`${req.type}-${req.key}-${req.createdAt}`}
                         className="border-b border-slate-100 last:border-0 hover:bg-slate-50"
-                    >
-                      <td className="px-3 py-2 whitespace-nowrap">
+                      >
+                        <td className="px-3 py-2 whitespace-nowrap">
                           <p className="text-xs text-slate-500">
-                        {formatDateTime(req.createdAt)}
+                            {formatDateTime(req.createdAt)}
                           </p>
                         </td>
                         <td className="px-3 py-2">
@@ -146,38 +210,37 @@ export default function FabricRequestsPage() {
                           ) : (
                             <p className="text-xs text-slate-400">—</p>
                           )}
-                      </td>
-                      <td className="px-3 py-2">
-                        <p className="font-medium text-slate-900">
-                          {req.customerName || "Khách lẻ"}
-                        </p>
-                        {req.customerPhone && (
-                          <p className="text-xs text-slate-500">
-                            {req.customerPhone}
+                        </td>
+                        <td className="px-3 py-2">
+                          <p className="font-medium text-slate-900">
+                            {req.customerName || "Khách lẻ"}
                           </p>
-                        )}
-                      </td>
-                      <td className="px-3 py-2">
-                        <span
-                          className={`inline-flex px-3 py-1 rounded-full text-xs font-semibold ${
-                            req.type === "hold"
+                          {req.customerPhone && (
+                            <p className="text-xs text-slate-500">
+                              {req.customerPhone}
+                            </p>
+                          )}
+                        </td>
+                        <td className="px-3 py-2">
+                          <span
+                            className={`inline-flex px-3 py-1 rounded-full text-xs font-semibold ${req.type === "hold"
                               ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
                               : "bg-amber-50 text-amber-700 border border-amber-200"
-                          }`}
-                        >
-                          {METHOD_LABEL[req.type] || req.type}
-                        </span>
-                      </td>
-                      <td className="px-3 py-2">
-                        <p className="font-medium text-slate-900">
-                          {req.name}
-                        </p>
-                        <p className="text-xs text-slate-500">{req.tag}</p>
-                      </td>
-                      <td className="px-3 py-2 text-xs text-slate-500">
-                        Giá tham khảo: {req.price}
-                      </td>
-                    </tr>
+                              }`}
+                          >
+                            {METHOD_LABEL[req.type] || req.type}
+                          </span>
+                        </td>
+                        <td className="px-3 py-2">
+                          <p className="font-medium text-slate-900">
+                            {req.name}
+                          </p>
+                          <p className="text-xs text-slate-500">{req.tag}</p>
+                        </td>
+                        <td className="px-3 py-2 text-xs text-slate-500">
+                          Giá tham khảo: {req.price}
+                        </td>
+                      </tr>
                     );
                   })
                 ) : (

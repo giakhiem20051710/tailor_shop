@@ -83,6 +83,19 @@ public class ReviewController {
     }
 
     /**
+     * Create image asset review (customer only)
+     */
+    @PostMapping("/image-assets/{imageAssetId}")
+    @PreAuthorize("hasRole('CUSTOMER')")
+    public ResponseEntity<CommonResponse<ReviewResponse>> createImageAssetReview(
+            @PathVariable Long imageAssetId,
+            @Valid @RequestBody ReviewRequest request,
+            @AuthenticationPrincipal CustomUserDetails principal) {
+        ReviewResponse data = reviewService.createImageAssetReview(imageAssetId, request, principal.getId());
+        return ResponseEntity.ok(ResponseUtil.success(TraceIdUtil.getOrCreateTraceId(), data));
+    }
+
+    /**
      * Update review (chỉ owner)
      */
     @PutMapping("/{id}")
@@ -95,6 +108,7 @@ public class ReviewController {
         return ResponseEntity.ok(ResponseUtil.success(TraceIdUtil.getOrCreateTraceId(), data));
     }
 
+    // ... (keep delete, reply, votes, moderate as is)
     /**
      * Delete review (chỉ owner)
      */
@@ -164,14 +178,15 @@ public class ReviewController {
     @GetMapping("/statistics")
     public ResponseEntity<CommonResponse<ReviewStatisticsResponse>> getStatistics(
             @RequestParam(required = false) Long productId,
+            @RequestParam(required = false) Long imageAssetId,
             @RequestParam(required = false) Long orderId,
-            @RequestParam(required = false) String type // PRODUCT or ORDER
+            @RequestParam(required = false) String type // PRODUCT or ORDER or IMAGE_ASSET
     ) {
         com.example.tailor_shop.modules.review.domain.ReviewType reviewType = null;
         if (type != null) {
             reviewType = com.example.tailor_shop.modules.review.domain.ReviewType.valueOf(type.toUpperCase());
         }
-        ReviewStatisticsResponse data = reviewService.getStatistics(productId, orderId, reviewType);
+        ReviewStatisticsResponse data = reviewService.getStatistics(productId, imageAssetId, orderId, reviewType);
         return ResponseEntity.ok(ResponseUtil.success(TraceIdUtil.getOrCreateTraceId(), data));
     }
 
@@ -196,6 +211,18 @@ public class ReviewController {
             @PathVariable Long orderId,
             @AuthenticationPrincipal CustomUserDetails principal) {
         boolean hasReviewed = reviewService.hasReviewedOrder(orderId, principal.getId());
+        return ResponseEntity.ok(ResponseUtil.success(TraceIdUtil.getOrCreateTraceId(), hasReviewed));
+    }
+
+    /**
+     * Check if user has reviewed image asset
+     */
+    @GetMapping("/image-assets/{imageAssetId}/check")
+    @PreAuthorize("hasRole('CUSTOMER')")
+    public ResponseEntity<CommonResponse<Boolean>> hasReviewedImageAsset(
+            @PathVariable Long imageAssetId,
+            @AuthenticationPrincipal CustomUserDetails principal) {
+        boolean hasReviewed = reviewService.hasReviewedImageAsset(imageAssetId, principal.getId());
         return ResponseEntity.ok(ResponseUtil.success(TraceIdUtil.getOrCreateTraceId(), hasReviewed));
     }
 }

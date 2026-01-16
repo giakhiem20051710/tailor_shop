@@ -36,7 +36,13 @@ public class ImageAssetEntity {
     private String s3Key; // "templates/ao-dai-do-1.jpg"
 
     @Column(name = "url", length = 500)
-    private String url; // full S3 URL
+    private String url; // full S3 URL (original or medium)
+
+    @Column(name = "thumbnail_url", length = 500)
+    private String thumbnailUrl; // thumbnail URL (300x300)
+
+    @Column(name = "large_url", length = 500)
+    private String largeUrl; // large URL (1200px width)
 
     @Column(name = "category", nullable = false, length = 50)
     private String category; // "template", "fabric", "style"
@@ -51,6 +57,65 @@ public class ImageAssetEntity {
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "tags", columnDefinition = "JSON")
     private List<String> tags; // ["traditional", "red", "tet"]
+
+    // === AI ANALYSIS FIELDS ===
+
+    @Column(name = "description", columnDefinition = "TEXT")
+    private String description; // Mô tả chi tiết từ AI
+
+    @Column(name = "occasion", length = 50)
+    private String occasion; // daily, work, party, wedding...
+
+    @Column(name = "season", length = 50)
+    private String season; // spring, summer, autumn, winter
+
+    @Column(name = "style_category", length = 50)
+    private String styleCategory; // elegant, casual, vintage... (renamed from style to avoid conflict with
+                                  // StyleEntity)
+
+    @Column(name = "silhouette", length = 200)
+    private String silhouette; // Form dáng
+
+    @Column(name = "length_info", length = 200)
+    private String lengthInfo; // Độ dài
+
+    @Column(name = "lining", length = 200)
+    private String lining; // Thông tin lót
+
+    @Column(name = "accessories", length = 500)
+    private String accessories; // Phụ kiện gợi ý
+
+    @Column(name = "tailoring_time", length = 50)
+    private String tailoringTime; // Thời gian may
+
+    @Column(name = "fitting_count", length = 50)
+    private String fittingCount; // Số lần thử
+
+    @Column(name = "warranty", length = 200)
+    private String warranty; // Bảo hành
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "materials", columnDefinition = "JSON")
+    private List<String> materials; // ["Lụa", "Satin"]
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "colors", columnDefinition = "JSON")
+    private List<String> colors; // ["Đỏ", "Xanh"]
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "occasions", columnDefinition = "JSON")
+    private List<String> occasions; // ["Cưới hỏi", "Lễ tối"]
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "customer_styles", columnDefinition = "JSON")
+    private List<String> customerStyles; // ["Nữ tính", "Thanh lịch"]
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "care_instructions", columnDefinition = "JSON")
+    private List<String> careInstructions; // ["Giặt tay"]
+
+    @Column(name = "confidence")
+    private Double confidence; // Độ tin cậy AI
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "product_template_id")
@@ -72,4 +137,3 @@ public class ImageAssetEntity {
     @Column(name = "updated_at")
     private OffsetDateTime updatedAt;
 }
-

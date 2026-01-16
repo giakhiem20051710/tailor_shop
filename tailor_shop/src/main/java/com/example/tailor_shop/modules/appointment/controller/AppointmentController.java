@@ -25,207 +25,115 @@ import java.util.List;
 @RequestMapping("/api/v1/appointments")
 public class AppointmentController {
 
-    private final AppointmentService appointmentService;
+        private final AppointmentService appointmentService;
 
-    public AppointmentController(AppointmentService appointmentService) {
-        this.appointmentService = appointmentService;
-    }
-
-    @GetMapping
-    @PreAuthorize("hasAnyRole('ADMIN','STAFF','TAILOR','CUSTOMER')")
-    public ResponseEntity<CommonResponse<Page<AppointmentResponse>>> list(
-            @RequestParam(value = "staffId", required = false) Long staffId,
-            @RequestParam(value = "customerId", required = false) Long customerId,
-            @RequestParam(value = "date", required = false) LocalDate date,
-            @RequestParam(value = "status", required = false) AppointmentStatus status,
-            @RequestParam(value = "type", required = false) AppointmentType type,
-            @PageableDefault(size = 20, sort = "appointmentDate") Pageable pageable,
-            @AuthenticationPrincipal CustomUserDetails principal
-    ) {
-        boolean isCustomer = principal != null && principal.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals("ROLE_CUSTOMER"));
-        Page<AppointmentResponse> data = appointmentService.list(staffId, customerId, date, status, type,
-                principal != null ? principal.getId() : null, isCustomer, pageable);
-        return ResponseEntity.ok(ResponseUtil.success(TraceIdUtil.getOrCreateTraceId(), data));
-    }
-
-    @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN','STAFF','TAILOR','CUSTOMER')")
-    public ResponseEntity<CommonResponse<AppointmentResponse>> detail(
-            @PathVariable Long id,
-            @AuthenticationPrincipal CustomUserDetails principal
-    ) {
-        boolean isCustomer = principal != null && principal.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals("ROLE_CUSTOMER"));
-        AppointmentResponse data = appointmentService.detail(id, principal != null ? principal.getId() : null, isCustomer);
-        return ResponseEntity.ok(ResponseUtil.success(TraceIdUtil.getOrCreateTraceId(), data));
-    }
-
-    @PostMapping
-    @PreAuthorize("hasAnyRole('ADMIN','STAFF','TAILOR')")
-    public ResponseEntity<CommonResponse<AppointmentResponse>> create(
-            @Valid @RequestBody AppointmentRequest request,
-            @AuthenticationPrincipal CustomUserDetails principal
-    ) {
-        AppointmentResponse data = appointmentService.create(request, principal != null ? principal.getId() : null);
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ResponseUtil.success(TraceIdUtil.getOrCreateTraceId(), data));
-    }
-
-    @PutMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN','STAFF','TAILOR')")
-    public ResponseEntity<CommonResponse<AppointmentResponse>> update(
-            @PathVariable Long id,
-            @Valid @RequestBody AppointmentRequest request,
-            @AuthenticationPrincipal CustomUserDetails principal
-    ) {
-        AppointmentResponse data = appointmentService.update(id, request, principal != null ? principal.getId() : null);
-        return ResponseEntity.ok(ResponseUtil.success(TraceIdUtil.getOrCreateTraceId(), data));
-    }
-
-    @PatchMapping("/{id}/status")
-    @PreAuthorize("hasAnyRole('ADMIN','STAFF','TAILOR')")
-    public ResponseEntity<CommonResponse<AppointmentResponse>> updateStatus(
-            @PathVariable Long id,
-            @Valid @RequestBody UpdateAppointmentStatusRequest request,
-            @AuthenticationPrincipal CustomUserDetails principal
-    ) {
-        AppointmentResponse data = appointmentService.updateStatus(id, request, principal != null ? principal.getId() : null);
-        return ResponseEntity.ok(ResponseUtil.success(TraceIdUtil.getOrCreateTraceId(), data));
-    }
-
-    @DeleteMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN','STAFF','TAILOR')")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public ResponseEntity<CommonResponse<Void>> delete(
-            @PathVariable Long id,
-            @AuthenticationPrincipal CustomUserDetails principal
-    ) {
-        appointmentService.delete(id, principal != null ? principal.getId() : null);
-        return ResponseEntity.ok(ResponseUtil.success(TraceIdUtil.getOrCreateTraceId(), null));
-    }
-
-    @GetMapping("/schedule")
-    @PreAuthorize("hasAnyRole('ADMIN','STAFF','TAILOR')")
-    public ResponseEntity<CommonResponse<List<AppointmentResponse>>> getSchedule(
-            @RequestParam(value = "staffId") Long staffId,
-            @RequestParam(value = "date") LocalDate date,
-            @RequestParam(value = "type", required = false) AppointmentType type
-    ) {
-        List<AppointmentResponse> data = appointmentService.getSchedule(staffId, date, type);
-        return ResponseEntity.ok(ResponseUtil.success(TraceIdUtil.getOrCreateTraceId(), data));
-    }
-
-    @GetMapping("/available-slots")
-    @PreAuthorize("hasAnyRole('ADMIN','STAFF','TAILOR')")
-    public ResponseEntity<CommonResponse<List<AvailableSlotResponse>>> getAvailableSlots(
-            @RequestParam(value = "staffId") Long staffId,
-            @RequestParam(value = "date") LocalDate date,
-            @RequestParam(value = "duration", required = false) Integer durationMinutes
-    ) {
-        List<AvailableSlotResponse> data = appointmentService.getAvailableSlots(staffId, date, durationMinutes);
-        return ResponseEntity.ok(ResponseUtil.success(TraceIdUtil.getOrCreateTraceId(), data));
-    }
-
-    // Working Slots
-    @GetMapping("/working-slots")
-    @PreAuthorize("hasAnyRole('ADMIN','STAFF','TAILOR')")
-    public ResponseEntity<CommonResponse<Page<WorkingSlotResponse>>> listWorkingSlots(
-            @RequestParam(value = "staffId", required = false) Long staffId,
-            @RequestParam(value = "date", required = false) LocalDate date,
-            @PageableDefault(size = 20) Pageable pageable
-    ) {
-        Page<WorkingSlotResponse> data;
-        if (staffId != null) {
-            data = appointmentService.listWorkingSlots(staffId, date, pageable);
-        } else {
-            data = appointmentService.listAllWorkingSlots(date, pageable);
+        public AppointmentController(AppointmentService appointmentService) {
+                this.appointmentService = appointmentService;
         }
-        return ResponseEntity.ok(ResponseUtil.success(TraceIdUtil.getOrCreateTraceId(), data));
-    }
 
-    @GetMapping("/working-slots/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN','STAFF','TAILOR')")
-    public ResponseEntity<CommonResponse<WorkingSlotResponse>> getWorkingSlot(@PathVariable Long id) {
-        WorkingSlotResponse data = appointmentService.getWorkingSlot(id);
-        return ResponseEntity.ok(ResponseUtil.success(TraceIdUtil.getOrCreateTraceId(), data));
-    }
+        @GetMapping
+        @PreAuthorize("hasAnyRole('ADMIN','STAFF','TAILOR','CUSTOMER')")
+        public ResponseEntity<CommonResponse<Page<AppointmentResponse>>> list(
+                        @RequestParam(value = "staffId", required = false) Long staffId,
+                        @RequestParam(value = "customerId", required = false) Long customerId,
+                        @RequestParam(value = "date", required = false) LocalDate date,
+                        @RequestParam(value = "status", required = false) AppointmentStatus status,
+                        @RequestParam(value = "type", required = false) AppointmentType type,
+                        @PageableDefault(size = 20, sort = "appointmentDate") Pageable pageable,
+                        @AuthenticationPrincipal CustomUserDetails principal) {
+                boolean isCustomer = principal != null && principal.getAuthorities().stream()
+                                .anyMatch(a -> a.getAuthority().equals("ROLE_CUSTOMER"));
+                Page<AppointmentResponse> data = appointmentService.list(staffId, customerId, date, status, type,
+                                principal != null ? principal.getId() : null, isCustomer, pageable);
+                return ResponseEntity.ok(ResponseUtil.success(TraceIdUtil.getOrCreateTraceId(), data));
+        }
 
-    @PostMapping("/working-slots")
-    @PreAuthorize("hasAnyRole('ADMIN','STAFF','TAILOR')")
-    public ResponseEntity<CommonResponse<WorkingSlotResponse>> createWorkingSlot(
-            @Valid @RequestBody WorkingSlotRequest request,
-            @AuthenticationPrincipal CustomUserDetails principal
-    ) {
-        WorkingSlotResponse data = appointmentService.createWorkingSlot(request, principal != null ? principal.getId() : null);
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ResponseUtil.success(TraceIdUtil.getOrCreateTraceId(), data));
-    }
+        @GetMapping("/{id}")
+        @PreAuthorize("hasAnyRole('ADMIN','STAFF','TAILOR','CUSTOMER')")
+        public ResponseEntity<CommonResponse<AppointmentResponse>> detail(
+                        @PathVariable Long id,
+                        @AuthenticationPrincipal CustomUserDetails principal) {
+                boolean isCustomer = principal != null && principal.getAuthorities().stream()
+                                .anyMatch(a -> a.getAuthority().equals("ROLE_CUSTOMER"));
+                AppointmentResponse data = appointmentService.detail(id, principal != null ? principal.getId() : null,
+                                isCustomer);
+                return ResponseEntity.ok(ResponseUtil.success(TraceIdUtil.getOrCreateTraceId(), data));
+        }
 
-    @PutMapping("/working-slots/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN','STAFF','TAILOR')")
-    public ResponseEntity<CommonResponse<WorkingSlotResponse>> updateWorkingSlot(
-            @PathVariable Long id,
-            @Valid @RequestBody WorkingSlotRequest request,
-            @AuthenticationPrincipal CustomUserDetails principal
-    ) {
-        WorkingSlotResponse data = appointmentService.updateWorkingSlot(id, request, principal != null ? principal.getId() : null);
-        return ResponseEntity.ok(ResponseUtil.success(TraceIdUtil.getOrCreateTraceId(), data));
-    }
+        @PostMapping
+        @PreAuthorize("hasAnyRole('ADMIN','STAFF','TAILOR')")
+        public ResponseEntity<CommonResponse<AppointmentResponse>> create(
+                        @Valid @RequestBody AppointmentRequest request,
+                        @AuthenticationPrincipal CustomUserDetails principal) {
+                AppointmentResponse data = appointmentService.create(request,
+                                principal != null ? principal.getId() : null);
+                return ResponseEntity.status(HttpStatus.CREATED)
+                                .body(ResponseUtil.success(TraceIdUtil.getOrCreateTraceId(), data));
+        }
 
-    @DeleteMapping("/working-slots/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN','STAFF','TAILOR')")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public ResponseEntity<CommonResponse<Void>> deleteWorkingSlot(
-            @PathVariable Long id,
-            @AuthenticationPrincipal CustomUserDetails principal
-    ) {
-        appointmentService.deleteWorkingSlot(id, principal != null ? principal.getId() : null);
-        return ResponseEntity.ok(ResponseUtil.success(TraceIdUtil.getOrCreateTraceId(), null));
-    }
+        /**
+         * Create appointment by customer (for fabric visit, etc. - orderId is optional)
+         */
+        @PostMapping("/customer")
+        @PreAuthorize("hasRole('CUSTOMER')")
+        public ResponseEntity<CommonResponse<AppointmentResponse>> createByCustomer(
+                        @Valid @RequestBody CustomerAppointmentRequest request,
+                        @AuthenticationPrincipal CustomUserDetails principal) {
+                AppointmentResponse data = appointmentService.createByCustomer(request, principal.getId());
+                return ResponseEntity.status(HttpStatus.CREATED)
+                                .body(ResponseUtil.success(TraceIdUtil.getOrCreateTraceId(), data));
+        }
 
-    // Bulk operations for easier management
-    @PostMapping("/working-slots/bulk")
-    @PreAuthorize("hasAnyRole('ADMIN','STAFF')")
-    public ResponseEntity<CommonResponse<List<WorkingSlotResponse>>> createBulkWorkingSlots(
-            @Valid @RequestBody BulkWorkingSlotRequest request,
-            @AuthenticationPrincipal CustomUserDetails principal
-    ) {
-        List<WorkingSlotResponse> data = appointmentService.createBulkWorkingSlots(
-                request, principal != null ? principal.getId() : null);
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ResponseUtil.success(TraceIdUtil.getOrCreateTraceId(), data));
-    }
+        @PutMapping("/{id}")
+        @PreAuthorize("hasAnyRole('ADMIN','STAFF','TAILOR')")
+        public ResponseEntity<CommonResponse<AppointmentResponse>> update(
+                        @PathVariable Long id,
+                        @Valid @RequestBody AppointmentRequest request,
+                        @AuthenticationPrincipal CustomUserDetails principal) {
+                AppointmentResponse data = appointmentService.update(id, request,
+                                principal != null ? principal.getId() : null);
+                return ResponseEntity.ok(ResponseUtil.success(TraceIdUtil.getOrCreateTraceId(), data));
+        }
 
-    @PostMapping("/working-slots/{staffId}/reset")
-    @PreAuthorize("hasAnyRole('ADMIN','STAFF')")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public ResponseEntity<CommonResponse<Void>> resetToDefaultWorkingHours(
-            @PathVariable Long staffId,
-            @AuthenticationPrincipal CustomUserDetails principal
-    ) {
-        appointmentService.resetToDefaultWorkingHours(staffId, principal != null ? principal.getId() : null);
-        return ResponseEntity.ok(ResponseUtil.success(TraceIdUtil.getOrCreateTraceId(), null));
-    }
+        @PatchMapping("/{id}/status")
+        @PreAuthorize("hasAnyRole('ADMIN','STAFF','TAILOR')")
+        public ResponseEntity<CommonResponse<AppointmentResponse>> updateStatus(
+                        @PathVariable Long id,
+                        @Valid @RequestBody UpdateAppointmentStatusRequest request,
+                        @AuthenticationPrincipal CustomUserDetails principal) {
+                AppointmentResponse data = appointmentService.updateStatus(id, request,
+                                principal != null ? principal.getId() : null);
+                return ResponseEntity.ok(ResponseUtil.success(TraceIdUtil.getOrCreateTraceId(), data));
+        }
 
-    @GetMapping("/working-slots/{staffId}/hours")
-    @PreAuthorize("hasAnyRole('ADMIN','STAFF','TAILOR')")
-    public ResponseEntity<CommonResponse<WorkingHoursResponse>> getWorkingHours(@PathVariable Long staffId) {
-        WorkingHoursResponse data = appointmentService.getWorkingHours(staffId);
-        return ResponseEntity.ok(ResponseUtil.success(TraceIdUtil.getOrCreateTraceId(), data));
-    }
+        @DeleteMapping("/{id}")
+        @PreAuthorize("hasAnyRole('ADMIN','STAFF','TAILOR')")
+        @ResponseStatus(HttpStatus.NO_CONTENT)
+        public ResponseEntity<CommonResponse<Void>> delete(
+                        @PathVariable Long id,
+                        @AuthenticationPrincipal CustomUserDetails principal) {
+                appointmentService.delete(id, principal != null ? principal.getId() : null);
+                return ResponseEntity.ok(ResponseUtil.success(TraceIdUtil.getOrCreateTraceId(), null));
+        }
 
-    // Đóng cửa theo ngày/tuần/tháng
-    @PostMapping("/working-slots/close-dates")
-    @PreAuthorize("hasAnyRole('ADMIN','STAFF')")
-    public ResponseEntity<CommonResponse<List<WorkingSlotResponse>>> closeDates(
-            @Valid @RequestBody CloseDateRequest request,
-            @AuthenticationPrincipal CustomUserDetails principal
-    ) {
-        List<WorkingSlotResponse> data = appointmentService.closeDates(
-                request, principal != null ? principal.getId() : null);
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ResponseUtil.success(TraceIdUtil.getOrCreateTraceId(), data));
-    }
+        @GetMapping("/schedule")
+        @PreAuthorize("hasAnyRole('ADMIN','STAFF','TAILOR')")
+        public ResponseEntity<CommonResponse<List<AppointmentResponse>>> getSchedule(
+                        @RequestParam(value = "staffId") Long staffId,
+                        @RequestParam(value = "date") LocalDate date,
+                        @RequestParam(value = "type", required = false) AppointmentType type) {
+                List<AppointmentResponse> data = appointmentService.getSchedule(staffId, date, type);
+                return ResponseEntity.ok(ResponseUtil.success(TraceIdUtil.getOrCreateTraceId(), data));
+        }
+
+        @GetMapping("/available-slots")
+        @PreAuthorize("hasAnyRole('ADMIN','STAFF','TAILOR')")
+        public ResponseEntity<CommonResponse<List<AvailableSlotResponse>>> getAvailableSlots(
+                        @RequestParam(value = "staffId") Long staffId,
+                        @RequestParam(value = "date") LocalDate date,
+                        @RequestParam(value = "duration", required = false) Integer durationMinutes) {
+                List<AvailableSlotResponse> data = appointmentService.getAvailableSlots(staffId, date, durationMinutes);
+                return ResponseEntity.ok(ResponseUtil.success(TraceIdUtil.getOrCreateTraceId(), data));
+        }
+
 }
-

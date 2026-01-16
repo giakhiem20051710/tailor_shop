@@ -16,6 +16,7 @@ export { default as fabricOrderService } from './fabricOrderService.js';
 export { default as promotionService } from './promotionService.js';
 export { default as orderService } from './orderService.js';
 export { default as appointmentService } from './appointmentService.js';
+export { default as workingSlotService } from './workingSlotService.js';
 export { default as invoiceService } from './invoiceService.js';
 export { default as reviewService } from './reviewService.js';
 export { default as measurementService } from './measurementService.js';

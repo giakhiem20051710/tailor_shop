@@ -1,0 +1,859 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FlashSaleService - Tài Liệu Chi Tiết</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a0a2e 0%, #2d1b4e 100%);
+            color: #eee;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: #ff6b9d;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+            text-shadow: 0 0 20px rgba(255, 107, 157, 0.3);
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #888;
+            margin-bottom: 30px;
+        }
+
+        h2 {
+            color: #ffd700;
+            margin: 40px 0 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #ffd700;
+        }
+
+        h3 {
+            color: #00ff88;
+            margin: 25px 0 15px;
+        }
+
+        h4 {
+            color: #00d9ff;
+            margin: 20px 0 10px;
+        }
+
+        .section {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 25px;
+            margin: 20px 0;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .mermaid {
+            background: #fff;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 15px 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+            font-size: 14px;
+        }
+
+        th,
+        td {
+            padding: 12px 15px;
+            text-align: left;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        th {
+            background: rgba(255, 107, 157, 0.2);
+            color: #ff6b9d;
+        }
+
+        tr:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        code {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 2px 8px;
+            border-radius: 4px;
+            color: #00ff88;
+            font-family: 'Consolas', monospace;
+        }
+
+        pre {
+            background: rgba(0, 0, 0, 0.4);
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 10px 0;
+        }
+
+        pre code {
+            padding: 0;
+            background: transparent;
+        }
+
+        .critical-box {
+            background: linear-gradient(135deg, rgba(255, 0, 0, 0.1), rgba(255, 107, 107, 0.1));
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 4px solid #ff0000;
+            margin: 15px 0;
+        }
+
+        .success-box {
+            background: linear-gradient(135deg, rgba(0, 255, 136, 0.1), rgba(0, 217, 255, 0.1));
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 4px solid #00ff88;
+            margin: 15px 0;
+        }
+
+        .warning-box {
+            background: linear-gradient(135deg, rgba(255, 193, 7, 0.1), rgba(255, 152, 0, 0.1));
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 4px solid #ffc107;
+            margin: 15px 0;
+        }
+
+        .info-box {
+            background: linear-gradient(135deg, rgba(0, 123, 255, 0.1), rgba(0, 217, 255, 0.1));
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 4px solid #007bff;
+            margin: 15px 0;
+        }
+
+        .algo-box {
+            background: linear-gradient(135deg, rgba(255, 107, 157, 0.2), rgba(255, 215, 0, 0.1));
+            padding: 20px;
+            border-radius: 10px;
+            border: 2px solid #ff6b9d;
+            margin: 15px 0;
+        }
+
+        ul,
+        ol {
+            padding-left: 25px;
+            margin: 10px 0;
+        }
+
+        li {
+            margin: 8px 0;
+            line-height: 1.6;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+            margin: 2px;
+        }
+
+        .badge-scheduled {
+            background: #6c757d;
+            color: white;
+        }
+
+        .badge-active {
+            background: #28a745;
+            color: white;
+        }
+
+        .badge-ended {
+            background: #dc3545;
+            color: white;
+        }
+
+        .badge-cancelled {
+            background: #343a40;
+            color: white;
+        }
+
+        .badge-soldout {
+            background: #fd7e14;
+            color: white;
+        }
+
+        .stats {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin: 20px 0;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.08);
+            padding: 20px;
+            border-radius: 10px;
+            flex: 1;
+            min-width: 150px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #ff6b9d;
+        }
+
+        .stat-label {
+            color: #888;
+            margin-top: 5px;
+        }
+
+        .step-number {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            background: #ff6b9d;
+            color: white;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 30px;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+
+        .timeline-item {
+            display: flex;
+            margin: 10px 0;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+        }
+
+        .config-value {
+            color: #ffd700;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>⚡ FlashSaleService - Tài Liệu Chi Tiết</h1>
+        <p class="subtitle">Module Flash Sale với Pessimistic Locking - High Concurrency System</p>
+
+        <!-- Stats -->
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-value">609</div>
+                <div class="stat-label">Dòng code</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">16</div>
+                <div class="stat-label">Methods</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">3</div>
+                <div class="stat-label">Scheduled Tasks</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">SERIALIZABLE</div>
+                <div class="stat-label">Isolation Level</div>
+            </div>
+        </div>
+
+        <div class="critical-box">
+            <strong>🔥 CRITICAL: </strong>Đây là service có tính đồng thời cao (High Concurrency), sử dụng
+            <strong>Pessimistic Locking</strong> và <strong>Serializable Isolation</strong> để tránh race condition
+            khi nhiều người mua cùng lúc.
+        </div>
+
+        <!-- 1. Overview -->
+        <div class="section">
+            <h2>1. Tổng Quan Hệ Thống</h2>
+
+            <p><code>FlashSaleServiceImpl</code> quản lý chương trình flash sale với các tính năng:</p>
+
+            <div class="success-box">
+                <strong>✅ Core Features:</strong>
+                <ul>
+                    <li><strong>Purchase Algorithm</strong> - Thuật toán mua hàng với lock</li>
+                    <li><strong>Reservation System</strong> - Giữ hàng trong thời gian giới hạn</li>
+                    <li><strong>User Limit</strong> - Giới hạn số lượng mỗi user</li>
+                    <li><strong>Stock Management</strong> - Quản lý tồn kho real-time</li>
+                    <li><strong>Scheduled Tasks</strong> - Tự động cập nhật trạng thái</li>
+                </ul>
+            </div>
+
+            <h3>Configuration Constants</h3>
+            <table>
+                <tr>
+                    <th>Constant</th>
+                    <th>Value</th>
+                    <th>Mô tả</th>
+                </tr>
+                <tr>
+                    <td><code>RESERVATION_MINUTES</code></td>
+                    <td class="config-value">10 phút</td>
+                    <td>Thời gian giữ hàng sau khi đặt</td>
+                </tr>
+                <tr>
+                    <td><code>PAYMENT_DEADLINE_MINUTES</code></td>
+                    <td class="config-value">10 phút</td>
+                    <td>Deadline thanh toán</td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- 2. Architecture -->
+        <div class="section">
+            <h2>2. Kiến Trúc Hệ Thống</h2>
+
+            <div class="mermaid">
+                graph TB
+                subgraph "Public APIs"
+                A1[getActiveSales]
+                A2[getUpcomingSales]
+                A3[getFeaturedSales]
+                A4[getDetail]
+                end
+
+                subgraph "Admin APIs"
+                B1[listAll]
+                B2[create]
+                B3[update]
+                B4[cancel]
+                end
+
+                subgraph "Customer APIs"
+                C1[purchase ⚡ CORE]
+                C2[getMyOrders]
+                C3[getOrderDetail]
+                C4[cancelOrder]
+                C5[confirmPayment]
+                end
+
+                subgraph "Scheduled Tasks"
+                D1[updateFlashSaleStatuses]
+                D2[releaseExpiredReservations]
+                D3[expirePendingOrders]
+                end
+
+                subgraph "Repositories"
+                R1[FlashSaleRepository]
+                R2[FlashSaleOrderRepository]
+                R3[FlashSaleReservationRepository]
+                R4[FabricRepository]
+                R5[UserRepository]
+                end
+
+                C1 -->|"FOR UPDATE"| R1
+                C1 --> R2
+                C1 --> R3
+                D1 -->|"Every 1 min"| R1
+                D2 -->|"Every 30 sec"| R3
+                D3 -->|"Every 1 min"| R2
+            </div>
+        </div>
+
+        <!-- 3. Flash Sale Status -->
+        <div class="section">
+            <h2>3. Flash Sale Status Flow</h2>
+
+            <div class="mermaid">
+                stateDiagram-v2
+                [*] --> SCHEDULED : Admin tạo mới
+
+                SCHEDULED --> ACTIVE : startTime đến
+                SCHEDULED --> CANCELLED : Admin hủy
+
+                ACTIVE --> ENDED : endTime đến
+                ACTIVE --> SOLD_OUT : Hết hàng
+                ACTIVE --> CANCELLED : Admin hủy
+
+                ENDED --> [*]
+                SOLD_OUT --> [*]
+                CANCELLED --> [*]
+            </div>
+
+            <h3>Status Badges</h3>
+            <p>
+                <span class="badge badge-scheduled">SCHEDULED</span> - Đã lên lịch, chưa bắt đầu<br>
+                <span class="badge badge-active">ACTIVE</span> - Đang diễn ra<br>
+                <span class="badge badge-ended">ENDED</span> - Đã kết thúc<br>
+                <span class="badge badge-soldout">SOLD_OUT</span> - Hết hàng<br>
+                <span class="badge badge-cancelled">CANCELLED</span> - Đã hủy
+            </p>
+        </div>
+
+        <!-- 4. CORE: Purchase Algorithm -->
+        <div class="section">
+            <h2>4. ⚡ PURCHASE ALGORITHM (Core Feature)</h2>
+
+            <div class="algo-box">
+                <h3>🔒 Pessimistic Locking Strategy</h3>
+                <p>Sử dụng <code>@Transactional(isolation = Isolation.SERIALIZABLE)</code> và
+                    <code>findByIdForUpdate()</code> để đảm bảo chỉ một transaction có thể modify flash sale tại một
+                    thời điểm.
+                </p>
+            </div>
+
+            <h3>Purchase Flow - 9 Bước</h3>
+
+            <div class="mermaid">
+                sequenceDiagram
+                participant U as User
+                participant S as FlashSaleService
+                participant FSR as FlashSaleRepo
+                participant RR as ReservationRepo
+                participant OR as OrderRepo
+                participant DB as Database
+
+                U->>S: purchase(flashSaleId, request, userId)
+
+                Note over S,DB: 🔒 STEP 1: LOCK FlashSale
+                S->>FSR: findByIdForUpdate(id)
+                FSR->>DB: SELECT ... FOR UPDATE
+                Note over DB: Row locked!
+                DB-->>FSR: FlashSale entity
+
+                Note over S: STEP 2: Validate Status
+                S->>S: Check CANCELLED/ENDED/SOLD_OUT
+                S->>S: Check startTime/endTime
+
+                Note over S: STEP 3: Validate Min Purchase
+                S->>S: quantity >= minPurchase?
+
+                Note over S: STEP 4: Check Stock
+                S->>S: availableQuantity >= quantity?
+
+                Note over S: STEP 5: Check User Limit
+                S->>OR: sumQuantityByUserAndFlashSale()
+                OR-->>S: userPurchased
+                S->>S: userRemaining >= quantity?
+
+                Note over S: STEP 6: Create Reservation
+                S->>RR: save(reservation)
+                Note over S: expiresAt = now + 10 min
+
+                Note over S: STEP 7: Update Reserved Qty
+                S->>S: reservedQuantity += quantity
+                S->>FSR: save(flashSale)
+
+                Note over S: STEP 8: Create Order
+                S->>OR: save(order)
+                Note over S: paymentDeadline = now + 10 min
+
+                Note over S: STEP 9: Build Result
+                S-->>U: FlashSalePurchaseResult
+                Note over DB: 🔓 Lock released
+            </div>
+
+            <h3>Chi Tiết Từng Bước</h3>
+
+            <div class="timeline-item">
+                <span class="step-number">1</span>
+                <div>
+                    <strong>LOCK Flash Sale (Critical!)</strong><br>
+                    <code>flashSaleRepository.findByIdForUpdate(flashSaleId)</code><br>
+                    Sử dụng <code>SELECT ... FOR UPDATE</code> để lock row, ngăn race condition.
+                </div>
+            </div>
+
+            <div class="timeline-item">
+                <span class="step-number">2</span>
+                <div>
+                    <strong>Validate Status</strong><br>
+                    Kiểm tra: CANCELLED? ENDED? SOLD_OUT? Chưa bắt đầu? Đã hết giờ?
+                </div>
+            </div>
+
+            <div class="timeline-item">
+                <span class="step-number">3</span>
+                <div>
+                    <strong>Validate Min Purchase</strong><br>
+                    <code>quantity >= sale.getMinPurchase()</code><br>
+                    Thường min = 0.5 mét
+                </div>
+            </div>
+
+            <div class="timeline-item">
+                <span class="step-number">4</span>
+                <div>
+                    <strong>Check Available Stock</strong><br>
+                    <code>availableQuantity = totalQuantity - soldQuantity - reservedQuantity</code><br>
+                    Nếu không đủ → Return OUT_OF_STOCK
+                </div>
+            </div>
+
+            <div class="timeline-item">
+                <span class="step-number">5</span>
+                <div>
+                    <strong>Check User Limit</strong><br>
+                    Tổng số lượng user đã mua + quantity hiện tại <= maxPerUser </div>
+                </div>
+
+                <div class="timeline-item">
+                    <span class="step-number">6</span>
+                    <div>
+                        <strong>Create Reservation</strong><br>
+                        Giữ hàng trong 10 phút, status = ACTIVE
+                    </div>
+                </div>
+
+                <div class="timeline-item">
+                    <span class="step-number">7</span>
+                    <div>
+                        <strong>Update Reserved Quantity</strong><br>
+                        <code>sale.reservedQuantity += quantity</code>
+                    </div>
+                </div>
+
+                <div class="timeline-item">
+                    <span class="step-number">8</span>
+                    <div>
+                        <strong>Create Order</strong><br>
+                        Status = PENDING, payment deadline = 10 phút
+                    </div>
+                </div>
+
+                <div class="timeline-item">
+                    <span class="step-number">9</span>
+                    <div>
+                        <strong>Build Success Result</strong><br>
+                        Return orderId, orderCode, totalAmount, paymentDeadline, etc.
+                    </div>
+                </div>
+
+                <h3>Purchase Result Types</h3>
+                <table>
+                    <tr>
+                        <th>Result</th>
+                        <th>Condition</th>
+                        <th>Message</th>
+                    </tr>
+                    <tr>
+                        <td class="config-value">SUCCESS</td>
+                        <td>Tất cả validation pass</td>
+                        <td>"Đặt hàng thành công! Thanh toán trong 10 phút"</td>
+                    </tr>
+                    <tr>
+                        <td>NOT_ACTIVE</td>
+                        <td>Flash sale chưa active</td>
+                        <td>"Flash sale chưa bắt đầu" / "đã kết thúc"</td>
+                    </tr>
+                    <tr>
+                        <td>MIN_QUANTITY</td>
+                        <td>quantity < minPurchase</td>
+                        <td>"Số lượng tối thiểu là X mét"</td>
+                    </tr>
+                    <tr>
+                        <td>OUT_OF_STOCK</td>
+                        <td>Không đủ hàng</td>
+                        <td>"Hết hàng"</td>
+                    </tr>
+                    <tr>
+                        <td>LIMIT_EXCEEDED</td>
+                        <td>Vượt quá limit user</td>
+                        <td>"Bạn chỉ có thể mua thêm X mét"</td>
+                    </tr>
+                </table>
+            </div>
+
+            <!-- 5. Order Status Flow -->
+            <div class="section">
+                <h2>5. Flash Sale Order Status</h2>
+
+                <div class="mermaid">
+                    stateDiagram-v2
+                    [*] --> PENDING : Purchase thành công
+
+                    PENDING --> PAID : confirmPayment()
+                    PENDING --> CANCELLED : cancelOrder()
+                    PENDING --> EXPIRED : Quá deadline
+
+                    PAID --> [*] : Hoàn thành
+                    CANCELLED --> [*]
+                    EXPIRED --> [*]
+                </div>
+
+                <h3>Khi Confirm Payment</h3>
+                <ol>
+                    <li>Reservation status → CONVERTED</li>
+                    <li>Sale.reservedQuantity -= quantity</li>
+                    <li>Sale.soldQuantity += quantity</li>
+                    <li>Check if SOLD_OUT</li>
+                    <li>Order.status → PAID</li>
+                </ol>
+            </div>
+
+            <!-- 6. Reservation System -->
+            <div class="section">
+                <h2>6. Reservation System</h2>
+
+                <div class="mermaid">
+                    flowchart LR
+                    subgraph "Reservation Lifecycle"
+                    A[ACTIVE] -->|"User thanh toán"| B[CONVERTED]
+                    A -->|"Hết 10 phút"| C[EXPIRED]
+                    A -->|"User hủy"| D[CANCELLED]
+                    end
+
+                    subgraph "Stock Impact"
+                    B -->|"soldQuantity +="| E[Sold]
+                    C -->|"reservedQuantity -="| F[Released]
+                    D -->|"reservedQuantity -="| F
+                    end
+                </div>
+
+                <div class="warning-box">
+                    <strong>⚠️ Quan trọng:</strong> Khi reservation EXPIRED hoặc CANCELLED, stock được release lại
+                    để người khác có thể mua.
+                </div>
+            </div>
+
+            <!-- 7. Scheduled Tasks -->
+            <div class="section">
+                <h2>7. Scheduled Tasks (Background Jobs)</h2>
+
+                <table>
+                    <tr>
+                        <th>Task</th>
+                        <th>Interval</th>
+                        <th>Chức năng</th>
+                    </tr>
+                    <tr>
+                        <td><code>updateFlashSaleStatuses()</code></td>
+                        <td class="config-value">60 giây</td>
+                        <td>
+                            <ul>
+                                <li>SCHEDULED → ACTIVE khi đến startTime</li>
+                                <li>ACTIVE → ENDED khi qua endTime</li>
+                            </ul>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><code>releaseExpiredReservations()</code></td>
+                        <td class="config-value">30 giây</td>
+                        <td>
+                            <ul>
+                                <li>Tìm reservations quá hạn</li>
+                                <li>Release stock (reservedQuantity -=)</li>
+                                <li>Mark reservation EXPIRED</li>
+                            </ul>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><code>expirePendingOrders()</code></td>
+                        <td class="config-value">60 giây</td>
+                        <td>
+                            <ul>
+                                <li>Tìm orders PENDING quá paymentDeadline</li>
+                                <li>Mark order EXPIRED</li>
+                            </ul>
+                        </td>
+                    </tr>
+                </table>
+
+                <div class="mermaid">
+                    gantt
+                    title Scheduled Tasks Timeline
+                    dateFormat mm:ss
+                    section updateFlashSaleStatuses
+                    Run :a1, 00:00, 1s
+                    Wait :00:01, 59s
+                    Run :a2, 01:00, 1s
+                    section releaseExpiredReservations
+                    Run :b1, 00:00, 1s
+                    Wait :00:01, 29s
+                    Run :b2, 00:30, 1s
+                    Wait :00:31, 29s
+                    Run :b3, 01:00, 1s
+                    section expirePendingOrders
+                    Run :c1, 00:00, 1s
+                    Wait :00:01, 59s
+                    Run :c2, 01:00, 1s
+                </div>
+            </div>
+
+            <!-- 8. Entity Relationships -->
+            <div class="section">
+                <h2>8. Entity Relationships</h2>
+
+                <div class="mermaid">
+                    erDiagram
+                    FlashSaleEntity ||--o{ FlashSaleOrderEntity : "has many"
+                    FlashSaleEntity ||--o{ FlashSaleReservationEntity : "has many"
+                    FlashSaleEntity }o--|| FabricEntity : "references"
+                    FlashSaleEntity }o--|| UserEntity : "createdBy"
+
+                    FlashSaleOrderEntity }o--|| UserEntity : "buyer"
+                    FlashSaleOrderEntity ||--o| FlashSaleReservationEntity : "has one"
+
+                    FlashSaleReservationEntity }o--|| UserEntity : "user"
+
+                    FlashSaleEntity {
+                    Long id PK
+                    Long fabricId FK
+                    String name
+                    BigDecimal originalPrice
+                    BigDecimal flashPrice
+                    BigDecimal totalQuantity
+                    BigDecimal soldQuantity
+                    BigDecimal reservedQuantity
+                    BigDecimal maxPerUser
+                    BigDecimal minPurchase
+                    OffsetDateTime startTime
+                    OffsetDateTime endTime
+                    FlashSaleStatus status
+                    Boolean isFeatured
+                    }
+
+                    FlashSaleOrderEntity {
+                    Long id PK
+                    Long flashSaleId FK
+                    Long userId FK
+                    String orderCode UK
+                    BigDecimal quantity
+                    BigDecimal unitPrice
+                    BigDecimal totalAmount
+                    FlashSaleOrderStatus status
+                    OffsetDateTime paymentDeadline
+                    String paymentMethod
+                    OffsetDateTime paidAt
+                    }
+
+                    FlashSaleReservationEntity {
+                    Long id PK
+                    Long flashSaleId FK
+                    Long userId FK
+                    BigDecimal quantity
+                    FlashSaleReservationStatus status
+                    OffsetDateTime expiresAt
+                    OffsetDateTime convertedAt
+                    }
+                </div>
+            </div>
+
+            <!-- 9. Stock Calculation -->
+            <div class="section">
+                <h2>9. Stock Calculation Formula</h2>
+
+                <pre><code>availableQuantity = totalQuantity - soldQuantity - reservedQuantity
+
+soldPercentage = (soldQuantity / totalQuantity) * 100
+
+discountPercent = ((originalPrice - flashPrice) / originalPrice) * 100</code></pre>
+
+                <div class="info-box">
+                    <strong>Ví dụ:</strong><br>
+                    totalQuantity = 100m, soldQuantity = 30m, reservedQuantity = 10m<br>
+                    → availableQuantity = 100 - 30 - 10 = <strong>60m</strong><br>
+                    → soldPercentage = (30/100) * 100 = <strong>30%</strong>
+                </div>
+            </div>
+
+            <!-- 10. Error Handling -->
+            <div class="section">
+                <h2>10. Error Handling</h2>
+
+                <table>
+                    <tr>
+                        <th>Scenario</th>
+                        <th>Exception</th>
+                    </tr>
+                    <tr>
+                        <td>Flash sale không tồn tại</td>
+                        <td><code>NotFoundException("Flash sale không tồn tại")</code></td>
+                    </tr>
+                    <tr>
+                        <td>Vải không tồn tại</td>
+                        <td><code>NotFoundException("Vải không tồn tại")</code></td>
+                    </tr>
+                    <tr>
+                        <td>User không tồn tại</td>
+                        <td><code>NotFoundException("Người dùng không tồn tại")</code></td>
+                    </tr>
+                    <tr>
+                        <td>endTime trước startTime</td>
+                        <td><code>BadRequestException("Thời gian kết thúc phải sau thời gian bắt đầu")</code></td>
+                    </tr>
+                    <tr>
+                        <td>Flash price >= original price</td>
+                        <td><code>BadRequestException("Giá flash sale phải thấp hơn giá gốc")</code></td>
+                    </tr>
+                    <tr>
+                        <td>Update flash sale đã kết thúc</td>
+                        <td><code>BadRequestException("Không thể cập nhật flash sale đã kết thúc")</code></td>
+                    </tr>
+                    <tr>
+                        <td>totalQuantity < soldQuantity</td>
+                        <td><code>BadRequestException("Số lượng mới không thể nhỏ hơn số đã bán")</code></td>
+                    </tr>
+                    <tr>
+                        <td>Hủy order không phải PENDING</td>
+                        <td><code>BadRequestException("Chỉ có thể hủy đơn hàng đang chờ thanh toán")</code></td>
+                    </tr>
+                    <tr>
+                        <td>Thanh toán quá hạn</td>
+                        <td><code>BadRequestException("Đơn hàng đã hết thời gian thanh toán")</code></td>
+                    </tr>
+                </table>
+            </div>
+
+            <!-- 11. Logging -->
+            <div class="section">
+                <h2>11. Logging</h2>
+
+                <ul>
+                    <li>✅ <code>Created flash sale: id={}, name={}</code></li>
+                    <li>✅ <code>Updated flash sale: id={}</code></li>
+                    <li>✅ <code>Cancelled flash sale: id={}</code></li>
+                    <li>✅ <code>Purchase attempt: flashSaleId={}, userId={}, quantity={}</code></li>
+                    <li>✅ <code>Purchase successful: orderId={}, orderCode={}, quantity={}</code></li>
+                    <li>✅ <code>Order cancelled: orderId={}</code></li>
+                    <li>✅ <code>Payment confirmed: orderId={}, method={}</code></li>
+                    <li>✅ <code>Flash sale activated: id={}</code></li>
+                    <li>✅ <code>Flash sale ended: id={}</code></li>
+                    <li>✅ <code>Reservation expired: id={}, quantity={}</code></li>
+                    <li>✅ <code>Expired {} pending orders</code></li>
+                </ul>
+            </div>
+
+            <!-- Footer -->
+            <div class="section" style="text-align: center; margin-top: 40px;">
+                <p style="color: #888;">Generated by Antigravity AI Assistant</p>
+                <p style="color: #666; font-size: 12px;">Last updated: 2024</p>
+            </div>
+        </div>
+
+        <script>
+            mermaid.initialize({
+                startOnLoad: true,
+                theme: 'default',
+                securityLevel: 'loose'
+            });
+        </script>
+</body>
+
+</html>

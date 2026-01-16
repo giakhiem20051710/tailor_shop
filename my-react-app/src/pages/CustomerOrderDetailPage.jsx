@@ -732,7 +732,7 @@ const CustomerOrderDetailPage = () => {
                 )}
               </div>
               <button
-                onClick={() => navigate(`/invoices/${invoice.id}`)}
+                onClick={() => navigate(`/customer/invoices/${invoice.id}`)}
                 className="w-full md:w-auto px-6 py-3 bg-[#1B4332] text-white rounded-lg hover:bg-[#14532d] transition-colors font-semibold flex items-center justify-center gap-2"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

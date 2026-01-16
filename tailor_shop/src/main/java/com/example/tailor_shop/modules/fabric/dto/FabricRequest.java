@@ -2,9 +2,12 @@ package com.example.tailor_shop.modules.fabric.dto;
 
 import com.example.tailor_shop.modules.fabric.domain.FabricCategory;
 import com.example.tailor_shop.modules.fabric.domain.FabricPattern;
+import com.example.tailor_shop.modules.fabric.domain.FabricSeason;
+import com.example.tailor_shop.modules.fabric.domain.FabricStretch;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.PositiveOrZero;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -57,7 +60,9 @@ public class FabricRequest {
     @Positive(message = "Price must be positive")
     private BigDecimal pricePerMeter;
 
-    @Size(max = 500, message = "Image URL must not exceed 500 characters")
+    @PositiveOrZero(message = "Quantity must be zero or positive")
+    private BigDecimal quantity;
+
     private String image;
 
     @Size(max = 9, message = "Maximum 9 images allowed")
@@ -77,5 +82,11 @@ public class FabricRequest {
 
     @Builder.Default
     private Integer displayOrder = 0;
-}
 
+    private FabricStretch stretch;
+
+    private FabricSeason season;
+
+    @Size(max = 20, message = "Maximum 20 tags allowed")
+    private List<String> tags;
+}
