@@ -5,7 +5,7 @@ import ChatWidget from "./components/ChatWidget.jsx";
 import ErrorBoundary from "./components/ErrorBoundary.jsx";
 import NotificationToast from "./components/NotificationToast.jsx";
 import { SkipToContentLink } from "./utils/accessibility.jsx";
-import RoleGuard, { StaffAndAdmin, TailorAndAbove } from "./components/RoleGuard.jsx";
+import RoleGuard, { StaffAndAdmin, TailorAndAbove, AuthenticatedOnly } from "./components/RoleGuard.jsx";
 import CustomerDashboardPage from "./pages/CustomerDashboardPage.jsx";
 
 const HomePage = lazy(() => import("./pages/HomePage.jsx"));
@@ -165,47 +165,65 @@ export default function App() {
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/reset-password" element={<ResetPasswordPage />} />
 
-          {/* All routes are now accessible without authentication */}
+          {/* ADMIN ROUTES - Protected by StaffAndAdmin guard */}
           <Route element={<Layout />}>
-            <Route path="/dashboard" element={<DashboardPage />} />
-            <Route path="/orders" element={<OrderListPage />} />
-            <Route path="/orders/new" element={<OrderFormPage />} />
-            <Route path="/orders/edit/:id" element={<OrderFormPage />} />
-            <Route path="/orders/:id/quote" element={<OrderQuotePage />} />
-            <Route path="/orders/:id" element={<OrderDetailPage />} />
-            <Route path="/customers" element={<CustomerListPage />} />
-            <Route path="/tailors" element={<TailorListPage />} />
-            <Route path="/tailors/orders/:tailorId?" element={<TailorOrdersPage />} />
-            <Route path="/tailors/completed" element={<CompletedOrdersPage />} />
+            {/* Dashboard - Admin/Staff only */}
+            <Route path="/dashboard" element={<StaffAndAdmin><DashboardPage /></StaffAndAdmin>} />
+
+            {/* Orders Management - Admin/Staff only */}
+            <Route path="/orders" element={<StaffAndAdmin><OrderListPage /></StaffAndAdmin>} />
+            <Route path="/orders/new" element={<StaffAndAdmin><OrderFormPage /></StaffAndAdmin>} />
+            <Route path="/orders/edit/:id" element={<StaffAndAdmin><OrderFormPage /></StaffAndAdmin>} />
+            <Route path="/orders/:id/quote" element={<StaffAndAdmin><OrderQuotePage /></StaffAndAdmin>} />
+            <Route path="/orders/:id" element={<StaffAndAdmin><OrderDetailPage /></StaffAndAdmin>} />
+
+            {/* Customer Management - Admin/Staff only */}
+            <Route path="/customers" element={<StaffAndAdmin><CustomerListPage /></StaffAndAdmin>} />
+
+            {/* Tailor Management - Admin/Staff only */}
+            <Route path="/tailors" element={<StaffAndAdmin><TailorListPage /></StaffAndAdmin>} />
+            <Route path="/tailors/orders/:tailorId?" element={<StaffAndAdmin><TailorOrdersPage /></StaffAndAdmin>} />
+            <Route path="/tailors/completed" element={<StaffAndAdmin><CompletedOrdersPage /></StaffAndAdmin>} />
+
+            {/* Schedule, Styles, Products - Admin/Staff only */}
             <Route path="/schedule" element={<StaffAndAdmin><SchedulePage /></StaffAndAdmin>} />
             <Route path="/styles" element={<StaffAndAdmin><ProductManagerPage /></StaffAndAdmin>} />
             <Route path="/admin/products" element={<StaffAndAdmin><ProductManagerPage /></StaffAndAdmin>} />
+
+            {/* Invoice & Transactions - Admin/Staff only */}
             <Route path="/invoice" element={<StaffAndAdmin><InvoicePage /></StaffAndAdmin>} />
-            <Route path="/invoices/:id" element={<InvoicePage />} />
+            <Route path="/invoices/:id" element={<StaffAndAdmin><InvoicePage /></StaffAndAdmin>} />
             <Route path="/transactions" element={<StaffAndAdmin><TransactionManagementPage /></StaffAndAdmin>} />
+
+            {/* Promotions & Flash Sales - Admin/Staff only */}
             <Route path="/admin/promotions" element={<StaffAndAdmin><PromotionManagementPage /></StaffAndAdmin>} />
+            <Route path="/admin/flash-sales" element={<StaffAndAdmin><FlashSaleManagementPage /></StaffAndAdmin>} />
+
+            {/* Fabric Management - Admin/Staff only */}
             <Route path="/fabric-requests" element={<StaffAndAdmin><FabricRequestsPage /></StaffAndAdmin>} />
             <Route path="/fabric-inventory" element={<StaffAndAdmin><FabricInventoryPage /></StaffAndAdmin>} />
-            <Route path="/admin/flash-sales" element={<StaffAndAdmin><FlashSaleManagementPage /></StaffAndAdmin>} />
+
+            {/* Templates & Images - Admin/Staff only */}
+            <Route path="/admin/templates" element={<StaffAndAdmin><CategoryTemplatePage /></StaffAndAdmin>} />
+            <Route path="/images" element={<StaffAndAdmin><ImageUploadPage /></StaffAndAdmin>} />
+
+            {/* Profile - Accessible to all authenticated users */}
             <Route path="/profile" element={<ProfilePage />} />
-            <Route path="/admin/templates" element={<CategoryTemplatePage />} />
-            {/* Image Upload & Management Page (Admin) */}
-            <Route path="/images" element={<ImageUploadPage />} />
           </Route>
 
-          {/* Tailor Routes - Separate layout for tailors */}
+          {/* Tailor Routes - Protected by TailorAndAbove guard */}
           <Route element={<TailorLayout />}>
-            <Route path="/tailor/dashboard" element={<TailorDashboardPage />} />
-            <Route path="/tailor/orders/:id" element={<TailorOrderDetailPage />} />
-            <Route path="/tailor/schedule" element={<SchedulePage />} />
+            <Route path="/tailor/dashboard" element={<TailorAndAbove><TailorDashboardPage /></TailorAndAbove>} />
+            <Route path="/tailor/orders/:id" element={<TailorAndAbove><TailorOrderDetailPage /></TailorAndAbove>} />
+            <Route path="/tailor/schedule" element={<TailorAndAbove><SchedulePage /></TailorAndAbove>} />
           </Route>
 
-          {/* Customer Dashboard - separate route without admin Layout */}
-          <Route path="/customer/dashboard" element={<CustomerDashboardPage />} />
-          <Route path="/customer/order" element={<CustomerOrderPage />} />
-          <Route path="/customer/orders/:id" element={<CustomerOrderDetailPage />} />
-          <Route path="/customer/orders/:orderId/review" element={<ProductReviewPage />} />
-          <Route path="/customer/invoices/:id" element={<CustomerInvoiceDetailPage />} />
+          {/* Customer Routes - Protected by AuthenticatedOnly guard */}
+          <Route path="/customer/dashboard" element={<AuthenticatedOnly><CustomerDashboardPage /></AuthenticatedOnly>} />
+          <Route path="/customer/order" element={<AuthenticatedOnly><CustomerOrderPage /></AuthenticatedOnly>} />
+          <Route path="/customer/orders/:id" element={<AuthenticatedOnly><CustomerOrderDetailPage /></AuthenticatedOnly>} />
+          <Route path="/customer/orders/:orderId/review" element={<AuthenticatedOnly><ProductReviewPage /></AuthenticatedOnly>} />
+          <Route path="/customer/invoices/:id" element={<AuthenticatedOnly><CustomerInvoiceDetailPage /></AuthenticatedOnly>} />
         </Routes>
       </Suspense>
       {/* Chat Widget - hiển thị trên tất cả các trang */}
