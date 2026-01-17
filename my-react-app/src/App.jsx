@@ -67,6 +67,7 @@ const InternationalPaymentPage = lazy(() =>
 const MBBankPaymentPage = lazy(() => import("./pages/MBBankPaymentPage.jsx"));
 const ZaloPayPaymentPage = lazy(() => import("./pages/ZaloPayPaymentPage.jsx"));
 const MoMoPaymentPage = lazy(() => import("./pages/MoMoPaymentPage.jsx"));
+const SandboxPaymentPage = lazy(() => import("./pages/SandboxPaymentPage.jsx"));
 
 // AI & AR Features
 const AIStyleSuggestionsPage = lazy(() =>
@@ -136,6 +137,7 @@ export default function App() {
           <Route path="/payment/mbbank" element={<MBBankPaymentPage />} />
           <Route path="/payment/zalopay" element={<ZaloPayPaymentPage />} />
           <Route path="/payment/momo" element={<MoMoPaymentPage />} />
+          <Route path="/payment/sandbox" element={<SandboxPaymentPage />} />
 
           {/* Favorites Page */}
           <Route path="/favorites" element={<FavoritesPage />} />

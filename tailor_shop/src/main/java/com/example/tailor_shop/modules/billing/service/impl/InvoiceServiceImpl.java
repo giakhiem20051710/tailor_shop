@@ -187,7 +187,7 @@ public class InvoiceServiceImpl implements InvoiceService {
         BigDecimal taxAmount = request.getTaxAmount() != null ? request.getTaxAmount() : ZERO;
         BigDecimal discount = ZERO;
         Long appliedPromotionId = null;
-        
+
         // Apply promo code if provided
         if (request.getPromoCode() != null && !request.getPromoCode().trim().isEmpty()) {
             try {
@@ -198,12 +198,11 @@ public class InvoiceServiceImpl implements InvoiceService {
                             .multiply(BigDecimal.valueOf(item.getQuantity()))
                             .subtract(item.getDiscountAmount() != null ? item.getDiscountAmount() : ZERO);
                     BigDecimal lineTax = lineBase.multiply(
-                            item.getTaxRate() != null ? item.getTaxRate() : ZERO
-                    ).divide(BigDecimal.valueOf(100));
+                            item.getTaxRate() != null ? item.getTaxRate() : ZERO).divide(BigDecimal.valueOf(100));
                     tempSubtotal = tempSubtotal.add(lineBase.add(lineTax));
                 }
                 BigDecimal orderAmount = tempSubtotal.add(taxAmount);
-                
+
                 // Build ApplyPromoCodeRequest
                 ApplyPromoCodeRequest promoRequest = ApplyPromoCodeRequest.builder()
                         .code(request.getPromoCode().trim().toUpperCase())
@@ -211,20 +210,19 @@ public class InvoiceServiceImpl implements InvoiceService {
                         .productIds(null) // Could extract from items if needed
                         .categoryIds(null) // Could extract from items if needed
                         .build();
-                
+
                 // Apply promo code (use customer ID for validation)
                 ApplyPromoCodeResponse promoResponse = promotionService.applyPromoCode(
-                        promoRequest, 
-                        customer.getId()
-                );
-                
+                        promoRequest,
+                        customer.getId());
+
                 discount = promoResponse.getDiscountAmount();
                 appliedPromotionId = promoResponse.getPromotionId();
-                
-                log.info("[TraceId: {}] Applied promo code {} to invoice, discount: {}", 
+
+                log.info("[TraceId: {}] Applied promo code {} to invoice, discount: {}",
                         TraceIdUtil.getTraceId(), request.getPromoCode(), discount);
             } catch (Exception e) {
-                log.warn("[TraceId: {}] Failed to apply promo code {}: {}. Using manual discount if provided.", 
+                log.warn("[TraceId: {}] Failed to apply promo code {}: {}. Using manual discount if provided.",
                         TraceIdUtil.getTraceId(), request.getPromoCode(), e.getMessage());
                 // Fall back to manual discount if promo code fails
                 if (request.getDiscountAmount() != null) {
@@ -272,7 +270,8 @@ public class InvoiceServiceImpl implements InvoiceService {
         invoice.setTotal(total);
         invoice.setPaidAmount(ZERO);
         invoice.setDueAmount(total);
-        // Lưu promotionId để track usage khi thanh toán (không track ngay khi tạo invoice)
+        // Lưu promotionId để track usage khi thanh toán (không track ngay khi tạo
+        // invoice)
         invoice.setPromotionId(appliedPromotionId);
 
         InvoiceEntity savedInvoice = invoiceRepository.save(invoice);
@@ -283,7 +282,8 @@ public class InvoiceServiceImpl implements InvoiceService {
         savedInvoice.setItems(items);
 
         // KHÔNG track promotion usage ngay khi tạo invoice
-        // Sẽ track khi invoice được thanh toán (status = paid) trong method applyPayment()
+        // Sẽ track khi invoice được thanh toán (status = paid) trong method
+        // applyPayment()
 
         return toResponse(savedInvoice);
     }
@@ -383,7 +383,7 @@ public class InvoiceServiceImpl implements InvoiceService {
         }
         invoice.setPaidAmount(newPaid);
         invoice.setDueAmount(newDue);
-        
+
         boolean isNowPaid = newDue.compareTo(ZERO) == 0;
         if (isNowPaid) {
             invoice.setStatus(InvoiceStatus.paid);
@@ -405,22 +405,22 @@ public class InvoiceServiceImpl implements InvoiceService {
 
         try {
             // Kiểm tra xem đã track usage chưa (tránh track nhiều lần)
-            java.util.Optional<PromotionUsageEntity> existingUsage = 
-                    promotionUsageRepository.findByPromotionIdAndInvoiceId(
+            java.util.Optional<PromotionUsageEntity> existingUsage = promotionUsageRepository
+                    .findByPromotionIdAndInvoiceId(
                             invoice.getPromotionId(), invoice.getId());
-            
+
             if (existingUsage.isPresent()) {
-                log.debug("[TraceId: {}] Promotion usage already tracked for invoice {}", 
+                log.debug("[TraceId: {}] Promotion usage already tracked for invoice {}",
                         TraceIdUtil.getTraceId(), invoice.getId());
                 return; // Đã track rồi, không track lại
             }
 
             PromotionEntity promotion = promotionRepository.findById(invoice.getPromotionId())
                     .orElseThrow(() -> new NotFoundException("Promotion not found"));
-            
+
             BigDecimal originalAmount = invoice.getSubtotal().add(invoice.getTaxAmount());
             BigDecimal finalAmount = invoice.getTotal();
-            
+
             PromotionUsageEntity usage = PromotionUsageEntity.builder()
                     .promotion(promotion)
                     .user(invoice.getCustomer())
@@ -430,14 +430,14 @@ public class InvoiceServiceImpl implements InvoiceService {
                     .originalAmount(originalAmount)
                     .finalAmount(finalAmount)
                     .build();
-            
+
             promotionUsageRepository.save(usage);
-            
-            log.info("[TraceId: {}] Tracked promotion usage on payment: promotionId={}, invoiceId={}, discount={}", 
+
+            log.info("[TraceId: {}] Tracked promotion usage on payment: promotionId={}, invoiceId={}, discount={}",
                     TraceIdUtil.getTraceId(), invoice.getPromotionId(), invoice.getId(), invoice.getDiscountAmount());
         } catch (Exception e) {
             // Log error but don't fail payment processing
-            log.error("[TraceId: {}] Failed to track promotion usage for invoice {}: {}", 
+            log.error("[TraceId: {}] Failed to track promotion usage for invoice {}: {}",
                     TraceIdUtil.getTraceId(), invoice.getId(), e.getMessage(), e);
         }
     }
@@ -524,6 +524,13 @@ public class InvoiceServiceImpl implements InvoiceService {
     }
 
     private String buildDummyPaymentUrl(PaymentTransactionEntity transaction) {
+        if (transaction.getProvider() == PaymentProvider.sandbox) {
+            // Route to local sandbox payment gateway
+            String backendUrl = "http://localhost:8083"; // TODO: move to config
+            return backendUrl + "/api/v1/sandbox/payment/pay?ref=" + transaction.getProviderRef()
+                    + "&amount=" + transaction.getAmount();
+        }
+        // Default dummy URL for other providers
         return "https://pay.example.com/redirect?ref=" + transaction.getProviderRef();
     }
 }
