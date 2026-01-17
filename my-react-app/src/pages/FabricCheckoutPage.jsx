@@ -261,6 +261,7 @@ export default function FabricCheckoutPage() {
       'mbbank': 'BANK_TRANSFER',
       'zalopay': 'E_WALLET',
       'momo': 'E_WALLET',
+      'sandbox': 'SANDBOX',
     };
     return mapping[method] || 'COD';
   };
@@ -319,6 +320,8 @@ export default function FabricCheckoutPage() {
         navigate(`/payment/qr?orderId=${order.id || order.orderId}`);
       } else if (formData.paymentMethod === "vnpay") {
         navigate(`/payment/vnpay?orderId=${order.id || order.orderId}`);
+      } else if (formData.paymentMethod === "sandbox") {
+        navigate(`/payment/sandbox`, { state: { ...orderData, formData, paymentMethod: "sandbox" } });
       } else {
         navigate(`/customer/orders/${order.id || order.orderId}`);
       }
@@ -658,6 +661,7 @@ export default function FabricCheckoutPage() {
                     { value: "mbbank", label: "Ngân hàng thương mại cổ phần Quân đội", icon: "🏦", offers: 1 },
                     { value: "zalopay", label: "Ví ZaloPay", icon: "💙" },
                     { value: "momo", label: "Ví điện tử MoMo", icon: "💖" },
+                    { value: "sandbox", label: "🧪 Sandbox (Test Mode)", icon: "🧪", isSandbox: true },
                   ].map((method) => (
                     <label
                       key={method.value}

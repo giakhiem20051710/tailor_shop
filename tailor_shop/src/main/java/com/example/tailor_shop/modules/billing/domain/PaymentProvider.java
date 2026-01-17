@@ -4,7 +4,8 @@ public enum PaymentProvider {
     vnpay,
     momo,
     zalopay,
-    cash
+    cash,
+    sandbox
 }
 
 
