@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Services Documentation - Product Module</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #2d1b69 0%, #1a0f3d 50%, #0d0621 100%);
+            color: #eee;
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: #9c27b0;
+            font-size: 3em;
+            margin-bottom: 10px;
+            text-shadow: 0 0 30px rgba(156, 39, 176, 0.6);
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #888;
+            margin-bottom: 40px;
+            font-size: 1.2em;
+        }
+
+        h2 {
+            color: #ce93d8;
+            margin: 40px 0 20px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #9c27b0;
+            font-size: 2em;
+        }
+
+        h3 {
+            color: #ba68c8;
+            margin: 30px 0 15px;
+            font-size: 1.5em;
+        }
+
+        h4 {
+            color: #ab47bc;
+            margin: 20px 0 10px;
+        }
+
+        .section {
+            background: rgba(156, 39, 176, 0.08);
+            border-radius: 15px;
+            padding: 30px;
+            margin: 25px 0;
+            border: 1px solid rgba(156, 39, 176, 0.3);
+            backdrop-filter: blur(10px);
+        }
+
+        .mermaid {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            margin: 20px 0;
+            box-shadow: 0 8px 32px rgba(156, 39, 176, 0.4);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 14px;
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        th,
+        td {
+            padding: 14px 16px;
+            text-align: left;
+            border: 1px solid rgba(156, 39, 176, 0.3);
+        }
+
+        th {
+            background: rgba(156, 39, 176, 0.4);
+            color: #ce93d8;
+            font-weight: 600;
+        }
+
+        tr:hover {
+            background: rgba(156, 39, 176, 0.15);
+        }
+
+        code {
+            background: rgba(156, 39, 176, 0.2);
+            padding: 3px 8px;
+            border-radius: 4px;
+            color: #ce93d8;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 0.9em;
+        }
+
+        pre {
+            background: rgba(0, 0, 0, 0.5);
+            padding: 20px;
+            border-radius: 10px;
+            overflow-x: auto;
+            margin: 15px 0;
+            border-left: 4px solid #9c27b0;
+        }
+
+        .ai-box {
+            background: linear-gradient(135deg, rgba(156, 39, 176, 0.2), rgba(123, 31, 162, 0.2));
+            padding: 25px;
+            border-radius: 12px;
+            border-left: 5px solid #9c27b0;
+            margin: 20px 0;
+        }
+
+        .warning {
+            background: linear-gradient(135deg, rgba(255, 193, 7, 0.15), rgba(200, 150, 0, 0.15));
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 4px solid #ffc107;
+            margin: 20px 0;
+        }
+
+        .success {
+            background: linear-gradient(135deg, rgba(76, 175, 80, 0.15), rgba(56, 142, 60, 0.15));
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 4px solid #4caf50;
+            margin: 20px 0;
+        }
+
+        ul,
+        ol {
+            padding-left: 25px;
+            margin: 15px 0;
+        }
+
+        li {
+            margin: 10px 0;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 12px;
+            font-size: 0.85em;
+            font-weight: 600;
+            margin: 0 5px;
+        }
+
+        .badge-gemini {
+            background: #9c27b0;
+            color: white;
+        }
+
+        .badge-rate {
+            background: #ff9800;
+            color: white;
+        }
+
+        .badge-rule {
+            background: #2196f3;
+            color: white;
+        }
+
+        .toc {
+            background: rgba(156, 39, 176, 0.1);
+            padding: 25px;
+            border-radius: 12px;
+            margin: 30px 0;
+            border: 1px solid rgba(156, 39, 176, 0.3);
+        }
+
+        .toc a {
+            color: #ce93d8;
+            text-decoration: none;
+        }
+
+        .toc a:hover {
+            text-decoration: underline;
+            color: #ba68c8;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .grid-2 {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>🤖 AI Services Documentation</h1>
+        <p class="subtitle">Gemini Vision Integration & Image Classification</p>
+
+        <!-- Table of Contents -->
+        <div class="toc">
+            <h3>📑 Mục Lục</h3>
+            <ol>
+                <li><a href="#overview">Tổng quan AI Services</a></li>
+                <li><a href="#gemini">GeminiVisionService - Gemini API Integration</a></li>
+                <li><a href="#classification">ImageClassificationService - Rule-based Classification</a></li>
+                <li><a href="#rate-limiter">AIRateLimiter - Rate Limiting & Concurrency Control</a></li>
+                <li><a href="#bulk">BulkImageClassificationService</a></li>
+                <li><a href="#integration">Integration Flow</a></li>
+            </ol>
+        </div>
+
+        <!-- Section 1: Overview -->
+        <div class="section" id="overview">
+            <h2>1️⃣ Tổng quan AI Services</h2>
+
+            <div class="ai-box">
+                <strong>AI Services</strong> trong Product Module cung cấp khả năng phân tích và phân loại ảnh tự động:
+                <ul>
+                    <li>🤖 <strong>Gemini Vision AI</strong>: Phân tích ảnh với Google Gemini</li>
+                    <li>📋 <strong>Rule-based Classification</strong>: Phân loại dựa trên keywords</li>
+                    <li>⏱️ <strong>Rate Limiting</strong>: Kiểm soát API calls</li>
+                    <li>📦 <strong>Bulk Processing</strong>: Xử lý hàng loạt</li>
+                </ul>
+            </div>
+
+            <h3>📊 Services Overview</h3>
+            <table>
+                <tr>
+                    <th>Service</th>
+                    <th>Purpose</th>
+                    <th>Technology</th>
+                    <th>Lines</th>
+                </tr>
+                <tr>
+                    <td><code>GeminiVisionService</code></td>
+                    <td>Gemini API integration</td>
+                    <td><span class="badge badge-gemini">Gemini</span></td>
+                    <td>547</td>
+                </tr>
+                <tr>
+                    <td><code>ImageClassificationService</code></td>
+                    <td>Rule-based classification</td>
+                    <td><span class="badge badge-rule">Rules</span></td>
+                    <td>263</td>
+                </tr>
+                <tr>
+                    <td><code>AIRateLimiter</code></td>
+                    <td>Rate limiting & concurrency</td>
+                    <td><span class="badge badge-rate">Semaphore</span></td>
+                    <td>80</td>
+                </tr>
+                <tr>
+                    <td><code>BulkImageClassificationService</code></td>
+                    <td>Batch processing</td>
+                    <td><span class="badge badge-gemini">Gemini</span> <span class="badge badge-rate">Async</span></td>
+                    <td>~200</td>
+                </tr>
+            </table>
+
+            <h3>🔄 AI Classification Flow</h3>
+            <div class="mermaid">
+                flowchart TB
+                Start([Upload Image])
+
+                Start --> Check{AI Enabled?}
+                Check -->|Yes| Gemini[GeminiVisionService]
+                Check -->|No| Fallback[ImageClassificationService]
+
+                Gemini --> RateLimit[AIRateLimiter]
+                RateLimit --> API[Google Gemini API]
+                API --> Parse[Parse JSON Response]
+                Parse --> Result[Classification Result]
+
+                Fallback --> Keywords[Keyword Matching]
+                Keywords --> Result
+
+                Result --> Save[Save to Database]
+
+                style Gemini fill:#9c27b0,color:white
+                style API fill:#9c27b0,color:white
+                style RateLimit fill:#ff9800,color:white
+            </div>
+        </div>
+
+        <!-- Section 2: GeminiVisionService -->
+        <div class="section" id="gemini">
+            <h2>2️⃣ GeminiVisionService</h2>
+
+            <div class="ai-box">
+                <strong>GeminiVisionService</strong> tích hợp Google Gemini Vision API để phân tích ảnh sản phẩm may đo.
+                <br><br>
+                <strong>Capabilities:</strong>
+                <ul>
+                    <li>Nhận diện category (Suit, Dress, Shirt, etc.)</li>
+                    <li>Phát hiện gender (Male, Female, Unisex)</li>
+                    <li>Xác định type (Formal, Casual, Business)</li>
+                    <li>Tạo description chi tiết</li>
+                    <li>Gợi ý tags và occasions</li>
+                </ul>
+            </div>
+
+            <h3>🔧 Key Methods</h3>
+            <table>
+                <tr>
+                    <th>Method</th>
+                    <th>Input</th>
+                    <th>Output</th>
+                    <th>Description</th>
+                </tr>
+                <tr>
+                    <td><code>analyzeImage()</code></td>
+                    <td>byte[], mimeType</td>
+                    <td>ProductAnalysisResult</td>
+                    <td>Phân tích từ byte array</td>
+                </tr>
+                <tr>
+                    <td><code>analyzeImageFromUrl()</code></td>
+                    <td>String imageUrl</td>
+                    <td>ProductAnalysisResult</td>
+                    <td>Phân tích từ URL</td>
+                </tr>
+                <tr>
+                    <td><code>isEnabled()</code></td>
+                    <td>-</td>
+                    <td>boolean</td>
+                    <td>Check API key configured</td>
+                </tr>
+            </table>
+
+            <h3>📝 Gemini API Request Flow</h3>
+            <div class="mermaid">
+                sequenceDiagram
+                participant S as Service
+                participant G as GeminiVisionService
+                participant RL as AIRateLimiter
+                participant API as Gemini API
+
+                S->>G: analyzeImage(imageData)
+                G->>G: Convert to Base64
+                G->>G: Build request body
+                G->>RL: executeWithRateLimit()
+                RL->>RL: Acquire semaphore
+                RL->>RL: Wait for rate limit
+                RL->>API: POST /generateContent
+                API-->>RL: JSON response
+                RL->>RL: Release semaphore
+                RL-->>G: Response
+                G->>G: Parse JSON
+                G->>G: Clean & validate
+                G-->>S: ProductAnalysisResult
+            </div>
+
+            <h3>🎯 Prompt Engineering</h3>
+            <pre><code>// System Prompt
+"You are an expert in fashion and tailoring..."
+
+// User Prompt (Structured JSON Request)
+{
+  "category": "Suit | Dress | Shirt | Pants | Ao Dai | Accessories",
+  "gender": "Male | Female | Unisex",
+  "type": "Formal | Casual | Business | Traditional",
+  "description": "Detailed description...",
+  "colors": ["color1", "color2"],
+  "materials": ["material1"],
+  "occasions": ["Wedding", "Office"],
+  "tags": ["tag1", "tag2"]
+}</code></pre>
+
+            <h3>🔍 Response Parsing</h3>
+            <div class="ai-box">
+                <h4>Challenges & Solutions:</h4>
+                <ul>
+                    <li>❌ <strong>Problem:</strong> Gemini trả về markdown code blocks</li>
+                    <li>✅ <strong>Solution:</strong> <code>cleanJsonText()</code> - Remove ```json markers</li>
+                    <li>❌ <strong>Problem:</strong> Truncated JSON responses</li>
+                    <li>✅ <strong>Solution:</strong> Auto-complete missing closing brackets</li>
+                    <li>❌ <strong>Problem:</strong> Invalid field values</li>
+                    <li>✅ <strong>Solution:</strong> Fallback to default values</li>
+                </ul>
+            </div>
+
+            <pre><code>// Clean JSON from markdown
+private String cleanJsonText(String text) {
+    // Remove ```json and ```
+    text = text.replaceAll("```json\\s*", "")
+               .replaceAll("```\\s*$", "");
+    
+    // Auto-complete truncated JSON
+    if (!text.trim().endsWith("}")) {
+        text = text + "\"}}}";
+    }
+    
+    return text.trim();
+}</code></pre>
+
+            <h3>⚙️ Configuration</h3>
+            <pre><code># application.properties
+gemini.api-key=${GEMINI_API_KEY}
+gemini.model=gemini-1.5-flash
+gemini.api-url=https://generativelanguage.googleapis.com/v1beta/models/</code></pre>
+        </div>
+
+        <!-- Section 3: ImageClassificationService -->
+        <div class="section" id="classification">
+            <h2>3️⃣ ImageClassificationService</h2>
+
+            <div class="ai-box">
+                <strong>ImageClassificationService</strong> cung cấp fallback classification khi Gemini không available.
+                <br><br>
+                <strong>Method:</strong> Rule-based keyword matching
+            </div>
+
+            <h3>🔍 Classification Logic</h3>
+            <div class="mermaid">
+                flowchart LR
+                Input["Description + Filename"]
+
+                Input --> Cat[detectCategory]
+                Input --> Type[detectType]
+                Input --> Gender[detectGender]
+                Input --> Tags[detectTags]
+
+                Cat --> Result[Classification Result]
+                Type --> Result
+                Gender --> Result
+                Tags --> Result
+
+                style Result fill:#2196f3,color:white
+            </div>
+
+            <h3>📋 Keyword Mappings</h3>
+            <div class="grid-2">
+                <div>
+                    <h4>Category Keywords</h4>
+                    <pre><code>SUIT: "vest", "suit", "bộ vest"
+DRESS: "váy", "dress", "đầm"
+SHIRT: "áo sơ mi", "shirt"
+PANTS: "quần", "pants", "trousers"
+AO_DAI: "áo dài", "ao dai"</code></pre>
+                </div>
+                <div>
+                    <h4>Gender Keywords</h4>
+                    <pre><code>MALE: "nam", "male", "men"
+FEMALE: "nữ", "female", "women"
+UNISEX: "unisex", "cả nam và nữ"</code></pre>
+                </div>
+            </div>
+
+            <h3>🎯 Usage Example</h3>
+            <pre><code>@Service
+public class ImageAssetService {
+    private final ImageClassificationService classifier;
+    
+    public void classifyImage(String description, String filename) {
+        var result = classifier.classify(description, filename);
+        
+        // result.getCategory() -> "SUIT"
+        // result.getGender() -> "MALE"
+        // result.getType() -> "FORMAL"
+        // result.getTags() -> ["wedding", "business"]
+    }
+}</code></pre>
+
+            <h3>⚖️ Gemini vs Rule-based</h3>
+            <table>
+                <tr>
+                    <th>Aspect</th>
+                    <th>GeminiVisionService</th>
+                    <th>ImageClassificationService</th>
+                </tr>
+                <tr>
+                    <td>Accuracy</td>
+                    <td>95%+ (AI-powered)</td>
+                    <td>70-80% (keyword matching)</td>
+                </tr>
+                <tr>
+                    <td>Speed</td>
+                    <td>1-3 seconds</td>
+                    <td>
+                        < 10ms</td>
+                </tr>
+                <tr>
+                    <td>Cost</td>
+                    <td>API calls ($$$)</td>
+                    <td>Free</td>
+                </tr>
+                <tr>
+                    <td>Dependency</td>
+                    <td>Internet + API key</td>
+                    <td>None</td>
+                </tr>
+                <tr>
+                    <td>Use case</td>
+                    <td>Production, high accuracy</td>
+                    <td>Fallback, development</td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- Section 4: AIRateLimiter -->
+        <div class="section" id="rate-limiter">
+            <h2>4️⃣ AIRateLimiter</h2>
+
+            <div class="ai-box">
+                <strong>AIRateLimiter</strong> kiểm soát số lượng và tốc độ AI API calls để tránh:
+                <ul>
+                    <li>🚫 API rate limit exceeded</li>
+                    <li>💰 Unexpected costs</li>
+                    <li>⚡ Server overload</li>
+                </ul>
+            </div>
+
+            <h3>🔧 Implementation</h3>
+            <div class="grid-2">
+                <div class="success">
+                    <h4>Semaphore (Concurrency Control)</h4>
+                    <ul>
+                        <li><strong>Limit:</strong> Max 5 concurrent AI calls</li>
+                        <li><strong>Purpose:</strong> Prevent overwhelming Gemini API</li>
+                        <li><strong>Behavior:</strong> Block if 5 calls in progress</li>
+                    </ul>
+                </div>
+                <div class="success">
+                    <h4>Rate Limiter (Throughput Control)</h4>
+                    <ul>
+                        <li><strong>Limit:</strong> Max 10 requests/second</li>
+                        <li><strong>Purpose:</strong> Comply with API quotas</li>
+                        <li><strong>Behavior:</strong> Delay if rate exceeded</li>
+                    </ul>
+                </div>
+            </div>
+
+            <h3>🔄 Rate Limiting Flow</h3>
+            <div class="mermaid">
+                sequenceDiagram
+                participant C as Caller
+                participant RL as AIRateLimiter
+                participant S as Semaphore
+                participant R as RateLimiter
+                participant API as AI Call
+
+                C->>RL: executeWithRateLimit(aiCall)
+                RL->>R: acquire() - Check rate
+
+                alt Rate OK
+                R-->>RL: Continue
+                else Rate exceeded
+                R->>R: Sleep (delay)
+                R-->>RL: Continue after delay
+                end
+
+                RL->>S: acquire() - Get slot
+
+                alt Slot available
+                S-->>RL: Acquired
+                else All slots busy
+                S->>S: Wait for release
+                S-->>RL: Acquired
+                end
+
+                RL->>API: Execute AI call
+                API-->>RL: Result
+                RL->>S: release()
+                RL-->>C: Return result
+            </div>
+
+            <h3>💻 Code Implementation</h3>
+            <pre><code>@Service
+public class AIRateLimiter {
+    private final Semaphore semaphore;        // Max 5 concurrent
+    private final SimpleRateLimiter rateLimiter; // Max 10/sec
+    
+    public <T> T executeWithRateLimit(Supplier<T> aiCall) {
+        rateLimiter.acquire();  // Wait for rate limit
+        
+        try {
+            semaphore.acquire();  // Wait for available slot
+            return aiCall.get();  // Execute AI call
+        } finally {
+            semaphore.release();  // Release slot
+        }
+    }
+}</code></pre>
+
+            <h3>📊 Rate Limiter Metrics</h3>
+            <table>
+                <tr>
+                    <th>Metric</th>
+                    <th>Value</th>
+                    <th>Configurable</th>
+                </tr>
+                <tr>
+                    <td>Max Concurrent Calls</td>
+                    <td>5</td>
+                    <td>✅ Yes (constructor)</td>
+                </tr>
+                <tr>
+                    <td>Max Requests/Second</td>
+                    <td>10</td>
+                    <td>✅ Yes (constructor)</td>
+                </tr>
+                <tr>
+                    <td>Wait Strategy</td>
+                    <td>Thread.sleep()</td>
+                    <td>❌ No</td>
+                </tr>
+                <tr>
+                    <td>Fairness</td>
+                    <td>FIFO</td>
+                    <td>❌ No</td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- Section 5: Integration -->
+        <div class="section" id="integration">
+            <h2>5️⃣ Integration Flow</h2>
+
+            <h3>🔄 Complete AI Classification Pipeline</h3>
+            <div class="mermaid">
+                flowchart TB
+                subgraph Upload["Image Upload"]
+                U1[User uploads image]
+                U2[ImageAssetController]
+                end
+
+                subgraph Check["Duplicate Check"]
+                C1[Calculate MD5 checksum]
+                C2{Duplicate?}
+                end
+
+                subgraph AI["AI Classification"]
+                A1{Gemini Enabled?}
+                A2[GeminiVisionService]
+                A3[ImageClassificationService]
+                A4[AIRateLimiter]
+                end
+
+                subgraph Storage["Storage"]
+                S1[Upload to S3]
+                S2[Save to Database]
+                end
+
+                U1 --> U2
+                U2 --> C1
+                C1 --> C2
+                C2 -->|Yes| Return[Return existing]
+                C2 -->|No| S1
+                S1 --> A1
+                A1 -->|Yes| A4
+                A4 --> A2
+                A1 -->|No| A3
+                A2 --> S2
+                A3 --> S2
+
+                style A2 fill:#9c27b0,color:white
+                style A4 fill:#ff9800,color:white
+            </div>
+
+            <h3>📝 Usage in ImageAssetService</h3>
+            <pre><code>@Service
+public class ImageAssetService {
+    private final GeminiVisionService geminiService;
+    private final ImageClassificationService fallbackService;
+    private final AIRateLimiter rateLimiter;
+    
+    public ImageAssetResponse uploadAndClassify(MultipartFile file) {
+        // 1. Upload to S3
+        String s3Url = s3Service.upload(file);
+        
+        // 2. Classify with AI
+        ProductAnalysisResult analysis;
+        if (geminiService.isEnabled()) {
+            // Use Gemini with rate limiting
+            analysis = rateLimiter.executeWithRateLimit(() -> 
+                geminiService.analyzeImageFromUrl(s3Url)
+            );
+        } else {
+            // Fallback to rule-based
+            analysis = fallbackService.classify(
+                file.getOriginalFilename(), 
+                file.getOriginalFilename()
+            );
+        }
+        
+        // 3. Save to database
+        ImageAssetEntity entity = new ImageAssetEntity();
+        entity.setUrl(s3Url);
+        entity.setCategory(analysis.getCategory());
+        entity.setGender(analysis.getGender());
+        entity.setAiDescription(analysis.getDescription());
+        
+        return imageAssetRepository.save(entity);
+    }
+}</code></pre>
+
+            <h3>⚙️ Best Practices</h3>
+            <div class="success">
+                <h4>✅ Recommendations:</h4>
+                <ul>
+                    <li>Always use <code>AIRateLimiter</code> when calling Gemini</li>
+                    <li>Implement fallback to <code>ImageClassificationService</code></li>
+                    <li>Cache AI results to avoid redundant API calls</li>
+                    <li>Monitor API usage and costs</li>
+                    <li>Set appropriate timeouts for AI calls</li>
+                </ul>
+            </div>
+
+            <div class="warning">
+                <h4>⚠️ Common Pitfalls:</h4>
+                <ul>
+                    <li>Forgetting to check <code>geminiService.isEnabled()</code></li>
+                    <li>Not handling API errors gracefully</li>
+                    <li>Calling Gemini without rate limiting</li>
+                    <li>Not validating AI response format</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="section" style="text-align: center; margin-top: 50px;">
+            <p style="color: #888;">Created for Tailor Shop Project</p>
+            <p style="color: #666; font-size: 12px;">AI Services Documentation - 2024</p>
+            <a href="ProductModule_Diagram.html" style="color: #ce93d8; text-decoration: none;">← Back to Product
+                Module</a> |
+            <a href="index.html" style="color: #ce93d8; text-decoration: none;">Home</a>
+        </div>
+    </div>
+
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            securityLevel: 'loose'
+        });
+    </script>
+</body>
+
+</html>

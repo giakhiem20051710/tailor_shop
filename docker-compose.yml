@@ -13,11 +13,11 @@ services:
       - "${MYSQL_PORT:-3306}:3306"
     volumes:
       - mysql_data:/var/lib/mysql
-      - ./tailor_shop/src/main/resources/db:/docker-entrypoint-initdb.d
+      - ./backend/src/main/resources/db:/docker-entrypoint-initdb.d
     networks:
       - tailor-shop-network
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD:-rootpassword}"]
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD:-rootpassword}" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -26,7 +26,7 @@ services:
   # Spring Boot Backend
   backend:
     build:
-      context: ./tailor_shop
+      context: ./backend
       dockerfile: Dockerfile
     container_name: tailor-shop-backend
     restart: unless-stopped
@@ -56,19 +56,19 @@ services:
     networks:
       - tailor-shop-network
     healthcheck:
-      test: ["CMD", "sh", "-c", "curl -f http://localhost:8083/api/v1/health || curl -f http://localhost:8083/ || exit 1"]
+      test: [ "CMD", "sh", "-c", "curl -f http://localhost:8083/api/v1/health || curl -f http://localhost:8083/ || exit 1" ]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 60s
     volumes:
-      - ./tailor_shop/uploads:/app/uploads
-    command: ["java", "-jar", "app.jar", "--spring.profiles.active=docker"]
+      - ./backend/uploads:/app/uploads
+    command: [ "java", "-jar", "app.jar", "--spring.profiles.active=docker" ]
 
   # React Frontend
   frontend:
     build:
-      context: ./my-react-app
+      context: ./frontend
       dockerfile: Dockerfile
     container_name: tailor-shop-frontend
     restart: unless-stopped
@@ -79,7 +79,7 @@ services:
     networks:
       - tailor-shop-network
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health || exit 1"]
+      test: [ "CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health || exit 1" ]
       interval: 30s
       timeout: 3s
       retries: 3
@@ -94,4 +94,3 @@ volumes:
 networks:
   tailor-shop-network:
     driver: bridge
-

@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AuthService - Tài Liệu Chi Tiết</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f0f23 0%, #1a1a3e 100%);
+            color: #eee;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: #00d9ff;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+            text-shadow: 0 0 20px rgba(0, 217, 255, 0.3);
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #888;
+            margin-bottom: 30px;
+        }
+
+        h2 {
+            color: #ffd700;
+            margin: 40px 0 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #ffd700;
+        }
+
+        h3 {
+            color: #00ff88;
+            margin: 25px 0 15px;
+        }
+
+        h4 {
+            color: #ff6b9d;
+            margin: 20px 0 10px;
+        }
+
+        .section {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 25px;
+            margin: 20px 0;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .mermaid {
+            background: #fff;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 15px 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+            font-size: 14px;
+        }
+
+        th,
+        td {
+            padding: 12px 15px;
+            text-align: left;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        th {
+            background: rgba(0, 217, 255, 0.2);
+            color: #00d9ff;
+        }
+
+        tr:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        code {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 2px 8px;
+            border-radius: 4px;
+            color: #00ff88;
+            font-family: 'Consolas', monospace;
+        }
+
+        pre {
+            background: rgba(0, 0, 0, 0.4);
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 10px 0;
+        }
+
+        pre code {
+            padding: 0;
+            background: transparent;
+        }
+
+        .highlight-box {
+            background: linear-gradient(135deg, rgba(255, 107, 107, 0.1), rgba(255, 107, 157, 0.1));
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 4px solid #ff6b6b;
+            margin: 15px 0;
+        }
+
+        .success-box {
+            background: linear-gradient(135deg, rgba(0, 255, 136, 0.1), rgba(0, 217, 255, 0.1));
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 4px solid #00ff88;
+            margin: 15px 0;
+        }
+
+        .warning-box {
+            background: linear-gradient(135deg, rgba(255, 193, 7, 0.1), rgba(255, 152, 0, 0.1));
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 4px solid #ffc107;
+            margin: 15px 0;
+        }
+
+        .info-box {
+            background: linear-gradient(135deg, rgba(0, 123, 255, 0.1), rgba(0, 217, 255, 0.1));
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 4px solid #007bff;
+            margin: 15px 0;
+        }
+
+        ul,
+        ol {
+            padding-left: 25px;
+            margin: 10px 0;
+        }
+
+        li {
+            margin: 8px 0;
+            line-height: 1.6;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+            margin: 2px;
+        }
+
+        .badge-primary {
+            background: #007bff;
+            color: white;
+        }
+
+        .badge-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .badge-warning {
+            background: #ffc107;
+            color: black;
+        }
+
+        .badge-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .badge-info {
+            background: #17a2b8;
+            color: white;
+        }
+
+        .back-link {
+            display: inline-block;
+            color: #00d9ff;
+            text-decoration: none;
+            margin-bottom: 20px;
+            padding: 10px 20px;
+            border: 1px solid #00d9ff;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .back-link:hover {
+            background: rgba(0, 217, 255, 0.2);
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 60px;
+            padding-top: 30px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            color: #666;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <a href="index.html" class="back-link">← Quay lại trang chính</a>
+
+        <h1>🔑 AuthService</h1>
+        <p class="subtitle">Authentication & Authorization Service - JWT, Login, Register, Password Reset</p>
+
+        <!-- Overview Section -->
+        <div class="section">
+            <h2>📋 Tổng Quan</h2>
+            <p>AuthService là module xác thực và phân quyền của hệ thống Tailor Shop, bao gồm:</p>
+            <ul>
+                <li><strong>AuthService:</strong> Xử lý đăng nhập, đăng ký, JWT token</li>
+                <li><strong>LoginAttemptService:</strong> Theo dõi và chặn brute-force attack</li>
+                <li><strong>EmailService:</strong> Gửi email OTP cho quên mật khẩu</li>
+                <li><strong>JwtService:</strong> Tạo và xác thực JWT tokens</li>
+            </ul>
+
+            <div class="success-box">
+                <strong>🔐 Security Features:</strong>
+                <ul>
+                    <li>Access Token + Refresh Token</li>
+                    <li>Login attempt tracking & account lockout</li>
+                    <li>OTP-based password reset</li>
+                    <li>Security audit logging</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Architecture Diagram -->
+        <div class="section">
+            <h2>🏗️ Kiến Trúc Tổng Quan</h2>
+            <div class="mermaid">
+flowchart TB
+    subgraph Client["📱 Client"]
+        FE[Frontend App]
+    end
+
+    subgraph Controller["🎮 Controller Layer"]
+        AC[AuthController]
+    end
+
+    subgraph Service["⚙️ Service Layer"]
+        AS[AuthServiceImpl]
+        LAS[LoginAttemptService]
+        ES[EmailService]
+        JS[JwtService]
+        SAL[SecurityAuditLogger]
+    end
+
+    subgraph Repository["💾 Repository Layer"]
+        UR[UserRepository]
+        RR[RoleRepository]
+        PRTR[PasswordResetTokenRepository]
+    end
+
+    subgraph Security["🔐 Security"]
+        AM[AuthenticationManager]
+        PE[PasswordEncoder]
+    end
+
+    FE -->|POST /login| AC
+    FE -->|POST /register| AC
+    FE -->|POST /refresh| AC
+    FE -->|POST /forgot-password| AC
+    FE -->|POST /reset-password| AC
+
+    AC --> AS
+    AS --> LAS
+    AS --> ES
+    AS --> JS
+    AS --> SAL
+    AS --> AM
+    AS --> PE
+    AS --> UR
+    AS --> RR
+    AS --> PRTR
+            </div>
+        </div>
+
+        <!-- API Endpoints -->
+        <div class="section">
+            <h2>🌐 API Endpoints</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Method</th>
+                        <th>Endpoint</th>
+                        <th>Mô tả</th>
+                        <th>Auth</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><span class="badge badge-success">POST</span></td>
+                        <td><code>/api/v1/auth/login</code></td>
+                        <td>Đăng nhập với email/phone và password</td>
+                        <td>❌ Public</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-success">POST</span></td>
+                        <td><code>/api/v1/auth/register</code></td>
+                        <td>Đăng ký tài khoản mới</td>
+                        <td>❌ Public</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-success">POST</span></td>
+                        <td><code>/api/v1/auth/refresh</code></td>
+                        <td>Làm mới access token bằng refresh token</td>
+                        <td>❌ Public</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-success">POST</span></td>
+                        <td><code>/api/v1/auth/forgot-password</code></td>
+                        <td>Yêu cầu OTP reset mật khẩu</td>
+                        <td>❌ Public</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-success">POST</span></td>
+                        <td><code>/api/v1/auth/reset-password</code></td>
+                        <td>Đặt lại mật khẩu với OTP</td>
+                        <td>❌ Public</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Login Flow -->
+        <div class="section">
+            <h2>🔄 Login Flow</h2>
+            <div class="mermaid">
+sequenceDiagram
+    participant C as Client
+    participant AC as AuthController
+    participant AS as AuthService
+    participant LAS as LoginAttemptService
+    participant AM as AuthenticationManager
+    participant JS as JwtService
+    participant SAL as SecurityAuditLogger
+
+    C->>AC: POST /login {phone/email, password}
+    AC->>AS: login(request)
+    
+    AS->>LAS: isLocked(key)?
+    alt Account Locked
+        LAS-->>AS: true
+        AS->>SAL: logAccountLockout()
+        AS-->>C: 400 Bad Request (Account locked)
+    else Account Not Locked
+        LAS-->>AS: false
+        AS->>AM: authenticate(credentials)
+        
+        alt Authentication Failed
+            AM-->>AS: BadCredentialsException
+            AS->>LAS: recordFailure(key)
+            AS->>SAL: logLoginFailure()
+            AS-->>C: 401 Unauthorized
+        else Authentication Success
+            AM-->>AS: Authentication
+            AS->>LAS: recordSuccess(key)
+            AS->>JS: generateAccessToken()
+            JS-->>AS: accessToken
+            AS->>JS: generateRefreshToken()
+            JS-->>AS: refreshToken
+            AS->>SAL: logLoginSuccess()
+            AS-->>C: 200 OK {accessToken, refreshToken}
+        end
+    end
+            </div>
+        </div>
+
+        <!-- Register Flow -->
+        <div class="section">
+            <h2>📝 Register Flow</h2>
+            <div class="mermaid">
+sequenceDiagram
+    participant C as Client
+    participant AC as AuthController
+    participant AS as AuthService
+    participant UR as UserRepository
+    participant RR as RoleRepository
+    participant PE as PasswordEncoder
+    participant SAL as SecurityAuditLogger
+
+    C->>AC: POST /register {email, phone, name, password, role}
+    AC->>AS: register(request)
+    
+    AS->>UR: existsByEmail(email)?
+    alt Email Exists
+        UR-->>AS: true
+        AS-->>C: 400 Bad Request (Email already exists)
+    else Email Not Exists
+        UR-->>AS: false
+        AS->>UR: existsByPhone(phone)?
+        alt Phone Exists
+            UR-->>AS: true
+            AS-->>C: 400 Bad Request (Phone already exists)
+        else Phone Not Exists
+            UR-->>AS: false
+            
+            Note over AS: Validate role (only customer/staff/tailor allowed)
+            
+            AS->>RR: findByCode(roleCode)
+            RR-->>AS: RoleEntity
+            
+            AS->>PE: encode(password)
+            PE-->>AS: encodedPassword
+            
+            AS->>UR: save(newUser)
+            UR-->>AS: savedUser
+            
+            AS->>SAL: logUserRegistration()
+            AS-->>C: 200 OK
+        end
+    end
+            </div>
+
+            <div class="warning-box">
+                <strong>⚠️ Role Validation:</strong>
+                <p>Chỉ cho phép đăng ký với các role: <code>CUSTOMER</code>, <code>STAFF</code>, <code>TAILOR</code></p>
+                <p>Role <code>ADMIN</code> không được phép đăng ký qua API công khai.</p>
+            </div>
+        </div>
+
+        <!-- Password Reset Flow -->
+        <div class="section">
+            <h2>🔐 Password Reset Flow</h2>
+            <div class="mermaid">
+sequenceDiagram
+    participant C as Client
+    participant AC as AuthController
+    participant AS as AuthService
+    participant UR as UserRepository
+    participant PRTR as PasswordResetTokenRepo
+    participant ES as EmailService
+
+    C->>AC: POST /forgot-password {email}
+    AC->>AS: forgotPassword(request)
+    
+    AS->>UR: findByEmailAndIsDeletedFalse(email)
+    alt User Not Found
+        UR-->>AS: null
+        AS-->>C: 404 Not Found
+    else User Found
+        UR-->>AS: UserEntity
+        
+        AS->>PRTR: countByUserAndCreatedAtAfter(user, 30min ago)
+        alt Rate Limited (>= 3 requests)
+            PRTR-->>AS: >= 3
+            AS-->>C: 400 Bad Request (Too many requests)
+        else Under Limit
+            PRTR-->>AS: < 3
+            
+            Note over AS: Generate 6-digit OTP
+            
+            AS->>PRTR: save(PasswordResetToken)
+            AS->>ES: sendOtpEmail(email, otp, userName)
+            AS-->>C: 200 OK
+        end
+    end
+
+    Note over C: User receives OTP via email
+
+    C->>AC: POST /reset-password {email, otp, newPassword}
+    AC->>AS: resetPassword(request)
+    
+    AS->>PRTR: findValidToken(email, otp)
+    alt Token Invalid/Expired
+        PRTR-->>AS: null
+        AS-->>C: 400 Bad Request (Invalid OTP)
+    else Token Valid
+        PRTR-->>AS: PasswordResetToken
+        AS->>UR: updatePassword(user, newPassword)
+        AS->>PRTR: markUsed(token)
+        AS-->>C: 200 OK
+    end
+            </div>
+
+            <div class="info-box">
+                <strong>📧 Rate Limiting:</strong>
+                <p>Tối đa 3 yêu cầu reset password trong 30 phút để chống spam.</p>
+                <p>OTP có hiệu lực trong 10 phút.</p>
+            </div>
+        </div>
+
+        <!-- Login Attempt Service -->
+        <div class="section">
+            <h2>🛡️ LoginAttemptService - Brute Force Protection</h2>
+            <div class="mermaid">
+flowchart TB
+    subgraph Config["⚙️ Configuration"]
+        MA[MAX_ATTEMPTS = 5]
+        WS[WINDOW_SECONDS = 15 min]
+    end
+
+    subgraph Flow["🔄 Login Attempt Flow"]
+        L[Login Request]
+        CL{isLocked?}
+        AF[Auth Attempt]
+        RS{Result?}
+        REC_S[recordSuccess - Clear attempts]
+        REC_F[recordFailure - Increment count]
+        LOCK[Account Locked 15 min]
+    end
+
+    L --> CL
+    CL -->|Yes| LOCK
+    CL -->|No| AF
+    AF --> RS
+    RS -->|Success| REC_S
+    RS -->|Failure| REC_F
+    REC_F -->|count >= 5| LOCK
+            </div>
+
+            <h3>Logic Implementation</h3>
+            <pre><code>@Component
+public class LoginAttemptService {
+    private static final int MAX_ATTEMPTS = 5;
+    private static final long WINDOW_SECONDS = 15 * 60; // 15 minutes
+    
+    private final Map&lt;String, Attempts&gt; attempts = new ConcurrentHashMap&lt;&gt;();
+    
+    public boolean isLocked(String key) {
+        Attempts a = attempts.get(key);
+        if (a == null) return false;
+        
+        long now = Instant.now().getEpochSecond();
+        if (now - a.firstTime > WINDOW_SECONDS) {
+            attempts.remove(key); // Window expired, reset
+            return false;
+        }
+        return a.count >= MAX_ATTEMPTS;
+    }
+}</code></pre>
+        </div>
+
+        <!-- JWT Token Structure -->
+        <div class="section">
+            <h2>🎫 JWT Token Structure</h2>
+            
+            <h3>Access Token vs Refresh Token</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Property</th>
+                        <th>Access Token</th>
+                        <th>Refresh Token</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Purpose</td>
+                        <td>API Authentication</td>
+                        <td>Get new Access Token</td>
+                    </tr>
+                    <tr>
+                        <td>Expiration</td>
+                        <td>Short (e.g., 15 min - 1 hour)</td>
+                        <td>Long (e.g., 7 days - 30 days)</td>
+                    </tr>
+                    <tr>
+                        <td>Storage</td>
+                        <td>Memory / Short-lived cookie</td>
+                        <td>HttpOnly Secure Cookie</td>
+                    </tr>
+                    <tr>
+                        <td>Contains</td>
+                        <td>User info, roles, permissions</td>
+                        <td>User identifier only</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Token Refresh Flow</h3>
+            <div class="mermaid">
+sequenceDiagram
+    participant C as Client
+    participant AC as AuthController
+    participant AS as AuthService
+    participant JS as JwtService
+    participant UDS as UserDetailsService
+
+    C->>AC: POST /refresh {refreshToken}
+    AC->>AS: refreshToken(token)
+    
+    AS->>JS: isRefreshToken(token)?
+    alt Not Refresh Token
+        JS-->>AS: false
+        AS-->>C: 400 Bad Request (Invalid refresh token)
+    else Is Refresh Token
+        JS-->>AS: true
+        AS->>JS: extractUsername(token)
+        JS-->>AS: username
+        
+        AS->>UDS: loadUserByUsername(username)
+        UDS-->>AS: UserDetails
+        
+        AS->>JS: isTokenValid(token, userDetails)?
+        alt Token Invalid/Expired
+            JS-->>AS: false
+            AS-->>C: 400 Bad Request (Token expired)
+        else Token Valid
+            JS-->>AS: true
+            AS->>JS: generateAccessToken(userDetails)
+            AS->>JS: generateRefreshToken(userDetails)
+            AS-->>C: 200 OK {newAccessToken, newRefreshToken}
+        end
+    end
+            </div>
+        </div>
+
+        <!-- Security Audit Logging -->
+        <div class="section">
+            <h2>📝 Security Audit Logging</h2>
+            <p>Hệ thống ghi lại tất cả các sự kiện bảo mật quan trọng:</p>
+            
+            <table>
+                <thead>
+                    <tr>
+                        <th>Event Type</th>
+                        <th>Method</th>
+                        <th>Logged Data</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Login Success</td>
+                        <td><code>logLoginSuccess()</code></td>
+                        <td>Username, IP, User Agent</td>
+                    </tr>
+                    <tr>
+                        <td>Login Failure</td>
+                        <td><code>logLoginFailure()</code></td>
+                        <td>Attempted username, IP, Reason</td>
+                    </tr>
+                    <tr>
+                        <td>Account Lockout</td>
+                        <td><code>logAccountLockout()</code></td>
+                        <td>Username, IP, Attempt count</td>
+                    </tr>
+                    <tr>
+                        <td>Token Refresh</td>
+                        <td><code>logTokenRefresh()</code></td>
+                        <td>Username, IP</td>
+                    </tr>
+                    <tr>
+                        <td>Invalid Token</td>
+                        <td><code>logInvalidToken()</code></td>
+                        <td>IP, Error message</td>
+                    </tr>
+                    <tr>
+                        <td>User Registration</td>
+                        <td><code>logUserRegistration()</code></td>
+                        <td>New username, Email, IP</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- DTOs -->
+        <div class="section">
+            <h2>📦 Data Transfer Objects</h2>
+
+            <h3>LoginRequest</h3>
+            <pre><code>{
+    "phoneOrEmail": "user@example.com",
+    "password": "securePassword123"
+}</code></pre>
+
+            <h3>LoginResponse</h3>
+            <pre><code>{
+    "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+    "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+    "accessTokenExpiry": 3600000,
+    "refreshTokenExpiry": 604800000
+}</code></pre>
+
+            <h3>RegisterRequest</h3>
+            <pre><code>{
+    "email": "newuser@example.com",
+    "phone": "0901234567",
+    "name": "Nguyễn Văn A",
+    "password": "securePassword123",
+    "role": "customer"
+}</code></pre>
+
+            <h3>ForgotPasswordRequest</h3>
+            <pre><code>{
+    "email": "user@example.com"
+}</code></pre>
+
+            <h3>ResetPasswordRequest</h3>
+            <pre><code>{
+    "email": "user@example.com",
+    "otp": "123456",
+    "newPassword": "newSecurePassword123"
+}</code></pre>
+        </div>
+
+        <!-- Dependencies -->
+        <div class="section">
+            <h2>🔗 Dependencies</h2>
+            <div class="mermaid">
+flowchart LR
+    subgraph AuthModule["🔑 Auth Module"]
+        AS[AuthService]
+        LAS[LoginAttemptService]
+        ES[EmailService]
+    end
+
+    subgraph UserModule["👤 User Module"]
+        UR[UserRepository]
+        RR[RoleRepository]
+    end
+
+    subgraph Security["🔐 Spring Security"]
+        AM[AuthenticationManager]
+        PE[PasswordEncoder]
+        JS[JwtService]
+    end
+
+    subgraph Common["📦 Common"]
+        SAL[SecurityAuditLogger]
+    end
+
+    AS --> LAS
+    AS --> ES
+    AS --> UR
+    AS --> RR
+    AS --> AM
+    AS --> PE
+    AS --> JS
+    AS --> SAL
+            </div>
+        </div>
+
+        <footer>
+            <p>Tailor Shop - AuthService Documentation</p>
+            <p style="margin-top: 10px;">Generated for Backend Team Reference</p>
+        </footer>
+    </div>
+
+    <script>
+        mermaid.initialize({ startOnLoad: true, theme: 'default' });
+    </script>
+</body>
+
+</html>

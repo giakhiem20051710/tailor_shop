@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ReviewService - Tài Liệu Chi Tiết</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f0f23 0%, #1a1a3e 100%);
+            color: #eee;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: #00d9ff;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+            text-shadow: 0 0 20px rgba(0, 217, 255, 0.3);
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #888;
+            margin-bottom: 30px;
+        }
+
+        h2 {
+            color: #ffd700;
+            margin: 40px 0 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #ffd700;
+        }
+
+        h3 {
+            color: #00ff88;
+            margin: 25px 0 15px;
+        }
+
+        .section {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 25px;
+            margin: 20px 0;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .mermaid {
+            background: #fff;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 15px 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+            font-size: 14px;
+        }
+
+        th,
+        td {
+            padding: 12px 15px;
+            text-align: left;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        th {
+            background: rgba(0, 217, 255, 0.2);
+            color: #00d9ff;
+        }
+
+        tr:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        code {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 2px 8px;
+            border-radius: 4px;
+            color: #00ff88;
+            font-family: 'Consolas', monospace;
+        }
+
+        pre {
+            background: rgba(0, 0, 0, 0.4);
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 10px 0;
+        }
+
+        pre code {
+            padding: 0;
+            background: transparent;
+        }
+
+        .success-box {
+            background: linear-gradient(135deg, rgba(0, 255, 136, 0.1), rgba(0, 217, 255, 0.1));
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 4px solid #00ff88;
+            margin: 15px 0;
+        }
+
+        .warning-box {
+            background: linear-gradient(135deg, rgba(255, 193, 7, 0.1), rgba(255, 152, 0, 0.1));
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 4px solid #ffc107;
+            margin: 15px 0;
+        }
+
+        .info-box {
+            background: linear-gradient(135deg, rgba(0, 123, 255, 0.1), rgba(0, 217, 255, 0.1));
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 4px solid #007bff;
+            margin: 15px 0;
+        }
+
+        ul,
+        ol {
+            padding-left: 25px;
+            margin: 10px 0;
+        }
+
+        li {
+            margin: 8px 0;
+            line-height: 1.6;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+            margin: 2px;
+        }
+
+        .badge-primary {
+            background: #007bff;
+            color: white;
+        }
+
+        .badge-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .badge-warning {
+            background: #ffc107;
+            color: black;
+        }
+
+        .badge-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .back-link {
+            display: inline-block;
+            color: #00d9ff;
+            text-decoration: none;
+            margin-bottom: 20px;
+            padding: 10px 20px;
+            border: 1px solid #00d9ff;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .back-link:hover {
+            background: rgba(0, 217, 255, 0.2);
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 60px;
+            padding-top: 30px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            color: #666;
+        }
+
+        .star-rating {
+            color: #ffd700;
+            font-size: 1.2em;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <a href="index.html" class="back-link">← Quay lại trang chính</a>
+
+        <h1>⭐ ReviewService</h1>
+        <p class="subtitle">Hệ thống Đánh giá - Product Reviews, Order Reviews, Shopee-like Features</p>
+
+        <!-- Overview Section -->
+        <div class="section">
+            <h2>📋 Tổng Quan</h2>
+            <p>ReviewService quản lý hệ thống đánh giá sản phẩm và đơn hàng với các tính năng giống Shopee:</p>
+            
+            <div class="success-box">
+                <strong>✨ Key Features:</strong>
+                <ul>
+                    <li><strong>Multiple Review Types:</strong> Product, Order, Image Asset</li>
+                    <li><strong>Rating System:</strong> 1-5 stars với thống kê chi tiết</li>
+                    <li><strong>Review Images:</strong> Hỗ trợ upload ảnh đánh giá</li>
+                    <li><strong>Shop Reply:</strong> Cửa hàng có thể phản hồi review</li>
+                    <li><strong>Helpful Votes:</strong> Người dùng vote review hữu ích</li>
+                    <li><strong>Moderation:</strong> Duyệt review trước khi public</li>
+                    <li><strong>Anonymous Reviews:</strong> Hỗ trợ đánh giá ẩn danh</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Architecture Diagram -->
+        <div class="section">
+            <h2>🏗️ Kiến Trúc Tổng Quan</h2>
+            <div class="mermaid">
+flowchart TB
+    subgraph Client["📱 Client"]
+        FE[Frontend App]
+    end
+
+    subgraph Controller["🎮 Controller Layer"]
+        RC[ReviewController]
+    end
+
+    subgraph Service["⚙️ Service Layer"]
+        RS[ReviewService]
+    end
+
+    subgraph Events["📡 Event System"]
+        RCE[ReviewCreatedEvent]
+    end
+
+    subgraph Repository["💾 Repository Layer"]
+        RR[ReviewRepository]
+        RIR[ReviewImageRepository]
+        RHVR[ReviewHelpfulVoteRepository]
+        PR[ProductRepository]
+        OR[OrderRepository]
+        IAR[ImageAssetRepository]
+        UR[UserRepository]
+    end
+
+    FE --> RC
+    RC --> RS
+    RS --> RCE
+    RS --> RR
+    RS --> RIR
+    RS --> RHVR
+    RS --> PR
+    RS --> OR
+    RS --> IAR
+    RS --> UR
+            </div>
+        </div>
+
+        <!-- Review Types -->
+        <div class="section">
+            <h2>📌 Review Types</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Type</th>
+                        <th>Mô tả</th>
+                        <th>Target</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>PRODUCT</code></td>
+                        <td>Đánh giá sản phẩm may sẵn</td>
+                        <td>ProductEntity</td>
+                    </tr>
+                    <tr>
+                        <td><code>ORDER</code></td>
+                        <td>Đánh giá đơn hàng may đo</td>
+                        <td>OrderEntity</td>
+                    </tr>
+                    <tr>
+                        <td><code>IMAGE_ASSET</code></td>
+                        <td>Đánh giá mẫu thiết kế</td>
+                        <td>ImageAssetEntity</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Review Status -->
+        <div class="section">
+            <h2>📊 Review Status Flow</h2>
+            <div class="mermaid">
+stateDiagram-v2
+    [*] --> PENDING: Create Review
+    
+    PENDING --> APPROVED: Moderate (approve)
+    PENDING --> REJECTED: Moderate (reject)
+    
+    APPROVED --> HIDDEN: Moderate (hide)
+    HIDDEN --> APPROVED: Moderate (unhide)
+    
+    APPROVED --> [*]: Delete
+    REJECTED --> [*]: Delete
+    HIDDEN --> [*]: Delete
+            </div>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Status</th>
+                        <th>Mô tả</th>
+                        <th>Visibility</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><span class="badge badge-warning">PENDING</span></td>
+                        <td>Chờ duyệt</td>
+                        <td>Chỉ owner và admin thấy</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-success">APPROVED</span></td>
+                        <td>Đã duyệt</td>
+                        <td>Public</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-danger">REJECTED</span></td>
+                        <td>Bị từ chối</td>
+                        <td>Chỉ owner thấy</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-secondary">HIDDEN</span></td>
+                        <td>Ẩn tạm thời</td>
+                        <td>Chỉ admin thấy</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- API Endpoints -->
+        <div class="section">
+            <h2>🌐 API Endpoints</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Method</th>
+                        <th>Endpoint</th>
+                        <th>Mô tả</th>
+                        <th>Auth</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><span class="badge badge-primary">GET</span></td>
+                        <td><code>/api/v1/reviews</code></td>
+                        <td>Danh sách reviews (filter)</td>
+                        <td>Public</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-primary">GET</span></td>
+                        <td><code>/api/v1/reviews/{id}</code></td>
+                        <td>Chi tiết review</td>
+                        <td>Public</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-success">POST</span></td>
+                        <td><code>/api/v1/reviews/products/{productId}</code></td>
+                        <td>Đánh giá sản phẩm</td>
+                        <td>CUSTOMER</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-success">POST</span></td>
+                        <td><code>/api/v1/reviews/orders/{orderId}</code></td>
+                        <td>Đánh giá đơn hàng</td>
+                        <td>CUSTOMER</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-success">POST</span></td>
+                        <td><code>/api/v1/reviews/image-assets/{id}</code></td>
+                        <td>Đánh giá mẫu thiết kế</td>
+                        <td>CUSTOMER</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-warning">PUT</span></td>
+                        <td><code>/api/v1/reviews/{id}</code></td>
+                        <td>Cập nhật review (chỉ owner)</td>
+                        <td>CUSTOMER</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-danger">DELETE</span></td>
+                        <td><code>/api/v1/reviews/{id}</code></td>
+                        <td>Xóa review (chỉ owner)</td>
+                        <td>CUSTOMER</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-success">POST</span></td>
+                        <td><code>/api/v1/reviews/{id}/reply</code></td>
+                        <td>Shop trả lời review</td>
+                        <td>ADMIN, STAFF</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-success">POST</span></td>
+                        <td><code>/api/v1/reviews/{id}/helpful</code></td>
+                        <td>Vote hữu ích</td>
+                        <td>Authenticated</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-danger">DELETE</span></td>
+                        <td><code>/api/v1/reviews/{id}/helpful</code></td>
+                        <td>Bỏ vote hữu ích</td>
+                        <td>Authenticated</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-warning">PATCH</span></td>
+                        <td><code>/api/v1/reviews/{id}/moderate</code></td>
+                        <td>Duyệt/từ chối/ẩn review</td>
+                        <td>ADMIN</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-primary">GET</span></td>
+                        <td><code>/api/v1/reviews/statistics</code></td>
+                        <td>Thống kê đánh giá</td>
+                        <td>Public</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Create Review Flow -->
+        <div class="section">
+            <h2>🔄 Create Product Review Flow</h2>
+            <div class="mermaid">
+sequenceDiagram
+    participant C as Customer
+    participant RC as ReviewController
+    participant RS as ReviewService
+    participant PR as ProductRepository
+    participant RR as ReviewRepository
+    participant RIR as ReviewImageRepository
+    participant EP as EventPublisher
+
+    C->>RC: POST /reviews/products/{productId} {rating, comment, images}
+    RC->>RS: createProductReview(productId, request, userId)
+    
+    RS->>PR: findById(productId)
+    PR-->>RS: ProductEntity
+    
+    RS->>RR: findByProductIdAndUserIdAndIsDeletedFalse(productId, userId)
+    alt Already Reviewed
+        RR-->>RS: existingReview
+        RS-->>C: 400 Bad Request (Already reviewed)
+    else Not Reviewed
+        RR-->>RS: null
+        
+        RS->>RS: Create ReviewEntity
+        Note over RS: rating, title, comment, isAnonymous
+        Note over RS: status = PENDING
+        Note over RS: isVerifiedPurchase = check order history
+        
+        RS->>RR: save(reviewEntity)
+        RR-->>RS: savedReview
+        
+        alt Has Images
+            RS->>RIR: saveAll(reviewImages)
+        end
+        
+        RS->>RS: updateProductRating(productId)
+        RS->>EP: publish(ReviewCreatedEvent)
+        
+        RS-->>C: 200 OK {reviewResponse}
+    end
+            </div>
+        </div>
+
+        <!-- Rating Statistics -->
+        <div class="section">
+            <h2>📊 Rating Statistics (Shopee-like)</h2>
+            <div class="mermaid">
+flowchart LR
+    subgraph Input["📥 Query"]
+        Q[productId / orderId / imageAssetId]
+    end
+
+    subgraph Calculate["🧮 Calculation"]
+        C1[Count total reviews]
+        C2[Calculate average rating]
+        C3[Count per rating 1-5]
+        C4[Count with images]
+        C5[Count with comments]
+    end
+
+    subgraph Output["📤 Statistics"]
+        O1[totalReviews: 150]
+        O2[averageRating: 4.7]
+        O3[ratingDistribution: 5★=100, 4★=30, 3★=15, 2★=3, 1★=2]
+        O4[withImages: 45]
+        O5[withComments: 120]
+    end
+
+    Q --> Calculate
+    Calculate --> Output
+            </div>
+
+            <h3>Statistics Response Example</h3>
+            <pre><code>{
+    "totalReviews": 150,
+    "averageRating": 4.7,
+    "ratingDistribution": {
+        "5": 100,
+        "4": 30,
+        "3": 15,
+        "2": 3,
+        "1": 2
+    },
+    "withImages": 45,
+    "withComments": 120,
+    "verifiedPurchases": 140
+}</code></pre>
+
+            <div class="info-box">
+                <strong>⭐ Rating Display:</strong>
+                <div class="star-rating">★★★★★ 4.7/5 (150 đánh giá)</div>
+            </div>
+        </div>
+
+        <!-- Shop Reply -->
+        <div class="section">
+            <h2>💬 Shop Reply Feature</h2>
+            <div class="mermaid">
+sequenceDiagram
+    participant S as Staff
+    participant RC as ReviewController
+    participant RS as ReviewService
+    participant RR as ReviewRepository
+
+    S->>RC: POST /reviews/{id}/reply {replyContent}
+    RC->>RS: reply(id, request, staffId)
+    
+    RS->>RR: findByIdAndIsDeletedFalse(id)
+    RR-->>RS: ReviewEntity
+    
+    RS->>RS: Set shopReply = request.content
+    RS->>RS: Set repliedBy = staffId
+    RS->>RS: Set repliedAt = now()
+    
+    RS->>RR: save(review)
+    RR-->>RS: updatedReview
+    
+    RS-->>S: 200 OK {reviewWithReply}
+            </div>
+
+            <h3>Review with Shop Reply Example</h3>
+            <pre><code>{
+    "id": 123,
+    "rating": 5,
+    "comment": "Sản phẩm rất đẹp, may rất vừa!",
+    "userName": "Nguyễn Văn A",
+    "createdAt": "2024-01-15T10:30:00Z",
+    "shopReply": {
+        "content": "Cảm ơn quý khách đã tin tưởng! Chúc quý khách sử dụng vui vẻ.",
+        "repliedBy": "Shop Manager",
+        "repliedAt": "2024-01-16T09:00:00Z"
+    }
+}</code></pre>
+        </div>
+
+        <!-- Helpful Votes -->
+        <div class="section">
+            <h2>👍 Helpful Votes System</h2>
+            <div class="mermaid">
+erDiagram
+    REVIEW ||--o{ REVIEW_HELPFUL_VOTE : has
+    USER ||--o{ REVIEW_HELPFUL_VOTE : votes
+    
+    REVIEW {
+        Long id PK
+        Integer helpfulCount
+    }
+    
+    REVIEW_HELPFUL_VOTE {
+        Long id PK
+        Long review_id FK
+        Long user_id FK
+        Timestamp created_at
+    }
+    
+    USER {
+        Long id PK
+        String name
+    }
+            </div>
+
+            <h3>Vote Logic</h3>
+            <pre><code>// Vote helpful
+1. Check if user already voted
+2. If not, create ReviewHelpfulVote
+3. Increment review.helpfulCount
+4. Save review
+
+// Unvote helpful
+1. Find existing vote by user and review
+2. Delete vote
+3. Decrement review.helpfulCount
+4. Save review</code></pre>
+        </div>
+
+        <!-- Moderation -->
+        <div class="section">
+            <h2>🔧 Moderation System</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Action</th>
+                        <th>Mô tả</th>
+                        <th>New Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>approve</code></td>
+                        <td>Duyệt review, cho hiển thị public</td>
+                        <td>APPROVED</td>
+                    </tr>
+                    <tr>
+                        <td><code>reject</code></td>
+                        <td>Từ chối review (vi phạm chính sách)</td>
+                        <td>REJECTED</td>
+                    </tr>
+                    <tr>
+                        <td><code>hide</code></td>
+                        <td>Ẩn tạm thời để xem xét</td>
+                        <td>HIDDEN</td>
+                    </tr>
+                    <tr>
+                        <td><code>unhide</code></td>
+                        <td>Hiện lại review đã ẩn</td>
+                        <td>APPROVED</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="warning-box">
+                <strong>⚠️ Auto-Moderation (Future):</strong>
+                <p>Có thể tích hợp AI để tự động phát hiện:</p>
+                <ul>
+                    <li>Spam reviews</li>
+                    <li>Offensive language</li>
+                    <li>Fake reviews</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- DTOs -->
+        <div class="section">
+            <h2>📦 Data Transfer Objects</h2>
+
+            <h3>ReviewRequest</h3>
+            <pre><code>{
+    "rating": 5,
+    "title": "Sản phẩm tuyệt vời!",
+    "comment": "May rất đẹp, vải tốt, giao hàng nhanh. Rất hài lòng!",
+    "isAnonymous": false,
+    "imageUrls": [
+        "https://cdn.example.com/review-img-1.jpg",
+        "https://cdn.example.com/review-img-2.jpg"
+    ]
+}</code></pre>
+
+            <h3>ReviewResponse</h3>
+            <pre><code>{
+    "id": 123,
+    "type": "PRODUCT",
+    "productId": 456,
+    "productName": "Vest Nam Cao Cấp",
+    "userId": 789,
+    "userName": "Nguyễn Văn A",
+    "userAvatar": "https://cdn.example.com/avatar.jpg",
+    "rating": 5,
+    "title": "Sản phẩm tuyệt vời!",
+    "comment": "May rất đẹp, vải tốt, giao hàng nhanh.",
+    "isAnonymous": false,
+    "isVerifiedPurchase": true,
+    "status": "APPROVED",
+    "helpfulCount": 15,
+    "hasVotedHelpful": false,
+    "images": [
+        "https://cdn.example.com/review-img-1.jpg"
+    ],
+    "shopReply": {
+        "content": "Cảm ơn quý khách!",
+        "repliedBy": "Shop Manager",
+        "repliedAt": "2024-01-16T09:00:00Z"
+    },
+    "createdAt": "2024-01-15T10:30:00Z",
+    "updatedAt": "2024-01-15T10:30:00Z"
+}</code></pre>
+
+            <h3>ReviewFilterRequest</h3>
+            <pre><code>{
+    "type": "PRODUCT",
+    "productId": 456,
+    "rating": 5,
+    "hasImages": true,
+    "hasReply": false,
+    "isVerifiedPurchase": true,
+    "status": "APPROVED",
+    "keyword": "tốt"
+}</code></pre>
+        </div>
+
+        <!-- Dependencies -->
+        <div class="section">
+            <h2>🔗 Dependencies</h2>
+            <div class="mermaid">
+flowchart LR
+    subgraph ReviewModule["⭐ Review Module"]
+        RS[ReviewService]
+        RL[ReviewListener]
+    end
+
+    subgraph ProductModule["📦 Product Module"]
+        PR[ProductRepository]
+        IAR[ImageAssetRepository]
+    end
+
+    subgraph OrderModule["📋 Order Module"]
+        OR[OrderRepository]
+    end
+
+    subgraph UserModule["👤 User Module"]
+        UR[UserRepository]
+    end
+
+    subgraph EventBus["📡 Spring Events"]
+        EP[EventPublisher]
+    end
+
+    RS --> PR
+    RS --> IAR
+    RS --> OR
+    RS --> UR
+    RS --> EP
+            </div>
+        </div>
+
+        <footer>
+            <p>Tailor Shop - ReviewService Documentation</p>
+            <p style="margin-top: 10px;">Generated for Backend Team Reference</p>
+        </footer>
+    </div>
+
+    <script>
+        mermaid.initialize({ startOnLoad: true, theme: 'default' });
+    </script>
+</body>
+
+</html>

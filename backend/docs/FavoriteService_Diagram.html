@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FavoriteService - Tài Liệu Chi Tiết</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f0f23 0%, #1a1a3e 100%);
+            color: #eee;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: #00d9ff;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+            text-shadow: 0 0 20px rgba(0, 217, 255, 0.3);
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #888;
+            margin-bottom: 30px;
+        }
+
+        h2 {
+            color: #ffd700;
+            margin: 40px 0 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #ffd700;
+        }
+
+        h3 {
+            color: #00ff88;
+            margin: 25px 0 15px;
+        }
+
+        .section {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 25px;
+            margin: 20px 0;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .mermaid {
+            background: #fff;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 15px 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+            font-size: 14px;
+        }
+
+        th,
+        td {
+            padding: 12px 15px;
+            text-align: left;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        th {
+            background: rgba(0, 217, 255, 0.2);
+            color: #00d9ff;
+        }
+
+        tr:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        code {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 2px 8px;
+            border-radius: 4px;
+            color: #00ff88;
+            font-family: 'Consolas', monospace;
+        }
+
+        pre {
+            background: rgba(0, 0, 0, 0.4);
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 10px 0;
+        }
+
+        pre code {
+            padding: 0;
+            background: transparent;
+        }
+
+        .success-box {
+            background: linear-gradient(135deg, rgba(0, 255, 136, 0.1), rgba(0, 217, 255, 0.1));
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 4px solid #00ff88;
+            margin: 15px 0;
+        }
+
+        .warning-box {
+            background: linear-gradient(135deg, rgba(255, 193, 7, 0.1), rgba(255, 152, 0, 0.1));
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 4px solid #ffc107;
+            margin: 15px 0;
+        }
+
+        .info-box {
+            background: linear-gradient(135deg, rgba(0, 123, 255, 0.1), rgba(0, 217, 255, 0.1));
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 4px solid #007bff;
+            margin: 15px 0;
+        }
+
+        ul,
+        ol {
+            padding-left: 25px;
+            margin: 10px 0;
+        }
+
+        li {
+            margin: 8px 0;
+            line-height: 1.6;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+            margin: 2px;
+        }
+
+        .badge-primary {
+            background: #007bff;
+            color: white;
+        }
+
+        .badge-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .badge-warning {
+            background: #ffc107;
+            color: black;
+        }
+
+        .badge-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .back-link {
+            display: inline-block;
+            color: #00d9ff;
+            text-decoration: none;
+            margin-bottom: 20px;
+            padding: 10px 20px;
+            border: 1px solid #00d9ff;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .back-link:hover {
+            background: rgba(0, 217, 255, 0.2);
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 60px;
+            padding-top: 30px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            color: #666;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <a href="index.html" class="back-link">← Quay lại trang chính</a>
+
+        <h1>❤️ FavoriteService</h1>
+        <p class="subtitle">Hệ thống Yêu Thích - Wishlist đa loại sản phẩm</p>
+
+        <!-- Overview Section -->
+        <div class="section">
+            <h2>📋 Tổng Quan</h2>
+            <p>FavoriteService quản lý danh sách yêu thích của khách hàng với hỗ trợ nhiều loại sản phẩm:</p>
+            
+            <div class="success-box">
+                <strong>✨ Key Features:</strong>
+                <ul>
+                    <li><strong>Generic Favorites:</strong> Hỗ trợ nhiều loại item (Product, Fabric, Service, Image Asset)</li>
+                    <li><strong>Toggle Mode:</strong> Add/Remove với single action</li>
+                    <li><strong>Bulk Check:</strong> Kiểm tra nhiều item cùng lúc</li>
+                    <li><strong>User-Specific:</strong> Mỗi user có wishlist riêng</li>
+                    <li><strong>Frontend Integration:</strong> Trạng thái yêu thích cho UI</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Architecture Diagram -->
+        <div class="section">
+            <h2>🏗️ Kiến Trúc Tổng Quan</h2>
+            <div class="mermaid">
+flowchart TB
+    subgraph Client["📱 Client"]
+        FE[Frontend App]
+    end
+
+    subgraph Controller["🎮 Controller Layer"]
+        FC[FavoriteController]
+    end
+
+    subgraph Service["⚙️ Service Layer"]
+        FS[FavoriteService]
+    end
+
+    subgraph Repository["💾 Repository Layer"]
+        FR[FavoriteRepository]
+        PR[ProductRepository]
+        FBR[FabricRepository]
+        IAR[ImageAssetRepository]
+    end
+
+    FE --> FC
+    FC --> FS
+    FS --> FR
+    FS --> PR
+    FS --> FBR
+    FS --> IAR
+            </div>
+        </div>
+
+        <!-- Favorite Item Types -->
+        <div class="section">
+            <h2>📌 Favorite Item Types</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Type</th>
+                        <th>Mô tả</th>
+                        <th>Target Entity</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>PRODUCT</code></td>
+                        <td>Sản phẩm may sẵn</td>
+                        <td>ProductEntity</td>
+                    </tr>
+                    <tr>
+                        <td><code>FABRIC</code></td>
+                        <td>Vải (thích mẫu vải)</td>
+                        <td>FabricEntity</td>
+                    </tr>
+                    <tr>
+                        <td><code>SERVICE</code></td>
+                        <td>Dịch vụ may đo</td>
+                        <td>ServiceEntity</td>
+                    </tr>
+                    <tr>
+                        <td><code>IMAGE_ASSET</code></td>
+                        <td>Mẫu thiết kế</td>
+                        <td>ImageAssetEntity</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="info-box">
+                <strong>💡 Flexible Design:</strong>
+                <p>Thiết kế generic cho phép dễ dàng thêm loại item mới trong tương lai mà không cần thay đổi cấu trúc database.</p>
+            </div>
+        </div>
+
+        <!-- Entity Diagram -->
+        <div class="section">
+            <h2>📊 Entity Diagram</h2>
+            <div class="mermaid">
+erDiagram
+    USER ||--o{ FAVORITE : has
+    FAVORITE ||--o| PRODUCT : references
+    FAVORITE ||--o| FABRIC : references
+    FAVORITE ||--o| SERVICE : references
+    FAVORITE ||--o| IMAGE_ASSET : references
+
+    FAVORITE {
+        Long id PK
+        Long user_id FK
+        FavoriteItemType itemType
+        Long itemId
+        Timestamp createdAt
+        Boolean isDeleted
+    }
+
+    USER {
+        Long id PK
+        String fullName
+        String email
+    }
+
+    PRODUCT {
+        Long id PK
+        String name
+        String code
+    }
+
+    FABRIC {
+        Long id PK
+        String name
+        String color
+    }
+            </div>
+        </div>
+
+        <!-- API Endpoints -->
+        <div class="section">
+            <h2>🌐 API Endpoints</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Method</th>
+                        <th>Endpoint</th>
+                        <th>Mô tả</th>
+                        <th>Auth</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><span class="badge badge-primary">GET</span></td>
+                        <td><code>/api/v1/favorites</code></td>
+                        <td>Danh sách yêu thích của user</td>
+                        <td>CUSTOMER</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-primary">GET</span></td>
+                        <td><code>/api/v1/favorites/{type}</code></td>
+                        <td>Lọc theo loại item</td>
+                        <td>CUSTOMER</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-success">POST</span></td>
+                        <td><code>/api/v1/favorites</code></td>
+                        <td>Thêm vào yêu thích</td>
+                        <td>CUSTOMER</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-danger">DELETE</span></td>
+                        <td><code>/api/v1/favorites/{type}/{itemId}</code></td>
+                        <td>Xóa khỏi yêu thích</td>
+                        <td>CUSTOMER</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-warning">PUT</span></td>
+                        <td><code>/api/v1/favorites/toggle</code></td>
+                        <td>Toggle yêu thích</td>
+                        <td>CUSTOMER</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-primary">GET</span></td>
+                        <td><code>/api/v1/favorites/check/{type}/{itemId}</code></td>
+                        <td>Kiểm tra đã yêu thích chưa</td>
+                        <td>CUSTOMER</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-success">POST</span></td>
+                        <td><code>/api/v1/favorites/check-batch</code></td>
+                        <td>Kiểm tra nhiều item</td>
+                        <td>CUSTOMER</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-primary">GET</span></td>
+                        <td><code>/api/v1/favorites/count</code></td>
+                        <td>Đếm số item yêu thích</td>
+                        <td>CUSTOMER</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Add to Favorites Flow -->
+        <div class="section">
+            <h2>🔄 Add to Favorites Flow</h2>
+            <div class="mermaid">
+sequenceDiagram
+    participant C as Customer
+    participant FC as FavoriteController
+    participant FS as FavoriteService
+    participant FR as FavoriteRepository
+    participant IR as ItemRepository
+
+    C->>FC: POST /favorites {itemType: "PRODUCT", itemId: 123}
+    FC->>FS: addFavorite(request, userId)
+    
+    FS->>IR: findById(itemId) [ProductRepo/FabricRepo/...]
+    
+    alt Item Not Found
+        IR-->>FS: null
+        FS-->>C: 404 Not Found
+    else Item Found
+        IR-->>FS: ItemEntity
+        
+        FS->>FR: findByUserIdAndItemTypeAndItemIdAndIsDeletedFalse(...)
+        
+        alt Already Favorited
+            FR-->>FS: existingFavorite
+            FS-->>C: 409 Conflict (Already in favorites)
+        else Not Favorited
+            FR-->>FS: null
+            
+            FS->>FS: Create FavoriteEntity
+            Note over FS: userId, itemType, itemId
+            Note over FS: createdAt = now()
+            
+            FS->>FR: save(favorite)
+            FR-->>FS: savedFavorite
+            
+            FS-->>C: 200 OK {favoriteResponse}
+        end
+    end
+            </div>
+        </div>
+
+        <!-- Toggle Flow -->
+        <div class="section">
+            <h2>🔀 Toggle Favorite Flow</h2>
+            <div class="mermaid">
+sequenceDiagram
+    participant C as Customer
+    participant FC as FavoriteController
+    participant FS as FavoriteService
+    participant FR as FavoriteRepository
+
+    C->>FC: PUT /favorites/toggle {itemType, itemId}
+    FC->>FS: toggle(request, userId)
+    
+    FS->>FR: findByUserIdAndItemTypeAndItemIdAndIsDeletedFalse(...)
+    
+    alt Currently Favorited
+        FR-->>FS: existingFavorite
+        FS->>FS: softDelete(favorite)
+        Note over FS: isDeleted = true
+        FS->>FR: save(favorite)
+        FS-->>C: 200 OK {isFavorite: false}
+    else Not Favorited
+        FR-->>FS: null
+        FS->>FS: Create new favorite
+        FS->>FR: save(favorite)
+        FS-->>C: 200 OK {isFavorite: true}
+    end
+            </div>
+
+            <div class="success-box">
+                <strong>✅ Toggle Benefits:</strong>
+                <ul>
+                    <li>Single API call cho cả add và remove</li>
+                    <li>Frontend không cần track trạng thái trước đó</li>
+                    <li>Atomic operation - không bị race condition</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Batch Check -->
+        <div class="section">
+            <h2>📦 Batch Check Flow</h2>
+            <div class="mermaid">
+sequenceDiagram
+    participant C as Customer
+    participant FC as FavoriteController
+    participant FS as FavoriteService
+    participant FR as FavoriteRepository
+
+    C->>FC: POST /favorites/check-batch {items: [{type, id}, ...]}
+    FC->>FS: checkBatch(request, userId)
+    
+    FS->>FR: findAllByUserIdAndIsDeletedFalse(userId)
+    FR-->>FS: List<Favorite>
+    
+    FS->>FS: Build Set<"type:itemId"> from favorites
+    
+    loop Each requested item
+        FS->>FS: Check if "type:itemId" exists in set
+    end
+    
+    FS-->>C: 200 OK {results: [{type, itemId, isFavorite}, ...]}
+            </div>
+
+            <h3>Request Example</h3>
+            <pre><code>{
+    "items": [
+        {"type": "PRODUCT", "itemId": 123},
+        {"type": "PRODUCT", "itemId": 456},
+        {"type": "FABRIC", "itemId": 789}
+    ]
+}</code></pre>
+
+            <h3>Response Example</h3>
+            <pre><code>{
+    "results": [
+        {"type": "PRODUCT", "itemId": 123, "isFavorite": true},
+        {"type": "PRODUCT", "itemId": 456, "isFavorite": false},
+        {"type": "FABRIC", "itemId": 789, "isFavorite": true}
+    ]
+}</code></pre>
+
+            <div class="info-box">
+                <strong>🚀 Performance:</strong>
+                <p>Batch check giúp giảm số lượng API calls khi hiển thị danh sách sản phẩm với trạng thái yêu thích.</p>
+            </div>
+        </div>
+
+        <!-- DTOs -->
+        <div class="section">
+            <h2>📦 Data Transfer Objects</h2>
+
+            <h3>FavoriteRequest</h3>
+            <pre><code>{
+    "itemType": "PRODUCT",  // PRODUCT, FABRIC, SERVICE, IMAGE_ASSET
+    "itemId": 123
+}</code></pre>
+
+            <h3>FavoriteResponse</h3>
+            <pre><code>{
+    "id": 1,
+    "itemType": "PRODUCT",
+    "itemId": 123,
+    "itemName": "Vest Nam Cao Cấp",
+    "itemImage": "https://cdn.example.com/product.jpg",
+    "itemPrice": 2500000,
+    "createdAt": "2024-01-15T10:30:00Z"
+}</code></pre>
+
+            <h3>FavoriteListResponse</h3>
+            <pre><code>{
+    "items": [
+        {
+            "id": 1,
+            "itemType": "PRODUCT",
+            "itemId": 123,
+            "itemName": "Vest Nam Cao Cấp",
+            ...
+        },
+        {
+            "id": 2,
+            "itemType": "FABRIC",
+            "itemId": 456,
+            "itemName": "Vải Wool Premium",
+            ...
+        }
+    ],
+    "total": 15,
+    "page": 0,
+    "size": 10
+}</code></pre>
+        </div>
+
+        <!-- Frontend Integration -->
+        <div class="section">
+            <h2>💻 Frontend Integration</h2>
+            
+            <h3>Product Card Component</h3>
+            <pre><code>// React component example
+function ProductCard({ product }) {
+    const [isFavorite, setIsFavorite] = useState(false);
+    
+    // Check favorite status on mount
+    useEffect(() => {
+        checkFavorite('PRODUCT', product.id);
+    }, []);
+    
+    const handleToggle = async () => {
+        const result = await api.put('/favorites/toggle', {
+            itemType: 'PRODUCT',
+            itemId: product.id
+        });
+        setIsFavorite(result.isFavorite);
+    };
+    
+    return (
+        &lt;div className="product-card"&gt;
+            &lt;img src={product.image} /&gt;
+            &lt;h3&gt;{product.name}&lt;/h3&gt;
+            &lt;button onClick={handleToggle}&gt;
+                {isFavorite ? '❤️' : '🤍'}
+            &lt;/button&gt;
+        &lt;/div&gt;
+    );
+}</code></pre>
+
+            <h3>Product List với Batch Check</h3>
+            <pre><code>// Load product list with favorite status
+async function loadProducts() {
+    const products = await api.get('/products');
+    
+    // Batch check favorite status
+    const checks = products.map(p => ({type: 'PRODUCT', itemId: p.id}));
+    const favoriteStatus = await api.post('/favorites/check-batch', {items: checks});
+    
+    // Merge status into products
+    products.forEach((p, i) => {
+        p.isFavorite = favoriteStatus.results[i].isFavorite;
+    });
+}</code></pre>
+        </div>
+
+        <!-- Dependencies -->
+        <div class="section">
+            <h2>🔗 Dependencies</h2>
+            <div class="mermaid">
+flowchart LR
+    subgraph FavoriteModule["❤️ Favorite Module"]
+        FS[FavoriteService]
+    end
+
+    subgraph ProductModule["📦 Product Module"]
+        PR[ProductRepository]
+    end
+
+    subgraph FabricModule["🧵 Fabric Module"]
+        FR[FabricRepository]
+    end
+
+    subgraph ImageModule["🖼️ Image Module"]
+        IAR[ImageAssetRepository]
+    end
+
+    subgraph UserModule["👤 User Module"]
+        UR[UserRepository]
+    end
+
+    FS --> PR
+    FS --> FR
+    FS --> IAR
+    FS --> UR
+            </div>
+        </div>
+
+        <footer>
+            <p>Tailor Shop - FavoriteService Documentation</p>
+            <p style="margin-top: 10px;">Generated for Backend Team Reference</p>
+        </footer>
+    </div>
+
+    <script>
+        mermaid.initialize({ startOnLoad: true, theme: 'default' });
+    </script>
+</body>
+
+</html>

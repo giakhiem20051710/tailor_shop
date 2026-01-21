@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PromotionService - Tài Liệu Chi Tiết</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f0f23 0%, #1a1a3e 100%);
+            color: #eee;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: #00d9ff;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+            text-shadow: 0 0 20px rgba(0, 217, 255, 0.3);
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #888;
+            margin-bottom: 30px;
+        }
+
+        h2 {
+            color: #ffd700;
+            margin: 40px 0 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #ffd700;
+        }
+
+        h3 {
+            color: #00ff88;
+            margin: 25px 0 15px;
+        }
+
+        .section {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 25px;
+            margin: 20px 0;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .mermaid {
+            background: #fff;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 15px 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+            font-size: 14px;
+        }
+
+        th,
+        td {
+            padding: 12px 15px;
+            text-align: left;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        th {
+            background: rgba(0, 217, 255, 0.2);
+            color: #00d9ff;
+        }
+
+        tr:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        code {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 2px 8px;
+            border-radius: 4px;
+            color: #00ff88;
+            font-family: 'Consolas', monospace;
+        }
+
+        pre {
+            background: rgba(0, 0, 0, 0.4);
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 10px 0;
+        }
+
+        pre code {
+            padding: 0;
+            background: transparent;
+        }
+
+        .success-box {
+            background: linear-gradient(135deg, rgba(0, 255, 136, 0.1), rgba(0, 217, 255, 0.1));
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 4px solid #00ff88;
+            margin: 15px 0;
+        }
+
+        .warning-box {
+            background: linear-gradient(135deg, rgba(255, 193, 7, 0.1), rgba(255, 152, 0, 0.1));
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 4px solid #ffc107;
+            margin: 15px 0;
+        }
+
+        .info-box {
+            background: linear-gradient(135deg, rgba(0, 123, 255, 0.1), rgba(0, 217, 255, 0.1));
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 4px solid #007bff;
+            margin: 15px 0;
+        }
+
+        ul,
+        ol {
+            padding-left: 25px;
+            margin: 10px 0;
+        }
+
+        li {
+            margin: 8px 0;
+            line-height: 1.6;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+            margin: 2px;
+        }
+
+        .badge-primary {
+            background: #007bff;
+            color: white;
+        }
+
+        .badge-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .badge-warning {
+            background: #ffc107;
+            color: black;
+        }
+
+        .badge-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .back-link {
+            display: inline-block;
+            color: #00d9ff;
+            text-decoration: none;
+            margin-bottom: 20px;
+            padding: 10px 20px;
+            border: 1px solid #00d9ff;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .back-link:hover {
+            background: rgba(0, 217, 255, 0.2);
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 60px;
+            padding-top: 30px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            color: #666;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <a href="index.html" class="back-link">← Quay lại trang chính</a>
+
+        <h1>🎁 PromotionService</h1>
+        <p class="subtitle">Quản lý Khuyến mãi - Promo Codes, Discounts, Shopee-like Features</p>
+
+        <!-- Overview Section -->
+        <div class="section">
+            <h2>📋 Tổng Quan</h2>
+            <p>PromotionService quản lý toàn bộ hệ thống khuyến mãi với các tính năng giống Shopee:</p>
+            
+            <div class="success-box">
+                <strong>✨ Key Features:</strong>
+                <ul>
+                    <li><strong>Multiple Promotion Types:</strong> Percentage, Fixed Amount, Buy X Get Y, Free Shipping</li>
+                    <li><strong>Usage Limits:</strong> Per user, total usage, single use</li>
+                    <li><strong>Target Conditions:</strong> Min order value, specific products/categories, user groups</li>
+                    <li><strong>Smart Suggestions:</strong> Auto-suggest best promotions for cart</li>
+                    <li><strong>Event-Driven:</strong> Publish events on activation, usage, expiry</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Architecture Diagram -->
+        <div class="section">
+            <h2>🏗️ Kiến Trúc Tổng Quan</h2>
+            <div class="mermaid">
+flowchart TB
+    subgraph Client["📱 Client"]
+        FE[Frontend App]
+    end
+
+    subgraph Controller["🎮 Controller Layer"]
+        PC[PromotionController]
+    end
+
+    subgraph Service["⚙️ Service Layer"]
+        PS[PromotionService]
+    end
+
+    subgraph Events["📡 Event System"]
+        PAE[PromotionActivatedEvent]
+        PDE[PromotionDeactivatedEvent]
+        PAP[PromotionAppliedEvent]
+        PEX[PromotionExpiredEvent]
+        PUL[PromotionUsageLimitReachedEvent]
+    end
+
+    subgraph Repository["💾 Repository Layer"]
+        PR[PromotionRepository]
+        PUR[PromotionUsageRepository]
+        UR[UserRepository]
+    end
+
+    FE --> PC
+    PC --> PS
+    PS --> PR
+    PS --> PUR
+    PS --> UR
+    PS --> PAE
+    PS --> PDE
+    PS --> PAP
+    PS --> PEX
+    PS --> PUL
+            </div>
+        </div>
+
+        <!-- Promotion Types -->
+        <div class="section">
+            <h2>📌 Promotion Types</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Type</th>
+                        <th>Mô tả</th>
+                        <th>Calculation</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>PERCENTAGE</code></td>
+                        <td>Giảm theo phần trăm</td>
+                        <td><code>discount = orderAmount × percentage</code><br>Cap by maxDiscountAmount</td>
+                    </tr>
+                    <tr>
+                        <td><code>FIXED_AMOUNT</code></td>
+                        <td>Giảm số tiền cố định</td>
+                        <td><code>discount = discountAmount</code></td>
+                    </tr>
+                    <tr>
+                        <td><code>BUY_X_GET_Y</code></td>
+                        <td>Mua X tặng Y</td>
+                        <td><code>Free getQuantity of getProductId when buy buyQuantity</code></td>
+                    </tr>
+                    <tr>
+                        <td><code>FREE_SHIPPING</code></td>
+                        <td>Miễn phí vận chuyển</td>
+                        <td><code>shippingFee = 0</code></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Promotion Status -->
+        <div class="section">
+            <h2>📊 Promotion Status Flow</h2>
+            <div class="mermaid">
+stateDiagram-v2
+    [*] --> INACTIVE: Create Promotion
+    
+    INACTIVE --> ACTIVE: activate()
+    ACTIVE --> INACTIVE: deactivate()
+    ACTIVE --> EXPIRED: endDate passed
+    
+    ACTIVE --> [*]: delete()
+    INACTIVE --> [*]: delete()
+    EXPIRED --> [*]: delete()
+            </div>
+        </div>
+
+        <!-- API Endpoints -->
+        <div class="section">
+            <h2>🌐 API Endpoints</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Method</th>
+                        <th>Endpoint</th>
+                        <th>Mô tả</th>
+                        <th>Auth</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><span class="badge badge-primary">GET</span></td>
+                        <td><code>/api/v1/promotions</code></td>
+                        <td>Danh sách promotions (filter)</td>
+                        <td>Public</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-primary">GET</span></td>
+                        <td><code>/api/v1/promotions/active</code></td>
+                        <td>Promotions đang active và public</td>
+                        <td>Public</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-primary">GET</span></td>
+                        <td><code>/api/v1/promotions/{id}</code></td>
+                        <td>Chi tiết promotion</td>
+                        <td>Public</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-primary">GET</span></td>
+                        <td><code>/api/v1/promotions/code/{code}</code></td>
+                        <td>Tìm promotion theo code</td>
+                        <td>Public</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-success">POST</span></td>
+                        <td><code>/api/v1/promotions</code></td>
+                        <td>Tạo promotion mới</td>
+                        <td>ADMIN, STAFF</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-warning">PUT</span></td>
+                        <td><code>/api/v1/promotions/{id}</code></td>
+                        <td>Cập nhật promotion</td>
+                        <td>ADMIN, STAFF</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-danger">DELETE</span></td>
+                        <td><code>/api/v1/promotions/{id}</code></td>
+                        <td>Xóa promotion (soft delete)</td>
+                        <td>ADMIN, STAFF</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-warning">PATCH</span></td>
+                        <td><code>/api/v1/promotions/{id}/activate</code></td>
+                        <td>Kích hoạt promotion</td>
+                        <td>ADMIN, STAFF</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-warning">PATCH</span></td>
+                        <td><code>/api/v1/promotions/{id}/deactivate</code></td>
+                        <td>Tắt promotion</td>
+                        <td>ADMIN, STAFF</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-success">POST</span></td>
+                        <td><code>/api/v1/promotions/apply</code></td>
+                        <td>Áp dụng promo code</td>
+                        <td>CUSTOMER, ADMIN, STAFF</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-success">POST</span></td>
+                        <td><code>/api/v1/promotions/suggestions</code></td>
+                        <td>Gợi ý promotions cho cart</td>
+                        <td>CUSTOMER</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-success">POST</span></td>
+                        <td><code>/api/v1/promotions/auto-apply</code></td>
+                        <td>Tự động áp dụng promo tốt nhất</td>
+                        <td>CUSTOMER</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Apply Promo Code Flow -->
+        <div class="section">
+            <h2>🔄 Apply Promo Code Flow</h2>
+            <div class="mermaid">
+sequenceDiagram
+    participant C as Customer
+    participant PC as PromotionController
+    participant PS as PromotionService
+    participant PR as PromotionRepository
+    participant PUR as PromotionUsageRepository
+
+    C->>PC: POST /promotions/apply {code, orderAmount, productIds}
+    PC->>PS: applyPromoCode(request, userId)
+    
+    PS->>PR: findByCodeAndIsDeletedFalse(code)
+    alt Promotion Not Found
+        PR-->>PS: null
+        PS-->>C: 404 Not Found (Invalid code)
+    else Promotion Found
+        PR-->>PS: PromotionEntity
+        
+        PS->>PS: validatePromotion(promo, userId, orderAmount)
+        
+        Note over PS: Check status = ACTIVE
+        Note over PS: Check current date in [startDate, endDate]
+        Note over PS: Check orderAmount >= minOrderValue
+        
+        alt Has maxUsageTotal
+            PS->>PUR: countByPromotionId(promoId)
+            PUR-->>PS: totalUsage
+            alt totalUsage >= maxUsageTotal
+                PS-->>C: 400 Bad Request (Usage limit reached)
+            end
+        end
+        
+        alt Has maxUsagePerUser
+            PS->>PUR: countByPromotionIdAndUserId(promoId, userId)
+            PUR-->>PS: userUsage
+            alt userUsage >= maxUsagePerUser
+                PS-->>C: 400 Bad Request (User limit reached)
+            end
+        end
+        
+        PS->>PS: calculateDiscount(type, orderAmount)
+        
+        PS->>PS: Publish PromotionAppliedEvent
+        
+        PS-->>C: 200 OK {discountAmount, finalAmount}
+    end
+            </div>
+        </div>
+
+        <!-- Discount Calculation -->
+        <div class="section">
+            <h2>🧮 Discount Calculation Logic</h2>
+            <div class="mermaid">
+flowchart TB
+    START[Calculate Discount]
+    
+    TYPE{Promotion Type?}
+    
+    subgraph PERCENT["PERCENTAGE"]
+        P1[discount = orderAmount × percentage / 100]
+        P2{discount > maxDiscountAmount?}
+        P3[discount = maxDiscountAmount]
+    end
+    
+    subgraph FIXED["FIXED_AMOUNT"]
+        F1[discount = discountAmount]
+    end
+    
+    subgraph BXGY["BUY_X_GET_Y"]
+        B1[Check buyQuantity in cart]
+        B2[Add getQuantity of getProductId free]
+        B3[discount = getProductPrice × getQuantity]
+    end
+    
+    FINAL[Return discountAmount]
+    
+    START --> TYPE
+    TYPE -->|PERCENTAGE| P1
+    TYPE -->|FIXED_AMOUNT| F1
+    TYPE -->|BUY_X_GET_Y| B1
+    
+    P1 --> P2
+    P2 -->|Yes| P3
+    P2 -->|No| FINAL
+    P3 --> FINAL
+    
+    F1 --> FINAL
+    
+    B1 --> B2
+    B2 --> B3
+    B3 --> FINAL
+            </div>
+
+            <h3>Example Calculations</h3>
+            <pre><code>// PERCENTAGE with cap
+orderAmount = 5,000,000 VND
+percentage = 20%
+maxDiscountAmount = 500,000 VND
+
+raw_discount = 5,000,000 × 0.20 = 1,000,000
+final_discount = min(1,000,000, 500,000) = 500,000 VND
+
+// FIXED_AMOUNT
+orderAmount = 2,000,000 VND
+discountAmount = 200,000 VND
+minOrderValue = 1,000,000 VND
+
+Check: 2,000,000 >= 1,000,000 ✓
+final_discount = 200,000 VND
+
+// BUY_X_GET_Y
+buyQuantity = 2 (Áo vest)
+getQuantity = 1 (Cà vạt)
+getProductPrice = 500,000 VND
+
+If cart has 2+ Áo vest:
+final_discount = 500,000 VND (1 Cà vạt miễn phí)</code></pre>
+        </div>
+
+        <!-- Suggestion Algorithm -->
+        <div class="section">
+            <h2>💡 Smart Suggestions (Shopee-like)</h2>
+            <div class="mermaid">
+sequenceDiagram
+    participant C as Customer
+    participant PS as PromotionService
+    participant PR as PromotionRepository
+
+    C->>PS: getSuggestions({orderAmount, productIds, categoryIds})
+    
+    PS->>PR: findActivePublicPromotions()
+    PR-->>PS: List<PromotionEntity>
+    
+    loop For each promotion
+        PS->>PS: Check applicableProductIds match
+        PS->>PS: Check applicableCategoryIds match
+        PS->>PS: Check minOrderValue <= orderAmount
+        PS->>PS: Calculate potential discount
+    end
+    
+    PS->>PS: Sort by discount amount DESC
+    PS->>PS: Mark best promotion as "recommended"
+    
+    PS-->>C: List<PromotionSuggestion> sorted by savings
+            </div>
+
+            <h3>Auto-Apply Best Promo</h3>
+            <pre><code>// autoApplyBestPromo(request, userId)
+1. Get all available promotions for user
+2. Calculate discount for each promotion
+3. Find promotion with maximum discount
+4. Apply that promotion automatically
+5. Return final amount and applied promo details</code></pre>
+        </div>
+
+        <!-- Event System -->
+        <div class="section">
+            <h2>📡 Event System</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Event</th>
+                        <th>Trigger</th>
+                        <th>Data</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>PromotionActivatedEvent</code></td>
+                        <td>activate()</td>
+                        <td>promotionId, code, activatedBy</td>
+                    </tr>
+                    <tr>
+                        <td><code>PromotionDeactivatedEvent</code></td>
+                        <td>deactivate()</td>
+                        <td>promotionId, code, deactivatedBy</td>
+                    </tr>
+                    <tr>
+                        <td><code>PromotionAppliedEvent</code></td>
+                        <td>applyPromoCode()</td>
+                        <td>promotionId, userId, orderAmount, discountAmount</td>
+                    </tr>
+                    <tr>
+                        <td><code>PromotionExpiredEvent</code></td>
+                        <td>Scheduled check</td>
+                        <td>promotionId, code, expiredAt</td>
+                    </tr>
+                    <tr>
+                        <td><code>PromotionUsageLimitReachedEvent</code></td>
+                        <td>Usage count = maxUsageTotal</td>
+                        <td>promotionId, code, totalUsage</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="info-box">
+                <strong>💡 Event Listeners:</strong>
+                <p>Các events có thể được listen bởi:</p>
+                <ul>
+                    <li>NotificationService: Gửi notification cho admin</li>
+                    <li>AnalyticsService: Track promotion performance</li>
+                    <li>CacheService: Invalidate promotion cache</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- DTOs -->
+        <div class="section">
+            <h2>📦 Data Transfer Objects</h2>
+
+            <h3>PromotionRequest</h3>
+            <pre><code>{
+    "code": "SUMMER2024",
+    "name": "Khuyến mãi hè 2024",
+    "description": "Giảm 20% cho tất cả sản phẩm",
+    "type": "PERCENTAGE",
+    "discountPercentage": 20,
+    "maxDiscountAmount": 500000,
+    "minOrderValue": 1000000,
+    "applicableProductIds": [1, 2, 3],
+    "applicableCategoryIds": null,
+    "startDate": "2024-06-01",
+    "endDate": "2024-08-31",
+    "maxUsageTotal": 1000,
+    "maxUsagePerUser": 2,
+    "isPublic": true,
+    "isSingleUse": false,
+    "priority": 10,
+    "image": "https://cdn.example.com/promo-summer.jpg",
+    "bannerText": "Giảm đến 500K!"
+}</code></pre>
+
+            <h3>ApplyPromoCodeRequest</h3>
+            <pre><code>{
+    "code": "SUMMER2024",
+    "orderAmount": 3000000,
+    "productIds": [1, 5, 10],
+    "categoryIds": [2, 3]
+}</code></pre>
+
+            <h3>ApplyPromoCodeResponse</h3>
+            <pre><code>{
+    "valid": true,
+    "promotionId": 5,
+    "code": "SUMMER2024",
+    "type": "PERCENTAGE",
+    "discountAmount": 500000,
+    "originalAmount": 3000000,
+    "finalAmount": 2500000,
+    "message": "Áp dụng thành công! Bạn tiết kiệm 500,000₫"
+}</code></pre>
+
+            <h3>PromotionSuggestionResponse</h3>
+            <pre><code>{
+    "promotionId": 5,
+    "code": "SUMMER2024",
+    "name": "Khuyến mãi hè 2024",
+    "description": "Giảm 20% cho tất cả sản phẩm",
+    "potentialDiscount": 500000,
+    "minOrderValue": 1000000,
+    "isApplicable": true,
+    "isRecommended": true,
+    "reason": "Tiết kiệm nhiều nhất cho đơn hàng của bạn"
+}</code></pre>
+        </div>
+
+        <!-- Priority System -->
+        <div class="section">
+            <h2>🎯 Priority System</h2>
+            <div class="warning-box">
+                <strong>⚠️ Promotion Priority:</strong>
+                <p>Khi có nhiều promotions valid, hệ thống sắp xếp theo:</p>
+                <ol>
+                    <li><code>priority</code> DESC (số cao hơn ưu tiên hơn)</li>
+                    <li><code>discountAmount</code> DESC (giảm nhiều hơn ưu tiên)</li>
+                    <li><code>createdAt</code> DESC (mới tạo ưu tiên hơn)</li>
+                </ol>
+            </div>
+        </div>
+
+        <!-- Dependencies -->
+        <div class="section">
+            <h2>🔗 Dependencies</h2>
+            <div class="mermaid">
+flowchart LR
+    subgraph PromotionModule["🎁 Promotion Module"]
+        PS[PromotionService]
+        PL[PromotionListener]
+    end
+
+    subgraph UserModule["👤 User Module"]
+        UR[UserRepository]
+    end
+
+    subgraph EventBus["📡 Spring Events"]
+        EP[EventPublisher]
+    end
+
+    PS --> UR
+    PS --> EP
+    EP --> PL
+            </div>
+        </div>
+
+        <footer>
+            <p>Tailor Shop - PromotionService Documentation</p>
+            <p style="margin-top: 10px;">Generated for Backend Team Reference</p>
+        </footer>
+    </div>
+
+    <script>
+        mermaid.initialize({ startOnLoad: true, theme: 'default' });
+    </script>
+</body>
+
+</html>

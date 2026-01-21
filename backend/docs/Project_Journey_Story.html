@@ -1,0 +1,1065 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hành Trình Xây Dựng Tailor Shop - Project Story</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Georgia', 'Times New Roman', serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            color: #e8e8e8;
+            min-height: 100vh;
+            padding: 20px;
+            line-height: 1.9;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: #e94560;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: normal;
+            letter-spacing: 2px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #888;
+            margin-bottom: 40px;
+            font-style: italic;
+        }
+
+        .chapter {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 20px;
+            padding: 35px 40px;
+            margin: 40px 0;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            position: relative;
+        }
+
+        .chapter::before {
+            content: '';
+            position: absolute;
+            left: -20px;
+            top: 50px;
+            width: 4px;
+            height: calc(100% - 100px);
+            background: linear-gradient(to bottom, #e94560, #0f3460);
+            border-radius: 2px;
+        }
+
+        .chapter-number {
+            position: absolute;
+            left: -45px;
+            top: 30px;
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #e94560, #ff6b8a);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.2em;
+            color: white;
+            box-shadow: 0 4px 15px rgba(233, 69, 96, 0.4);
+        }
+
+        h2 {
+            color: #e94560;
+            font-size: 1.6em;
+            margin-bottom: 20px;
+            font-weight: normal;
+            border-bottom: 1px solid rgba(233, 69, 96, 0.3);
+            padding-bottom: 10px;
+        }
+
+        h3 {
+            color: #00d9ff;
+            font-size: 1.2em;
+            margin: 30px 0 15px;
+            font-weight: normal;
+        }
+
+        p {
+            margin-bottom: 18px;
+            text-align: justify;
+        }
+
+        .story-text {
+            font-size: 1.05em;
+            color: #d0d0d0;
+        }
+
+        .highlight {
+            color: #00ff88;
+            font-weight: bold;
+        }
+
+        .problem-box {
+            background: linear-gradient(135deg, rgba(233, 69, 96, 0.15), rgba(233, 69, 96, 0.05));
+            padding: 20px 25px;
+            border-radius: 12px;
+            border-left: 4px solid #e94560;
+            margin: 25px 0;
+        }
+
+        .problem-box h4 {
+            color: #e94560;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+
+        .solution-box {
+            background: linear-gradient(135deg, rgba(0, 255, 136, 0.1), rgba(0, 217, 255, 0.05));
+            padding: 20px 25px;
+            border-radius: 12px;
+            border-left: 4px solid #00ff88;
+            margin: 25px 0;
+        }
+
+        .solution-box h4 {
+            color: #00ff88;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+
+        .lesson-box {
+            background: linear-gradient(135deg, rgba(255, 215, 0, 0.1), rgba(255, 165, 0, 0.05));
+            padding: 20px 25px;
+            border-radius: 12px;
+            border-left: 4px solid #ffd700;
+            margin: 25px 0;
+        }
+
+        .lesson-box h4 {
+            color: #ffd700;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+
+        code {
+            background: rgba(0, 0, 0, 0.4);
+            padding: 3px 10px;
+            border-radius: 5px;
+            color: #00ff88;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 0.9em;
+        }
+
+        pre {
+            background: rgba(0, 0, 0, 0.5);
+            padding: 20px;
+            border-radius: 10px;
+            overflow-x: auto;
+            margin: 20px 0;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 0.9em;
+        }
+
+        pre code {
+            padding: 0;
+            background: transparent;
+            color: #e0e0e0;
+        }
+
+        .keyword {
+            color: #ff79c6;
+        }
+
+        .string {
+            color: #f1fa8c;
+        }
+
+        .comment {
+            color: #6272a4;
+        }
+
+        .function {
+            color: #50fa7b;
+        }
+
+        .tech-tag {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 0.8em;
+            margin: 3px;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        .tag-fe {
+            background: #61dafb;
+            color: #000;
+        }
+
+        .tag-be {
+            background: #6db33f;
+            color: #fff;
+        }
+
+        .tag-db {
+            background: #336791;
+            color: #fff;
+        }
+
+        .tag-cache {
+            background: #dc382d;
+            color: #fff;
+        }
+
+        .mermaid {
+            background: #fff;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .quote {
+            font-style: italic;
+            color: #aaa;
+            padding: 15px 25px;
+            border-left: 3px solid #e94560;
+            margin: 20px 0;
+        }
+
+        .timeline {
+            position: relative;
+            padding-left: 30px;
+        }
+
+        .timeline-item {
+            position: relative;
+            padding-bottom: 25px;
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -25px;
+            top: 8px;
+            width: 12px;
+            height: 12px;
+            background: #e94560;
+            border-radius: 50%;
+        }
+
+        .timeline-item::after {
+            content: '';
+            position: absolute;
+            left: -20px;
+            top: 20px;
+            width: 2px;
+            height: calc(100% - 10px);
+            background: rgba(233, 69, 96, 0.3);
+        }
+
+        .timeline-item:last-child::after {
+            display: none;
+        }
+
+        .back-link {
+            display: inline-block;
+            color: #00d9ff;
+            text-decoration: none;
+            margin-bottom: 20px;
+            padding: 10px 20px;
+            border: 1px solid #00d9ff;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        .back-link:hover {
+            background: rgba(0, 217, 255, 0.2);
+        }
+
+        .chapter-intro {
+            font-size: 1.1em;
+            color: #bbb;
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 1px dashed rgba(255, 255, 255, 0.1);
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 60px;
+            padding-top: 30px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            color: #666;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        ul,
+        ol {
+            margin: 15px 0 15px 25px;
+        }
+
+        li {
+            margin: 10px 0;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <a href="index.html" class="back-link">← Quay lại trang chính</a>
+
+        <h1>🧵 Hành Trình Xây Dựng Tailor Shop</h1>
+        <p class="subtitle">Câu chuyện giải quyết vấn đề từ Frontend đến Backend</p>
+
+        <!-- OPENING -->
+        <div class="chapter" style="border-left: none; padding-left: 40px;">
+            <p class="story-text">
+                Đây là câu chuyện về hành trình em xây dựng <span class="highlight">Tailor Shop</span> -
+                một hệ thống quản lý cửa hàng may đo trực tuyến. Trong suốt quá trình phát triển,
+                em đã gặp nhiều thách thức thú vị và học được rất nhiều điều...
+            </p>
+        </div>
+
+        <!-- CHAPTER 1: THE BEGINNING -->
+        <div class="chapter">
+            <div class="chapter-number">1</div>
+            <h2>Khởi Đầu: Phân Tích Yêu Cầu</h2>
+
+            <p class="chapter-intro">
+                Mọi thứ bắt đầu từ việc hiểu rõ business domain của một cửa hàng may đo...
+            </p>
+
+            <p class="story-text">
+                Khi bắt đầu dự án, em nhận ra rằng một cửa hàng may đo rất khác với e-commerce thông thường.
+                Khách hàng không chỉ đơn giản là "thêm vào giỏ hàng và thanh toán", mà còn cần:
+            </p>
+
+            <ul class="story-text">
+                <li>Đặt lịch hẹn để đo số đo</li>
+                <li>Lưu lịch sử số đo qua nhiều lần</li>
+                <li>Theo dõi tiến trình may (đang cắt, đang may, đang thử...)</li>
+                <li>Chọn vải với nhiều thông số kỹ thuật</li>
+            </ul>
+
+            <div class="problem-box">
+                <h4>🤔 Vấn đề đầu tiên: Kiến trúc nào phù hợp?</h4>
+                <p class="story-text">
+                    Em đứng trước lựa chọn: <strong>Microservices</strong> hay <strong>Monolith</strong>?
+                </p>
+            </div>
+
+            <p class="story-text">
+                Sau khi cân nhắc, em chọn <span class="highlight">Modular Monolith</span>. Lý do:
+            </p>
+
+            <div class="solution-box">
+                <h4>💡 Quyết định: Modular Monolith</h4>
+                <ul class="story-text">
+                    <li><strong>Team size nhỏ:</strong> Chỉ có 1-2 người, không cần phức tạp hóa</li>
+                    <li><strong>Debug dễ hơn:</strong> Không phải trace qua nhiều services</li>
+                    <li><strong>Database đơn giản:</strong> JOIN, transaction làm việc bình thường</li>
+                    <li><strong>Future-proof:</strong> Có thể tách thành Microservices sau nếu cần scale</li>
+                </ul>
+            </div>
+
+            <p class="story-text">
+                Em chia dự án thành 15 modules, mỗi module có <code>controller</code>, <code>service</code>,
+                <code>repository</code>, <code>dto</code>, <code>entity</code> riêng:
+            </p>
+
+            <pre><code>tailor_shop/modules/
+├── auth/           <span class="comment"># Xác thực</span>
+├── user/           <span class="comment"># Quản lý người dùng</span>
+├── product/        <span class="comment"># Sản phẩm</span>
+├── fabric/         <span class="comment"># Vải</span>
+├── order/          <span class="comment"># Đơn hàng</span>
+├── flashsale/      <span class="comment"># Flash sale</span>
+├── appointment/    <span class="comment"># Lịch hẹn</span>
+├── measurement/    <span class="comment"># Số đo</span>
+└── ...</code></pre>
+
+            <div class="lesson-box">
+                <h4>📝 Bài học rút ra</h4>
+                <p class="story-text">
+                    "Start simple, add complexity when you feel the pain." - Đừng over-engineering
+                    ngay từ đầu, hãy để vấn đề thực tế dẫn đường cho kiến trúc.
+                </p>
+            </div>
+        </div>
+
+        <!-- CHAPTER 2: FLASH SALE -->
+        <div class="chapter">
+            <div class="chapter-number">2</div>
+            <h2>Thử Thách Lớn: Xây Dựng Flash Sale</h2>
+
+            <p class="chapter-intro">
+                Flash Sale là tính năng phức tạp nhất mà em từng implement...
+            </p>
+
+            <p class="story-text">
+                Khách hàng muốn có tính năng giống Shopee: Sale trong thời gian giới hạn,
+                số lượng có hạn, ai nhanh tay thì được mua. Nghe đơn giản, nhưng...
+            </p>
+
+            <div class="problem-box">
+                <h4>🔥 Vấn đề: 1000 người bấm "Mua" cùng lúc</h4>
+                <p class="story-text">
+                    Nếu chỉ đơn giản <code>stock = stock - 1</code>, điều gì xảy ra?
+                </p>
+                <pre><code><span class="comment">// 1000 users đọc stock = 10 cùng lúc</span>
+User 1: SELECT stock → 10 → UPDATE stock = 9 ✓
+User 2: SELECT stock → 10 → UPDATE stock = 9 <span class="comment">// Ghi đè!</span>
+User 3: SELECT stock → 10 → UPDATE stock = 9 <span class="comment">// Ghi đè!</span>
+...
+<span class="comment">// Kết quả: stock = 9, nhưng đã bán 1000 đơn!</span>
+<span class="comment">// → OVERSELLING!</span></code></pre>
+            </div>
+
+            <h3>🔧 Giải pháp 1: Pessimistic Locking</h3>
+
+            <p class="story-text">
+                Em quyết định dùng <span class="highlight">Pessimistic Locking</span> với
+                <code>SELECT ... FOR UPDATE</code>. Cách này lock row ngay từ đầu,
+                đảm bảo chỉ 1 transaction được xử lý tại một thời điểm.
+            </p>
+
+            <pre><code><span class="keyword">@Transactional</span>(isolation = Isolation.SERIALIZABLE)
+<span class="keyword">public</span> FlashSalePurchaseResult <span class="function">purchase</span>(Long flashSaleId, ...) {
+    <span class="comment">// 1. LOCK row - các transactions khác phải đợi</span>
+    FlashSale sale = flashSaleRepository.<span class="function">findByIdForUpdate</span>(flashSaleId);
+    
+    <span class="comment">// 2. Check stock</span>
+    <span class="keyword">if</span> (sale.getAvailableQuantity() < quantity) {
+        <span class="keyword">return</span> Result.OUT_OF_STOCK;
+    }
+    
+    <span class="comment">// 3. Reserve stock</span>
+    sale.setReservedQuantity(sale.getReservedQuantity().add(quantity));
+    
+    <span class="comment">// 4. Create order</span>
+    ...
+}</code></pre>
+
+            <div class="problem-box">
+                <h4>🤔 Vấn đề mới: User click Mua rồi... bỏ đi?</h4>
+                <p class="story-text">
+                    Nếu trừ stock ngay khi user click "Mua", nhưng họ không thanh toán thì sao?
+                    Stock sẽ bị giữ vĩnh viễn!
+                </p>
+            </div>
+
+            <h3>🔧 Giải pháp 2: Reservation System</h3>
+
+            <p class="story-text">
+                Em implement hệ thống "giữ hàng" 10 phút - giống như đặt vé máy bay:
+            </p>
+
+            <div class="solution-box">
+                <h4>💡 Reservation Flow</h4>
+                <div class="timeline">
+                    <div class="timeline-item">
+                        <strong>User click "Mua":</strong> Tạo Reservation, giữ hàng 10 phút
+                    </div>
+                    <div class="timeline-item">
+                        <strong>User thanh toán:</strong> Reservation → CONVERTED, soldQuantity += 1
+                    </div>
+                    <div class="timeline-item">
+                        <strong>Quá 10 phút:</strong> Reservation → EXPIRED, stock được trả lại
+                    </div>
+                </div>
+            </div>
+
+            <p class="story-text">
+                Để tự động release expired reservations, em tạo <span class="highlight">Scheduled Task</span>
+                chạy mỗi 30 giây:
+            </p>
+
+            <pre><code><span class="keyword">@Scheduled</span>(fixedRate = 30000) <span class="comment">// Every 30 seconds</span>
+<span class="keyword">public void</span> <span class="function">releaseExpiredReservations</span>() {
+    List<Reservation> expired = reservationRepository
+        .<span class="function">findByStatusAndExpiresAtBefore</span>(ACTIVE, LocalDateTime.now());
+    
+    <span class="keyword">for</span> (Reservation r : expired) {
+        <span class="comment">// Trả stock lại</span>
+        flashSale.setReservedQuantity(
+            flashSale.getReservedQuantity().<span class="function">subtract</span>(r.getQuantity())
+        );
+        r.setStatus(EXPIRED);
+    }
+}</code></pre>
+
+            <h3>🖥️ Frontend: Countdown Timer</h3>
+
+            <p class="story-text">
+                Phía Frontend <span class="tech-tag tag-fe">React</span>, em cần hiển thị:
+            </p>
+
+            <ul class="story-text">
+                <li>Countdown đến khi flash sale bắt đầu/kết thúc</li>
+                <li>Stock còn lại (cập nhật real-time)</li>
+                <li>Timer 10 phút để thanh toán sau khi đặt hàng</li>
+            </ul>
+
+            <pre><code><span class="comment">// FlashSaleCard.jsx</span>
+<span class="keyword">const</span> [timeLeft, setTimeLeft] = <span class="function">useState</span>(calculateTimeLeft());
+<span class="keyword">const</span> [stock, setStock] = <span class="function">useState</span>(flashSale.availableQuantity);
+
+<span class="function">useEffect</span>(() => {
+    <span class="keyword">const</span> timer = <span class="function">setInterval</span>(() => {
+        setTimeLeft(<span class="function">calculateTimeLeft</span>());
+    }, 1000);
+    
+    <span class="comment">// Poll stock every 5 seconds</span>
+    <span class="keyword">const</span> stockPoller = <span class="function">setInterval</span>(<span class="keyword">async</span> () => {
+        <span class="keyword">const</span> data = <span class="keyword">await</span> api.<span class="function">getFlashSaleStock</span>(flashSale.id);
+        <span class="function">setStock</span>(data.availableQuantity);
+    }, 5000);
+    
+    <span class="keyword">return</span> () => {
+        <span class="function">clearInterval</span>(timer);
+        <span class="function">clearInterval</span>(stockPoller);
+    };
+}, []);</code></pre>
+
+            <div class="lesson-box">
+                <h4>📝 Bài học rút ra</h4>
+                <p class="story-text">
+                    "Think about failure cases BEFORE implementing the happy path." - Luôn tự hỏi:
+                    "Điều gì xảy ra nếu user bỏ giữa chừng? Nếu mất mạng? Nếu refresh trang?"
+                </p>
+            </div>
+        </div>
+
+        <!-- CHAPTER 3: ORDER STATE MACHINE -->
+        <div class="chapter">
+            <div class="chapter-number">3</div>
+            <h2>May Đo Là Nghệ Thuật: Order State Machine</h2>
+
+            <p class="chapter-intro">
+                Một đơn hàng may đo không chỉ đơn giản là "Đang xử lý → Hoàn thành"...
+            </p>
+
+            <p class="story-text">
+                Khi làm việc với chủ tiệm may, em nhận ra quy trình rất phức tạp:
+            </p>
+
+            <div class="mermaid">
+                stateDiagram-v2
+                [*] --> DRAFT : Tạo mới
+                DRAFT --> WAITING_FOR_QUOTE : Gửi yêu cầu
+                WAITING_FOR_QUOTE --> CONFIRMED : Khách đồng ý giá
+                CONFIRMED --> IN_PROGRESS : Bắt đầu may
+                IN_PROGRESS --> FITTING : Thử đồ
+                FITTING --> IN_PROGRESS : Cần chỉnh sửa
+                FITTING --> COMPLETED : Hoàn thành
+                COMPLETED --> [*]
+            </div>
+
+            <div class="problem-box">
+                <h4>🤔 Vấn đề: Làm sao đảm bảo không skip bước?</h4>
+                <p class="story-text">
+                    Không thể cho phép chuyển từ DRAFT thẳng sang COMPLETED.
+                    Mỗi bước phải được validate.
+                </p>
+            </div>
+
+            <h3>🔧 Giải pháp: State Transition Validation</h3>
+
+            <pre><code><span class="keyword">public class</span> OrderStatus {
+    <span class="keyword">private static final</span> Map<OrderStatus, List<OrderStatus>> ALLOWED_TRANSITIONS = Map.of(
+        DRAFT, List.of(WAITING_FOR_QUOTE, CANCELLED),
+        WAITING_FOR_QUOTE, List.of(CONFIRMED, CANCELLED),
+        CONFIRMED, List.of(IN_PROGRESS, CANCELLED),
+        IN_PROGRESS, List.of(FITTING, CANCELLED),
+        FITTING, List.of(COMPLETED, IN_PROGRESS, CANCELLED) <span class="comment">// Có thể quay lại!</span>
+    );
+    
+    <span class="keyword">public static boolean</span> <span class="function">isTransitionAllowed</span>(OrderStatus from, OrderStatus to) {
+        <span class="keyword">return</span> ALLOWED_TRANSITIONS.getOrDefault(from, List.of()).contains(to);
+    }
+}</code></pre>
+
+            <h3>📜 Timeline: Lưu lại mọi thay đổi</h3>
+
+            <p class="story-text">
+                Em tạo <code>OrderTimeline</code> entity để lưu lịch sử. Khi khách hỏi
+                "Đơn hàng của tôi đang ở đâu?", em có thể show:
+            </p>
+
+            <div class="solution-box">
+                <h4>💡 Order Tracking UI</h4>
+                <div class="timeline">
+                    <div class="timeline-item">
+                        <strong>10/01 09:00</strong> - Đã tạo đơn hàng
+                    </div>
+                    <div class="timeline-item">
+                        <strong>10/01 14:30</strong> - Đã xác nhận báo giá: 2,500,000đ
+                    </div>
+                    <div class="timeline-item">
+                        <strong>11/01 08:00</strong> - Bắt đầu may - Thợ: Anh Minh
+                    </div>
+                    <div class="timeline-item">
+                        <strong>15/01 16:00</strong> - Đang trong quá trình thử đồ
+                    </div>
+                </div>
+            </div>
+
+            <h3>🖥️ Frontend: Multi-step Order Form</h3>
+
+            <p class="story-text">
+                Phía <span class="tech-tag tag-fe">React</span>, em tạo wizard form với nhiều bước:
+            </p>
+
+            <pre><code><span class="comment">// TailoringOrderForm.jsx</span>
+<span class="keyword">const</span> steps = [
+    { id: 1, title: <span class="string">'Thông tin khách hàng'</span>, component: CustomerInfoStep },
+    { id: 2, title: <span class="string">'Chọn sản phẩm'</span>, component: ProductSelectStep },
+    { id: 3, title: <span class="string">'Nhập số đo'</span>, component: MeasurementStep },
+    { id: 4, title: <span class="string">'Xác nhận'</span>, component: ConfirmStep }
+];
+
+<span class="keyword">const</span> [currentStep, setCurrentStep] = <span class="function">useState</span>(1);
+<span class="keyword">const</span> [formData, setFormData] = <span class="function">useState</span>({});</code></pre>
+
+            <div class="lesson-box">
+                <h4>📝 Bài học rút ra</h4>
+                <p class="story-text">
+                    "Model your domain, not a generic solution." - Hệ thống may đo khác hoàn toàn
+                    với e-commerce thông thường. Đừng cố ép vào mô hình có sẵn.
+                </p>
+            </div>
+        </div>
+
+        <!-- CHAPTER 4: AUTHENTICATION -->
+        <div class="chapter">
+            <div class="chapter-number">4</div>
+            <h2>Bảo Mật: JWT và Cuộc Chiến Chống Brute-force</h2>
+
+            <p class="chapter-intro">
+                Sau khi đọc về các vụ hack, em quyết định đầu tư nghiêm túc vào bảo mật...
+            </p>
+
+            <h3>🔐 JWT: Access Token + Refresh Token</h3>
+
+            <div class="problem-box">
+                <h4>🤔 Vấn đề: Token bị đánh cắp thì sao?</h4>
+                <p class="story-text">
+                    Nếu dùng 1 token với thời hạn 7 ngày, hacker có 7 ngày để khai thác!
+                </p>
+            </div>
+
+            <div class="solution-box">
+                <h4>💡 Dual Token Strategy</h4>
+                <ul class="story-text">
+                    <li><strong>Access Token:</strong> Sống 15 phút, dùng cho mọi API request</li>
+                    <li><strong>Refresh Token:</strong> Sống 7 ngày, chỉ dùng để lấy Access Token mới</li>
+                </ul>
+                <p class="story-text">
+                    → Nếu Access Token bị đánh cắp, hacker chỉ có 15 phút. Refresh Token
+                    lưu trong database nên có thể revoke ngay lập tức.
+                </p>
+            </div>
+
+            <h3>🛡️ Chống Brute-force: Multi-layer Protection</h3>
+
+            <pre><code><span class="keyword">@Service</span>
+<span class="keyword">public class</span> LoginAttemptService {
+    <span class="keyword">private static final int</span> MAX_ATTEMPTS = 5;
+    <span class="keyword">private static final int</span> LOCK_MINUTES = 15;
+    
+    <span class="keyword">public void</span> <span class="function">recordFailure</span>(String key) {
+        Attempts attempts = cache.get(key);
+        attempts.increment();
+        
+        <span class="keyword">if</span> (attempts.getCount() >= MAX_ATTEMPTS) {
+            <span class="comment">// Lock account 15 phút</span>
+            attempts.setLockedUntil(LocalDateTime.now().plusMinutes(LOCK_MINUTES));
+        }
+    }
+}</code></pre>
+
+            <p class="story-text">
+                Nhưng chỉ lock account không đủ! Hacker có thể thử 1 password với 10,000 accounts
+                khác nhau (credential stuffing). Vì vậy em thêm:
+            </p>
+
+            <ul class="story-text">
+                <li><strong>Layer 1:</strong> Account-level - 5 lần sai = khóa 15 phút</li>
+                <li><strong>Layer 2:</strong> IP-level - 100 requests/phút</li>
+                <li><strong>Layer 3:</strong> OTP - 3 lần gửi/30 phút (chống spam email)</li>
+            </ul>
+
+            <h3>🖥️ Frontend: Token Management</h3>
+
+            <pre><code><span class="comment">// api.js - Axios interceptor</span>
+api.interceptors.response.use(
+    response => response,
+    <span class="keyword">async</span> error => {
+        <span class="keyword">if</span> (error.response?.status === 401) {
+            <span class="comment">// Access token hết hạn, thử refresh</span>
+            <span class="keyword">try</span> {
+                <span class="keyword">const</span> { accessToken } = <span class="keyword">await</span> <span class="function">refreshToken</span>();
+                localStorage.<span class="function">setItem</span>(<span class="string">'accessToken'</span>, accessToken);
+                
+                <span class="comment">// Retry request ban đầu</span>
+                error.config.headers.Authorization = <span class="string">`Bearer ${accessToken}`</span>;
+                <span class="keyword">return</span> api(error.config);
+            } <span class="keyword">catch</span> (refreshError) {
+                <span class="comment">// Refresh token cũng hết hạn → logout</span>
+                <span class="function">logout</span>();
+            }
+        }
+        <span class="keyword">return</span> Promise.reject(error);
+    }
+);</code></pre>
+
+            <div class="lesson-box">
+                <h4>📝 Bài học rút ra</h4>
+                <p class="story-text">
+                    "Defense in depth" - Bảo mật là nhiều lớp chồng lên nhau.
+                    Không có lớp nào là hoàn hảo, nhưng kết hợp lại thì rất khó xâm nhập.
+                </p>
+            </div>
+        </div>
+
+        <!-- CHAPTER 5: EVENT-DRIVEN -->
+        <div class="chapter">
+            <div class="chapter-number">5</div>
+            <h2>Giải Phóng User: Event-Driven Architecture</h2>
+
+            <p class="chapter-intro">
+                Ban đầu, user phải đợi 3-4 giây mỗi khi tạo đơn hàng. Tại sao lại lâu vậy?
+            </p>
+
+            <div class="problem-box">
+                <h4>🐌 Vấn đề: Synchronous Processing</h4>
+                <pre><code><span class="keyword">public</span> OrderResponse <span class="function">createOrder</span>(OrderRequest request) {
+    Order order = saveOrder(request);           <span class="comment">// 50ms</span>
+    invoiceService.createInvoice(order);        <span class="comment">// 100ms</span>
+    emailService.sendConfirmation(order);       <span class="comment">// 2000ms ← SMTP chậm!</span>
+    smsService.sendNotification(order);         <span class="comment">// 1500ms ← API chậm!</span>
+    
+    <span class="keyword">return</span> toResponse(order);
+}
+<span class="comment">// Total: 3650ms - User phải đợi gần 4 giây!</span></code></pre>
+            </div>
+
+            <h3>🚀 Giải pháp: Publish Event và Return Ngay</h3>
+
+            <pre><code><span class="keyword">public</span> OrderResponse <span class="function">createOrder</span>(OrderRequest request) {
+    Order order = saveOrder(request);           <span class="comment">// 50ms</span>
+    
+    <span class="comment">// Publish event và return ngay!</span>
+    eventPublisher.<span class="function">publishEvent</span>(<span class="keyword">new</span> OrderCreatedEvent(order));
+    
+    <span class="keyword">return</span> toResponse(order);
+}
+<span class="comment">// Total: ~100ms - User nhận response gần như ngay lập tức!</span></code></pre>
+
+            <p class="story-text">
+                Các listeners xử lý async ở background:
+            </p>
+
+            <pre><code><span class="keyword">@Component</span>
+<span class="keyword">public class</span> OrderEventListeners {
+    
+    <span class="keyword">@Async</span>
+    <span class="keyword">@EventListener</span>
+    <span class="keyword">public void</span> <span class="function">createInvoice</span>(OrderCreatedEvent event) {
+        invoiceService.<span class="function">createForOrder</span>(event.getOrder());
+    }
+    
+    <span class="keyword">@Async</span>
+    <span class="keyword">@EventListener</span>
+    <span class="keyword">public void</span> <span class="function">sendEmail</span>(OrderCreatedEvent event) {
+        emailService.<span class="function">sendOrderConfirmation</span>(event.getOrder());
+    }
+}</code></pre>
+
+            <h3>🖥️ Frontend: Optimistic UI</h3>
+
+            <p class="story-text">
+                Phía Frontend, em apply <span class="highlight">Optimistic Update</span> -
+                cập nhật UI ngay trước khi API response:
+            </p>
+
+            <pre><code><span class="keyword">const</span> <span class="function">handleAddToCart</span> = <span class="keyword">async</span> (product) => {
+    <span class="comment">// 1. Update UI ngay lập tức (optimistic)</span>
+    <span class="function">setCartItems</span>(prev => [...prev, product]);
+    <span class="function">showToast</span>(<span class="string">'Đã thêm vào giỏ hàng!'</span>);
+    
+    <span class="keyword">try</span> {
+        <span class="comment">// 2. Gọi API ở background</span>
+        <span class="keyword">await</span> api.<span class="function">addToCart</span>(product.id);
+    } <span class="keyword">catch</span> (error) {
+        <span class="comment">// 3. Nếu fail, rollback UI</span>
+        <span class="function">setCartItems</span>(prev => prev.filter(p => p.id !== product.id));
+        <span class="function">showToast</span>(<span class="string">'Lỗi! Vui lòng thử lại.'</span>);
+    }
+};</code></pre>
+
+            <div class="lesson-box">
+                <h4>📝 Bài học rút ra</h4>
+                <p class="story-text">
+                    "Don't make users wait for non-critical operations." - Gửi email, tạo invoice
+                    không quan trọng bằng việc user nhận được xác nhận đơn hàng ngay.
+                </p>
+            </div>
+        </div>
+
+        <!-- CHAPTER 6: CACHING -->
+        <div class="chapter">
+            <div class="chapter-number">6</div>
+            <h2>Tăng Tốc: Redis Cache và Performance</h2>
+
+            <p class="chapter-intro">
+                Khi product catalog lên đến hàng nghìn sản phẩm, database query trở nên chậm...
+            </p>
+
+            <div class="problem-box">
+                <h4>🐌 Vấn đề: Database Bottleneck</h4>
+                <p class="story-text">
+                    Mỗi request đến trang Products đều phải query database. Với 100 users
+                    cùng lúc, database connections cạn kiệt!
+                </p>
+            </div>
+
+            <h3>🔧 Giải pháp: Redis Cache Layer</h3>
+
+            <pre><code><span class="keyword">@Cacheable</span>(value = <span class="string">"products"</span>, key = <span class="string">"#id"</span>)
+<span class="keyword">public</span> ProductResponse <span class="function">getProduct</span>(Long id) {
+    <span class="comment">// Lần đầu: query DB, lưu vào Redis</span>
+    <span class="comment">// Lần sau: trả về từ Redis ngay (&lt;1ms)</span>
+    <span class="keyword">return</span> productRepository.<span class="function">findById</span>(id)
+        .map(<span class="keyword">this</span>::toResponse)
+        .orElseThrow();
+}
+
+<span class="keyword">@CacheEvict</span>(value = <span class="string">"products"</span>, key = <span class="string">"#id"</span>)
+<span class="keyword">public void</span> <span class="function">updateProduct</span>(Long id, ProductRequest request) {
+    <span class="comment">// Khi update, xóa cache cũ</span>
+    <span class="comment">// Lần query tiếp theo sẽ lấy data mới từ DB</span>
+}</code></pre>
+
+            <p class="story-text">
+                Kết quả:
+            </p>
+
+            <table style="width: 100%; margin: 20px 0;">
+                <tr>
+                    <th>Metric</th>
+                    <th>Trước (DB only)</th>
+                    <th>Sau (Redis cache)</th>
+                </tr>
+                <tr>
+                    <td>Response time</td>
+                    <td>50-100ms</td>
+                    <td>&lt;5ms</td>
+                </tr>
+                <tr>
+                    <td>DB queries/second</td>
+                    <td>1000</td>
+                    <td>~50 (cache hits)</td>
+                </tr>
+                <tr>
+                    <td>Max concurrent users</td>
+                    <td>~100</td>
+                    <td>~1000+</td>
+                </tr>
+            </table>
+
+            <h3>🖥️ Frontend: Image Lazy Loading</h3>
+
+            <p class="story-text">
+                Phía Frontend, trang Products với 50+ hình ảnh rất nặng. Em implement lazy loading:
+            </p>
+
+            <pre><code><span class="comment">// ProductImage.jsx</span>
+<span class="keyword">const</span> [isVisible, setIsVisible] = <span class="function">useState</span>(<span class="keyword">false</span>);
+<span class="keyword">const</span> imgRef = <span class="function">useRef</span>();
+
+<span class="function">useEffect</span>(() => {
+    <span class="keyword">const</span> observer = <span class="keyword">new</span> <span class="function">IntersectionObserver</span>((entries) => {
+        <span class="keyword">if</span> (entries[0].isIntersecting) {
+            <span class="function">setIsVisible</span>(<span class="keyword">true</span>);
+            observer.<span class="function">disconnect</span>();
+        }
+    });
+    observer.<span class="function">observe</span>(imgRef.current);
+    <span class="keyword">return</span> () => observer.<span class="function">disconnect</span>();
+}, []);
+
+<span class="keyword">return</span> (
+    <span class="keyword">&lt;div</span> ref={imgRef}<span class="keyword">&gt;</span>
+        {isVisible ? (
+            <span class="keyword">&lt;img</span> src={product.imageUrl} alt={product.name} <span class="keyword">/&gt;</span>
+        ) : (
+            <span class="keyword">&lt;div</span> className=<span class="string">"placeholder"</span><span class="keyword">&gt;</span>Loading...<span class="keyword">&lt;/div&gt;</span>
+        )}
+    <span class="keyword">&lt;/div&gt;</span>
+);</code></pre>
+
+            <div class="lesson-box">
+                <h4>📝 Bài học rút ra</h4>
+                <p class="story-text">
+                    "Use the right tool for the right job." - Database cho persistence,
+                    Redis cho speed. Đừng bắt database làm việc của cache.
+                </p>
+            </div>
+        </div>
+
+        <!-- CHAPTER 7: DEBUGGING JOURNEY -->
+        <div class="chapter">
+            <div class="chapter-number">7</div>
+            <h2>3 Giờ Sáng: Những Bugs Đáng Nhớ</h2>
+
+            <p class="chapter-intro">
+                Không có dự án nào hoàn hảo. Đây là những bugs khó quên nhất...
+            </p>
+
+            <h3>🐛 Bug 1: "Tại sao order.total luôn = 0?"</h3>
+
+            <div class="problem-box">
+                <h4>Triệu chứng</h4>
+                <p class="story-text">
+                    Tất cả đơn hàng đều có total = 0, dù items có giá đúng.
+                </p>
+            </div>
+
+            <div class="solution-box">
+                <h4>Nguyên nhân & Fix</h4>
+                <p class="story-text">
+                    Em tính total SAU khi đã save order, nhưng không save lại!
+                </p>
+                <pre><code>Order order = orderRepository.<span class="function">save</span>(new Order());
+
+<span class="keyword">for</span> (Item item : items) {
+    order.setTotal(order.getTotal().add(item.getSubtotal()));
+}
+
+<span class="comment">// BUG: Quên save lại order với total mới!</span>
+<span class="comment">// FIX: Thêm dòng này</span>
+orderRepository.<span class="function">save</span>(order);</code></pre>
+            </div>
+
+            <h3>🐛 Bug 2: "Flash sale stock thành số âm?"</h3>
+
+            <div class="problem-box">
+                <h4>Triệu chứng</h4>
+                <p class="story-text">
+                    availableQuantity hiển thị -5, nghĩa là đã bán quá 5 sản phẩm!
+                </p>
+            </div>
+
+            <div class="solution-box">
+                <h4>Nguyên nhân & Fix</h4>
+                <p class="story-text">
+                    Race condition! Em đang dùng <code>READ_COMMITTED</code> thay vì
+                    <code>SERIALIZABLE</code> isolation level.
+                </p>
+                <pre><code><span class="comment">// BEFORE</span>
+<span class="keyword">@Transactional</span>
+<span class="keyword">public</span> Result <span class="function">purchase</span>(...) { ... }
+
+<span class="comment">// AFTER</span>
+<span class="keyword">@Transactional</span>(isolation = Isolation.SERIALIZABLE)
+<span class="keyword">public</span> Result <span class="function">purchase</span>(...) { ... }</code></pre>
+            </div>
+
+            <h3>🐛 Bug 3: Frontend "Cannot read property 'map' of undefined"</h3>
+
+            <div class="problem-box">
+                <h4>Triệu chứng</h4>
+                <p class="story-text">
+                    Trang Products crash ngay khi load.
+                </p>
+            </div>
+
+            <div class="solution-box">
+                <h4>Nguyên nhân & Fix</h4>
+                <p class="story-text">
+                    API trả về <code>{ data: null }</code> khi không có products,
+                    nhưng Frontend expect array.
+                </p>
+                <pre><code><span class="comment">// BEFORE</span>
+<span class="keyword">const</span> products = response.data;
+products.<span class="function">map</span>(...); <span class="comment">// CRASH nếu data = null</span>
+
+<span class="comment">// AFTER</span>
+<span class="keyword">const</span> products = response.data || [];
+products.<span class="function">map</span>(...); <span class="comment">// Safe!</span></code></pre>
+            </div>
+
+            <div class="lesson-box">
+                <h4>📝 Bài học rút ra</h4>
+                <p class="story-text">
+                    "Defensive programming" - Luôn assume data có thể null/undefined.
+                    Viết code để handle edge cases, không chỉ happy path.
+                </p>
+            </div>
+        </div>
+
+        <!-- CLOSING -->
+        <div class="chapter" style="border-left: none; padding-left: 40px;">
+            <h2>Kết Luận: Những Gì Em Học Được</h2>
+
+            <p class="story-text">
+                Sau hành trình xây dựng Tailor Shop, em rút ra những bài học quan trọng:
+            </p>
+
+            <ol class="story-text">
+                <li>
+                    <strong>Hiểu domain trước khi code:</strong> May đo khác e-commerce thông thường.
+                    Đừng cố ép vào mô hình có sẵn.
+                </li>
+                <li>
+                    <strong>Start simple, evolve when needed:</strong> Modular Monolith cho phép
+                    phát triển nhanh, có thể tách Microservices sau.
+                </li>
+                <li>
+                    <strong>Think about failure cases:</strong> User bỏ giữa chừng? Mất mạng?
+                    Hai người mua cùng lúc? Chuẩn bị cho tất cả.
+                </li>
+                <li>
+                    <strong>Don't make users wait:</strong> Event-driven, async processing,
+                    optimistic UI giúp UX tốt hơn.
+                </li>
+                <li>
+                    <strong>Defense in depth:</strong> Security cần nhiều lớp bảo vệ chồng lên nhau.
+                </li>
+            </ol>
+
+            <div class="quote">
+                "Anyone can write code that works. Engineers write code that handles when things go wrong."
+            </div>
+        </div>
+
+        <footer>
+            <p>🧵 Tailor Shop Project Story</p>
+            <p style="margin-top: 10px;">Created with 💻 and lots of ☕</p>
+        </footer>
+    </div>
+
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            securityLevel: 'loose'
+        });
+    </script>
+</body>
+
+</html>

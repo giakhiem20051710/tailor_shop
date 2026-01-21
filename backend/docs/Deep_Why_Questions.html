@@ -1,0 +1,1297 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deep "TẠI SAO" Questions - Tailor Shop Interview Prep</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0a1628 0%, #1a2d4a 50%, #0a1628 100%);
+            color: #eee;
+            min-height: 100vh;
+            padding: 20px;
+            line-height: 1.7;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: #ffd700;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #888;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+
+        h2 {
+            color: #00d9ff;
+            margin: 40px 0 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #00d9ff;
+            font-size: 1.8em;
+        }
+
+        h3 {
+            color: #00ff88;
+            margin: 25px 0 15px;
+            font-size: 1.3em;
+        }
+
+        h4 {
+            color: #ff6b9d;
+            margin: 20px 0 10px;
+        }
+
+        .section {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 25px;
+            margin: 20px 0;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .question-box {
+            background: linear-gradient(135deg, rgba(255, 215, 0, 0.1), rgba(255, 165, 0, 0.05));
+            padding: 20px;
+            border-radius: 12px;
+            border-left: 4px solid #ffd700;
+            margin: 25px 0;
+        }
+
+        .question-title {
+            color: #ffd700;
+            font-size: 1.2em;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .think-prompt {
+            background: rgba(0, 217, 255, 0.1);
+            padding: 12px 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            border-left: 3px solid #00d9ff;
+            font-style: italic;
+        }
+
+        .answer-section {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            margin-top: 15px;
+            overflow: hidden;
+        }
+
+        .answer-toggle {
+            background: linear-gradient(135deg, #00ff88, #00d9ff);
+            color: #000;
+            padding: 12px 20px;
+            cursor: pointer;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .answer-toggle:hover {
+            filter: brightness(1.1);
+        }
+
+        .answer-content {
+            padding: 20px;
+            display: none;
+        }
+
+        .answer-content.show {
+            display: block;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+            font-size: 14px;
+        }
+
+        th,
+        td {
+            padding: 12px 15px;
+            text-align: left;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        th {
+            background: rgba(0, 217, 255, 0.2);
+            color: #00d9ff;
+        }
+
+        tr:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        code {
+            background: rgba(0, 0, 0, 0.4);
+            padding: 2px 8px;
+            border-radius: 4px;
+            color: #00ff88;
+            font-family: 'Consolas', 'Monaco', monospace;
+        }
+
+        pre {
+            background: rgba(0, 0, 0, 0.5);
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 15px 0;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        pre code {
+            padding: 0;
+            background: transparent;
+            color: #e6e6e6;
+        }
+
+        .keyword {
+            color: #ff79c6;
+        }
+
+        .string {
+            color: #f1fa8c;
+        }
+
+        .comment {
+            color: #6272a4;
+        }
+
+        .function {
+            color: #50fa7b;
+        }
+
+        .annotation {
+            color: #ffb86c;
+        }
+
+        .lesson-box {
+            background: linear-gradient(135deg, rgba(156, 39, 176, 0.2), rgba(103, 58, 183, 0.1));
+            padding: 15px 20px;
+            border-radius: 10px;
+            border-left: 4px solid #9c27b0;
+            margin: 20px 0;
+        }
+
+        .lesson-box strong {
+            color: #ce93d8;
+        }
+
+        .lesson-box blockquote {
+            margin-top: 10px;
+            font-style: italic;
+            color: #ddd;
+            padding-left: 15px;
+            border-left: 2px solid #ce93d8;
+        }
+
+        ul,
+        ol {
+            padding-left: 25px;
+            margin: 15px 0;
+        }
+
+        li {
+            margin: 8px 0;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-right: 8px;
+        }
+
+        .badge-architecture {
+            background: #9c27b0;
+            color: white;
+        }
+
+        .badge-flashsale {
+            background: #ff5722;
+            color: white;
+        }
+
+        .badge-order {
+            background: #2196f3;
+            color: white;
+        }
+
+        .badge-security {
+            background: #f44336;
+            color: white;
+        }
+
+        .badge-event {
+            background: #4caf50;
+            color: white;
+        }
+
+        .badge-data {
+            background: #ff9800;
+            color: black;
+        }
+
+        .badge-performance {
+            background: #00bcd4;
+            color: black;
+        }
+
+        .mermaid {
+            background: #fff;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 15px 0;
+        }
+
+        .toc {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 25px;
+            border-radius: 12px;
+            margin: 30px 0;
+        }
+
+        .toc h3 {
+            margin-top: 0;
+        }
+
+        .toc ul {
+            list-style: none;
+            padding: 0;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 10px;
+        }
+
+        .toc a {
+            color: #00d9ff;
+            text-decoration: none;
+            padding: 8px 12px;
+            display: block;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+
+        .toc a:hover {
+            background: rgba(0, 217, 255, 0.1);
+        }
+
+        .framework-box {
+            background: linear-gradient(135deg, rgba(255, 215, 0, 0.15), rgba(255, 165, 0, 0.1));
+            padding: 25px;
+            border-radius: 15px;
+            border: 2px solid #ffd700;
+            margin: 30px 0;
+        }
+
+        .framework-box h3 {
+            color: #ffd700;
+            margin-top: 0;
+        }
+
+        .tip-box {
+            background: linear-gradient(135deg, rgba(0, 255, 136, 0.1), rgba(0, 200, 100, 0.05));
+            padding: 20px;
+            border-radius: 12px;
+            border-left: 4px solid #00ff88;
+            margin: 25px 0;
+        }
+
+        .back-link {
+            display: inline-block;
+            color: #00d9ff;
+            text-decoration: none;
+            margin-bottom: 20px;
+            padding: 10px 20px;
+            border: 1px solid #00d9ff;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .back-link:hover {
+            background: rgba(0, 217, 255, 0.2);
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 60px;
+            padding-top: 30px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            color: #666;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <a href="index.html" class="back-link">← Quay lại trang chính</a>
+
+        <h1>🤔 Deep "TẠI SAO" Questions</h1>
+        <p class="subtitle">Nâng cao tư duy giải quyết vấn đề cho phỏng vấn</p>
+
+        <!-- How to use -->
+        <div class="section">
+            <h2>📚 Cách Sử Dụng Tài Liệu Này</h2>
+            <ol>
+                <li><strong>Đọc câu hỏi</strong> - Suy nghĩ trước khi xem đáp án</li>
+                <li><strong>Tự trả lời</strong> - Viết ra lý do theo suy nghĩ của bạn</li>
+                <li><strong>So sánh</strong> - Click xem đáp án và hiểu trade-offs</li>
+                <li><strong>Mở rộng</strong> - Nghĩ thêm các cách tiếp cận khác</li>
+            </ol>
+        </div>
+
+        <!-- TOC -->
+        <div class="toc">
+            <h3>📑 Mục Lục - 15 Câu Hỏi</h3>
+            <ul>
+                <li><a href="#q1"><span class="badge badge-architecture">Architecture</span> Q1: Modular Monolith vs
+                        Microservices</a></li>
+                <li><a href="#q2"><span class="badge badge-architecture">Architecture</span> Q2: Module Boundaries</a>
+                </li>
+                <li><a href="#q3"><span class="badge badge-flashsale">Flash Sale</span> Q3: Pessimistic vs Optimistic
+                        Locking</a></li>
+                <li><a href="#q4"><span class="badge badge-flashsale">Flash Sale</span> Q4: Reservation System</a></li>
+                <li><a href="#q5"><span class="badge badge-flashsale">Flash Sale</span> Q5: Scheduled Tasks</a></li>
+                <li><a href="#q6"><span class="badge badge-order">Order</span> Q6: 10+ Order Statuses</a></li>
+                <li><a href="#q7"><span class="badge badge-order">Order</span> Q7: Timeline/Audit Log</a></li>
+                <li><a href="#q8"><span class="badge badge-security">Security</span> Q8: JWT vs Session</a></li>
+                <li><a href="#q9"><span class="badge badge-security">Security</span> Q9: Dual Token Strategy</a></li>
+                <li><a href="#q10"><span class="badge badge-security">Security</span> Q10: Multi-layer Rate Limiting</a>
+                </li>
+                <li><a href="#q11"><span class="badge badge-event">Event</span> Q11: Spring Events vs Kafka</a></li>
+                <li><a href="#q12"><span class="badge badge-event">Event</span> Q12: Sync vs Async</a></li>
+                <li><a href="#q13"><span class="badge badge-data">Data</span> Q13: Soft Delete vs Hard Delete</a></li>
+                <li><a href="#q14"><span class="badge badge-data">Data</span> Q14: Measurement Versioning</a></li>
+                <li><a href="#q15"><span class="badge badge-performance">Performance</span> Q15: Redis Cache</a></li>
+            </ul>
+        </div>
+
+        <!-- ARCHITECTURE SECTION -->
+        <div class="section">
+            <h2>🏗️ ARCHITECTURE & DESIGN</h2>
+
+            <!-- Q1 -->
+            <div class="question-box" id="q1">
+                <div class="question-title">
+                    <span class="badge badge-architecture">Q1</span>
+                    Tại sao chọn Modular Monolith thay vì Microservices?
+                </div>
+                <div class="think-prompt">
+                    💭 <strong>Suy nghĩ trước:</strong> Microservices đang rất "hot", tại sao không dùng?
+                </div>
+                <div class="answer-section">
+                    <div class="answer-toggle" onclick="toggleAnswer(this)">
+                        💡 Click để xem đáp án
+                    </div>
+                    <div class="answer-content">
+                        <h4>Phân tích vấn đề:</h4>
+                        <ul>
+                            <li>Team size: 1-2 người</li>
+                            <li>Timeline: Cần release nhanh</li>
+                            <li>Complexity: Chưa cần scale riêng từng service</li>
+                        </ul>
+
+                        <h4>Tại sao KHÔNG chọn Microservices:</h4>
+                        <ol>
+                            <li><strong>Overhead cao:</strong> Service discovery, API gateway, distributed tracing,
+                                network latency</li>
+                            <li><strong>Debugging khó:</strong> Log phân tán, request qua nhiều service</li>
+                            <li><strong>Data consistency:</strong> Distributed transactions phức tạp (Saga pattern, 2PC)
+                            </li>
+                            <li><strong>Deployment complexity:</strong> CI/CD cho 15+ services</li>
+                        </ol>
+
+                        <h4>Tại sao CHỌN Modular Monolith:</h4>
+                        <ol>
+                            <li><strong>Rapid development:</strong> Debug dễ, single deployment</li>
+                            <li><strong>Module boundaries rõ ràng:</strong> Có thể tách thành Microservices sau</li>
+                            <li><strong>Shared database:</strong> Dễ join, transaction đơn giản</li>
+                            <li><strong>Low latency:</strong> Không có network hop giữa modules</li>
+                        </ol>
+
+                        <div class="lesson-box">
+                            <strong>🎯 Bài học tư duy:</strong>
+                            <blockquote>"Start with a modular monolith, evolve to microservices when you have the pain
+                                of a monolith and the resources to handle microservices complexity."</blockquote>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Q2 -->
+            <div class="question-box" id="q2">
+                <div class="question-title">
+                    <span class="badge badge-architecture">Q2</span>
+                    Tại sao tách thành 15 modules thay vì ít hơn hoặc nhiều hơn?
+                </div>
+                <div class="think-prompt">
+                    💭 <strong>Suy nghĩ trước:</strong> Làm sao xác định boundary của mỗi module?
+                </div>
+                <div class="answer-section">
+                    <div class="answer-toggle" onclick="toggleAnswer(this)">
+                        💡 Click để xem đáp án
+                    </div>
+                    <div class="answer-content">
+                        <h4>Nguyên tắc đã áp dụng:</h4>
+
+                        <p><strong>1. Single Responsibility:</strong> Mỗi module làm MỘT việc chính</p>
+                        <ul>
+                            <li>OrderModule: Quản lý đơn hàng</li>
+                            <li>AuthModule: Authentication/Authorization</li>
+                        </ul>
+
+                        <p><strong>2. Domain-Driven Design (DDD):</strong></p>
+                        <ul>
+                            <li>Bounded Context: Order ≠ Invoice (dù liên quan)</li>
+                            <li>Ubiquitous Language: "Order" trong OrderModule khác "Order" trong ReportModule</li>
+                        </ul>
+
+                        <p><strong>3. Dependency Direction:</strong></p>
+                        <pre><code>Controller → Service → Repository
+Module A → Interface → Module B (không phụ thuộc implementation)</code></pre>
+
+                        <h4>Tại sao không GỘP Order + Billing?</h4>
+                        <ul>
+                            <li>Lifecycle khác nhau: Order có thể COMPLETED nhưng Invoice còn PENDING</li>
+                            <li>Đội ngũ khác nhau có thể develop song song</li>
+                            <li>Có thể reuse BillingModule cho Subscription sau này</li>
+                        </ul>
+
+                        <h4>Tại sao không TÁCH Product thành ProductCatalog + ProductInventory?</h4>
+                        <ul>
+                            <li>Chưa có pain point: Không có team riêng, không cần scale riêng</li>
+                            <li>Complexity không đáng: Thêm API calls nội bộ</li>
+                        </ul>
+
+                        <div class="lesson-box">
+                            <strong>🎯 Bài học tư duy:</strong>
+                            <blockquote>"Split when you feel the pain of coupling, not before."</blockquote>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- FLASH SALE SECTION -->
+        <div class="section">
+            <h2>⚡ FLASH SALE SYSTEM</h2>
+
+            <!-- Q3 -->
+            <div class="question-box" id="q3">
+                <div class="question-title">
+                    <span class="badge badge-flashsale">Q3</span>
+                    Tại sao dùng Pessimistic Locking thay vì Optimistic Locking cho Flash Sale?
+                </div>
+                <div class="think-prompt">
+                    💭 <strong>Suy nghĩ trước:</strong> Optimistic Locking (version field) có vẻ đơn giản hơn?
+                </div>
+                <div class="answer-section">
+                    <div class="answer-toggle" onclick="toggleAnswer(this)">
+                        💡 Click để xem đáp án
+                    </div>
+                    <div class="answer-content">
+                        <h4>So sánh hai approach:</h4>
+                        <table>
+                            <tr>
+                                <th>Tiêu chí</th>
+                                <th>Optimistic Locking</th>
+                                <th>Pessimistic Locking</th>
+                            </tr>
+                            <tr>
+                                <td>Lock timing</td>
+                                <td>Khi UPDATE (cuối transaction)</td>
+                                <td>Khi SELECT (đầu transaction)</td>
+                            </tr>
+                            <tr>
+                                <td>Conflict detection</td>
+                                <td>Sau khi xử lý xong</td>
+                                <td>Trước khi xử lý</td>
+                            </tr>
+                            <tr>
+                                <td>Retry needed</td>
+                                <td>Có (khi version mismatch)</td>
+                                <td>Không</td>
+                            </tr>
+                            <tr>
+                                <td>Best for</td>
+                                <td>Low contention</td>
+                                <td>High contention</td>
+                            </tr>
+                        </table>
+
+                        <h4>Scenario Flash Sale (1000 người mua cùng lúc):</h4>
+
+                        <p><strong>Nếu dùng Optimistic:</strong></p>
+                        <pre><code>User A: SELECT stock=10 → process → UPDATE stock=9 ✓
+User B: SELECT stock=10 → process → UPDATE stock=9 ✗ (version mismatch)
+User C: SELECT stock=10 → process → UPDATE stock=9 ✗
+... 998 users fail và phải retry</code></pre>
+                        <p>→ <strong style="color: #ff6b6b;">999 users phải retry</strong> = waste CPU, poor UX</p>
+
+                        <p><strong>Nếu dùng Pessimistic:</strong></p>
+                        <pre><code>User A: SELECT FOR UPDATE (lock) → process → UPDATE → release
+User B: WAIT for lock → SELECT → process → UPDATE
+... (queue style)</code></pre>
+                        <p>→ <strong style="color: #00ff88;">Sequential processing</strong> = no wasted work</p>
+
+                        <h4>Tại sao CHỌN Pessimistic:</h4>
+                        <ol>
+                            <li><strong>High contention:</strong> 1000 concurrent requests</li>
+                            <li><strong>Wasted work:</strong> Với Optimistic, 999 transactions làm việc vô ích</li>
+                            <li><strong>Better UX:</strong> User biết ngay kết quả</li>
+                        </ol>
+
+                        <div class="lesson-box">
+                            <strong>🎯 Bài học tư duy:</strong>
+                            <blockquote>"Choose locking strategy based on contention level, not simplicity."
+                            </blockquote>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Q4 -->
+            <div class="question-box" id="q4">
+                <div class="question-title">
+                    <span class="badge badge-flashsale">Q4</span>
+                    Tại sao cần Reservation System thay vì trừ stock ngay?
+                </div>
+                <div class="think-prompt">
+                    💭 <strong>Suy nghĩ trước:</strong> Tại sao không trừ stock khi user click "Mua"?
+                </div>
+                <div class="answer-section">
+                    <div class="answer-toggle" onclick="toggleAnswer(this)">
+                        💡 Click để xem đáp án
+                    </div>
+                    <div class="answer-content">
+                        <h4>Vấn đề nếu trừ stock ngay:</h4>
+                        <pre><code><span class="comment">// User A click Mua → stock = 10 - 1 = 9</span>
+<span class="comment">// User A nhảy qua trang thanh toán...</span>
+<span class="comment">// User A đổi ý, close tab</span>
+
+<span class="comment">// Result: stock = 9 nhưng không ai mua</span>
+<span class="comment">// → MẤT 1 SLOT VĨNH VIỄN!</span></code></pre>
+
+                        <h4>Solution: Reservation (Giữ hàng tạm thời)</h4>
+                        <pre><code><span class="comment">// User A click Mua</span>
+reservation created (10 phút)
+reservedQuantity += 1
+
+<span class="comment">// Nếu thanh toán:</span>
+reservation → CONVERTED
+soldQuantity += 1
+
+<span class="comment">// Nếu timeout/cancel:</span>
+reservation → EXPIRED
+reservedQuantity -= 1  <span class="comment">// Stock available lại!</span></code></pre>
+
+                        <h4>Công thức stock:</h4>
+                        <pre><code><span class="function">availableStock</span> = totalQuantity - soldQuantity - reservedQuantity</code></pre>
+
+                        <h4>Tại sao 10 phút?</h4>
+                        <ul>
+                            <li>Đủ thời gian điền form thanh toán (~2-3 phút)</li>
+                            <li>Đủ thời gian chuyển khoản (~5 phút)</li>
+                            <li>Không quá lâu để block người khác</li>
+                        </ul>
+
+                        <h4>Real-world examples:</h4>
+                        <ul>
+                            <li>Đặt vé máy bay: Giữ ghế 15 phút</li>
+                            <li>Mua vé concert: Giữ 10 phút</li>
+                            <li>Shopee Flash Sale: Giữ 5-10 phút</li>
+                        </ul>
+
+                        <div class="lesson-box">
+                            <strong>🎯 Bài học tư duy:</strong>
+                            <blockquote>"Think about failure cases BEFORE implementing the happy path."</blockquote>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Q5 -->
+            <div class="question-box" id="q5">
+                <div class="question-title">
+                    <span class="badge badge-flashsale">Q5</span>
+                    Tại sao dùng Scheduled Tasks thay vì check expiration khi user request?
+                </div>
+                <div class="think-prompt">
+                    💭 <strong>Suy nghĩ trước:</strong> Có thể check reservation expired khi user query, tại sao cần
+                    background job?
+                </div>
+                <div class="answer-section">
+                    <div class="answer-toggle" onclick="toggleAnswer(this)">
+                        💡 Click để xem đáp án
+                    </div>
+                    <div class="answer-content">
+                        <h4>Approach 1: Lazy check (khi user request)</h4>
+                        <pre><code><span class="keyword">public int</span> <span class="function">getAvailableStock</span>() {
+    <span class="comment">// Mỗi lần query phải check tất cả reservations</span>
+    releaseExpiredReservations(); <span class="comment">// ← expensive!</span>
+    <span class="keyword">return</span> calculateStock();
+}</code></pre>
+                        <p><strong style="color: #ff6b6b;">Vấn đề:</strong></p>
+                        <ul>
+                            <li>Latency spike: User request phải đợi cleanup</li>
+                            <li>Inconsistent: Stock chỉ update khi có request</li>
+                            <li>Race condition: 2 users cùng cleanup → bugs</li>
+                        </ul>
+
+                        <h4>Approach 2: Eager cleanup (Scheduled Task)</h4>
+                        <pre><code><span class="annotation">@Scheduled</span>(fixedRate = <span class="string">30000</span>) <span class="comment">// Every 30 seconds</span>
+<span class="keyword">public void</span> <span class="function">releaseExpiredReservations</span>() {
+    List&lt;Reservation&gt; expired = reservationRepository.findExpired(LocalDateTime.now());
+    <span class="keyword">for</span> (Reservation r : expired) {
+        flashSale.setReservedQuantity(
+            flashSale.getReservedQuantity().subtract(r.getQuantity())
+        );
+        r.setStatus(EXPIRED);
+    }
+}</code></pre>
+                        <p><strong style="color: #00ff88;">Lợi ích:</strong></p>
+                        <ul>
+                            <li>Consistent: Stock luôn accurate (max 30 giây delay)</li>
+                            <li>Low latency: User request không cần cleanup</li>
+                            <li>Single point: Một job cleanup, không race condition</li>
+                        </ul>
+
+                        <div class="lesson-box">
+                            <strong>🎯 Bài học tư duy:</strong>
+                            <blockquote>"Background jobs are often better than on-demand processing for cleanup tasks."
+                            </blockquote>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ORDER MANAGEMENT SECTION -->
+        <div class="section">
+            <h2>📋 ORDER MANAGEMENT</h2>
+
+            <!-- Q6 -->
+            <div class="question-box" id="q6">
+                <div class="question-title">
+                    <span class="badge badge-order">Q6</span>
+                    Tại sao Order có 10+ trạng thái thay vì 3-4 trạng thái đơn giản?
+                </div>
+                <div class="think-prompt">
+                    💭 <strong>Suy nghĩ trước:</strong> PENDING → PROCESSING → COMPLETED có vẻ đủ?
+                </div>
+                <div class="answer-section">
+                    <div class="answer-toggle" onclick="toggleAnswer(this)">
+                        💡 Click để xem đáp án
+                    </div>
+                    <div class="answer-content">
+                        <h4>Đặc thù ngành may đo:</h4>
+
+                        <p><strong>Order thường (e-commerce):</strong></p>
+                        <pre><code>PENDING → PAID → SHIPPED → DELIVERED</code></pre>
+
+                        <p><strong>Order may đo:</strong></p>
+                        <pre><code>DRAFT → WAITING_FOR_QUOTE → CONFIRMED → IN_PROGRESS → 
+FITTING → ADJUSTING → READY → DELIVERING → DELIVERED</code></pre>
+
+                        <h4>Tại sao cần nhiều trạng thái:</h4>
+                        <ol>
+                            <li><strong>Business visibility:</strong> Khách muốn biết "Đơn đang ở bước nào?"</li>
+                            <li><strong>Workflow control:</strong> Không thể skip: FITTING → READY</li>
+                            <li><strong>Reporting:</strong> "Có bao nhiêu đơn stuck ở WAITING_FOR_QUOTE?"</li>
+                            <li><strong>Integration:</strong> Status = CONFIRMED → Auto create Invoice</li>
+                        </ol>
+
+                        <div class="lesson-box">
+                            <strong>🎯 Bài học tư duy:</strong>
+                            <blockquote>"Model your domain, not a generic solution. E-commerce ≠ Tailoring."
+                            </blockquote>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Q7 -->
+            <div class="question-box" id="q7">
+                <div class="question-title">
+                    <span class="badge badge-order">Q7</span>
+                    Tại sao dùng Timeline/Audit Log thay vì chỉ lưu current status?
+                </div>
+                <div class="think-prompt">
+                    💭 <strong>Suy nghĩ trước:</strong> Cần gì ngoài order.status = COMPLETED?
+                </div>
+                <div class="answer-section">
+                    <div class="answer-toggle" onclick="toggleAnswer(this)">
+                        💡 Click để xem đáp án
+                    </div>
+                    <div class="answer-content">
+                        <h4>Vấn đề khi chỉ lưu current status:</h4>
+                        <pre><code><span class="comment">"Đơn hàng này stuck ở WAITING_FOR_QUOTE bao lâu rồi?"</span>
+→ Không biết! Chỉ có current status
+
+<span class="comment">"Ai đã chuyển đơn sang CANCELLED?"</span>
+→ Không biết! Không có history</code></pre>
+
+                        <h4>Solution: Timeline Entity</h4>
+                        <pre><code><span class="annotation">@Entity</span>
+<span class="keyword">public class</span> <span class="function">OrderTimeline</span> {
+    <span class="keyword">private</span> Long orderId;
+    <span class="keyword">private</span> OrderStatus status;
+    <span class="keyword">private</span> String note;          <span class="comment">// "Khách yêu cầu sửa"</span>
+    <span class="keyword">private</span> Long createdById;     <span class="comment">// User nào thực hiện</span>
+    <span class="keyword">private</span> Instant createdAt;    <span class="comment">// Thời điểm</span>
+}</code></pre>
+
+                        <h4>Use cases:</h4>
+                        <ol>
+                            <li><strong>Customer tracking:</strong> "Đơn hàng của bạn đang ở bước 3/7"</li>
+                            <li><strong>SLA monitoring:</strong> "Đơn từ CONFIRMED → IN_PROGRESS mất 3 ngày"</li>
+                            <li><strong>Dispute resolution:</strong> "Ai cancel đơn này? → User X lúc 10:30"</li>
+                            <li><strong>Analytics:</strong> "Average time per status?"</li>
+                        </ol>
+
+                        <div class="lesson-box">
+                            <strong>🎯 Bài học tư duy:</strong>
+                            <blockquote>"Log significant state changes. Debug production issues is 10x harder without
+                                history."</blockquote>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECURITY SECTION -->
+        <div class="section">
+            <h2>🔐 SECURITY</h2>
+
+            <!-- Q8 -->
+            <div class="question-box" id="q8">
+                <div class="question-title">
+                    <span class="badge badge-security">Q8</span>
+                    Tại sao dùng JWT thay vì Session-based Authentication?
+                </div>
+                <div class="think-prompt">
+                    💭 <strong>Suy nghĩ trước:</strong> Session đơn giản hơn, tại sao phức tạp hóa?
+                </div>
+                <div class="answer-section">
+                    <div class="answer-toggle" onclick="toggleAnswer(this)">
+                        💡 Click để xem đáp án
+                    </div>
+                    <div class="answer-content">
+                        <h4>So sánh:</h4>
+                        <table>
+                            <tr>
+                                <th>Tiêu chí</th>
+                                <th>Session-based</th>
+                                <th>JWT</th>
+                            </tr>
+                            <tr>
+                                <td>Storage</td>
+                                <td>Server-side (Redis/DB)</td>
+                                <td>Client-side (token)</td>
+                            </tr>
+                            <tr>
+                                <td>Scalability</td>
+                                <td>Cần shared session store</td>
+                                <td>Stateless, scale dễ</td>
+                            </tr>
+                            <tr>
+                                <td>Mobile support</td>
+                                <td>Cookie issues</td>
+                                <td>Header-based, dễ</td>
+                            </tr>
+                            <tr>
+                                <td>Microservices</td>
+                                <td>Session sync giữa services</td>
+                                <td>Token verify độc lập</td>
+                            </tr>
+                        </table>
+
+                        <h4>Tại sao CHỌN JWT:</h4>
+                        <ol>
+                            <li><strong>Stateless API:</strong> REST API thuần, không cần server remember state</li>
+                            <li><strong>Mobile-ready:</strong> React Native, Flutter không dùng cookie tốt</li>
+                            <li><strong>Future-proof:</strong> Nếu tách Microservices: JWT verify độc lập</li>
+                        </ol>
+
+                        <div class="lesson-box">
+                            <strong>🎯 Bài học tư duy:</strong>
+                            <blockquote>"Choose authentication strategy based on your architecture (API, Mobile,
+                                Microservices)."</blockquote>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Q9 -->
+            <div class="question-box" id="q9">
+                <div class="question-title">
+                    <span class="badge badge-security">Q9</span>
+                    Tại sao Access Token ngắn (15-30 phút) + Refresh Token dài (7 ngày)?
+                </div>
+                <div class="think-prompt">
+                    💭 <strong>Suy nghĩ trước:</strong> Tại sao không 1 token duy nhất?
+                </div>
+                <div class="answer-section">
+                    <div class="answer-toggle" onclick="toggleAnswer(this)">
+                        💡 Click để xem đáp án
+                    </div>
+                    <div class="answer-content">
+                        <h4>Vấn đề với 1 token dài hạn:</h4>
+                        <pre><code>Token expire: 7 ngày
+Nếu bị steal → Attacker có 7 ngày để exploit
+Không thể revoke → Phải đợi expire</code></pre>
+
+                        <h4>Solution: Dual Token Strategy</h4>
+                        <pre><code>Access Token: 15 phút, dùng cho mọi API request
+Refresh Token: 7 ngày, chỉ dùng để lấy Access Token mới</code></pre>
+
+                        <h4>Security benefits:</h4>
+                        <ol>
+                            <li><strong>Minimize exposure:</strong> Access token bị steal → Attacker chỉ có 15 phút</li>
+                            <li><strong>Revocation possible:</strong> Refresh token lưu DB → Có thể revoke ngay</li>
+                            <li><strong>Separate responsibilities:</strong> Access token stateless, Refresh token có thể
+                                lookup DB</li>
+                        </ol>
+
+                        <h4>Flow:</h4>
+                        <pre><code>1. Login → Access Token (15m) + Refresh Token (7d)
+2. API requests → Use Access Token
+3. Access Token expire → Call /refresh → New Access Token
+4. Logout → Revoke Refresh Token trong DB</code></pre>
+
+                        <div class="lesson-box">
+                            <strong>🎯 Bài học tư duy:</strong>
+                            <blockquote>"Security is about minimizing blast radius, not preventing all attacks."
+                            </blockquote>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Q10 -->
+            <div class="question-box" id="q10">
+                <div class="question-title">
+                    <span class="badge badge-security">Q10</span>
+                    Tại sao cần Rate Limiting cho Login và OTP?
+                </div>
+                <div class="think-prompt">
+                    💭 <strong>Suy nghĩ trước:</strong> Có brute-force protection rồi, cần gì thêm?
+                </div>
+                <div class="answer-section">
+                    <div class="answer-toggle" onclick="toggleAnswer(this)">
+                        💡 Click để xem đáp án
+                    </div>
+                    <div class="answer-content">
+                        <h4>Các loại attack cần chống:</h4>
+                        <table>
+                            <tr>
+                                <th>Attack</th>
+                                <th>Pattern</th>
+                                <th>Solution</th>
+                            </tr>
+                            <tr>
+                                <td>Brute-force password</td>
+                                <td>10000 passwords cho 1 account</td>
+                                <td>Lock account sau 5 lần sai</td>
+                            </tr>
+                            <tr>
+                                <td>Credential stuffing</td>
+                                <td>1 password cho 10000 accounts</td>
+                                <td>Rate limit per IP</td>
+                            </tr>
+                            <tr>
+                                <td>OTP bombing</td>
+                                <td>Spam /forgot-password</td>
+                                <td>Rate limit OTP requests</td>
+                            </tr>
+                        </table>
+
+                        <h4>Multi-layer protection:</h4>
+                        <pre><code><span class="comment">// Layer 1: Account-level (5 attempts, lock 15 min)</span>
+loginAttemptService.checkBlocked(username);
+
+<span class="comment">// Layer 2: IP-level (100 requests/minute)</span>
+rateLimiter.checkIPLimit(request.getRemoteAddr());
+
+<span class="comment">// Layer 3: OTP-level (3 requests/30 min per email)</span>
+otpRateLimiter.checkLimit(email);</code></pre>
+
+                        <div class="lesson-box">
+                            <strong>🎯 Bài học tư duy:</strong>
+                            <blockquote>"Defense in depth: Multiple layers of protection, each addressing different
+                                attack vectors."</blockquote>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- EVENT-DRIVEN SECTION -->
+        <div class="section">
+            <h2>🔄 EVENT-DRIVEN ARCHITECTURE</h2>
+
+            <!-- Q11 -->
+            <div class="question-box" id="q11">
+                <div class="question-title">
+                    <span class="badge badge-event">Q11</span>
+                    Tại sao dùng Spring Events thay vì Kafka/RabbitMQ?
+                </div>
+                <div class="think-prompt">
+                    💭 <strong>Suy nghĩ trước:</strong> Kafka mạnh hơn, tại sao không dùng?
+                </div>
+                <div class="answer-section">
+                    <div class="answer-toggle" onclick="toggleAnswer(this)">
+                        💡 Click để xem đáp án
+                    </div>
+                    <div class="answer-content">
+                        <h4>So sánh:</h4>
+                        <table>
+                            <tr>
+                                <th>Feature</th>
+                                <th>Spring Events</th>
+                                <th>Kafka/RabbitMQ</th>
+                            </tr>
+                            <tr>
+                                <td>Setup</td>
+                                <td>Zero config</td>
+                                <td>Install broker, config</td>
+                            </tr>
+                            <tr>
+                                <td>Persistence</td>
+                                <td>No</td>
+                                <td>Yes (replay events)</td>
+                            </tr>
+                            <tr>
+                                <td>Cross-service</td>
+                                <td>No (in-process)</td>
+                                <td>Yes</td>
+                            </tr>
+                            <tr>
+                                <td>Throughput</td>
+                                <td>High</td>
+                                <td>Very high</td>
+                            </tr>
+                        </table>
+
+                        <h4>Tại sao CHỌN Spring Events:</h4>
+                        <ol>
+                            <li><strong>Monolith architecture:</strong> Tất cả modules trong 1 process</li>
+                            <li><strong>Simplicity:</strong> Không thêm infrastructure burden</li>
+                            <li><strong>Good enough:</strong> At-most-once đủ cho email, invoice</li>
+                        </ol>
+
+                        <h4>Khi nào upgrade lên Kafka:</h4>
+                        <ul>
+                            <li>Microservices: Events qua network</li>
+                            <li>Event replay: Debug, rebuild state</li>
+                            <li>High throughput: 100K+ events/second</li>
+                        </ul>
+
+                        <div class="lesson-box">
+                            <strong>🎯 Bài học tư duy:</strong>
+                            <blockquote>"Start simple, add complexity when you have the pain."</blockquote>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Q12 -->
+            <div class="question-box" id="q12">
+                <div class="question-title">
+                    <span class="badge badge-event">Q12</span>
+                    Tại sao dùng @Async thay vì process sync?
+                </div>
+                <div class="think-prompt">
+                    💭 <strong>Suy nghĩ trước:</strong> Async thêm complexity, đáng không?
+                </div>
+                <div class="answer-section">
+                    <div class="answer-toggle" onclick="toggleAnswer(this)">
+                        💡 Click để xem đáp án
+                    </div>
+                    <div class="answer-content">
+                        <h4>Sync approach:</h4>
+                        <pre><code><span class="keyword">public</span> OrderResponse <span class="function">createOrder</span>(OrderRequest request) {
+    Order order = saveOrder(request);           <span class="comment">// 50ms</span>
+    invoiceService.createInvoice(order);        <span class="comment">// 100ms</span>
+    emailService.sendConfirmation(order);       <span class="comment">// 2000ms (SMTP slow!)</span>
+    smsService.sendNotification(order);         <span class="comment">// 1500ms</span>
+    <span class="keyword">return</span> toResponse(order);
+}
+<span class="comment">// Total: 3650ms - User phải đợi 3.6 giây!</span></code></pre>
+
+                        <h4>Async approach:</h4>
+                        <pre><code><span class="keyword">public</span> OrderResponse <span class="function">createOrder</span>(OrderRequest request) {
+    Order order = saveOrder(request);           <span class="comment">// 50ms</span>
+    eventPublisher.publishEvent(<span class="keyword">new</span> OrderCreatedEvent(order)); <span class="comment">// &lt;1ms</span>
+    <span class="keyword">return</span> toResponse(order);
+}
+<span class="comment">// Total: ~100ms - User nhận response ngay!</span>
+
+<span class="annotation">@Async</span>
+<span class="annotation">@EventListener</span>
+<span class="keyword">public void</span> <span class="function">sendEmail</span>(OrderCreatedEvent event) {
+    emailService.sendConfirmation(event.getOrder()); <span class="comment">// Background</span>
+}</code></pre>
+
+                        <div class="lesson-box">
+                            <strong>🎯 Bài học tư duy:</strong>
+                            <blockquote>"Don't make users wait for non-critical operations."</blockquote>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- DATA DESIGN SECTION -->
+        <div class="section">
+            <h2>🗄️ DATA DESIGN</h2>
+
+            <!-- Q13 -->
+            <div class="question-box" id="q13">
+                <div class="question-title">
+                    <span class="badge badge-data">Q13</span>
+                    Tại sao dùng Soft Delete thay vì Hard Delete?
+                </div>
+                <div class="think-prompt">
+                    💭 <strong>Suy nghĩ trước:</strong> DELETE FROM users đơn giản hơn?
+                </div>
+                <div class="answer-section">
+                    <div class="answer-toggle" onclick="toggleAnswer(this)">
+                        💡 Click để xem đáp án
+                    </div>
+                    <div class="answer-content">
+                        <h4>Hard Delete vs Soft Delete:</h4>
+                        <pre><code><span class="comment">-- Hard Delete</span>
+<span class="keyword">DELETE FROM</span> users <span class="keyword">WHERE</span> id = 1;
+<span class="comment">-- Data mất vĩnh viễn!</span>
+
+<span class="comment">-- Soft Delete</span>
+<span class="keyword">UPDATE</span> users <span class="keyword">SET</span> is_deleted = <span class="keyword">true</span> <span class="keyword">WHERE</span> id = 1;
+<span class="comment">-- Data vẫn còn!</span></code></pre>
+
+                        <h4>Tại sao CHỌN Soft Delete:</h4>
+                        <ol>
+                            <li><strong>Recovery:</strong> "Ôi, tôi xóa nhầm user!" → Sửa is_deleted = false</li>
+                            <li><strong>Audit trail:</strong> "User này có đơn hàng nào không?" → JOIN được</li>
+                            <li><strong>Data integrity:</strong> Order references User → Foreign key intact</li>
+                            <li><strong>Legal compliance:</strong> GDPR: Financial records phải giữ 7 năm</li>
+                        </ol>
+
+                        <div class="lesson-box">
+                            <strong>🎯 Bài học tư duy:</strong>
+                            <blockquote>"Data is valuable. Delete is expensive to undo."</blockquote>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Q14 -->
+            <div class="question-box" id="q14">
+                <div class="question-title">
+                    <span class="badge badge-data">Q14</span>
+                    Tại sao Measurement cần Versioning?
+                </div>
+                <div class="think-prompt">
+                    💭 <strong>Suy nghĩ trước:</strong> Override số đo cũ không được sao?
+                </div>
+                <div class="answer-section">
+                    <div class="answer-toggle" onclick="toggleAnswer(this)">
+                        💡 Click để xem đáp án
+                    </div>
+                    <div class="answer-content">
+                        <h4>Vấn đề với override:</h4>
+                        <pre><code>Tháng 1: User đo ngực 95cm → lưu
+Tháng 6: User đo lại 98cm → override → <span class="comment">mất 95cm!</span>
+
+Order tháng 2 reference số đo nào? 
+→ Không rõ! Order ghi 95cm nhưng DB chỉ có 98cm</code></pre>
+
+                        <h4>Solution: Immutable Versioning</h4>
+                        <pre><code><span class="annotation">@Entity</span>
+<span class="keyword">public class</span> <span class="function">Measurement</span> {
+    <span class="keyword">private</span> UUID groupId;    <span class="comment">// Nhóm các versions của 1 user</span>
+    <span class="keyword">private int</span> version;     <span class="comment">// 1, 2, 3...</span>
+    <span class="keyword">private</span> Long userId;
+    <span class="keyword">private</span> BigDecimal chest;
+}
+
+<span class="comment">// Không update, luôn tạo mới</span>
+<span class="keyword">public</span> Measurement <span class="function">update</span>(Long userId, MeasurementRequest request) {
+    Measurement latest = findLatest(userId);
+    <span class="keyword">return</span> Measurement.builder()
+        .groupId(latest.getGroupId())
+        .version(latest.getVersion() + 1)  <span class="comment">// Increment</span>
+        .build();
+}</code></pre>
+
+                        <h4>Benefits:</h4>
+                        <ul>
+                            <li><strong>Order integrity:</strong> Order reference version cụ thể</li>
+                            <li><strong>Progress tracking:</strong> "Số đo thay đổi thế nào qua thời gian?"</li>
+                            <li><strong>Dispute resolution:</strong> "Tôi đo 95cm mà sao áo chật?" → Check version</li>
+                        </ul>
+
+                        <div class="lesson-box">
+                            <strong>🎯 Bài học tư duy:</strong>
+                            <blockquote>"Immutability simplifies debugging and auditing."</blockquote>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- PERFORMANCE SECTION -->
+        <div class="section">
+            <h2>🔧 PERFORMANCE</h2>
+
+            <!-- Q15 -->
+            <div class="question-box" id="q15">
+                <div class="question-title">
+                    <span class="badge badge-performance">Q15</span>
+                    Tại sao cần Redis Cache, không đủ PostgreSQL?
+                </div>
+                <div class="think-prompt">
+                    💭 <strong>Suy nghĩ trước:</strong> Postgres cũng có cache, sao cần thêm Redis?
+                </div>
+                <div class="answer-section">
+                    <div class="answer-toggle" onclick="toggleAnswer(this)">
+                        💡 Click để xem đáp án
+                    </div>
+                    <div class="answer-content">
+                        <h4>Tại sao vẫn cần Redis:</h4>
+                        <table>
+                            <tr>
+                                <th>Tiêu chí</th>
+                                <th>PostgreSQL</th>
+                                <th>Redis</th>
+                            </tr>
+                            <tr>
+                                <td>Response time</td>
+                                <td>5-50ms</td>
+                                <td>&lt;1ms</td>
+                            </tr>
+                            <tr>
+                                <td>1000 requests/second</td>
+                                <td>Connection exhaustion</td>
+                                <td>Trivial</td>
+                            </tr>
+                            <tr>
+                                <td>Computed data cache</td>
+                                <td>Re-compute mỗi lần</td>
+                                <td>Cache result</td>
+                            </tr>
+                            <tr>
+                                <td>Session/Rate limit</td>
+                                <td>Overkill</td>
+                                <td>Perfect fit</td>
+                            </tr>
+                        </table>
+
+                        <h4>Cache strategy:</h4>
+                        <pre><code><span class="annotation">@Cacheable</span>(value = <span class="string">"products"</span>, key = <span class="string">"#id"</span>)
+<span class="keyword">public</span> ProductResponse <span class="function">getProduct</span>(Long id) {
+    <span class="keyword">return</span> productRepository.findById(id)
+        .map(<span class="keyword">this</span>::toResponse)
+        .orElseThrow();
+}
+
+<span class="annotation">@CacheEvict</span>(value = <span class="string">"products"</span>, key = <span class="string">"#id"</span>)
+<span class="keyword">public void</span> <span class="function">updateProduct</span>(Long id, ProductRequest request) {
+    <span class="comment">// Update DB → Evict cache → Next read sẽ cache lại</span>
+}</code></pre>
+
+                        <div class="lesson-box">
+                            <strong>🎯 Bài học tư duy:</strong>
+                            <blockquote>"Use the right tool for the right job. RDBMS for persistence, Redis for speed."
+                            </blockquote>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- THINKING FRAMEWORK -->
+        <div class="framework-box">
+            <h3>🎯 Framework Tư Duy Giải Quyết Vấn Đề</h3>
+            <p>Khi gặp vấn đề technical, hỏi:</p>
+            <ol>
+                <li><strong>What are the requirements?</strong> - Functional vs Non-functional</li>
+                <li><strong>What are the options?</strong> - List ít nhất 2-3 alternatives</li>
+                <li><strong>What are the trade-offs?</strong> - Pros/Cons của mỗi option</li>
+                <li><strong>What constraints do we have?</strong> - Team size, Timeline, Budget</li>
+                <li><strong>What's the migration path?</strong> - Can we evolve later?</li>
+            </ol>
+        </div>
+
+        <!-- FINAL TIP -->
+        <div class="tip-box">
+            <h3>💡 Tip cuối cho phỏng vấn</h3>
+            <p>Interviewer thường quan tâm <strong>TẠI SAO</strong> bạn chọn solution hơn là <strong>CÁI GÌ</strong> là
+                solution.</p>
+            <p>Hãy luôn giải thích:</p>
+            <ul>
+                <li>Các options bạn đã consider</li>
+                <li>Trade-offs của mỗi option</li>
+                <li>Lý do cuối cùng chọn option này</li>
+            </ul>
+            <blockquote style="margin-top: 15px; font-style: italic; color: #ffd700;">
+                "Anyone can copy a solution from Stack Overflow. Engineers understand WHY it works and WHEN it doesn't."
+            </blockquote>
+        </div>
+
+        <footer>
+            <p>Generated by Antigravity AI Assistant</p>
+            <p style="margin-top: 10px;">Deep "WHY" Questions - Interview Preparation v1.0</p>
+        </footer>
+    </div>
+
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            securityLevel: 'loose'
+        });
+
+        function toggleAnswer(element) {
+            const content = element.nextElementSibling;
+            content.classList.toggle('show');
+            if (content.classList.contains('show')) {
+                element.innerHTML = '📖 Ẩn đáp án';
+            } else {
+                element.innerHTML = '💡 Click để xem đáp án';
+            }
+        }
+    </script>
+</body>
+
+</html>

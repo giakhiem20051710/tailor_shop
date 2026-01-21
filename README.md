@@ -207,7 +207,7 @@ docker-compose up -d
 
 #### Backend
 ```bash
-cd tailor_shop
+cd backend
 
 # Install dependencies & run
 ./mvnw spring-boot:run
@@ -218,7 +218,7 @@ cd tailor_shop
 
 #### Frontend
 ```bash
-cd my-react-app
+cd frontend
 
 # Install dependencies
 npm install
@@ -290,7 +290,7 @@ curl http://localhost:8083/api/v1/orders \
 
 ```
 tailor-shop/
-├── tailor_shop/              # Backend (Spring Boot)
+├── backend/              # Backend (Spring Boot)
 │   ├── src/main/java/
 │   │   └── com/example/tailor_shop/
 │   │       ├── modules/      # Feature modules
@@ -301,7 +301,7 @@ tailor-shop/
 │   │   └── db/migration/     # Flyway migrations
 │   └── Dockerfile
 │
-├── my-react-app/             # Frontend (React)
+├── frontend/             # Frontend (React)
 │   ├── src/
 │   │   ├── pages/            # Page components
 │   │   ├── components/       # Reusable components
@@ -348,13 +348,13 @@ tailor-shop/
 
 ### Run Backend Tests
 ```bash
-cd tailor_shop
+cd backend
 ./mvnw test
 ```
 
 ### Run Frontend Tests
 ```bash
-cd my-react-app
+cd frontend
 npm test
 ```
 

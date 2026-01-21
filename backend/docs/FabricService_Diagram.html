@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FabricService - Tài Liệu Chi Tiết</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a2e0a 0%, #2d4e1a 100%);
+            color: #eee;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: #8bc34a;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+            text-shadow: 0 0 20px rgba(139, 195, 74, 0.3);
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #888;
+            margin-bottom: 30px;
+        }
+
+        h2 {
+            color: #ffd700;
+            margin: 40px 0 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #ffd700;
+        }
+
+        h3 {
+            color: #00ff88;
+            margin: 25px 0 15px;
+        }
+
+        .section {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 25px;
+            margin: 20px 0;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .mermaid {
+            background: #fff;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 15px 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+            font-size: 14px;
+        }
+
+        th,
+        td {
+            padding: 12px 15px;
+            text-align: left;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        th {
+            background: rgba(139, 195, 74, 0.2);
+            color: #8bc34a;
+        }
+
+        tr:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        code {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 2px 8px;
+            border-radius: 4px;
+            color: #00ff88;
+            font-family: 'Consolas', monospace;
+        }
+
+        pre {
+            background: rgba(0, 0, 0, 0.4);
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 10px 0;
+        }
+
+        .success-box {
+            background: linear-gradient(135deg, rgba(0, 255, 136, 0.1), rgba(0, 217, 255, 0.1));
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 4px solid #00ff88;
+            margin: 15px 0;
+        }
+
+        .warning-box {
+            background: linear-gradient(135deg, rgba(255, 193, 7, 0.1), rgba(255, 152, 0, 0.1));
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 4px solid #ffc107;
+            margin: 15px 0;
+        }
+
+        .info-box {
+            background: linear-gradient(135deg, rgba(0, 123, 255, 0.1), rgba(0, 217, 255, 0.1));
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 4px solid #007bff;
+            margin: 15px 0;
+        }
+
+        ul,
+        ol {
+            padding-left: 25px;
+            margin: 10px 0;
+        }
+
+        li {
+            margin: 8px 0;
+            line-height: 1.6;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+            margin: 2px;
+        }
+
+        .badge-pending {
+            background: #ffc107;
+            color: black;
+        }
+
+        .badge-approved {
+            background: #28a745;
+            color: white;
+        }
+
+        .badge-rejected {
+            background: #dc3545;
+            color: white;
+        }
+
+        .badge-completed {
+            background: #17a2b8;
+            color: white;
+        }
+
+        .badge-cancelled {
+            background: #6c757d;
+            color: white;
+        }
+
+        .stats {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin: 20px 0;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.08);
+            padding: 20px;
+            border-radius: 10px;
+            flex: 1;
+            min-width: 150px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #8bc34a;
+        }
+
+        .stat-label {
+            color: #888;
+            margin-top: 5px;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: #00d9ff;
+            text-decoration: none;
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <a href="index.html" class="back-link">← Quay lại danh sách</a>
+        <h1>🧶 FabricService - Tài Liệu Chi Tiết</h1>
+        <p class="subtitle">Module quản lý vải với Inventory và Hold Request System</p>
+
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-value">736</div>
+                <div class="stat-label">Dòng code</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">16</div>
+                <div class="stat-label">Methods</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">6</div>
+                <div class="stat-label">Dependencies</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">3</div>
+                <div class="stat-label">Sub-systems</div>
+            </div>
+        </div>
+
+        <!-- 1. Overview -->
+        <div class="section">
+            <h2>1. Tổng Quan</h2>
+            <p><code>FabricServiceImpl</code> quản lý toàn bộ thông tin về vải trong hệ thống Tailor Shop, bao gồm:</p>
+
+            <div class="success-box">
+                <strong>✅ 3 Sub-systems chính:</strong>
+                <ul>
+                    <li><strong>Fabric Management</strong> - CRUD vải, filter, search</li>
+                    <li><strong>Inventory Management</strong> - Quản lý tồn kho theo location</li>
+                    <li><strong>Hold Request System</strong> - Đặt giữ vải hoặc đặt lịch xem hàng</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- 2. Architecture -->
+        <div class="section">
+            <h2>2. Kiến Trúc Hệ Thống</h2>
+
+            <div class="mermaid">
+                graph TB
+                subgraph "FabricServiceImpl"
+                FS[FabricServiceImpl]
+
+                subgraph "Fabric CRUD"
+                F1[list - Filter & Search]
+                F2[detail / detailByCode / detailBySlug]
+                F3[create]
+                F4[update]
+                F5[delete - Soft Delete]
+                F6[incrementViewCount]
+                end
+
+                subgraph "Inventory Management"
+                I1[getInventory]
+                I2[updateInventory]
+                end
+
+                subgraph "Hold Request System"
+                H1[createHoldRequest]
+                H2[listHoldRequests]
+                H3[getHoldRequestDetail]
+                H4[updateHoldRequestStatus]
+                H5[cancelHoldRequest]
+                end
+
+                subgraph "Promo Integration"
+                P1[applyPromoCode]
+                end
+                end
+
+                subgraph "Repositories"
+                FR[FabricRepository]
+                FIR[FabricInventoryRepository]
+                FHR[FabricHoldRequestRepository]
+                UR[UserRepository]
+                end
+
+                subgraph "External Services"
+                PS[PromotionService]
+                end
+
+                FS --> FR
+                FS --> FIR
+                FS --> FHR
+                FS --> UR
+                P1 --> PS
+            </div>
+        </div>
+
+        <!-- 3. Entity Relationships -->
+        <div class="section">
+            <h2>3. Entity Relationships</h2>
+
+            <div class="mermaid">
+                erDiagram
+                FabricEntity ||--o{ FabricInventoryEntity : "has inventory"
+                FabricEntity ||--o{ FabricHoldRequestEntity : "has requests"
+                FabricEntity }o--|| UserEntity : "createdBy"
+                FabricHoldRequestEntity }o--|| UserEntity : "requested by"
+                FabricHoldRequestEntity }o--o| UserEntity : "handled by"
+
+                FabricEntity {
+                Long id PK
+                String code UK
+                String name
+                String slug UK
+                String description
+                String category
+                String material
+                String color
+                String pattern
+                BigDecimal width
+                BigDecimal weight
+                BigDecimal pricePerMeter
+                String image
+                String gallery JSON
+                String origin
+                String careInstructions
+                Boolean isAvailable
+                Boolean isFeatured
+                Integer displayOrder
+                Integer viewCount
+                Boolean isDeleted
+                }
+
+                FabricInventoryEntity {
+                Long id PK
+                Long fabricId FK
+                String location
+                BigDecimal quantity
+                BigDecimal reservedQuantity
+                BigDecimal minStockLevel
+                BigDecimal maxStockLevel
+                String unit
+                OffsetDateTime lastRestockedAt
+                String notes
+                }
+
+                FabricHoldRequestEntity {
+                Long id PK
+                Long fabricId FK
+                Long userId FK
+                FabricHoldRequestType type
+                BigDecimal quantity
+                LocalDate requestedDate
+                LocalTime requestedTime
+                FabricHoldRequestStatus status
+                LocalDate expiryDate
+                String notes
+                String staffNotes
+                Long handledById FK
+                OffsetDateTime handledAt
+                }
+            </div>
+        </div>
+
+        <!-- 4. Fabric Filter & Search -->
+        <div class="section">
+            <h2>4. Fabric Filter & Search</h2>
+
+            <h3>Filter Parameters</h3>
+            <table>
+                <tr>
+                    <th>Parameter</th>
+                    <th>Type</th>
+                    <th>Mô tả</th>
+                </tr>
+                <tr>
+                    <td>category</td>
+                    <td>String</td>
+                    <td>Loại vải (cotton, silk, linen...)</td>
+                </tr>
+                <tr>
+                    <td>color</td>
+                    <td>String</td>
+                    <td>Màu sắc</td>
+                </tr>
+                <tr>
+                    <td>pattern</td>
+                    <td>String</td>
+                    <td>Họa tiết (solid, striped, checked...)</td>
+                </tr>
+                <tr>
+                    <td>material</td>
+                    <td>String</td>
+                    <td>Chất liệu</td>
+                </tr>
+                <tr>
+                    <td>origin</td>
+                    <td>String</td>
+                    <td>Xuất xứ</td>
+                </tr>
+                <tr>
+                    <td>isAvailable</td>
+                    <td>Boolean</td>
+                    <td>Còn hàng?</td>
+                </tr>
+                <tr>
+                    <td>isFeatured</td>
+                    <td>Boolean</td>
+                    <td>Nổi bật?</td>
+                </tr>
+                <tr>
+                    <td>minPrice</td>
+                    <td>BigDecimal</td>
+                    <td>Giá từ</td>
+                </tr>
+                <tr>
+                    <td>maxPrice</td>
+                    <td>BigDecimal</td>
+                    <td>Giá đến</td>
+                </tr>
+                <tr>
+                    <td>keyword</td>
+                    <td>String</td>
+                    <td>Tìm kiếm text</td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- 5. Inventory System -->
+        <div class="section">
+            <h2>5. Inventory Management System</h2>
+
+            <div class="mermaid">
+                flowchart LR
+                subgraph "Stock Calculation"
+                A[quantity] --> D[availableQuantity]
+                B[reservedQuantity] --> D
+                D --> |"quantity - reserved"| E[Available]
+                end
+
+                subgraph "Low Stock Alert"
+                F[quantity] --> G{quantity < minStockLevel?} G -->|Yes| H[isLowStock = true]
+                    G -->|No| I[isLowStock = false]
+                    end
+            </div>
+
+            <h3>Inventory Features</h3>
+            <ul>
+                <li><strong>Multi-location</strong> - Quản lý tồn kho theo từng kho/location</li>
+                <li><strong>Reserved Quantity</strong> - Số lượng đã được đặt giữ</li>
+                <li><strong>Min/Max Stock Level</strong> - Mức tồn kho tối thiểu/tối đa</li>
+                <li><strong>Low Stock Alert</strong> - Cảnh báo khi tồn kho thấp</li>
+                <li><strong>Last Restocked</strong> - Thời điểm nhập hàng gần nhất</li>
+            </ul>
+
+            <pre><code>availableQuantity = quantity - reservedQuantity
+isLowStock = quantity < minStockLevel</code></pre>
+        </div>
+
+        <!-- 6. Hold Request System -->
+        <div class="section">
+            <h2>6. Hold Request System</h2>
+
+            <h3>Request Types</h3>
+            <table>
+                <tr>
+                    <th>Type</th>
+                    <th>Mô tả</th>
+                    <th>Required Fields</th>
+                </tr>
+                <tr>
+                    <td><strong>HOLD</strong></td>
+                    <td>Đặt giữ vải trong thời gian nhất định</td>
+                    <td>quantity, expiryDate (default 7 ngày)</td>
+                </tr>
+                <tr>
+                    <td><strong>VISIT</strong></td>
+                    <td>Đặt lịch đến xem hàng trực tiếp</td>
+                    <td>requestedDate, requestedTime</td>
+                </tr>
+            </table>
+
+            <h3>Request Status Flow</h3>
+            <div class="mermaid">
+                stateDiagram-v2
+                [*] --> PENDING : Customer tạo request
+
+                PENDING --> APPROVED : Staff duyệt
+                PENDING --> REJECTED : Staff từ chối
+                PENDING --> CANCELLED : Customer hủy
+
+                APPROVED --> COMPLETED : Hoàn thành giao dịch
+                APPROVED --> CANCELLED : Customer hủy
+
+                COMPLETED --> [*]
+                REJECTED --> [*]
+                CANCELLED --> [*]
+            </div>
+
+            <h3>Status Badges</h3>
+            <p>
+                <span class="badge badge-pending">PENDING</span> - Đang chờ duyệt<br>
+                <span class="badge badge-approved">APPROVED</span> - Đã duyệt<br>
+                <span class="badge badge-rejected">REJECTED</span> - Từ chối<br>
+                <span class="badge badge-completed">COMPLETED</span> - Hoàn thành<br>
+                <span class="badge badge-cancelled">CANCELLED</span> - Đã hủy
+            </p>
+
+            <h3>Hold Request Flow</h3>
+            <div class="mermaid">
+                sequenceDiagram
+                participant C as Customer
+                participant S as FabricService
+                participant FIR as InventoryRepo
+                participant FHR as HoldRequestRepo
+                participant Staff
+
+                C->>S: createHoldRequest(HOLD, quantity)
+                S->>FIR: Check available quantity
+                FIR-->>S: totalQuantity - totalReserved
+
+                alt Insufficient quantity
+                S-->>C: BadRequestException
+                else Sufficient
+                S->>FHR: Save request (PENDING)
+                FHR-->>S: Saved entity
+                S-->>C: HoldRequestResponse
+                end
+
+                Staff->>S: updateHoldRequestStatus(id, APPROVED)
+                S->>FIR: reservedQuantity += quantity
+                S->>FHR: Update status
+                S-->>Staff: HoldRequestResponse
+            </div>
+
+            <div class="warning-box">
+                <strong>⚠️ Quan trọng:</strong> Khi HOLD request được APPROVED, reserved quantity sẽ tăng lên.
+                Khi CANCELLED, reserved quantity sẽ được release.
+            </div>
+        </div>
+
+        <!-- 7. Soft Delete -->
+        <div class="section">
+            <h2>7. Soft Delete Strategy</h2>
+
+            <div class="info-box">
+                <strong>💡 Soft Delete:</strong> Thay vì xóa thực sự, system sẽ:
+                <ol>
+                    <li>Set <code>isDeleted = true</code></li>
+                    <li>Append timestamp vào code: <code>FABRIC-001_DEL_1704200000000</code></li>
+                    <li>Append timestamp vào slug: <code>vai-cotton_DEL_1704200000000</code></li>
+                </ol>
+                Điều này cho phép tái sử dụng code/slug trong tương lai.
+            </div>
+        </div>
+
+        <!-- 8. Promo Code Integration -->
+        <div class="section">
+            <h2>8. Promo Code Integration</h2>
+
+            <div class="mermaid">
+                sequenceDiagram
+                participant C as Customer
+                participant FS as FabricService
+                participant PS as PromotionService
+
+                C->>FS: applyPromoCode(fabricId, quantity, promoCode)
+                FS->>FS: Validate fabric & quantity
+                FS->>FS: Calculate subtotal = price * quantity
+                FS->>PS: applyPromoCode(code, subtotal, productIds, categoryIds)
+                PS-->>FS: ApplyPromoCodeResponse (discountAmount, finalAmount)
+                FS-->>C: FabricOrderResponse
+            </div>
+        </div>
+
+        <!-- 9. Error Handling -->
+        <div class="section">
+            <h2>9. Error Handling</h2>
+
+            <table>
+                <tr>
+                    <th>Scenario</th>
+                    <th>Exception</th>
+                </tr>
+                <tr>
+                    <td>Fabric không tồn tại</td>
+                    <td><code>NotFoundException("Fabric not found")</code></td>
+                </tr>
+                <tr>
+                    <td>Code đã tồn tại</td>
+                    <td><code>BadRequestException("Fabric code already exists")</code></td>
+                </tr>
+                <tr>
+                    <td>Slug đã tồn tại</td>
+                    <td><code>BadRequestException("Slug already exists")</code></td>
+                </tr>
+                <tr>
+                    <td>Vải không available</td>
+                    <td><code>BadRequestException("Fabric is not available")</code></td>
+                </tr>
+                <tr>
+                    <td>HOLD request thiếu quantity</td>
+                    <td><code>BadRequestException("Quantity is required for HOLD request")</code></td>
+                </tr>
+                <tr>
+                    <td>VISIT request thiếu date</td>
+                    <td><code>BadRequestException("Requested date is required for VISIT request")</code></td>
+                </tr>
+                <tr>
+                    <td>Date trong quá khứ</td>
+                    <td><code>BadRequestException("Requested date cannot be in the past")</code></td>
+                </tr>
+                <tr>
+                    <td>Không đủ hàng</td>
+                    <td><code>BadRequestException("Insufficient quantity. Available: X")</code></td>
+                </tr>
+                <tr>
+                    <td>Hủy request người khác</td>
+                    <td><code>BadRequestException("You can only cancel your own requests")</code></td>
+                </tr>
+                <tr>
+                    <td>Update completed/cancelled request</td>
+                    <td><code>BadRequestException("Cannot update completed or cancelled request")</code></td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- 10. Logging -->
+        <div class="section">
+            <h2>10. Logging với TraceId</h2>
+
+            <div class="info-box">
+                <strong>💡 TraceId:</strong> Mọi log đều có TraceId để dễ dàng trace request qua các service.
+            </div>
+
+            <ul>
+                <li>✅ <code>[TraceId: {}] Fabric created: id={}, code={}, name={}</code></li>
+                <li>✅ <code>[TraceId: {}] Fabric updated: id={}, code={}</code></li>
+                <li>✅ <code>[TraceId: {}] Fabric deleted: id={}, code={}</code></li>
+                <li>✅ <code>[TraceId: {}] Fabric inventory updated: fabricId={}, location={}, quantity={}</code></li>
+                <li>✅ <code>[TraceId: {}] Fabric hold request created: id={}, type={}, fabricId={}, userId={}</code>
+                </li>
+                <li>✅ <code>[TraceId: {}] Hold request status updated: id={}, status={}, handledBy={}</code></li>
+                <li>✅ <code>[TraceId: {}] Hold request cancelled: id={}, userId={}</code></li>
+            </ul>
+        </div>
+
+        <!-- Footer -->
+        <div class="section" style="text-align: center; margin-top: 40px;">
+            <p style="color: #888;">Generated by Antigravity AI Assistant</p>
+            <a href="index.html" style="color: #00d9ff;">← Quay lại danh sách</a>
+        </div>
+    </div>
+
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            securityLevel: 'loose'
+        });
+    </script>
+</body>
+
+</html>

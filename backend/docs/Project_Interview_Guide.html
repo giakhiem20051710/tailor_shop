@@ -1,0 +1,841 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tailor Shop - Interview Guide & Project Overview</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f0f23 0%, #1a1a3e 100%);
+            color: #eee;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: #00d9ff;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+            text-shadow: 0 0 20px rgba(0, 217, 255, 0.3);
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #888;
+            margin-bottom: 30px;
+        }
+
+        h2 {
+            color: #ffd700;
+            margin: 40px 0 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #ffd700;
+        }
+
+        h3 {
+            color: #00ff88;
+            margin: 25px 0 15px;
+        }
+
+        h4 {
+            color: #ff6b9d;
+            margin: 20px 0 10px;
+        }
+
+        .section {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 25px;
+            margin: 20px 0;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .mermaid {
+            background: #fff;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 15px 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+            font-size: 14px;
+        }
+
+        th,
+        td {
+            padding: 12px 15px;
+            text-align: left;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        th {
+            background: rgba(0, 217, 255, 0.2);
+            color: #00d9ff;
+        }
+
+        tr:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        code {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 2px 8px;
+            border-radius: 4px;
+            color: #00ff88;
+            font-family: 'Consolas', monospace;
+        }
+
+        pre {
+            background: rgba(0, 0, 0, 0.4);
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 10px 0;
+        }
+
+        pre code {
+            padding: 0;
+            background: transparent;
+        }
+
+        .highlight-box {
+            background: linear-gradient(135deg, rgba(255, 107, 107, 0.1), rgba(255, 107, 157, 0.1));
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 4px solid #ff6b6b;
+            margin: 15px 0;
+        }
+
+        .success-box {
+            background: linear-gradient(135deg, rgba(0, 255, 136, 0.1), rgba(0, 217, 255, 0.1));
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 4px solid #00ff88;
+            margin: 15px 0;
+        }
+
+        .warning-box {
+            background: linear-gradient(135deg, rgba(255, 193, 7, 0.1), rgba(255, 152, 0, 0.1));
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 4px solid #ffc107;
+            margin: 15px 0;
+        }
+
+        .info-box {
+            background: linear-gradient(135deg, rgba(0, 123, 255, 0.1), rgba(0, 217, 255, 0.1));
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 4px solid #007bff;
+            margin: 15px 0;
+        }
+
+        .question-box {
+            background: linear-gradient(135deg, rgba(156, 39, 176, 0.1), rgba(103, 58, 183, 0.1));
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 4px solid #9c27b0;
+            margin: 20px 0;
+        }
+
+        .question-box h4 {
+            color: #ce93d8;
+            margin-bottom: 15px;
+        }
+
+        .answer {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 10px;
+            line-height: 1.8;
+        }
+
+        ul,
+        ol {
+            padding-left: 25px;
+            margin: 10px 0;
+        }
+
+        li {
+            margin: 8px 0;
+            line-height: 1.6;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: bold;
+            margin: 3px;
+        }
+
+        .badge-primary {
+            background: rgba(0, 217, 255, 0.2);
+            color: #00d9ff;
+        }
+
+        .badge-success {
+            background: rgba(0, 255, 136, 0.2);
+            color: #00ff88;
+        }
+
+        .badge-warning {
+            background: rgba(255, 215, 0, 0.2);
+            color: #ffd700;
+        }
+
+        .badge-danger {
+            background: rgba(255, 107, 157, 0.2);
+            color: #ff6b9d;
+        }
+
+        .back-link {
+            display: inline-block;
+            color: #00d9ff;
+            text-decoration: none;
+            margin-bottom: 20px;
+            padding: 10px 20px;
+            border: 1px solid #00d9ff;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .back-link:hover {
+            background: rgba(0, 217, 255, 0.2);
+        }
+
+        .tech-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .tech-item {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .tech-item .icon {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        .timeline {
+            position: relative;
+            padding-left: 30px;
+            margin: 20px 0;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 10px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: #00d9ff;
+        }
+
+        .timeline-item {
+            position: relative;
+            margin-bottom: 25px;
+            padding-left: 20px;
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -24px;
+            top: 5px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #00d9ff;
+        }
+
+        .timeline-date {
+            color: #00ff88;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 60px;
+            padding-top: 30px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            color: #666;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <a href="index.html" class="back-link">← Quay lại trang chính</a>
+
+        <h1>🧵 Tailor Shop</h1>
+        <p class="subtitle">Interview Guide & Project Overview</p>
+
+        <!-- Project Summary -->
+        <div class="section">
+            <h2>📋 1. Tổng Quan Dự Án</h2>
+            
+            <div class="success-box">
+                <strong>🎯 Mô tả ngắn gọn:</strong>
+                <p style="margin-top: 10px;">
+                    <strong>Tailor Shop</strong> là một hệ thống quản lý cửa hàng may đo trực tuyến hoàn chỉnh, 
+                    cho phép khách hàng đặt may quần áo theo số đo, mua sản phẩm may sẵn, đặt lịch hẹn, 
+                    và theo dõi đơn hàng. Hệ thống được xây dựng với kiến trúc Monolithic modular, 
+                    sử dụng Spring Boot cho Backend và React cho Frontend.
+                </p>
+            </div>
+
+            <h3>🎯 Mục tiêu dự án</h3>
+            <ul>
+                <li>Số hóa quy trình kinh doanh của cửa hàng may đo truyền thống</li>
+                <li>Tạo trải nghiệm mua sắm online thuận tiện cho khách hàng</li>
+                <li>Quản lý đơn hàng, lịch hẹn, số đo khách hàng một cách hiệu quả</li>
+                <li>Tích hợp các tính năng thương mại điện tử hiện đại (Shopee-like features)</li>
+            </ul>
+
+            <h3>👥 Đối tượng sử dụng</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Role</th>
+                        <th>Mô tả</th>
+                        <th>Chức năng chính</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><span class="badge badge-primary">Customer</span></td>
+                        <td>Khách hàng</td>
+                        <td>Đặt hàng, đặt lịch, đánh giá, quản lý profile</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-warning">Staff</span></td>
+                        <td>Nhân viên</td>
+                        <td>Xử lý đơn hàng, đo số đo, quản lý lịch hẹn</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-success">Tailor</span></td>
+                        <td>Thợ may</td>
+                        <td>Nhận và hoàn thành đơn may đo</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-danger">Admin</span></td>
+                        <td>Quản trị viên</td>
+                        <td>Quản lý toàn bộ hệ thống, users, products, reports</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Tech Stack -->
+        <div class="section">
+            <h2>🛠️ 2. Tech Stack</h2>
+            
+            <h3>Backend</h3>
+            <div class="tech-grid">
+                <div class="tech-item">
+                    <div class="icon">☕</div>
+                    <strong>Java 17</strong>
+                    <p style="font-size: 12px; color: #888;">LTS Version</p>
+                </div>
+                <div class="tech-item">
+                    <div class="icon">🍃</div>
+                    <strong>Spring Boot 3.x</strong>
+                    <p style="font-size: 12px; color: #888;">Framework chính</p>
+                </div>
+                <div class="tech-item">
+                    <div class="icon">🔐</div>
+                    <strong>Spring Security</strong>
+                    <p style="font-size: 12px; color: #888;">JWT Authentication</p>
+                </div>
+                <div class="tech-item">
+                    <div class="icon">💾</div>
+                    <strong>Spring Data JPA</strong>
+                    <p style="font-size: 12px; color: #888;">ORM Framework</p>
+                </div>
+                <div class="tech-item">
+                    <div class="icon">🐘</div>
+                    <strong>PostgreSQL</strong>
+                    <p style="font-size: 12px; color: #888;">Database chính</p>
+                </div>
+                <div class="tech-item">
+                    <div class="icon">⚡</div>
+                    <strong>Redis</strong>
+                    <p style="font-size: 12px; color: #888;">Caching, Session</p>
+                </div>
+            </div>
+
+            <h3>Frontend</h3>
+            <div class="tech-grid">
+                <div class="tech-item">
+                    <div class="icon">⚛️</div>
+                    <strong>React 18</strong>
+                    <p style="font-size: 12px; color: #888;">UI Library</p>
+                </div>
+                <div class="tech-item">
+                    <div class="icon">⚡</div>
+                    <strong>Vite</strong>
+                    <p style="font-size: 12px; color: #888;">Build Tool</p>
+                </div>
+                <div class="tech-item">
+                    <div class="icon">🎨</div>
+                    <strong>TailwindCSS</strong>
+                    <p style="font-size: 12px; color: #888;">Styling</p>
+                </div>
+                <div class="tech-item">
+                    <div class="icon">🔄</div>
+                    <strong>Redux/Zustand</strong>
+                    <p style="font-size: 12px; color: #888;">State Management</p>
+                </div>
+            </div>
+
+            <h3>DevOps & Tools</h3>
+            <div class="tech-grid">
+                <div class="tech-item">
+                    <div class="icon">🐳</div>
+                    <strong>Docker</strong>
+                    <p style="font-size: 12px; color: #888;">Containerization</p>
+                </div>
+                <div class="tech-item">
+                    <div class="icon">🔧</div>
+                    <strong>Docker Compose</strong>
+                    <p style="font-size: 12px; color: #888;">Multi-container</p>
+                </div>
+                <div class="tech-item">
+                    <div class="icon">📊</div>
+                    <strong>Prometheus</strong>
+                    <p style="font-size: 12px; color: #888;">Monitoring</p>
+                </div>
+                <div class="tech-item">
+                    <div class="icon">📈</div>
+                    <strong>Grafana</strong>
+                    <p style="font-size: 12px; color: #888;">Visualization</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Architecture -->
+        <div class="section">
+            <h2>🏗️ 3. Kiến Trúc Hệ Thống</h2>
+            
+            <h3>System Architecture</h3>
+            <div class="mermaid">
+flowchart TB
+    subgraph Client["🌐 Client Layer"]
+        WEB[React Web App]
+        MOBILE[Mobile App]
+    end
+
+    subgraph Gateway["🚪 API Gateway"]
+        NGINX[Nginx Reverse Proxy]
+    end
+
+    subgraph Backend["☕ Spring Boot Application"]
+        subgraph Security["🔐 Security"]
+            JWT[JWT Filter]
+            AUTH[AuthService]
+        end
+        
+        subgraph Modules["📦 Business Modules"]
+            ORDER[Order Module]
+            PRODUCT[Product Module]
+            USER[User Module]
+            APPOINTMENT[Appointment Module]
+            BILLING[Billing Module]
+            PROMOTION[Promotion Module]
+        end
+        
+        subgraph Common["🔧 Common"]
+            EVENT[Event Publisher]
+            CACHE[Cache Manager]
+        end
+    end
+
+    subgraph Data["💾 Data Layer"]
+        PG[(PostgreSQL)]
+        REDIS[(Redis Cache)]
+        S3[Image Storage]
+    end
+
+    subgraph Monitoring["📊 Monitoring"]
+        PROM[Prometheus]
+        GRAF[Grafana]
+    end
+
+    WEB --> NGINX
+    MOBILE --> NGINX
+    NGINX --> JWT
+    JWT --> AUTH
+    AUTH --> Modules
+    Modules --> EVENT
+    Modules --> CACHE
+    Modules --> PG
+    CACHE --> REDIS
+    Backend --> PROM
+    PROM --> GRAF
+            </div>
+
+            <h3>Module Structure (Modular Monolith)</h3>
+            <div class="mermaid">
+flowchart LR
+    subgraph Modules["📦 Backend Modules"]
+        AUTH[🔐 Auth]
+        USER[👤 User]
+        PRODUCT[📦 Product]
+        FABRIC[🧵 Fabric]
+        ORDER[📋 Order]
+        CART[🛒 Cart]
+        BILLING[💳 Billing]
+        APPOINTMENT[📅 Appointment]
+        MEASUREMENT[📏 Measurement]
+        PROMOTION[🎁 Promotion]
+        REVIEW[⭐ Review]
+        FAVORITE[❤️ Favorite]
+        FLASHSALE[⚡ Flash Sale]
+        NOTIFICATION[🔔 Notification]
+    end
+            </div>
+
+            <div class="info-box">
+                <strong>💡 Tại sao chọn Modular Monolith?</strong>
+                <ul>
+                    <li>Dễ phát triển và debug hơn Microservices</li>
+                    <li>Không cần quản lý phức tạp về network giữa services</li>
+                    <li>Có thể tách thành Microservices sau này nếu cần scale</li>
+                    <li>Phù hợp với team size nhỏ và dự án ở giai đoạn đầu</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Key Features -->
+        <div class="section">
+            <h2>⭐ 4. Tính Năng Chính</h2>
+
+            <h3>🛍️ E-commerce Features</h3>
+            <ul>
+                <li><strong>Product Catalog:</strong> Quản lý sản phẩm may sẵn với categories, variants, inventory</li>
+                <li><strong>Fabric Management:</strong> Quản lý kho vải với màu sắc, chất liệu, giá</li>
+                <li><strong>Shopping Cart:</strong> Giỏ hàng đa loại (Product, Fabric, Service)</li>
+                <li><strong>Order Management:</strong> Quản lý đơn hàng với workflow phức tạp (10+ trạng thái)</li>
+                <li><strong>Flash Sale:</strong> Chương trình sale theo thời gian thực</li>
+                <li><strong>Promotion System:</strong> Mã giảm giá Shopee-like với smart suggestions</li>
+            </ul>
+
+            <h3>📅 Appointment & Measurement</h3>
+            <ul>
+                <li><strong>Appointment Booking:</strong> Đặt lịch hẹn với conflict detection</li>
+                <li><strong>Working Slots:</strong> Quản lý khung giờ làm việc của nhân viên</li>
+                <li><strong>Measurement System:</strong> Lưu số đo với versioning để theo dõi thay đổi</li>
+            </ul>
+
+            <h3>👥 User & Review</h3>
+            <ul>
+                <li><strong>JWT Authentication:</strong> Access Token + Refresh Token</li>
+                <li><strong>Role-based Access:</strong> Customer, Staff, Tailor, Admin</li>
+                <li><strong>Review System:</strong> Đánh giá với shop reply, helpful votes, moderation</li>
+                <li><strong>Favorites:</strong> Wishlist đa loại sản phẩm</li>
+            </ul>
+
+            <h3>💳 Billing & Invoice</h3>
+            <ul>
+                <li><strong>Invoice Generation:</strong> Tự động tạo hóa đơn từ đơn hàng</li>
+                <li><strong>Payment Processing:</strong> Ghi nhận thanh toán với nhiều phương thức</li>
+                <li><strong>Promo Integration:</strong> Áp dụng mã giảm giá vào hóa đơn</li>
+            </ul>
+        </div>
+
+        <!-- Development Process -->
+        <div class="section">
+            <h2>📈 5. Quá Trình Phát Triển</h2>
+
+            <div class="timeline">
+                <div class="timeline-item">
+                    <div class="timeline-date">Phase 1: Planning & Design</div>
+                    <p>Phân tích yêu cầu, thiết kế database schema, định nghĩa API contracts, setup project structure</p>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-date">Phase 2: Core Backend</div>
+                    <p>Implement Auth, User, Product, Fabric modules. Setup Spring Security với JWT.</p>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-date">Phase 3: Order Management</div>
+                    <p>Xây dựng Order module với state machine phức tạp, Cart, Billing integration.</p>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-date">Phase 4: Advanced Features</div>
+                    <p>Appointment, Measurement, Promotion, Review, Flash Sale modules.</p>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-date">Phase 5: Frontend Development</div>
+                    <p>React app với Vite, responsive design, state management, API integration.</p>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-date">Phase 6: DevOps & Documentation</div>
+                    <p>Docker containerization, monitoring setup, API documentation, testing.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Technical Challenges -->
+        <div class="section">
+            <h2>🔥 6. Thách Thức Kỹ Thuật & Giải Pháp</h2>
+
+            <div class="highlight-box">
+                <h4>Challenge 1: Order State Machine phức tạp</h4>
+                <p><strong>Vấn đề:</strong> Đơn hàng may đo có nhiều trạng thái (10+) và transitions phức tạp.</p>
+                <p><strong>Giải pháp:</strong> Sử dụng State Pattern với validation chặt chẽ cho mỗi transition. 
+                   Tạo OrderStatusTransitionValidator để kiểm tra transition hợp lệ.</p>
+            </div>
+
+            <div class="highlight-box">
+                <h4>Challenge 2: Appointment Conflict Detection</h4>
+                <p><strong>Vấn đề:</strong> Tránh đặt lịch trùng giờ, cần buffer time giữa các lịch hẹn.</p>
+                <p><strong>Giải pháp:</strong> Implement thuật toán check overlap với effective time range 
+                   (startTime - buffer, endTime + buffer). Query database với range condition.</p>
+            </div>
+
+            <div class="highlight-box">
+                <h4>Challenge 3: Measurement Versioning</h4>
+                <p><strong>Vấn đề:</strong> Số đo khách hàng thay đổi theo thời gian, cần giữ lịch sử.</p>
+                <p><strong>Giải pháp:</strong> Implement versioning với groupId (UUID) và version number. 
+                   Update tạo version mới thay vì sửa record cũ.</p>
+            </div>
+
+            <div class="highlight-box">
+                <h4>Challenge 4: Promotion Logic phức tạp</h4>
+                <p><strong>Vấn đề:</strong> Mã giảm giá có nhiều điều kiện (min order, max discount, usage limit).</p>
+                <p><strong>Giải pháp:</strong> Tạo PromotionValidator với chain of validation rules. 
+                   Smart suggestion algorithm dựa trên cart value.</p>
+            </div>
+
+            <div class="highlight-box">
+                <h4>Challenge 5: Real-time Flash Sale</h4>
+                <p><strong>Vấn đề:</strong> Flash sale cần cập nhật real-time, tránh overselling.</p>
+                <p><strong>Giải pháp:</strong> Sử dụng Redis cho counter với atomic operations. 
+                   Optimistic locking cho database updates.</p>
+            </div>
+        </div>
+
+        <!-- Interview Q&A -->
+        <div class="section">
+            <h2>💬 7. Câu Hỏi Phỏng Vấn Thường Gặp</h2>
+
+            <div class="question-box">
+                <h4>❓ "Hãy giới thiệu về dự án của bạn?"</h4>
+                <div class="answer">
+                    <p>"Dự án Tailor Shop là một hệ thống quản lý cửa hàng may đo trực tuyến mà em đã phát triển. 
+                    Hệ thống cho phép khách hàng đặt may quần áo theo số đo, mua sản phẩm may sẵn, đặt lịch hẹn thử đồ, 
+                    và quản lý đơn hàng.</p>
+                    <p>Backend được xây dựng bằng Spring Boot 3 với kiến trúc Modular Monolith, bao gồm 15+ modules 
+                    như Order, Product, Appointment, Billing, Promotion... Frontend sử dụng React với Vite và TailwindCSS.</p>
+                    <p>Điểm đặc biệt của dự án là tích hợp nhiều tính năng e-commerce hiện đại như mã giảm giá Shopee-like, 
+                    flash sale, hệ thống đánh giá với shop reply, và appointment booking với conflict detection."</p>
+                </div>
+            </div>
+
+            <div class="question-box">
+                <h4>❓ "Tại sao bạn chọn kiến trúc Modular Monolith thay vì Microservices?"</h4>
+                <div class="answer">
+                    <p>"Em chọn Modular Monolith vì một số lý do:</p>
+                    <ul>
+                        <li><strong>Team size nhỏ:</strong> Microservices phù hợp với team lớn, còn dự án này em làm chủ yếu một mình hoặc team nhỏ.</li>
+                        <li><strong>Complexity:</strong> Microservices thêm độ phức tạp về network, distributed transactions, service discovery mà dự án chưa cần.</li>
+                        <li><strong>Development speed:</strong> Modular Monolith cho phép phát triển nhanh hơn, debug dễ hơn.</li>
+                        <li><strong>Future-proof:</strong> Cấu trúc module rõ ràng cho phép tách thành Microservices sau này nếu cần scale.</li>
+                    </ul>
+                    <p>Mỗi module có package riêng (controller, service, repository, dto, entity) và communicate qua service interfaces, 
+                    không phụ thuộc trực tiếp vào implementation của module khác."</p>
+                </div>
+            </div>
+
+            <div class="question-box">
+                <h4>❓ "Bạn xử lý authentication và authorization như thế nào?"</h4>
+                <div class="answer">
+                    <p>"Em implement JWT-based authentication với Spring Security:</p>
+                    <ul>
+                        <li><strong>Access Token:</strong> Short-lived (15-30 phút), dùng cho API requests.</li>
+                        <li><strong>Refresh Token:</strong> Long-lived (7 ngày), lưu trong database để có thể revoke.</li>
+                        <li><strong>JwtAuthenticationFilter:</strong> Intercept requests, validate token, set SecurityContext.</li>
+                        <li><strong>Role-based Authorization:</strong> Sử dụng @PreAuthorize annotation với SpEL expressions.</li>
+                        <li><strong>Brute-force Protection:</strong> LoginAttemptService track failed attempts, lock account sau 5 lần sai.</li>
+                    </ul>
+                    <p>Password reset sử dụng OTP gửi qua email với expiration time."</p>
+                </div>
+            </div>
+
+            <div class="question-box">
+                <h4>❓ "Giải thích về Order State Machine trong dự án?"</h4>
+                <div class="answer">
+                    <p>"Order trong hệ thống may đo có workflow phức tạp với 10+ trạng thái:</p>
+                    <pre><code>PENDING → CONFIRMED → MEASURING → CUTTING → SEWING → 
+QUALITY_CHECK → FITTING → ADJUSTING → READY → 
+DELIVERING → DELIVERED</code></pre>
+                    <p>Em implement State Pattern với:</p>
+                    <ul>
+                        <li><strong>OrderStatus enum:</strong> Định nghĩa tất cả trạng thái có thể.</li>
+                        <li><strong>Transition validation:</strong> Mỗi status có danh sách next states hợp lệ.</li>
+                        <li><strong>Event-driven updates:</strong> Khi status thay đổi, publish event để các module khác xử lý (tạo invoice, gửi notification).</li>
+                        <li><strong>Timeline tracking:</strong> Lưu lịch sử thay đổi trạng thái với timestamp và user thực hiện.</li>
+                    </ul>
+                    <p>Điều này đảm bảo đơn hàng không thể skip steps và có audit trail đầy đủ."</p>
+                </div>
+            </div>
+
+            <div class="question-box">
+                <h4>❓ "Bạn xử lý concurrency trong Flash Sale như thế nào?"</h4>
+                <div class="answer">
+                    <p>"Flash Sale có risk cao về overselling khi nhiều người mua cùng lúc. Em xử lý bằng:</p>
+                    <ul>
+                        <li><strong>Redis Atomic Counter:</strong> Sử dụng DECR command để giảm quantity, atomic và thread-safe.</li>
+                        <li><strong>Optimistic Locking:</strong> Entity có @Version field, JPA tự động check version khi update.</li>
+                        <li><strong>Database Constraint:</strong> CHECK constraint đảm bảo quantity >= 0.</li>
+                        <li><strong>Two-phase approach:</strong> Reserve trong Redis trước, commit vào DB sau khi payment success.</li>
+                    </ul>
+                    <p>Nếu Redis counter về 0, reject ngay mà không cần query database."</p>
+                </div>
+            </div>
+
+            <div class="question-box">
+                <h4>❓ "Bạn đã áp dụng design patterns nào trong dự án?"</h4>
+                <div class="answer">
+                    <ul>
+                        <li><strong>Repository Pattern:</strong> Spring Data JPA repositories cho data access layer.</li>
+                        <li><strong>Service Layer Pattern:</strong> Business logic tách biệt khỏi controllers.</li>
+                        <li><strong>DTO Pattern:</strong> Request/Response DTOs để decouple API từ entities.</li>
+                        <li><strong>Builder Pattern:</strong> Lombok @Builder cho entity và DTO creation.</li>
+                        <li><strong>State Pattern:</strong> Order status machine với valid transitions.</li>
+                        <li><strong>Observer Pattern:</strong> Spring Events cho loose coupling giữa modules.</li>
+                        <li><strong>Strategy Pattern:</strong> Discount calculation với different promotion types.</li>
+                        <li><strong>Factory Pattern:</strong> Creating different types of notifications.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="question-box">
+                <h4>❓ "Dự án có những điểm bạn muốn cải thiện không?"</h4>
+                <div class="answer">
+                    <p>"Có một số điểm em muốn cải thiện:</p>
+                    <ul>
+                        <li><strong>Testing:</strong> Tăng test coverage, thêm integration tests với Testcontainers.</li>
+                        <li><strong>Caching:</strong> Implement cache strategy chi tiết hơn với Redis.</li>
+                        <li><strong>Message Queue:</strong> Thêm RabbitMQ/Kafka cho async processing.</li>
+                        <li><strong>API Documentation:</strong> Hoàn thiện Swagger/OpenAPI documentation.</li>
+                        <li><strong>Performance:</strong> Thêm database indexing, query optimization.</li>
+                        <li><strong>CI/CD:</strong> Setup GitHub Actions cho automated testing và deployment.</li>
+                    </ul>
+                    <p>Đây là những improvements em sẽ làm nếu có thêm thời gian."</p>
+                </div>
+            </div>
+
+            <div class="question-box">
+                <h4>❓ "Bạn học được gì từ dự án này?"</h4>
+                <div class="answer">
+                    <ul>
+                        <li><strong>System Design:</strong> Cách thiết kế hệ thống từ đầu, chia modules, định nghĩa interfaces.</li>
+                        <li><strong>Spring Ecosystem:</strong> Deep understanding về Spring Boot, Security, Data JPA, Events.</li>
+                        <li><strong>Database Design:</strong> Normalization, relationships, indexing strategies.</li>
+                        <li><strong>API Design:</strong> RESTful conventions, error handling, pagination.</li>
+                        <li><strong>Problem Solving:</strong> Xử lý các edge cases, concurrency issues, business logic phức tạp.</li>
+                        <li><strong>DevOps:</strong> Docker, monitoring, deployment strategies.</li>
+                        <li><strong>Documentation:</strong> Tầm quan trọng của việc document code và APIs.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Key Metrics -->
+        <div class="section">
+            <h2>📊 8. Thống Kê Dự Án</h2>
+            
+            <table>
+                <thead>
+                    <tr>
+                        <th>Metric</th>
+                        <th>Value</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Backend Modules</td>
+                        <td>15+ modules</td>
+                    </tr>
+                    <tr>
+                        <td>Service Classes</td>
+                        <td>37 services</td>
+                    </tr>
+                    <tr>
+                        <td>API Endpoints</td>
+                        <td>100+ endpoints</td>
+                    </tr>
+                    <tr>
+                        <td>Database Tables</td>
+                        <td>30+ tables</td>
+                    </tr>
+                    <tr>
+                        <td>React Components</td>
+                        <td>50+ components</td>
+                    </tr>
+                    <tr>
+                        <td>Docker Services</td>
+                        <td>5 services (app, db, redis, prometheus, grafana)</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Contact & Links -->
+        <div class="section">
+            <h2>🔗 9. Links & Resources</h2>
+            
+            <div class="info-box">
+                <ul>
+                    <li><strong>📁 Source Code:</strong> GitHub Repository (nếu public)</li>
+                    <li><strong>📖 API Documentation:</strong> Swagger UI / Postman Collection</li>
+                    <li><strong>🎨 Demo:</strong> Live demo link (nếu có)</li>
+                    <li><strong>📊 Monitoring:</strong> Grafana Dashboard</li>
+                </ul>
+            </div>
+        </div>
+
+        <footer>
+            <p>Tailor Shop - Interview Guide</p>
+            <p style="margin-top: 10px;">Chuẩn bị cho phỏng vấn với confidence! 💪</p>
+        </footer>
+    </div>
+
+    <script>
+        mermaid.initialize({ startOnLoad: true, theme: 'default' });
+    </script>
+</body>
+
+</html>

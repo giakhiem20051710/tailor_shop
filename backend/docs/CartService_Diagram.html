@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CartService - Tài Liệu Chi Tiết</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f0f23 0%, #1a1a3e 100%);
+            color: #eee;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: #00d9ff;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+            text-shadow: 0 0 20px rgba(0, 217, 255, 0.3);
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #888;
+            margin-bottom: 30px;
+        }
+
+        h2 {
+            color: #ffd700;
+            margin: 40px 0 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #ffd700;
+        }
+
+        h3 {
+            color: #00ff88;
+            margin: 25px 0 15px;
+        }
+
+        .section {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 25px;
+            margin: 20px 0;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .mermaid {
+            background: #fff;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 15px 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+            font-size: 14px;
+        }
+
+        th,
+        td {
+            padding: 12px 15px;
+            text-align: left;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        th {
+            background: rgba(0, 217, 255, 0.2);
+            color: #00d9ff;
+        }
+
+        tr:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        code {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 2px 8px;
+            border-radius: 4px;
+            color: #00ff88;
+            font-family: 'Consolas', monospace;
+        }
+
+        pre {
+            background: rgba(0, 0, 0, 0.4);
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 10px 0;
+        }
+
+        pre code {
+            padding: 0;
+            background: transparent;
+        }
+
+        .success-box {
+            background: linear-gradient(135deg, rgba(0, 255, 136, 0.1), rgba(0, 217, 255, 0.1));
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 4px solid #00ff88;
+            margin: 15px 0;
+        }
+
+        .warning-box {
+            background: linear-gradient(135deg, rgba(255, 193, 7, 0.1), rgba(255, 152, 0, 0.1));
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 4px solid #ffc107;
+            margin: 15px 0;
+        }
+
+        .info-box {
+            background: linear-gradient(135deg, rgba(0, 123, 255, 0.1), rgba(0, 217, 255, 0.1));
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 4px solid #007bff;
+            margin: 15px 0;
+        }
+
+        ul,
+        ol {
+            padding-left: 25px;
+            margin: 10px 0;
+        }
+
+        li {
+            margin: 8px 0;
+            line-height: 1.6;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+            margin: 2px;
+        }
+
+        .badge-primary {
+            background: #007bff;
+            color: white;
+        }
+
+        .badge-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .badge-warning {
+            background: #ffc107;
+            color: black;
+        }
+
+        .badge-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .back-link {
+            display: inline-block;
+            color: #00d9ff;
+            text-decoration: none;
+            margin-bottom: 20px;
+            padding: 10px 20px;
+            border: 1px solid #00d9ff;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .back-link:hover {
+            background: rgba(0, 217, 255, 0.2);
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 60px;
+            padding-top: 30px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            color: #666;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <a href="index.html" class="back-link">← Quay lại trang chính</a>
+
+        <h1>🛒 CartService</h1>
+        <p class="subtitle">Quản lý Giỏ hàng - Generic Cart cho nhiều loại sản phẩm</p>
+
+        <!-- Overview Section -->
+        <div class="section">
+            <h2>📋 Tổng Quan</h2>
+            <p>CartService là module giỏ hàng độc lập, thiết kế generic để hỗ trợ nhiều loại sản phẩm:</p>
+            
+            <div class="success-box">
+                <strong>✨ Key Features:</strong>
+                <ul>
+                    <li><strong>Generic Design:</strong> Hỗ trợ FABRIC, PRODUCT, SERVICE</li>
+                    <li><strong>Quantity Validation:</strong> Kiểm tra tồn kho trước khi thêm</li>
+                    <li><strong>Cart Summary:</strong> Tính toán subtotal, discount, total</li>
+                    <li><strong>User-specific Cart:</strong> Mỗi user có giỏ hàng riêng</li>
+                </ul>
+            </div>
+
+            <div class="info-box">
+                <strong>💡 Thiết kế giống Shopee/FPT Shop:</strong>
+                <p>Cart là module độc lập, có thể tái sử dụng cho nhiều loại sản phẩm khác nhau.</p>
+            </div>
+        </div>
+
+        <!-- Architecture Diagram -->
+        <div class="section">
+            <h2>🏗️ Kiến Trúc Tổng Quan</h2>
+            <div class="mermaid">
+flowchart TB
+    subgraph Client["📱 Client"]
+        FE[Frontend App]
+    end
+
+    subgraph Controller["🎮 Controller Layer"]
+        CC[CartController]
+    end
+
+    subgraph Service["⚙️ Service Layer"]
+        CS[CartService]
+    end
+
+    subgraph Repository["💾 Repository Layer"]
+        CIR[CartItemRepository]
+        UR[UserRepository]
+        FR[FabricRepository]
+        FIR[FabricInventoryRepository]
+        PR[ProductRepository]
+    end
+
+    FE --> CC
+    CC --> CS
+    CS --> CIR
+    CS --> UR
+    CS --> FR
+    CS --> FIR
+    CS --> PR
+            </div>
+        </div>
+
+        <!-- Cart Item Types -->
+        <div class="section">
+            <h2>📦 Cart Item Types</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Type</th>
+                        <th>Mô tả</th>
+                        <th>Validation</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>FABRIC</code></td>
+                        <td>Vải may đo</td>
+                        <td>Check FabricInventory quantity</td>
+                    </tr>
+                    <tr>
+                        <td><code>PRODUCT</code></td>
+                        <td>Sản phẩm may sẵn</td>
+                        <td>Check Product availability</td>
+                    </tr>
+                    <tr>
+                        <td><code>SERVICE</code></td>
+                        <td>Dịch vụ may đo</td>
+                        <td>Check Service availability</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- API Endpoints -->
+        <div class="section">
+            <h2>🌐 API Endpoints</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Method</th>
+                        <th>Endpoint</th>
+                        <th>Mô tả</th>
+                        <th>Auth</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><span class="badge badge-success">POST</span></td>
+                        <td><code>/api/v1/cart</code></td>
+                        <td>Thêm sản phẩm vào giỏ</td>
+                        <td>CUSTOMER</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-primary">GET</span></td>
+                        <td><code>/api/v1/cart</code></td>
+                        <td>Xem giỏ hàng</td>
+                        <td>CUSTOMER</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-warning">PUT</span></td>
+                        <td><code>/api/v1/cart/{id}</code></td>
+                        <td>Cập nhật số lượng</td>
+                        <td>CUSTOMER</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-danger">DELETE</span></td>
+                        <td><code>/api/v1/cart/{id}</code></td>
+                        <td>Xóa sản phẩm khỏi giỏ</td>
+                        <td>CUSTOMER</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-danger">DELETE</span></td>
+                        <td><code>/api/v1/cart</code></td>
+                        <td>Xóa toàn bộ giỏ hàng</td>
+                        <td>CUSTOMER</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Add to Cart Flow -->
+        <div class="section">
+            <h2>🔄 Add to Cart Flow</h2>
+            <div class="mermaid">
+sequenceDiagram
+    participant C as Customer
+    participant CC as CartController
+    participant CS as CartService
+    participant UR as UserRepository
+    participant FR as FabricRepository
+    participant FIR as FabricInventoryRepository
+    participant CIR as CartItemRepository
+
+    C->>CC: POST /cart {itemType: FABRIC, itemId: 1, quantity: 2}
+    CC->>CS: addToCart(request, userId)
+    
+    CS->>UR: findById(userId)
+    UR-->>CS: UserEntity
+    
+    CS->>CS: validateItem(itemType, itemId, quantity)
+    
+    alt Item Type = FABRIC
+        CS->>FR: findById(itemId)
+        FR-->>CS: FabricEntity
+        
+        Note over CS: Check fabric.isAvailable = true
+        
+        CS->>FIR: sumAvailableQuantityByFabricId(itemId)
+        FIR-->>CS: availableQuantity
+        
+        alt quantity > availableQuantity
+            CS-->>C: 400 Bad Request (Insufficient quantity)
+        else quantity <= availableQuantity
+            Note over CS: Validation passed
+        end
+    end
+    
+    CS->>CIR: findByUserIdAndItemTypeAndItemId(userId, type, id)
+    
+    alt Existing Cart Item
+        CIR-->>CS: existingCartItem
+        CS->>CS: existingCartItem.quantity += request.quantity
+    else New Cart Item
+        CIR-->>CS: null
+        CS->>CS: Create new CartItemEntity
+    end
+    
+    CS->>CIR: save(cartItem)
+    CIR-->>CS: savedCartItem
+    
+    CS-->>C: 200 OK {cartItemResponse}
+            </div>
+        </div>
+
+        <!-- Get Cart Flow -->
+        <div class="section">
+            <h2>📋 Get Cart Summary Flow</h2>
+            <div class="mermaid">
+sequenceDiagram
+    participant C as Customer
+    participant CC as CartController
+    participant CS as CartService
+    participant CIR as CartItemRepository
+
+    C->>CC: GET /cart
+    CC->>CS: getCart(userId)
+    
+    CS->>CIR: findByUserId(userId)
+    CIR-->>CS: List<CartItemEntity>
+    
+    loop For each cart item
+        CS->>CS: toCartItemResponse(item)
+        Note over CS: Load item details based on type
+        Note over CS: Calculate subtotal = unitPrice × quantity
+        Note over CS: Check current availability
+    end
+    
+    CS->>CS: Calculate total subtotal
+    CS->>CS: Check hasAvailableItems
+    
+    CS-->>C: 200 OK {cartSummary}
+            </div>
+        </div>
+
+        <!-- Cart Entity -->
+        <div class="section">
+            <h2>📊 Cart Entity Structure</h2>
+            <div class="mermaid">
+erDiagram
+    USER ||--o{ CART_ITEM : has
+    CART_ITEM {
+        Long id PK
+        Long user_id FK
+        CartItemType item_type
+        Long item_id
+        BigDecimal quantity
+        Timestamp created_at
+        Timestamp updated_at
+    }
+    
+    CART_ITEM ||--o| FABRIC : references
+    CART_ITEM ||--o| PRODUCT : references
+    
+    FABRIC {
+        Long id PK
+        String name
+        BigDecimal price_per_meter
+        Boolean is_available
+    }
+    
+    PRODUCT {
+        Long id PK
+        String name
+        BigDecimal price
+        Boolean is_available
+    }
+            </div>
+        </div>
+
+        <!-- DTOs -->
+        <div class="section">
+            <h2>📦 Data Transfer Objects</h2>
+
+            <h3>AddToCartRequest</h3>
+            <pre><code>{
+    "itemType": "FABRIC",
+    "itemId": 123,
+    "quantity": 2.5
+}</code></pre>
+
+            <h3>CartItemResponse</h3>
+            <pre><code>{
+    "id": 1,
+    "itemType": "FABRIC",
+    "itemId": 123,
+    "itemName": "Vải Wool Cao Cấp",
+    "itemImage": "https://cdn.example.com/fabric-123.jpg",
+    "unitPrice": 500000,
+    "quantity": 2.5,
+    "subtotal": 1250000,
+    "isAvailable": true,
+    "availableQuantity": 10.0,
+    "addedAt": "2024-01-20T10:30:00Z"
+}</code></pre>
+
+            <h3>CartSummaryResponse</h3>
+            <pre><code>{
+    "items": [
+        {
+            "id": 1,
+            "itemType": "FABRIC",
+            "itemId": 123,
+            "itemName": "Vải Wool Cao Cấp",
+            "unitPrice": 500000,
+            "quantity": 2.5,
+            "subtotal": 1250000,
+            "isAvailable": true
+        },
+        {
+            "id": 2,
+            "itemType": "PRODUCT",
+            "itemId": 456,
+            "itemName": "Áo Vest Nam",
+            "unitPrice": 3500000,
+            "quantity": 1,
+            "subtotal": 3500000,
+            "isAvailable": true
+        }
+    ],
+    "itemCount": 2,
+    "subtotal": 4750000,
+    "discountAmount": 0,
+    "shippingFee": 0,
+    "total": 4750000,
+    "hasAvailableItems": true
+}</code></pre>
+        </div>
+
+        <!-- Validation Logic -->
+        <div class="section">
+            <h2>✅ Validation Logic</h2>
+            <div class="mermaid">
+flowchart TB
+    START[Add to Cart Request]
+    
+    CHECK_TYPE{Item Type?}
+    
+    subgraph FABRIC_VAL["Validate Fabric"]
+        F1[Find Fabric by ID]
+        F2{Fabric exists & not deleted?}
+        F3{isAvailable = true?}
+        F4[Get available quantity from inventory]
+        F5{request.quantity <= available?}
+    end
+    
+    subgraph PRODUCT_VAL["Validate Product"]
+        P1[Find Product by ID]
+        P2{Product exists & not deleted?}
+        P3{isAvailable = true?}
+    end
+    
+    SUCCESS[✅ Add to Cart]
+    ERROR[❌ Return Error]
+    
+    START --> CHECK_TYPE
+    CHECK_TYPE -->|FABRIC| F1
+    CHECK_TYPE -->|PRODUCT| P1
+    CHECK_TYPE -->|SERVICE| SUCCESS
+    
+    F1 --> F2
+    F2 -->|No| ERROR
+    F2 -->|Yes| F3
+    F3 -->|No| ERROR
+    F3 -->|Yes| F4
+    F4 --> F5
+    F5 -->|No| ERROR
+    F5 -->|Yes| SUCCESS
+    
+    P1 --> P2
+    P2 -->|No| ERROR
+    P2 -->|Yes| P3
+    P3 -->|No| ERROR
+    P3 -->|Yes| SUCCESS
+            </div>
+        </div>
+
+        <!-- Dependencies -->
+        <div class="section">
+            <h2>🔗 Dependencies</h2>
+            <div class="mermaid">
+flowchart LR
+    subgraph CartModule["🛒 Cart Module"]
+        CS[CartService]
+    end
+
+    subgraph FabricModule["🧶 Fabric Module"]
+        FR[FabricRepository]
+        FIR[FabricInventoryRepository]
+    end
+
+    subgraph ProductModule["📦 Product Module"]
+        PR[ProductRepository]
+    end
+
+    subgraph UserModule["👤 User Module"]
+        UR[UserRepository]
+    end
+
+    CS --> FR
+    CS --> FIR
+    CS --> PR
+    CS --> UR
+            </div>
+        </div>
+
+        <footer>
+            <p>Tailor Shop - CartService Documentation</p>
+            <p style="margin-top: 10px;">Generated for Backend Team Reference</p>
+        </footer>
+    </div>
+
+    <script>
+        mermaid.initialize({ startOnLoad: true, theme: 'default' });
+    </script>
+</body>
+
+</html>
