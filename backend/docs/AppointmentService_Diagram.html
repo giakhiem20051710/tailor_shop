@@ -1,0 +1,834 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AppointmentService - Tài Liệu Chi Tiết</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f0f23 0%, #1a1a3e 100%);
+            color: #eee;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: #00d9ff;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+            text-shadow: 0 0 20px rgba(0, 217, 255, 0.3);
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #888;
+            margin-bottom: 30px;
+        }
+
+        h2 {
+            color: #ffd700;
+            margin: 40px 0 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #ffd700;
+        }
+
+        h3 {
+            color: #00ff88;
+            margin: 25px 0 15px;
+        }
+
+        h4 {
+            color: #ff6b9d;
+            margin: 20px 0 10px;
+        }
+
+        .section {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 25px;
+            margin: 20px 0;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .mermaid {
+            background: #fff;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 15px 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+            font-size: 14px;
+        }
+
+        th,
+        td {
+            padding: 12px 15px;
+            text-align: left;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        th {
+            background: rgba(0, 217, 255, 0.2);
+            color: #00d9ff;
+        }
+
+        tr:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        code {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 2px 8px;
+            border-radius: 4px;
+            color: #00ff88;
+            font-family: 'Consolas', monospace;
+        }
+
+        pre {
+            background: rgba(0, 0, 0, 0.4);
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 10px 0;
+        }
+
+        pre code {
+            padding: 0;
+            background: transparent;
+        }
+
+        .highlight-box {
+            background: linear-gradient(135deg, rgba(255, 107, 107, 0.1), rgba(255, 107, 157, 0.1));
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 4px solid #ff6b6b;
+            margin: 15px 0;
+        }
+
+        .success-box {
+            background: linear-gradient(135deg, rgba(0, 255, 136, 0.1), rgba(0, 217, 255, 0.1));
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 4px solid #00ff88;
+            margin: 15px 0;
+        }
+
+        .warning-box {
+            background: linear-gradient(135deg, rgba(255, 193, 7, 0.1), rgba(255, 152, 0, 0.1));
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 4px solid #ffc107;
+            margin: 15px 0;
+        }
+
+        .info-box {
+            background: linear-gradient(135deg, rgba(0, 123, 255, 0.1), rgba(0, 217, 255, 0.1));
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 4px solid #007bff;
+            margin: 15px 0;
+        }
+
+        ul,
+        ol {
+            padding-left: 25px;
+            margin: 10px 0;
+        }
+
+        li {
+            margin: 8px 0;
+            line-height: 1.6;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+            margin: 2px;
+        }
+
+        .badge-primary {
+            background: #007bff;
+            color: white;
+        }
+
+        .badge-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .badge-warning {
+            background: #ffc107;
+            color: black;
+        }
+
+        .badge-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .badge-info {
+            background: #17a2b8;
+            color: white;
+        }
+
+        .back-link {
+            display: inline-block;
+            color: #00d9ff;
+            text-decoration: none;
+            margin-bottom: 20px;
+            padding: 10px 20px;
+            border: 1px solid #00d9ff;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .back-link:hover {
+            background: rgba(0, 217, 255, 0.2);
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 60px;
+            padding-top: 30px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            color: #666;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <a href="index.html" class="back-link">← Quay lại trang chính</a>
+
+        <h1>📅 AppointmentService</h1>
+        <p class="subtitle">Quản lý Lịch hẹn - Đặt lịch, Working Slots, Conflict Detection</p>
+
+        <!-- Overview Section -->
+        <div class="section">
+            <h2>📋 Tổng Quan</h2>
+            <p>AppointmentService quản lý toàn bộ quy trình đặt lịch hẹn của cửa hàng may đo:</p>
+            <ul>
+                <li><strong>AppointmentService:</strong> Quản lý lịch hẹn khách hàng</li>
+                <li><strong>WorkingSlotService:</strong> Quản lý khung giờ làm việc của nhân viên</li>
+            </ul>
+
+            <div class="success-box">
+                <strong>✨ Key Features:</strong>
+                <ul>
+                    <li>Đặt lịch hẹn với nhiều loại: đo số đo, thử đồ, tư vấn, xem vải</li>
+                    <li>Working slots với capacity management</li>
+                    <li>Conflict detection với buffer time</li>
+                    <li>Reschedule và cancel appointments</li>
+                    <li>Available slots suggestion</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Architecture Diagram -->
+        <div class="section">
+            <h2>🏗️ Kiến Trúc Tổng Quan</h2>
+            <div class="mermaid">
+flowchart TB
+    subgraph Client["📱 Client"]
+        FE[Frontend App]
+    end
+
+    subgraph Controller["🎮 Controller Layer"]
+        AC[AppointmentController]
+        WSC[WorkingSlotController]
+    end
+
+    subgraph Service["⚙️ Service Layer"]
+        AS[AppointmentService]
+        WSS[WorkingSlotService]
+    end
+
+    subgraph Repository["💾 Repository Layer"]
+        AR[AppointmentRepository]
+        WSR[WorkingSlotRepository]
+        OR[OrderRepository]
+        UR[UserRepository]
+    end
+
+    FE --> AC
+    FE --> WSC
+    AC --> AS
+    WSC --> WSS
+    AS --> WSS
+    AS --> AR
+    AS --> OR
+    AS --> UR
+    WSS --> WSR
+    WSS --> UR
+            </div>
+        </div>
+
+        <!-- Appointment Types -->
+        <div class="section">
+            <h2>📌 Appointment Types</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Type</th>
+                        <th>Mô tả</th>
+                        <th>Default Duration</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>measurement</code></td>
+                        <td>Đo số đo khách hàng</td>
+                        <td>30 phút</td>
+                    </tr>
+                    <tr>
+                        <td><code>fitting</code></td>
+                        <td>Thử đồ</td>
+                        <td>45 phút</td>
+                    </tr>
+                    <tr>
+                        <td><code>consultation</code></td>
+                        <td>Tư vấn thiết kế</td>
+                        <td>60 phút</td>
+                    </tr>
+                    <tr>
+                        <td><code>fabric_visit</code></td>
+                        <td>Xem vải tại cửa hàng</td>
+                        <td>30 phút</td>
+                    </tr>
+                    <tr>
+                        <td><code>pickup</code></td>
+                        <td>Nhận hàng</td>
+                        <td>15 phút</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="info-box">
+                <strong>💡 Secondary Types:</strong>
+                <p>Một appointment có thể có nhiều secondary types, ví dụ: đo số đo + tư vấn. Duration sẽ được tính tổng.</p>
+            </div>
+        </div>
+
+        <!-- Appointment Status -->
+        <div class="section">
+            <h2>📊 Appointment Status Flow</h2>
+            <div class="mermaid">
+stateDiagram-v2
+    [*] --> scheduled: Create Appointment
+    
+    scheduled --> confirmed: Staff Confirm
+    scheduled --> cancelled: Customer/Staff Cancel
+    
+    confirmed --> in_progress: Check-in
+    confirmed --> no_show: Customer No Show
+    confirmed --> cancelled: Cancel Before Time
+    
+    in_progress --> completed: Complete Service
+    
+    completed --> [*]
+    cancelled --> [*]
+    no_show --> [*]
+            </div>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Status</th>
+                        <th>Mô tả</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><span class="badge badge-info">scheduled</span></td>
+                        <td>Mới tạo, chờ xác nhận</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-primary">confirmed</span></td>
+                        <td>Đã xác nhận bởi nhân viên</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-warning">in_progress</span></td>
+                        <td>Đang thực hiện</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-success">completed</span></td>
+                        <td>Hoàn thành</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-danger">cancelled</span></td>
+                        <td>Đã hủy</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-danger">no_show</span></td>
+                        <td>Khách không đến</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- API Endpoints -->
+        <div class="section">
+            <h2>🌐 API Endpoints - Appointments</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Method</th>
+                        <th>Endpoint</th>
+                        <th>Mô tả</th>
+                        <th>Auth</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><span class="badge badge-primary">GET</span></td>
+                        <td><code>/api/v1/appointments</code></td>
+                        <td>Danh sách appointments (filter by staff, customer, date, status, type)</td>
+                        <td>ADMIN, STAFF, TAILOR, CUSTOMER</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-primary">GET</span></td>
+                        <td><code>/api/v1/appointments/{id}</code></td>
+                        <td>Chi tiết appointment</td>
+                        <td>ADMIN, STAFF, TAILOR, CUSTOMER</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-success">POST</span></td>
+                        <td><code>/api/v1/appointments</code></td>
+                        <td>Tạo appointment (bởi staff)</td>
+                        <td>ADMIN, STAFF, TAILOR</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-success">POST</span></td>
+                        <td><code>/api/v1/appointments/customer</code></td>
+                        <td>Khách tự đặt lịch (qua working slot)</td>
+                        <td>CUSTOMER</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-warning">PUT</span></td>
+                        <td><code>/api/v1/appointments/{id}</code></td>
+                        <td>Cập nhật appointment</td>
+                        <td>ADMIN, STAFF, TAILOR</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-warning">PATCH</span></td>
+                        <td><code>/api/v1/appointments/{id}/status</code></td>
+                        <td>Cập nhật trạng thái</td>
+                        <td>ADMIN, STAFF, TAILOR</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-danger">DELETE</span></td>
+                        <td><code>/api/v1/appointments/{id}</code></td>
+                        <td>Xóa appointment (soft delete)</td>
+                        <td>ADMIN, STAFF, TAILOR</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-primary">GET</span></td>
+                        <td><code>/api/v1/appointments/schedule</code></td>
+                        <td>Lịch làm việc của staff theo ngày</td>
+                        <td>ADMIN, STAFF, TAILOR</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-success">POST</span></td>
+                        <td><code>/api/v1/appointments/{id}/reschedule</code></td>
+                        <td>Dời lịch hẹn</td>
+                        <td>ADMIN, STAFF, TAILOR, CUSTOMER</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-primary">GET</span></td>
+                        <td><code>/api/v1/appointments/available-slots</code></td>
+                        <td>Lấy khung giờ trống</td>
+                        <td>ALL</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Create Appointment Flow -->
+        <div class="section">
+            <h2>🔄 Create Appointment Flow (Staff)</h2>
+            <div class="mermaid">
+sequenceDiagram
+    participant C as Client
+    participant AC as AppointmentController
+    participant AS as AppointmentService
+    participant OR as OrderRepository
+    participant UR as UserRepository
+    participant WSS as WorkingSlotService
+    participant AR as AppointmentRepository
+
+    C->>AC: POST /appointments {orderId, customerId, staffId, type, date, time}
+    AC->>AS: create(request, currentUserId)
+    
+    AS->>OR: findById(orderId)
+    OR-->>AS: OrderEntity
+    
+    AS->>UR: findById(customerId)
+    UR-->>AS: CustomerEntity
+    
+    Note over AS: Validate Order belongs to Customer
+    
+    alt Staff Assigned
+        AS->>UR: findById(staffId)
+        UR-->>AS: StaffEntity
+        
+        Note over AS: Validate Staff has STAFF/ADMIN role
+        
+        AS->>AS: calculateDuration(type, secondaryTypes)
+        AS->>AS: calculateEndTime(startTime + duration)
+        AS->>AS: calculateEffectiveRange(with buffer)
+        
+        AS->>AS: validateAppointmentTime(staffId, date, start, end)
+        AS->>AS: checkConflict(staffId, date, effectiveStart, effectiveEnd)
+        
+        alt Conflict Detected
+            AS-->>C: 400 Bad Request (Time slot conflict)
+        else No Conflict
+            AS->>AR: save(AppointmentEntity)
+            AR-->>AS: savedEntity
+            AS-->>C: 201 Created {appointment}
+        end
+    else No Staff (Auto-assign later)
+        AS->>AR: save(AppointmentEntity)
+        AR-->>AS: savedEntity
+        AS-->>C: 201 Created {appointment}
+    end
+            </div>
+        </div>
+
+        <!-- Customer Appointment Flow -->
+        <div class="section">
+            <h2>🔄 Create Appointment Flow (Customer)</h2>
+            <div class="mermaid">
+sequenceDiagram
+    participant C as Customer
+    participant AC as AppointmentController
+    participant AS as AppointmentService
+    participant WSR as WorkingSlotRepository
+    participant UR as UserRepository
+    participant AR as AppointmentRepository
+
+    C->>AC: POST /appointments/customer {workingSlotId, type, notes}
+    AC->>AS: createByCustomer(request, customerId)
+    
+    AS->>UR: findById(customerId)
+    UR-->>AS: CustomerEntity
+    
+    AS->>WSR: findById(workingSlotId)
+    WSR-->>AS: WorkingSlotEntity
+    
+    Note over AS: Validate slot is active
+    
+    AS->>AS: Check bookedCount < maxCapacity
+    
+    alt Slot Full
+        AS-->>C: 400 Bad Request (Slot is full)
+    else Slot Available
+        AS->>AR: save(AppointmentEntity)
+        AS->>WSR: incrementBookedCount(slotId)
+        AR-->>AS: savedEntity
+        AS-->>C: 201 Created {appointment}
+    end
+            </div>
+        </div>
+
+        <!-- Working Slot API -->
+        <div class="section">
+            <h2>🌐 API Endpoints - Working Slots</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Method</th>
+                        <th>Endpoint</th>
+                        <th>Mô tả</th>
+                        <th>Auth</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><span class="badge badge-primary">GET</span></td>
+                        <td><code>/api/v1/working-slots</code></td>
+                        <td>Danh sách slots theo staff và ngày</td>
+                        <td>ALL</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-primary">GET</span></td>
+                        <td><code>/api/v1/working-slots/all</code></td>
+                        <td>Tất cả slots theo ngày</td>
+                        <td>ALL</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-primary">GET</span></td>
+                        <td><code>/api/v1/working-slots/{id}</code></td>
+                        <td>Chi tiết slot</td>
+                        <td>ALL</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-success">POST</span></td>
+                        <td><code>/api/v1/working-slots</code></td>
+                        <td>Tạo slot mới</td>
+                        <td>ADMIN, STAFF</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-success">POST</span></td>
+                        <td><code>/api/v1/working-slots/bulk</code></td>
+                        <td>Tạo nhiều slots (bulk)</td>
+                        <td>ADMIN, STAFF</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-warning">PUT</span></td>
+                        <td><code>/api/v1/working-slots/{id}</code></td>
+                        <td>Cập nhật slot</td>
+                        <td>ADMIN, STAFF</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-danger">DELETE</span></td>
+                        <td><code>/api/v1/working-slots/{id}</code></td>
+                        <td>Xóa slot</td>
+                        <td>ADMIN, STAFF</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-success">POST</span></td>
+                        <td><code>/api/v1/working-slots/close-dates</code></td>
+                        <td>Đóng ngày (nghỉ)</td>
+                        <td>ADMIN, STAFF</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-success">POST</span></td>
+                        <td><code>/api/v1/working-slots/reset-default</code></td>
+                        <td>Reset về slots mặc định</td>
+                        <td>ADMIN, STAFF</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Working Hours -->
+        <div class="section">
+            <h2>⏰ Working Hours Configuration</h2>
+            
+            <div class="info-box">
+                <strong>📅 Default Working Hours:</strong>
+                <ul>
+                    <li><strong>Thứ 2 - Thứ 7:</strong> 7:00 AM - 11:00 PM</li>
+                    <li><strong>Chủ nhật:</strong> Nghỉ (có thể cấu hình)</li>
+                    <li><strong>Buffer Time:</strong> 15 phút giữa các appointments</li>
+                </ul>
+            </div>
+
+            <div class="mermaid">
+flowchart TB
+    subgraph WorkingSlot["📅 Working Slot Entity"]
+        ID[id]
+        STAFF[staffId]
+        DATE[slotDate]
+        START[startTime]
+        END[endTime]
+        CAP[maxCapacity]
+        BOOKED[bookedCount]
+        ACTIVE[isActive]
+        TYPES[appointmentTypes]
+    end
+
+    subgraph Validation["✅ Slot Validation"]
+        V1[isActive = true]
+        V2[bookedCount < maxCapacity]
+        V3[slotDate >= today]
+        V4[appointmentType in supportedTypes]
+    end
+
+    WorkingSlot --> Validation
+            </div>
+        </div>
+
+        <!-- Conflict Detection -->
+        <div class="section">
+            <h2>⚠️ Conflict Detection</h2>
+            
+            <div class="warning-box">
+                <strong>🔒 Buffer Time:</strong>
+                <p>Mỗi appointment có buffer time (mặc định 15 phút) trước và sau để đảm bảo không có xung đột.</p>
+            </div>
+
+            <div class="mermaid">
+gantt
+    title Appointment Time Slots với Buffer
+    dateFormat HH:mm
+    axisFormat %H:%M
+    
+    section Staff A
+    Buffer (15min)     :buffer1, 08:45, 15m
+    Appointment 1      :active, apt1, 09:00, 45m
+    Buffer (15min)     :buffer2, 09:45, 15m
+    Buffer (15min)     :buffer3, 10:45, 15m
+    Appointment 2      :active, apt2, 11:00, 30m
+    Buffer (15min)     :buffer4, 11:30, 15m
+            </div>
+
+            <h3>Conflict Check Logic</h3>
+            <pre><code>// Effective range = [startTime - buffer, endTime + buffer]
+LocalTime effectiveStart = startTime.minusMinutes(BUFFER_MINUTES);
+LocalTime effectiveEnd = endTime.plusMinutes(BUFFER_MINUTES);
+
+// Check overlap with existing appointments
+boolean hasConflict = appointmentRepository
+    .existsByStaffIdAndDateAndTimeRange(staffId, date, effectiveStart, effectiveEnd);</code></pre>
+        </div>
+
+        <!-- Available Slots Algorithm -->
+        <div class="section">
+            <h2>🎯 Available Slots Algorithm</h2>
+            <div class="mermaid">
+flowchart TB
+    START[Start: getAvailableSlots]
+    
+    PARAMS[Input: staffId, date, duration]
+    
+    GET_WH[Get Working Hours for date]
+    GET_APT[Get existing appointments]
+    
+    INIT[Initialize: currentTime = workStart]
+    
+    CHECK{currentTime + duration <= workEnd?}
+    
+    CONFLICT{Has conflict with existing appointments?}
+    
+    ADD[Add to available slots]
+    SKIP[Skip this slot]
+    
+    NEXT[currentTime += slotInterval]
+    
+    RETURN[Return available slots list]
+
+    START --> PARAMS
+    PARAMS --> GET_WH
+    GET_WH --> GET_APT
+    GET_APT --> INIT
+    INIT --> CHECK
+    
+    CHECK -->|Yes| CONFLICT
+    CHECK -->|No| RETURN
+    
+    CONFLICT -->|No| ADD
+    CONFLICT -->|Yes| SKIP
+    
+    ADD --> NEXT
+    SKIP --> NEXT
+    NEXT --> CHECK
+            </div>
+        </div>
+
+        <!-- DTOs -->
+        <div class="section">
+            <h2>📦 Data Transfer Objects</h2>
+
+            <h3>AppointmentRequest</h3>
+            <pre><code>{
+    "orderId": 123,
+    "customerId": 456,
+    "staffId": 789,
+    "type": "fitting",
+    "secondaryTypes": ["consultation"],
+    "appointmentDate": "2024-01-20",
+    "appointmentTime": "10:00",
+    "durationMinutes": 60,
+    "notes": "Thử đồ vest cho đám cưới"
+}</code></pre>
+
+            <h3>CustomerAppointmentRequest</h3>
+            <pre><code>{
+    "workingSlotId": 100,
+    "type": "fabric_visit",
+    "notes": "Muốn xem vải vest"
+}</code></pre>
+
+            <h3>AppointmentResponse</h3>
+            <pre><code>{
+    "id": 1,
+    "orderId": 123,
+    "orderCode": "ORD-20240120-001",
+    "customerId": 456,
+    "customerName": "Nguyễn Văn A",
+    "customerPhone": "0901234567",
+    "staffId": 789,
+    "staffName": "Trần Văn B",
+    "type": "fitting",
+    "secondaryTypes": ["consultation"],
+    "appointmentDate": "2024-01-20",
+    "appointmentTime": "10:00",
+    "estimatedEndTime": "11:00",
+    "durationMinutes": 60,
+    "status": "scheduled",
+    "notes": "Thử đồ vest cho đám cưới",
+    "createdAt": "2024-01-15T10:30:00Z"
+}</code></pre>
+
+            <h3>AvailableSlotResponse</h3>
+            <pre><code>{
+    "startTime": "10:00",
+    "endTime": "11:00",
+    "staffId": 789,
+    "staffName": "Trần Văn B",
+    "isAvailable": true
+}</code></pre>
+        </div>
+
+        <!-- Dependencies -->
+        <div class="section">
+            <h2>🔗 Dependencies</h2>
+            <div class="mermaid">
+flowchart LR
+    subgraph AppointmentModule["📅 Appointment Module"]
+        AS[AppointmentService]
+        WSS[WorkingSlotService]
+    end
+
+    subgraph OrderModule["📋 Order Module"]
+        OR[OrderRepository]
+    end
+
+    subgraph UserModule["👤 User Module"]
+        UR[UserRepository]
+    end
+
+    AS --> WSS
+    AS --> OR
+    AS --> UR
+    WSS --> UR
+            </div>
+        </div>
+
+        <footer>
+            <p>Tailor Shop - AppointmentService Documentation</p>
+            <p style="margin-top: 10px;">Generated for Backend Team Reference</p>
+        </footer>
+    </div>
+
+    <script>
+        mermaid.initialize({ startOnLoad: true, theme: 'default' });
+    </script>
+</body>
+
+</html>

@@ -3,7 +3,7 @@ echo ========================================
 echo   DEPLOYING BACKEND WITH LOCAL DB
 echo ========================================
 
-cd /d E:\Tailor_shop\tailor_shop
+cd /d E:\Tailor_shop
 
 echo.
 echo [1/3] Stopping existing containers...

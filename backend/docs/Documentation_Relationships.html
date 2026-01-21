@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Documentation Relationships - Tailor Shop</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f0f23 0%, #1a1a3e 50%, #0f0f23 100%);
+            color: #eee;
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: #00d9ff;
+            font-size: 3em;
+            margin-bottom: 10px;
+            text-shadow: 0 0 30px rgba(0, 217, 255, 0.6);
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #888;
+            margin-bottom: 40px;
+            font-size: 1.2em;
+        }
+
+        h2 {
+            color: #ffd700;
+            margin: 40px 0 20px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #ffd700;
+            font-size: 2em;
+        }
+
+        .section {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 30px;
+            margin: 25px 0;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .mermaid {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            margin: 20px 0;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        th,
+        td {
+            padding: 14px 16px;
+            text-align: left;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        th {
+            background: rgba(0, 217, 255, 0.3);
+            color: #00d9ff;
+            font-weight: 600;
+        }
+
+        tr:hover {
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .highlight {
+            background: linear-gradient(135deg, rgba(0, 217, 255, 0.15), rgba(0, 150, 200, 0.15));
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 4px solid #00d9ff;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>📚 Documentation Relationships</h1>
+        <p class="subtitle">Mối quan hệ giữa các files documentation</p>
+
+        <div class="section">
+            <h2>🗺️ Documentation Structure</h2>
+
+            <div class="mermaid">
+                graph TB
+                Index["index.html<br />(Homepage)"]
+
+                subgraph Core["Core Services"]
+                Order["OrderService_Diagram.html"]
+                Flash["FlashSaleService_Diagram.html"]
+                Fabric["FabricService_Diagram.html"]
+                ImageAsset["ImageAssetService_Diagram.html"]
+                end
+
+                subgraph Product["Product Module"]
+                ProdOverview["ProductModule_Diagram.html<br />(Overview)"]
+                AI["AI_Services_Documentation.html"]
+                Image["Image_Management_Services.html"]
+                CRUD["Product_CRUD_Services.html"]
+                Bulk["Bulk_Processing_Services.html"]
+                end
+
+                subgraph Guides["Architecture & Guides"]
+                Event["Event_Driven_Architecture_Guide.html"]
+                Security["Security_Audit_Report.html"]
+                end
+
+                Index --> Core
+                Index --> Product
+                Index --> Guides
+
+                ProdOverview --> AI
+                ProdOverview --> Image
+                ProdOverview --> CRUD
+                ProdOverview --> Bulk
+
+                AI -.-> Image
+                Image -.-> CRUD
+                CRUD -.-> Bulk
+
+                style Index fill:#00d9ff,color:#000
+                style ProdOverview fill:#ffd700,color:#000
+                style AI fill:#9c27b0,color:white
+                style Image fill:#4caf50,color:white
+                style CRUD fill:#2196f3,color:white
+                style Bulk fill:#ab47bc,color:white
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>🔗 Mối quan hệ giữa các files</h2>
+
+            <h3>1️⃣ ProductModule_Diagram.html (Parent)</h3>
+            <div class="highlight">
+                <strong>Vai trò:</strong> Tổng quan kiến trúc Product Module
+                <br><br>
+                <strong>Liên kết đến:</strong>
+                <ul>
+                    <li>→ AI_Services_Documentation.html (AI integration details)</li>
+                    <li>→ Image_Management_Services.html (Image handling)</li>
+                    <li>→ Product_CRUD_Services.html (Core CRUD)</li>
+                    <li>→ Bulk_Processing_Services.html (Batch operations)</li>
+                </ul>
+            </div>
+
+            <h3>2️⃣ AI_Services_Documentation.html</h3>
+            <div class="highlight">
+                <strong>Chức năng:</strong> Gemini Vision, Classification, Rate Limiting
+                <br><br>
+                <strong>Được sử dụng bởi:</strong>
+                <ul>
+                    <li>← Image_Management_Services.html (ImageAssetService uses AI)</li>
+                    <li>← Bulk_Processing_Services.html (Bulk classification uses AI)</li>
+                </ul>
+            </div>
+
+            <h3>3️⃣ Image_Management_Services.html</h3>
+            <div class="highlight">
+                <strong>Chức năng:</strong> S3 Upload, Duplicate Detection, Filename Parsing
+                <br><br>
+                <strong>Dependencies:</strong>
+                <ul>
+                    <li>→ AI_Services_Documentation.html (Uses GeminiVisionService)</li>
+                </ul>
+                <strong>Được sử dụng bởi:</strong>
+                <ul>
+                    <li>← Product_CRUD_Services.html (ProductService uses ImageAsset)</li>
+                    <li>← Bulk_Processing_Services.html (Bulk upload uses ImageAsset)</li>
+                </ul>
+            </div>
+
+            <h3>4️⃣ Product_CRUD_Services.html</h3>
+            <div class="highlight">
+                <strong>Chức năng:</strong> Product CRUD, Style, Category, Configuration
+                <br><br>
+                <strong>Dependencies:</strong>
+                <ul>
+                    <li>→ Image_Management_Services.html (Uses ImageAssetService)</li>
+                </ul>
+            </div>
+
+            <h3>5️⃣ Bulk_Processing_Services.html</h3>
+            <div class="highlight">
+                <strong>Chức năng:</strong> Async Jobs, Batch Upload, Trend Analysis
+                <br><br>
+                <strong>Dependencies:</strong>
+                <ul>
+                    <li>→ AI_Services_Documentation.html (Bulk AI classification)</li>
+                    <li>→ Image_Management_Services.html (Bulk image upload)</li>
+                    <li>→ Product_CRUD_Services.html (Bulk product creation)</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>📊 Service Dependencies Matrix</h2>
+
+            <table>
+                <tr>
+                    <th>Service</th>
+                    <th>Depends On</th>
+                    <th>Used By</th>
+                </tr>
+                <tr>
+                    <td><strong>GeminiVisionService</strong></td>
+                    <td>-</td>
+                    <td>ImageAssetService, BulkImageClassificationService</td>
+                </tr>
+                <tr>
+                    <td><strong>ImageClassificationService</strong></td>
+                    <td>-</td>
+                    <td>ImageAssetService (fallback)</td>
+                </tr>
+                <tr>
+                    <td><strong>AIRateLimiter</strong></td>
+                    <td>-</td>
+                    <td>GeminiVisionService</td>
+                </tr>
+                <tr>
+                    <td><strong>ImageAssetService</strong></td>
+                    <td>GeminiVisionService, ImageClassificationService, DuplicateCheckService</td>
+                    <td>ProductService, BulkProductService</td>
+                </tr>
+                <tr>
+                    <td><strong>DuplicateCheckService</strong></td>
+                    <td>-</td>
+                    <td>ImageAssetService</td>
+                </tr>
+                <tr>
+                    <td><strong>FilenameParserService</strong></td>
+                    <td>-</td>
+                    <td>ImageAssetService, BulkProductService</td>
+                </tr>
+                <tr>
+                    <td><strong>ProductServiceImpl</strong></td>
+                    <td>ImageAssetService</td>
+                    <td>Controllers, BulkProductService</td>
+                </tr>
+                <tr>
+                    <td><strong>BulkProductService</strong></td>
+                    <td>ImageAssetService, ProductService, GeminiVisionService</td>
+                    <td>Controllers</td>
+                </tr>
+            </table>
+        </div>
+
+        <div class="section">
+            <h2>🔄 Data Flow Example</h2>
+
+            <div class="mermaid">
+                sequenceDiagram
+                participant U as User
+                participant BP as BulkProductService
+                participant FP as FilenameParserService
+                participant DC as DuplicateCheckService
+                participant IAS as ImageAssetService
+                participant AI as GeminiVisionService
+                participant RL as AIRateLimiter
+                participant PS as ProductService
+
+                U->>BP: Upload 100 images
+
+                loop For each image
+                BP->>FP: Parse filename
+                FP-->>BP: ProductInfo
+
+                BP->>DC: Check duplicate
+                DC-->>BP: Not duplicate
+
+                BP->>IAS: Upload & classify
+                IAS->>RL: Rate limit check
+                RL->>AI: Analyze image
+                AI-->>RL: Classification
+                RL-->>IAS: Result
+                IAS-->>BP: ImageAsset created
+
+                BP->>PS: Create product
+                PS-->>BP: Product created
+                end
+
+                BP-->>U: Job completed
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>📝 Reading Order Recommendation</h2>
+
+            <div class="highlight">
+                <strong>Nếu bạn mới bắt đầu, đọc theo thứ tự:</strong>
+                <ol>
+                    <li><strong>ProductModule_Diagram.html</strong> - Hiểu tổng quan kiến trúc</li>
+                    <li><strong>AI_Services_Documentation.html</strong> - Hiểu AI integration</li>
+                    <li><strong>Image_Management_Services.html</strong> - Hiểu image handling</li>
+                    <li><strong>Product_CRUD_Services.html</strong> - Hiểu core CRUD</li>
+                    <li><strong>Bulk_Processing_Services.html</strong> - Hiểu batch operations</li>
+                </ol>
+
+                <br>
+                <strong>Nếu bạn quan tâm đến specific topic:</strong>
+                <ul>
+                    <li><strong>AI/ML:</strong> AI_Services_Documentation.html</li>
+                    <li><strong>File Upload:</strong> Image_Management_Services.html</li>
+                    <li><strong>Database CRUD:</strong> Product_CRUD_Services.html</li>
+                    <li><strong>Async Processing:</strong> Bulk_Processing_Services.html</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="section" style="text-align: center; margin-top: 50px;">
+            <p style="color: #888;">Created for Tailor Shop Project</p>
+            <p style="color: #666; font-size: 12px;">Documentation Relationships - 2024</p>
+            <a href="index.html" style="color: #00d9ff;">← Back to Homepage</a>
+        </div>
+    </div>
+
+    <script>
+        mermaid.initialize({ startOnLoad: true, theme: 'default', securityLevel: 'loose' });
+    </script>
+</body>
+
+</html>

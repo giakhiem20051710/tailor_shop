@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CV Highlights - Tailor Shop Project</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            text-align: center;
+            color: #667eea;
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #888;
+            margin-bottom: 30px;
+        }
+
+        h2 {
+            color: #764ba2;
+            font-size: 1.3em;
+            margin: 30px 0 15px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #667eea;
+        }
+
+        h3 {
+            color: #667eea;
+            font-size: 1.1em;
+            margin: 20px 0 10px;
+        }
+
+        .copy-section {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 15px 0;
+            position: relative;
+        }
+
+        .copy-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s;
+        }
+
+        .copy-btn:hover {
+            background: #764ba2;
+        }
+
+        .copy-btn.copied {
+            background: #28a745;
+        }
+
+        .bullet-point {
+            background: #fff;
+            border-left: 4px solid #667eea;
+            padding: 12px 15px;
+            margin: 10px 0;
+            border-radius: 0 8px 8px 0;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+        }
+
+        .tech-stack {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin: 15px 0;
+        }
+
+        .tech-tag {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .tag-backend {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .tag-frontend {
+            background: #cce5ff;
+            color: #004085;
+        }
+
+        .tag-devops {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .tag-other {
+            background: #e2e3e5;
+            color: #383d41;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+
+        th,
+        td {
+            padding: 12px;
+            text-align: left;
+            border: 1px solid #dee2e6;
+        }
+
+        th {
+            background: #667eea;
+            color: white;
+        }
+
+        tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+
+        .highlight {
+            color: #667eea;
+            font-weight: bold;
+        }
+
+        .tip-box {
+            background: linear-gradient(135deg, #fff3cd, #ffeeba);
+            padding: 15px 20px;
+            border-radius: 10px;
+            border-left: 4px solid #ffc107;
+            margin: 20px 0;
+        }
+
+        .back-link {
+            display: inline-block;
+            color: white;
+            text-decoration: none;
+            margin-bottom: 20px;
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+        }
+
+        .back-link:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        code {
+            background: #e9ecef;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+            color: #764ba2;
+        }
+
+        .version-toggle {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .version-btn {
+            padding: 8px 20px;
+            border: 2px solid #667eea;
+            background: white;
+            color: #667eea;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .version-btn.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .version-content {
+            display: none;
+        }
+
+        .version-content.active {
+            display: block;
+        }
+    </style>
+</head>
+
+<body>
+    <a href="index.html" class="back-link">← Quay lại trang chính</a>
+
+    <div class="container">
+        <h1>📝 CV Highlights</h1>
+        <p class="subtitle">Tailor Shop Project - Copy & Paste Ready</p>
+
+        <!-- Project Title -->
+        <h2>🎯 Project Title</h2>
+        <div class="copy-section">
+            <button class="copy-btn" onclick="copyText(this)">📋 Copy</button>
+            <strong>Tailor Shop</strong> - Full-stack E-commerce Platform for Custom Tailoring Services
+        </div>
+
+        <!-- Technical Summary -->
+        <h2>📋 Technical Summary (1-2 câu mô tả)</h2>
+        <div class="copy-section">
+            <button class="copy-btn" onclick="copyText(this)">📋 Copy</button>
+            Built a full-stack e-commerce platform for custom tailoring with <strong>15+ backend modules</strong>,
+            handling <strong>order lifecycle management</strong>, <strong>flash sales with high concurrency</strong>,
+            and <strong>AI-powered image classification</strong>.
+        </div>
+
+        <!-- Tech Stack -->
+        <h2>💻 Tech Stack</h2>
+
+        <h3>Version đầy đủ:</h3>
+        <div class="copy-section">
+            <button class="copy-btn" onclick="copyText(this)">📋 Copy</button>
+            <strong>Backend:</strong> Java 21, Spring Boot 3.3, Spring Security, Spring Data JPA, PostgreSQL, Redis<br>
+            <strong>Frontend:</strong> React 18, Vite, React Router 6, Axios, CSS3<br>
+            <strong>DevOps:</strong> Docker, Docker Compose, GitHub Actions, Prometheus, Grafana<br>
+            <strong>Others:</strong> AWS S3, Google Gemini AI, JWT, WebSocket
+        </div>
+
+        <h3>Version ngắn gọn:</h3>
+        <div class="copy-section">
+            <button class="copy-btn" onclick="copyText(this)">📋 Copy</button>
+            Java 21 | Spring Boot 3.3 | React 18 | PostgreSQL | Redis | Docker | AWS S3
+        </div>
+
+        <div class="tech-stack">
+            <span class="tech-tag tag-backend">Java 21</span>
+            <span class="tech-tag tag-backend">Spring Boot 3.3</span>
+            <span class="tech-tag tag-backend">Spring Security</span>
+            <span class="tech-tag tag-backend">PostgreSQL</span>
+            <span class="tech-tag tag-backend">Redis</span>
+            <span class="tech-tag tag-frontend">React 18</span>
+            <span class="tech-tag tag-frontend">Vite</span>
+            <span class="tech-tag tag-devops">Docker</span>
+            <span class="tech-tag tag-devops">GitHub Actions</span>
+            <span class="tech-tag tag-other">AWS S3</span>
+            <span class="tech-tag tag-other">Gemini AI</span>
+        </div>
+
+        <!-- Metrics -->
+        <h2>📊 Key Metrics</h2>
+        <table>
+            <tr>
+                <th>Metric</th>
+                <th>Value</th>
+            </tr>
+            <tr>
+                <td>Backend Modules</td>
+                <td><strong>15+</strong></td>
+            </tr>
+            <tr>
+                <td>Order States</td>
+                <td><strong>10+</strong></td>
+            </tr>
+            <tr>
+                <td>API Response Time Improvement</td>
+                <td><strong>97% faster</strong> (3.6s → 100ms)</td>
+            </tr>
+            <tr>
+                <td>Concurrent Users Handled</td>
+                <td><strong>1000+</strong></td>
+            </tr>
+            <tr>
+                <td>Architecture</td>
+                <td>Modular Monolith (microservices-ready)</td>
+            </tr>
+        </table>
+
+        <!-- Bullet Points -->
+        <h2>🏆 CV Bullet Points</h2>
+
+        <div class="version-toggle">
+            <button class="version-btn active" onclick="showVersion('short')">Ngắn gọn</button>
+            <button class="version-btn" onclick="showVersion('detailed')">Chi tiết</button>
+            <button class="version-btn" onclick="showVersion('english')">English</button>
+        </div>
+
+        <!-- Short Version -->
+        <div id="version-short" class="version-content active">
+            <p style="color: #666; margin-bottom: 15px;">Chọn 3-5 điểm phù hợp nhất:</p>
+
+            <div class="bullet-point">
+                <button class="copy-btn" onclick="copyBullet(this)">📋</button>
+                • Xây dựng hệ thống e-commerce full-stack với <strong>15+ Spring Boot modules</strong> và <strong>React
+                    18</strong>
+            </div>
+
+            <div class="bullet-point">
+                <button class="copy-btn" onclick="copyBullet(this)">📋</button>
+                • Thiết kế hệ thống Flash Sale xử lý <strong>1000+ concurrent users</strong> với pessimistic locking
+            </div>
+
+            <div class="bullet-point">
+                <button class="copy-btn" onclick="copyBullet(this)">📋</button>
+                • Tối ưu API response time <strong>giảm 97%</strong> (3.6s → 100ms) bằng event-driven architecture
+            </div>
+
+            <div class="bullet-point">
+                <button class="copy-btn" onclick="copyBullet(this)">📋</button>
+                • Implement <strong>JWT authentication</strong> với brute-force protection và OTP password reset
+            </div>
+
+            <div class="bullet-point">
+                <button class="copy-btn" onclick="copyBullet(this)">📋</button>
+                • Tích hợp <strong>AI image classification</strong> sử dụng Google Gemini API
+            </div>
+
+            <div class="bullet-point">
+                <button class="copy-btn" onclick="copyBullet(this)">📋</button>
+                • Thiết kế <strong>Order State Machine</strong> với 10+ trạng thái và audit logging
+            </div>
+
+            <div class="bullet-point">
+                <button class="copy-btn" onclick="copyBullet(this)">📋</button>
+                • Implement <strong>Redis caching</strong> tăng throughput lên 10x
+            </div>
+        </div>
+
+        <!-- Detailed Version -->
+        <div id="version-detailed" class="version-content">
+            <p style="color: #666; margin-bottom: 15px;">Version chi tiết với context:</p>
+
+            <div class="bullet-point">
+                <button class="copy-btn" onclick="copyBullet(this)">📋</button>
+                • <strong>Architected</strong> a modular monolith e-commerce platform with 15+ modules, enabling clean
+                separation of concerns and future microservices migration
+            </div>
+
+            <div class="bullet-point">
+                <button class="copy-btn" onclick="copyBullet(this)">📋</button>
+                • <strong>Engineered</strong> high-concurrency flash sale system using pessimistic locking and
+                reservation mechanism, eliminating 100% of overselling issues
+            </div>
+
+            <div class="bullet-point">
+                <button class="copy-btn" onclick="copyBullet(this)">📋</button>
+                • <strong>Optimized</strong> order creation flow from 3.6s to 100ms by implementing event-driven
+                architecture with Spring Events and async processing
+            </div>
+
+            <div class="bullet-point">
+                <button class="copy-btn" onclick="copyBullet(this)">📋</button>
+                • <strong>Designed</strong> complex order state machine with 10+ states, transition validation, and
+                complete audit trail for tracking
+            </div>
+
+            <div class="bullet-point">
+                <button class="copy-btn" onclick="copyBullet(this)">📋</button>
+                • <strong>Implemented</strong> multi-layer security with JWT dual token strategy, IP-based rate
+                limiting, and account lockout mechanism
+            </div>
+
+            <div class="bullet-point">
+                <button class="copy-btn" onclick="copyBullet(this)">📋</button>
+                • <strong>Integrated</strong> Google Gemini AI for automatic product image classification with rate
+                limiting and graceful degradation
+            </div>
+
+            <div class="bullet-point">
+                <button class="copy-btn" onclick="copyBullet(this)">📋</button>
+                • <strong>Deployed</strong> containerized application using Docker Compose with Prometheus/Grafana
+                monitoring stack
+            </div>
+        </div>
+
+        <!-- English Version -->
+        <div id="version-english" class="version-content">
+            <p style="color: #666; margin-bottom: 15px;">English version for international applications:</p>
+
+            <div class="bullet-point">
+                <button class="copy-btn" onclick="copyBullet(this)">📋</button>
+                • Developed full-stack e-commerce platform with <strong>15+ Spring Boot modules</strong> and
+                <strong>React 18</strong> frontend
+            </div>
+
+            <div class="bullet-point">
+                <button class="copy-btn" onclick="copyBullet(this)">📋</button>
+                • Implemented flash sale system handling <strong>1000+ concurrent users</strong> with pessimistic
+                locking
+            </div>
+
+            <div class="bullet-point">
+                <button class="copy-btn" onclick="copyBullet(this)">📋</button>
+                • Reduced API response time by <strong>97%</strong> using event-driven architecture and Redis caching
+            </div>
+
+            <div class="bullet-point">
+                <button class="copy-btn" onclick="copyBullet(this)">📋</button>
+                • Built <strong>JWT authentication</strong> with brute-force protection and OTP password reset
+            </div>
+
+            <div class="bullet-point">
+                <button class="copy-btn" onclick="copyBullet(this)">📋</button>
+                • Integrated <strong>AI image classification</strong> using Google Gemini API
+            </div>
+
+            <div class="bullet-point">
+                <button class="copy-btn" onclick="copyBullet(this)">📋</button>
+                • Designed <strong>Order State Machine</strong> with 10+ states and complete audit logging
+            </div>
+
+            <div class="bullet-point">
+                <button class="copy-btn" onclick="copyBullet(this)">📋</button>
+                • Containerized application using <strong>Docker</strong> with Prometheus/Grafana monitoring
+            </div>
+        </div>
+
+        <!-- Key Achievements -->
+        <h2>🎖️ Key Achievements (Thành tựu nổi bật)</h2>
+        <div class="copy-section">
+            <button class="copy-btn" onclick="copyText(this)">📋 Copy All</button>
+            <strong>1. Flash Sale System:</strong> Handled 1000+ concurrent requests with zero overselling using
+            pessimistic locking<br><br>
+            <strong>2. Performance:</strong> Reduced response time by 97% (3.6s → 100ms) with event-driven
+            architecture<br><br>
+            <strong>3. Security:</strong> Implemented multi-layer protection with JWT, rate limiting, and brute-force
+            prevention<br><br>
+            <strong>4. AI Integration:</strong> Automated product categorization using Google Gemini Vision API
+        </div>
+
+        <!-- Tips -->
+        <div class="tip-box">
+            <h3 style="color: #856404; margin-bottom: 10px;">💡 Tips khi viết CV</h3>
+            <ul style="margin-left: 20px;">
+                <li><strong>Dùng action verbs mạnh:</strong> Developed, Implemented, Architected, Engineered, Optimized
+                </li>
+                <li><strong>Có số liệu cụ thể:</strong> 15+ modules, 97% faster, 1000+ users</li>
+                <li><strong>Nêu impact:</strong> "eliminating overselling", "enabling future migration"</li>
+                <li><strong>Match với JD:</strong> Nếu JD cần microservices, nhấn mạnh "microservices-ready"</li>
+            </ul>
+        </div>
+
+        <!-- GitHub Description -->
+        <h2>📦 GitHub Repository Description</h2>
+        <div class="copy-section">
+            <button class="copy-btn" onclick="copyText(this)">📋 Copy</button>
+            🧵 Full-stack e-commerce platform for custom tailoring. Built with Spring Boot 3.3, React 18, PostgreSQL,
+            Redis. Features: Flash Sales, Order State Machine, JWT Auth, AI Image Classification, Prometheus/Grafana
+            monitoring.
+        </div>
+
+    </div>
+
+    <script>
+        function copyText(btn) {
+            const section = btn.parentElement;
+            const text = section.innerText.replace('📋 Copy', '').replace('📋 Copy All', '').trim();
+            navigator.clipboard.writeText(text);
+
+            btn.textContent = '✅ Copied!';
+            btn.classList.add('copied');
+            setTimeout(() => {
+                btn.textContent = '📋 Copy';
+                btn.classList.remove('copied');
+            }, 2000);
+        }
+
+        function copyBullet(btn) {
+            const bullet = btn.parentElement;
+            const text = bullet.innerText.replace('📋', '').trim();
+            navigator.clipboard.writeText(text);
+
+            btn.textContent = '✅';
+            btn.classList.add('copied');
+            setTimeout(() => {
+                btn.textContent = '📋';
+                btn.classList.remove('copied');
+            }, 2000);
+        }
+
+        function showVersion(version) {
+            // Hide all versions
+            document.querySelectorAll('.version-content').forEach(el => {
+                el.classList.remove('active');
+            });
+            document.querySelectorAll('.version-btn').forEach(el => {
+                el.classList.remove('active');
+            });
+
+            // Show selected version
+            document.getElementById('version-' + version).classList.add('active');
+            event.target.classList.add('active');
+        }
+    </script>
+</body>
+
+</html>

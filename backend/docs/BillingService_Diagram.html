@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BillingService - Tài Liệu Chi Tiết</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f0f23 0%, #1a1a3e 100%);
+            color: #eee;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: #00d9ff;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+            text-shadow: 0 0 20px rgba(0, 217, 255, 0.3);
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #888;
+            margin-bottom: 30px;
+        }
+
+        h2 {
+            color: #ffd700;
+            margin: 40px 0 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #ffd700;
+        }
+
+        h3 {
+            color: #00ff88;
+            margin: 25px 0 15px;
+        }
+
+        h4 {
+            color: #ff6b9d;
+            margin: 20px 0 10px;
+        }
+
+        .section {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 25px;
+            margin: 20px 0;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .mermaid {
+            background: #fff;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 15px 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+            font-size: 14px;
+        }
+
+        th,
+        td {
+            padding: 12px 15px;
+            text-align: left;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        th {
+            background: rgba(0, 217, 255, 0.2);
+            color: #00d9ff;
+        }
+
+        tr:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        code {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 2px 8px;
+            border-radius: 4px;
+            color: #00ff88;
+            font-family: 'Consolas', monospace;
+        }
+
+        pre {
+            background: rgba(0, 0, 0, 0.4);
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 10px 0;
+        }
+
+        pre code {
+            padding: 0;
+            background: transparent;
+        }
+
+        .highlight-box {
+            background: linear-gradient(135deg, rgba(255, 107, 107, 0.1), rgba(255, 107, 157, 0.1));
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 4px solid #ff6b6b;
+            margin: 15px 0;
+        }
+
+        .success-box {
+            background: linear-gradient(135deg, rgba(0, 255, 136, 0.1), rgba(0, 217, 255, 0.1));
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 4px solid #00ff88;
+            margin: 15px 0;
+        }
+
+        .warning-box {
+            background: linear-gradient(135deg, rgba(255, 193, 7, 0.1), rgba(255, 152, 0, 0.1));
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 4px solid #ffc107;
+            margin: 15px 0;
+        }
+
+        .info-box {
+            background: linear-gradient(135deg, rgba(0, 123, 255, 0.1), rgba(0, 217, 255, 0.1));
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 4px solid #007bff;
+            margin: 15px 0;
+        }
+
+        ul,
+        ol {
+            padding-left: 25px;
+            margin: 10px 0;
+        }
+
+        li {
+            margin: 8px 0;
+            line-height: 1.6;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+            margin: 2px;
+        }
+
+        .badge-primary {
+            background: #007bff;
+            color: white;
+        }
+
+        .badge-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .badge-warning {
+            background: #ffc107;
+            color: black;
+        }
+
+        .badge-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .badge-info {
+            background: #17a2b8;
+            color: white;
+        }
+
+        .back-link {
+            display: inline-block;
+            color: #00d9ff;
+            text-decoration: none;
+            margin-bottom: 20px;
+            padding: 10px 20px;
+            border: 1px solid #00d9ff;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .back-link:hover {
+            background: rgba(0, 217, 255, 0.2);
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 60px;
+            padding-top: 30px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            color: #666;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <a href="index.html" class="back-link">← Quay lại trang chính</a>
+
+        <h1>🧾 BillingService</h1>
+        <p class="subtitle">Quản lý Hóa đơn & Thanh toán - Invoice, Payment, Promo Code Integration</p>
+
+        <!-- Overview Section -->
+        <div class="section">
+            <h2>📋 Tổng Quan</h2>
+            <p>BillingService (InvoiceService) quản lý toàn bộ quy trình xuất hóa đơn và thanh toán:</p>
+            <ul>
+                <li><strong>Invoice Management:</strong> Tạo, xem, hủy hóa đơn</li>
+                <li><strong>Payment Processing:</strong> Xử lý thanh toán, callback từ payment gateway</li>
+                <li><strong>Promo Code Integration:</strong> Áp dụng mã giảm giá vào hóa đơn</li>
+                <li><strong>Customer Auto-Creation:</strong> Tự động tạo khách hàng mới từ số điện thoại</li>
+            </ul>
+
+            <div class="success-box">
+                <strong>✨ Key Features:</strong>
+                <ul>
+                    <li>Auto-generate invoice code (INV-YYYYMMDD-XXX)</li>
+                    <li>Support multiple payment methods</li>
+                    <li>Promo code discount calculation</li>
+                    <li>Tax calculation per item</li>
+                    <li>Payment transaction tracking</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Architecture Diagram -->
+        <div class="section">
+            <h2>🏗️ Kiến Trúc Tổng Quan</h2>
+            <div class="mermaid">
+flowchart TB
+    subgraph Client["📱 Client"]
+        FE[Frontend App]
+        PG[Payment Gateway]
+    end
+
+    subgraph Controller["🎮 Controller Layer"]
+        IC[InvoiceController]
+        SPC[SandboxPaymentController]
+    end
+
+    subgraph Service["⚙️ Service Layer"]
+        IS[InvoiceService]
+        PS[PromotionService]
+        US[UserService]
+    end
+
+    subgraph Repository["💾 Repository Layer"]
+        IR[InvoiceRepository]
+        IIR[InvoiceItemRepository]
+        PTR[PaymentTransactionRepository]
+        OR[OrderRepository]
+        UR[UserRepository]
+        PUR[PromotionUsageRepository]
+    end
+
+    FE --> IC
+    PG --> IC
+    IC --> IS
+    SPC --> IS
+    IS --> PS
+    IS --> US
+    IS --> IR
+    IS --> IIR
+    IS --> PTR
+    IS --> OR
+    IS --> UR
+    IS --> PUR
+            </div>
+        </div>
+
+        <!-- Invoice Status -->
+        <div class="section">
+            <h2>📊 Invoice Status Flow</h2>
+            <div class="mermaid">
+stateDiagram-v2
+    [*] --> issued: Create Invoice
+    
+    issued --> partial_paid: Partial Payment
+    issued --> paid: Full Payment
+    issued --> void: Void Invoice
+    
+    partial_paid --> paid: Complete Payment
+    partial_paid --> void: Void Invoice
+    
+    paid --> [*]
+    void --> [*]
+            </div>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Status</th>
+                        <th>Mô tả</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><span class="badge badge-info">issued</span></td>
+                        <td>Mới tạo, chờ thanh toán</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-warning">partial_paid</span></td>
+                        <td>Đã thanh toán một phần</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-success">paid</span></td>
+                        <td>Đã thanh toán đủ</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-danger">void</span></td>
+                        <td>Đã hủy</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Payment Providers -->
+        <div class="section">
+            <h2>💳 Payment Providers</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Provider</th>
+                        <th>Mô tả</th>
+                        <th>Type</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>cash</code></td>
+                        <td>Tiền mặt tại cửa hàng</td>
+                        <td>Offline</td>
+                    </tr>
+                    <tr>
+                        <td><code>bank_transfer</code></td>
+                        <td>Chuyển khoản ngân hàng</td>
+                        <td>Manual</td>
+                    </tr>
+                    <tr>
+                        <td><code>momo</code></td>
+                        <td>Ví MoMo</td>
+                        <td>E-Wallet</td>
+                    </tr>
+                    <tr>
+                        <td><code>vnpay</code></td>
+                        <td>VNPay Gateway</td>
+                        <td>Payment Gateway</td>
+                    </tr>
+                    <tr>
+                        <td><code>zalopay</code></td>
+                        <td>ZaloPay</td>
+                        <td>E-Wallet</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- API Endpoints -->
+        <div class="section">
+            <h2>🌐 API Endpoints</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Method</th>
+                        <th>Endpoint</th>
+                        <th>Mô tả</th>
+                        <th>Auth</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><span class="badge badge-primary">GET</span></td>
+                        <td><code>/api/v1/invoices</code></td>
+                        <td>Danh sách hóa đơn (filter by code, customer, status, date)</td>
+                        <td>ADMIN, STAFF, TAILOR, CUSTOMER</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-primary">GET</span></td>
+                        <td><code>/api/v1/invoices/{id}</code></td>
+                        <td>Chi tiết hóa đơn</td>
+                        <td>ADMIN, STAFF, TAILOR, CUSTOMER</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-success">POST</span></td>
+                        <td><code>/api/v1/invoices</code></td>
+                        <td>Tạo hóa đơn mới</td>
+                        <td>ADMIN, STAFF</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-success">POST</span></td>
+                        <td><code>/api/v1/invoices/{id}/void</code></td>
+                        <td>Hủy hóa đơn</td>
+                        <td>ADMIN, STAFF</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-success">POST</span></td>
+                        <td><code>/api/v1/invoices/payments</code></td>
+                        <td>Thêm thanh toán</td>
+                        <td>ADMIN, STAFF, CUSTOMER</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-success">POST</span></td>
+                        <td><code>/api/v1/invoices/payments/callback</code></td>
+                        <td>Callback từ payment gateway</td>
+                        <td>Public (webhook)</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Create Invoice Flow -->
+        <div class="section">
+            <h2>🔄 Create Invoice Flow</h2>
+            <div class="mermaid">
+sequenceDiagram
+    participant C as Client
+    participant IC as InvoiceController
+    participant IS as InvoiceService
+    participant UR as UserRepository
+    participant US as UserService
+    participant PS as PromotionService
+    participant IR as InvoiceRepository
+
+    C->>IC: POST /invoices {customerId/Phone, items, promoCode}
+    IC->>IS: create(request, currentUserId)
+    
+    IS->>UR: findById(staffId or currentUserId)
+    UR-->>IS: StaffEntity
+    
+    alt Customer ID provided
+        IS->>UR: findById(customerId)
+        UR-->>IS: CustomerEntity
+    else Customer Phone provided
+        IS->>UR: findByPhone(phone)
+        alt Customer Exists
+            UR-->>IS: CustomerEntity
+        else Customer Not Exists
+            IS->>US: create(newCustomerDTO)
+            US-->>IS: NewCustomerEntity
+        end
+    end
+    
+    Note over IS: Calculate subtotal from items
+    
+    alt Promo Code provided
+        IS->>PS: applyPromoCode(code, subtotal, userId)
+        PS-->>IS: ApplyPromoCodeResponse {discountAmount}
+    end
+    
+    Note over IS: Calculate: total = subtotal + tax - discount
+    
+    IS->>IS: generateCode() "INV-YYYYMMDD-XXX"
+    IS->>IR: save(InvoiceEntity with items)
+    IR-->>IS: savedInvoice
+    
+    IS-->>C: 201 Created {invoice}
+            </div>
+
+            <div class="info-box">
+                <strong>🆔 Auto Customer Creation:</strong>
+                <p>Nếu không có <code>customerId</code> nhưng có <code>customerPhone</code>, hệ thống sẽ tự động:</p>
+                <ol>
+                    <li>Tìm customer theo số điện thoại</li>
+                    <li>Nếu không có, tạo customer mới với role CUSTOMER</li>
+                    <li>Email mặc định: <code>{phone}@customer.local</code></li>
+                    <li>Password mặc định: <code>123456</code></li>
+                </ol>
+            </div>
+        </div>
+
+        <!-- Payment Flow -->
+        <div class="section">
+            <h2>💰 Payment Flow</h2>
+            <div class="mermaid">
+sequenceDiagram
+    participant C as Client
+    participant IC as InvoiceController
+    participant IS as InvoiceService
+    participant IR as InvoiceRepository
+    participant PTR as PaymentTransactionRepository
+
+    C->>IC: POST /invoices/payments {invoiceId, amount, provider}
+    IC->>IS: addPayment(request, currentUserId)
+    
+    IS->>IR: findById(invoiceId)
+    IR-->>IS: InvoiceEntity
+    
+    Note over IS: Validate invoice status (not void)
+    Note over IS: Calculate remaining = total - paidAmount
+    
+    alt Amount > Remaining
+        IS-->>C: 400 Bad Request (Amount exceeds remaining)
+    else Amount Valid
+        IS->>IS: Create PaymentTransaction
+        IS->>PTR: save(transaction)
+        PTR-->>IS: savedTransaction
+        
+        IS->>IS: Update invoice paidAmount
+        
+        alt paidAmount >= total
+            IS->>IS: Update status = PAID
+        else paidAmount > 0
+            IS->>IS: Update status = PARTIAL_PAID
+        end
+        
+        IS->>IR: save(invoice)
+        IS-->>C: 200 OK {paymentResponse}
+    end
+            </div>
+        </div>
+
+        <!-- Payment Callback Flow -->
+        <div class="section">
+            <h2>🔔 Payment Gateway Callback</h2>
+            <div class="mermaid">
+sequenceDiagram
+    participant PG as Payment Gateway
+    participant IC as InvoiceController
+    participant IS as InvoiceService
+    participant PTR as PaymentTransactionRepository
+    participant IR as InvoiceRepository
+
+    PG->>IC: POST /invoices/payments/callback {transactionId, status, signature}
+    IC->>IS: handleCallback(request)
+    
+    IS->>PTR: findByTransactionId(transactionId)
+    PTR-->>IS: PaymentTransaction
+    
+    Note over IS: Verify signature with secret key
+    
+    alt Signature Invalid
+        IS-->>PG: 400 Bad Request (Invalid signature)
+    else Signature Valid
+        alt Status = SUCCESS
+            IS->>IS: Update transaction status = SUCCESS
+            IS->>IS: Update invoice paidAmount
+            IS->>IR: save(invoice)
+            IS-->>PG: 200 OK
+        else Status = FAILED
+            IS->>IS: Update transaction status = FAILED
+            IS->>PTR: save(transaction)
+            IS-->>PG: 200 OK
+        end
+    end
+            </div>
+
+            <div class="warning-box">
+                <strong>⚠️ Webhook Security:</strong>
+                <p>Luôn verify signature từ payment gateway để đảm bảo request là hợp lệ.</p>
+                <p>Không xử lý duplicate callback (check transaction status trước).</p>
+            </div>
+        </div>
+
+        <!-- Invoice Calculation -->
+        <div class="section">
+            <h2>🧮 Invoice Calculation</h2>
+            
+            <h3>Price Calculation Formula</h3>
+            <div class="mermaid">
+flowchart TB
+    subgraph Item["📦 Per Item"]
+        UP[Unit Price]
+        QTY[Quantity]
+        ID[Item Discount]
+        TR[Tax Rate]
+        
+        LB[Line Base = UP × QTY - ID]
+        LT[Line Tax = LB × TR]
+        LA[Line Amount = LB + LT]
+    end
+
+    subgraph Invoice["🧾 Invoice Total"]
+        SUB[Subtotal = Σ Line Amount]
+        TAX[Tax Amount = Σ Line Tax]
+        PROMO[Promo Discount]
+        TOTAL[Total = Subtotal - Promo Discount]
+    end
+
+    UP --> LB
+    QTY --> LB
+    ID --> LB
+    LB --> LT
+    TR --> LT
+    LB --> LA
+    LT --> LA
+    LA --> SUB
+    LT --> TAX
+    SUB --> TOTAL
+    PROMO --> TOTAL
+            </div>
+
+            <h3>Example Calculation</h3>
+            <pre><code>Item 1: Vest Nam
+  - Unit Price: 5,000,000 VND
+  - Quantity: 1
+  - Discount: 0
+  - Tax Rate: 10%
+  - Line Base: 5,000,000
+  - Line Tax: 500,000
+  - Line Amount: 5,500,000
+
+Item 2: Áo Sơ Mi
+  - Unit Price: 800,000 VND
+  - Quantity: 2
+  - Discount: 100,000
+  - Tax Rate: 10%
+  - Line Base: 800,000 × 2 - 100,000 = 1,500,000
+  - Line Tax: 150,000
+  - Line Amount: 1,650,000
+
+Subtotal: 7,150,000 VND
+Promo Code "SUMMER20": -20% (max 1,000,000) = -1,000,000
+Total: 6,150,000 VND</code></pre>
+        </div>
+
+        <!-- Promo Code Integration -->
+        <div class="section">
+            <h2>🎁 Promo Code Integration</h2>
+            <div class="mermaid">
+sequenceDiagram
+    participant IS as InvoiceService
+    participant PS as PromotionService
+    participant PUR as PromotionUsageRepository
+
+    IS->>PS: applyPromoCode({code, orderAmount, userId})
+    
+    PS->>PS: Validate promo code exists
+    PS->>PS: Validate promo is active
+    PS->>PS: Validate date range
+    PS->>PS: Validate min order value
+    
+    PS->>PUR: countByPromotionAndUser(promo, user)
+    PUR-->>PS: userUsageCount
+    
+    alt User exceeded max usage
+        PS-->>IS: Error (Usage limit reached)
+    else Valid
+        PS->>PS: Calculate discount amount
+        PS-->>IS: ApplyPromoCodeResponse {discountAmount, finalAmount}
+    end
+            </div>
+
+            <div class="success-box">
+                <strong>✅ Promo Code Validation:</strong>
+                <ul>
+                    <li>Code exists and not deleted</li>
+                    <li>Status = ACTIVE</li>
+                    <li>Current date within start/end date</li>
+                    <li>Order amount >= minOrderValue</li>
+                    <li>User usage count < maxUsagePerUser</li>
+                    <li>Total usage count < maxUsageTotal</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- DTOs -->
+        <div class="section">
+            <h2>📦 Data Transfer Objects</h2>
+
+            <h3>InvoiceRequest</h3>
+            <pre><code>{
+    "customerId": 123,
+    // OR
+    "customerPhone": "0901234567",
+    "customerName": "Nguyễn Văn A",
+    
+    "orderId": 456,
+    "staffId": 789,
+    "currency": "VND",
+    "promoCode": "SUMMER20",
+    "taxAmount": 500000,
+    "dueDate": "2024-02-01",
+    "notes": "Hóa đơn may vest + áo sơ mi",
+    "items": [
+        {
+            "productId": 1,
+            "productName": "Vest Nam Cao Cấp",
+            "description": "Vest 2 khuy, vải wool",
+            "quantity": 1,
+            "unitPrice": 5000000,
+            "discountAmount": 0,
+            "taxRate": 0.10
+        },
+        {
+            "productId": 2,
+            "productName": "Áo Sơ Mi Trắng",
+            "quantity": 2,
+            "unitPrice": 800000,
+            "discountAmount": 100000,
+            "taxRate": 0.10
+        }
+    ]
+}</code></pre>
+
+            <h3>InvoiceResponse</h3>
+            <pre><code>{
+    "id": 1,
+    "code": "INV-20240120-001",
+    "orderId": 456,
+    "orderCode": "ORD-20240115-001",
+    "customerId": 123,
+    "customerName": "Nguyễn Văn A",
+    "customerPhone": "0901234567",
+    "staffId": 789,
+    "staffName": "Trần Văn B",
+    "status": "issued",
+    "currency": "VND",
+    "subtotal": 7150000,
+    "taxAmount": 650000,
+    "discountAmount": 1000000,
+    "total": 6150000,
+    "paidAmount": 0,
+    "promotionId": 10,
+    "promotionCode": "SUMMER20",
+    "notes": "Hóa đơn may vest + áo sơ mi",
+    "dueDate": "2024-02-01",
+    "issuedAt": "2024-01-20T10:30:00Z",
+    "items": [...],
+    "payments": []
+}</code></pre>
+
+            <h3>PaymentRequest</h3>
+            <pre><code>{
+    "invoiceId": 1,
+    "amount": 3000000,
+    "provider": "momo",
+    "notes": "Thanh toán đặt cọc 50%"
+}</code></pre>
+
+            <h3>PaymentResponse</h3>
+            <pre><code>{
+    "id": 1,
+    "invoiceId": 1,
+    "transactionId": "TXN-20240120-001",
+    "amount": 3000000,
+    "provider": "momo",
+    "status": "pending",
+    "paymentUrl": "https://momo.vn/pay/...",
+    "createdAt": "2024-01-20T10:35:00Z"
+}</code></pre>
+        </div>
+
+        <!-- Dependencies -->
+        <div class="section">
+            <h2>🔗 Dependencies</h2>
+            <div class="mermaid">
+flowchart LR
+    subgraph BillingModule["🧾 Billing Module"]
+        IS[InvoiceService]
+    end
+
+    subgraph PromotionModule["🎁 Promotion Module"]
+        PS[PromotionService]
+    end
+
+    subgraph UserModule["👤 User Module"]
+        US[UserService]
+        UR[UserRepository]
+    end
+
+    subgraph OrderModule["📋 Order Module"]
+        OR[OrderRepository]
+    end
+
+    IS --> PS
+    IS --> US
+    IS --> UR
+    IS --> OR
+            </div>
+        </div>
+
+        <footer>
+            <p>Tailor Shop - BillingService Documentation</p>
+            <p style="margin-top: 10px;">Generated for Backend Team Reference</p>
+        </footer>
+    </div>
+
+    <script>
+        mermaid.initialize({ startOnLoad: true, theme: 'default' });
+    </script>
+</body>
+
+</html>

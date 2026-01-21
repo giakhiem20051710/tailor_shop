@@ -1,0 +1,841 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UserService - Tài Liệu Chi Tiết</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f0f23 0%, #1a1a3e 100%);
+            color: #eee;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: #00d9ff;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+            text-shadow: 0 0 20px rgba(0, 217, 255, 0.3);
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #888;
+            margin-bottom: 30px;
+        }
+
+        h2 {
+            color: #ffd700;
+            margin: 40px 0 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #ffd700;
+        }
+
+        h3 {
+            color: #00ff88;
+            margin: 25px 0 15px;
+        }
+
+        .section {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 25px;
+            margin: 20px 0;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .mermaid {
+            background: #fff;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 15px 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+            font-size: 14px;
+        }
+
+        th,
+        td {
+            padding: 12px 15px;
+            text-align: left;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        th {
+            background: rgba(0, 217, 255, 0.2);
+            color: #00d9ff;
+        }
+
+        tr:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        code {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 2px 8px;
+            border-radius: 4px;
+            color: #00ff88;
+            font-family: 'Consolas', monospace;
+        }
+
+        pre {
+            background: rgba(0, 0, 0, 0.4);
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 10px 0;
+        }
+
+        pre code {
+            padding: 0;
+            background: transparent;
+        }
+
+        .success-box {
+            background: linear-gradient(135deg, rgba(0, 255, 136, 0.1), rgba(0, 217, 255, 0.1));
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 4px solid #00ff88;
+            margin: 15px 0;
+        }
+
+        .warning-box {
+            background: linear-gradient(135deg, rgba(255, 193, 7, 0.1), rgba(255, 152, 0, 0.1));
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 4px solid #ffc107;
+            margin: 15px 0;
+        }
+
+        .info-box {
+            background: linear-gradient(135deg, rgba(0, 123, 255, 0.1), rgba(0, 217, 255, 0.1));
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 4px solid #007bff;
+            margin: 15px 0;
+        }
+
+        ul,
+        ol {
+            padding-left: 25px;
+            margin: 10px 0;
+        }
+
+        li {
+            margin: 8px 0;
+            line-height: 1.6;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+            margin: 2px;
+        }
+
+        .badge-primary {
+            background: #007bff;
+            color: white;
+        }
+
+        .badge-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .badge-warning {
+            background: #ffc107;
+            color: black;
+        }
+
+        .badge-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .badge-info {
+            background: #17a2b8;
+            color: white;
+        }
+
+        .back-link {
+            display: inline-block;
+            color: #00d9ff;
+            text-decoration: none;
+            margin-bottom: 20px;
+            padding: 10px 20px;
+            border: 1px solid #00d9ff;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .back-link:hover {
+            background: rgba(0, 217, 255, 0.2);
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 60px;
+            padding-top: 30px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            color: #666;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <a href="index.html" class="back-link">← Quay lại trang chính</a>
+
+        <h1>👤 UserService</h1>
+        <p class="subtitle">Hệ thống Quản lý Người dùng - User Management & Profile</p>
+
+        <!-- Overview Section -->
+        <div class="section">
+            <h2>📋 Tổng Quan</h2>
+            <p>UserService quản lý thông tin người dùng bao gồm customers, staff, và admins:</p>
+            
+            <div class="success-box">
+                <strong>✨ Key Features:</strong>
+                <ul>
+                    <li><strong>User CRUD:</strong> Tạo, đọc, cập nhật, xóa người dùng</li>
+                    <li><strong>Profile Management:</strong> Quản lý thông tin cá nhân</li>
+                    <li><strong>Role-based Queries:</strong> Tìm kiếm theo role (Customer, Staff, Admin)</li>
+                    <li><strong>Avatar Upload:</strong> Tích hợp với Image Service</li>
+                    <li><strong>Address Management:</strong> Quản lý địa chỉ giao hàng</li>
+                    <li><strong>Soft Delete:</strong> Hỗ trợ xóa mềm</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Architecture Diagram -->
+        <div class="section">
+            <h2>🏗️ Kiến Trúc Tổng Quan</h2>
+            <div class="mermaid">
+flowchart TB
+    subgraph Client["📱 Client"]
+        FE[Frontend App]
+        Admin[Admin Panel]
+    end
+
+    subgraph Controller["🎮 Controller Layer"]
+        UC[UserController]
+        PC[ProfileController]
+    end
+
+    subgraph Service["⚙️ Service Layer"]
+        US[UserService]
+    end
+
+    subgraph Repository["💾 Repository Layer"]
+        UR[UserRepository]
+        AR[AddressRepository]
+    end
+
+    subgraph Integration["🔗 Integration"]
+        AS[AuthService]
+        IS[ImageService]
+    end
+
+    FE --> UC
+    FE --> PC
+    Admin --> UC
+    UC --> US
+    PC --> US
+    US --> UR
+    US --> AR
+    AS --> US
+    US --> IS
+            </div>
+        </div>
+
+        <!-- User Roles -->
+        <div class="section">
+            <h2>👥 User Roles</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Role</th>
+                        <th>Mô tả</th>
+                        <th>Permissions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><span class="badge badge-info">CUSTOMER</span></td>
+                        <td>Khách hàng</td>
+                        <td>Đặt hàng, đặt lịch, đánh giá, quản lý profile</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-warning">STAFF</span></td>
+                        <td>Nhân viên</td>
+                        <td>Quản lý đơn hàng, đo số đo, phục vụ khách</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-success">TAILOR</span></td>
+                        <td>Thợ may</td>
+                        <td>Nhận và hoàn thành đơn may đo</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-danger">ADMIN</span></td>
+                        <td>Quản trị viên</td>
+                        <td>Full access, quản lý users, settings</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Entity Diagram -->
+        <div class="section">
+            <h2>📊 Entity Diagram</h2>
+            <div class="mermaid">
+erDiagram
+    USER ||--o{ ADDRESS : has
+    USER ||--o{ ORDER : places
+    USER ||--o{ MEASUREMENT : has
+    USER ||--o{ APPOINTMENT : books
+    USER ||--o{ REVIEW : writes
+
+    USER {
+        Long id PK
+        String email UK
+        String phone UK
+        String password
+        String fullName
+        String avatarUrl
+        Role role
+        Boolean isEmailVerified
+        Boolean isPhoneVerified
+        Boolean isActive
+        LocalDate dateOfBirth
+        Gender gender
+        Timestamp createdAt
+        Timestamp updatedAt
+        Boolean isDeleted
+    }
+
+    ADDRESS {
+        Long id PK
+        Long userId FK
+        String fullName
+        String phone
+        String province
+        String district
+        String ward
+        String streetAddress
+        Boolean isDefault
+        Boolean isDeleted
+    }
+            </div>
+        </div>
+
+        <!-- API Endpoints -->
+        <div class="section">
+            <h2>🌐 API Endpoints</h2>
+            
+            <h3>User Management (Admin)</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Method</th>
+                        <th>Endpoint</th>
+                        <th>Mô tả</th>
+                        <th>Auth</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><span class="badge badge-primary">GET</span></td>
+                        <td><code>/api/v1/users</code></td>
+                        <td>Danh sách tất cả users (paginated)</td>
+                        <td>ADMIN</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-primary">GET</span></td>
+                        <td><code>/api/v1/users/{id}</code></td>
+                        <td>Chi tiết user</td>
+                        <td>ADMIN, STAFF</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-primary">GET</span></td>
+                        <td><code>/api/v1/users/customers</code></td>
+                        <td>Danh sách khách hàng</td>
+                        <td>ADMIN, STAFF</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-primary">GET</span></td>
+                        <td><code>/api/v1/users/staff</code></td>
+                        <td>Danh sách nhân viên</td>
+                        <td>ADMIN</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-primary">GET</span></td>
+                        <td><code>/api/v1/users/tailors</code></td>
+                        <td>Danh sách thợ may</td>
+                        <td>ADMIN, STAFF</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-success">POST</span></td>
+                        <td><code>/api/v1/users</code></td>
+                        <td>Tạo user mới (by admin)</td>
+                        <td>ADMIN</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-warning">PUT</span></td>
+                        <td><code>/api/v1/users/{id}</code></td>
+                        <td>Cập nhật user</td>
+                        <td>ADMIN</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-danger">DELETE</span></td>
+                        <td><code>/api/v1/users/{id}</code></td>
+                        <td>Xóa user (soft delete)</td>
+                        <td>ADMIN</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-warning">PATCH</span></td>
+                        <td><code>/api/v1/users/{id}/status</code></td>
+                        <td>Kích hoạt/vô hiệu hóa user</td>
+                        <td>ADMIN</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-warning">PATCH</span></td>
+                        <td><code>/api/v1/users/{id}/role</code></td>
+                        <td>Thay đổi role</td>
+                        <td>ADMIN</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Profile Management (User)</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Method</th>
+                        <th>Endpoint</th>
+                        <th>Mô tả</th>
+                        <th>Auth</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><span class="badge badge-primary">GET</span></td>
+                        <td><code>/api/v1/profile</code></td>
+                        <td>Xem profile của mình</td>
+                        <td>Authenticated</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-warning">PUT</span></td>
+                        <td><code>/api/v1/profile</code></td>
+                        <td>Cập nhật profile</td>
+                        <td>Authenticated</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-success">POST</span></td>
+                        <td><code>/api/v1/profile/avatar</code></td>
+                        <td>Upload avatar</td>
+                        <td>Authenticated</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-warning">PUT</span></td>
+                        <td><code>/api/v1/profile/password</code></td>
+                        <td>Đổi mật khẩu</td>
+                        <td>Authenticated</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Address Management</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Method</th>
+                        <th>Endpoint</th>
+                        <th>Mô tả</th>
+                        <th>Auth</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><span class="badge badge-primary">GET</span></td>
+                        <td><code>/api/v1/addresses</code></td>
+                        <td>Danh sách địa chỉ của mình</td>
+                        <td>CUSTOMER</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-success">POST</span></td>
+                        <td><code>/api/v1/addresses</code></td>
+                        <td>Thêm địa chỉ mới</td>
+                        <td>CUSTOMER</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-warning">PUT</span></td>
+                        <td><code>/api/v1/addresses/{id}</code></td>
+                        <td>Cập nhật địa chỉ</td>
+                        <td>CUSTOMER</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-danger">DELETE</span></td>
+                        <td><code>/api/v1/addresses/{id}</code></td>
+                        <td>Xóa địa chỉ</td>
+                        <td>CUSTOMER</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-warning">PATCH</span></td>
+                        <td><code>/api/v1/addresses/{id}/default</code></td>
+                        <td>Đặt làm địa chỉ mặc định</td>
+                        <td>CUSTOMER</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Create User Flow -->
+        <div class="section">
+            <h2>🔄 Create User Flow (Admin)</h2>
+            <div class="mermaid">
+sequenceDiagram
+    participant A as Admin
+    participant UC as UserController
+    participant US as UserService
+    participant UR as UserRepository
+    participant PE as PasswordEncoder
+
+    A->>UC: POST /users {email, phone, fullName, role, password}
+    UC->>US: createUser(request)
+    
+    US->>UR: existsByEmail(email)
+    alt Email exists
+        UR-->>US: true
+        US-->>A: 409 Conflict (Email already exists)
+    else Email available
+        UR-->>US: false
+        
+        US->>UR: existsByPhone(phone)
+        alt Phone exists
+            UR-->>US: true
+            US-->>A: 409 Conflict (Phone already exists)
+        else Phone available
+            UR-->>US: false
+            
+            US->>PE: encode(password)
+            PE-->>US: encodedPassword
+            
+            US->>US: Create UserEntity
+            Note over US: email, phone, fullName
+            Note over US: role = request.role
+            Note over US: isActive = true
+            Note over US: isEmailVerified = false
+            
+            US->>UR: save(user)
+            UR-->>US: savedUser
+            
+            US-->>A: 201 Created {userResponse}
+        end
+    end
+            </div>
+        </div>
+
+        <!-- Update Profile Flow -->
+        <div class="section">
+            <h2>📝 Update Profile Flow</h2>
+            <div class="mermaid">
+sequenceDiagram
+    participant U as User
+    participant PC as ProfileController
+    participant US as UserService
+    participant UR as UserRepository
+
+    U->>PC: PUT /profile {fullName, phone, dateOfBirth, gender}
+    PC->>US: updateProfile(request, currentUserId)
+    
+    US->>UR: findByIdAndIsDeletedFalse(currentUserId)
+    UR-->>US: UserEntity
+    
+    alt Phone changed
+        US->>UR: existsByPhoneAndIdNot(newPhone, userId)
+        alt Phone taken by others
+            UR-->>US: true
+            US-->>U: 409 Conflict (Phone already used)
+        else Phone available
+            UR-->>US: false
+        end
+    end
+    
+    US->>US: Update fields
+    Note over US: fullName = request.fullName
+    Note over US: phone = request.phone
+    Note over US: dateOfBirth = request.dateOfBirth
+    Note over US: gender = request.gender
+    
+    US->>UR: save(user)
+    UR-->>US: updatedUser
+    
+    US-->>U: 200 OK {userResponse}
+            </div>
+        </div>
+
+        <!-- Avatar Upload -->
+        <div class="section">
+            <h2>🖼️ Avatar Upload Flow</h2>
+            <div class="mermaid">
+sequenceDiagram
+    participant U as User
+    participant PC as ProfileController
+    participant US as UserService
+    participant IS as ImageService
+    participant UR as UserRepository
+
+    U->>PC: POST /profile/avatar (multipart file)
+    PC->>US: uploadAvatar(file, userId)
+    
+    US->>UR: findByIdAndIsDeletedFalse(userId)
+    UR-->>US: UserEntity
+    
+    alt Has old avatar
+        US->>IS: deleteImage(oldAvatarUrl)
+    end
+    
+    US->>IS: uploadImage(file, "avatars")
+    IS-->>US: newAvatarUrl
+    
+    US->>US: user.setAvatarUrl(newAvatarUrl)
+    US->>UR: save(user)
+    UR-->>US: updatedUser
+    
+    US-->>U: 200 OK {avatarUrl}
+            </div>
+        </div>
+
+        <!-- Address Management -->
+        <div class="section">
+            <h2>📍 Address Management Flow</h2>
+            <div class="mermaid">
+sequenceDiagram
+    participant C as Customer
+    participant AC as AddressController
+    participant US as UserService
+    participant AR as AddressRepository
+
+    C->>AC: POST /addresses {fullName, phone, province, district, ward, streetAddress, isDefault}
+    AC->>US: addAddress(request, userId)
+    
+    alt isDefault = true
+        US->>AR: updateAllToNotDefault(userId)
+        Note over AR: Set isDefault = false for all
+    end
+    
+    US->>US: Create AddressEntity
+    US->>AR: save(address)
+    AR-->>US: savedAddress
+    
+    US-->>C: 201 Created {addressResponse}
+            </div>
+
+            <div class="info-box">
+                <strong>💡 Default Address Logic:</strong>
+                <p>Khi đặt một địa chỉ làm mặc định, tất cả các địa chỉ khác sẽ tự động được cập nhật <code>isDefault = false</code>.</p>
+            </div>
+        </div>
+
+        <!-- Search & Filter -->
+        <div class="section">
+            <h2>🔍 Search & Filter</h2>
+            
+            <h3>Query Parameters</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Parameter</th>
+                        <th>Type</th>
+                        <th>Mô tả</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>keyword</code></td>
+                        <td>String</td>
+                        <td>Tìm theo tên, email, phone</td>
+                    </tr>
+                    <tr>
+                        <td><code>role</code></td>
+                        <td>Enum</td>
+                        <td>CUSTOMER, STAFF, TAILOR, ADMIN</td>
+                    </tr>
+                    <tr>
+                        <td><code>isActive</code></td>
+                        <td>Boolean</td>
+                        <td>Trạng thái kích hoạt</td>
+                    </tr>
+                    <tr>
+                        <td><code>isEmailVerified</code></td>
+                        <td>Boolean</td>
+                        <td>Đã xác thực email</td>
+                    </tr>
+                    <tr>
+                        <td><code>createdFrom</code></td>
+                        <td>Date</td>
+                        <td>Ngày tạo từ</td>
+                    </tr>
+                    <tr>
+                        <td><code>createdTo</code></td>
+                        <td>Date</td>
+                        <td>Ngày tạo đến</td>
+                    </tr>
+                    <tr>
+                        <td><code>page</code></td>
+                        <td>Integer</td>
+                        <td>Số trang (0-indexed)</td>
+                    </tr>
+                    <tr>
+                        <td><code>size</code></td>
+                        <td>Integer</td>
+                        <td>Số items per page</td>
+                    </tr>
+                    <tr>
+                        <td><code>sort</code></td>
+                        <td>String</td>
+                        <td>createdAt,desc hoặc fullName,asc</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- DTOs -->
+        <div class="section">
+            <h2>📦 Data Transfer Objects</h2>
+
+            <h3>UserRequest (Create/Update)</h3>
+            <pre><code>{
+    "email": "customer@example.com",
+    "phone": "0901234567",
+    "fullName": "Nguyễn Văn A",
+    "password": "SecurePass123!",  // Only for create
+    "role": "CUSTOMER",  // Only admin can set
+    "dateOfBirth": "1990-05-15",
+    "gender": "MALE"
+}</code></pre>
+
+            <h3>UserResponse</h3>
+            <pre><code>{
+    "id": 1,
+    "email": "customer@example.com",
+    "phone": "0901234567",
+    "fullName": "Nguyễn Văn A",
+    "avatarUrl": "https://cdn.example.com/avatars/1.jpg",
+    "role": "CUSTOMER",
+    "dateOfBirth": "1990-05-15",
+    "gender": "MALE",
+    "isActive": true,
+    "isEmailVerified": true,
+    "isPhoneVerified": false,
+    "createdAt": "2024-01-01T10:00:00Z",
+    "updatedAt": "2024-06-15T14:30:00Z"
+}</code></pre>
+
+            <h3>ProfileUpdateRequest</h3>
+            <pre><code>{
+    "fullName": "Nguyễn Văn B",
+    "phone": "0909876543",
+    "dateOfBirth": "1990-05-15",
+    "gender": "MALE"
+}</code></pre>
+
+            <h3>AddressRequest</h3>
+            <pre><code>{
+    "fullName": "Nguyễn Văn A",
+    "phone": "0901234567",
+    "province": "Hồ Chí Minh",
+    "district": "Quận 1",
+    "ward": "Phường Bến Nghé",
+    "streetAddress": "123 Đường Lê Lợi",
+    "isDefault": true
+}</code></pre>
+
+            <h3>AddressResponse</h3>
+            <pre><code>{
+    "id": 1,
+    "fullName": "Nguyễn Văn A",
+    "phone": "0901234567",
+    "province": "Hồ Chí Minh",
+    "district": "Quận 1",
+    "ward": "Phường Bến Nghé",
+    "streetAddress": "123 Đường Lê Lợi",
+    "fullAddress": "123 Đường Lê Lợi, Phường Bến Nghé, Quận 1, Hồ Chí Minh",
+    "isDefault": true,
+    "createdAt": "2024-01-01T10:00:00Z"
+}</code></pre>
+        </div>
+
+        <!-- Dependencies -->
+        <div class="section">
+            <h2>🔗 Dependencies</h2>
+            <div class="mermaid">
+flowchart LR
+    subgraph UserModule["👤 User Module"]
+        US[UserService]
+    end
+
+    subgraph AuthModule["🔐 Auth Module"]
+        AS[AuthService]
+    end
+
+    subgraph ImageModule["🖼️ Image Module"]
+        IS[ImageService]
+    end
+
+    subgraph OrderModule["📋 Order Module"]
+        OS[OrderService]
+    end
+
+    subgraph BillingModule["💳 Billing Module"]
+        BS[InvoiceService]
+    end
+
+    subgraph MeasurementModule["📏 Measurement Module"]
+        MS[MeasurementService]
+    end
+
+    AS --> US
+    OS --> US
+    BS --> US
+    MS --> US
+    US --> IS
+            </div>
+        </div>
+
+        <footer>
+            <p>Tailor Shop - UserService Documentation</p>
+            <p style="margin-top: 10px;">Generated for Backend Team Reference</p>
+        </footer>
+    </div>
+
+    <script>
+        mermaid.initialize({ startOnLoad: true, theme: 'default' });
+    </script>
+</body>
+
+</html>

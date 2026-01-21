@@ -1,0 +1,874 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Module - Architecture & Flow Diagram</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            color: #eee;
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: #00d4ff;
+            font-size: 2.8em;
+            margin-bottom: 10px;
+            text-shadow: 0 0 20px rgba(0, 212, 255, 0.5);
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #888;
+            margin-bottom: 40px;
+            font-size: 1.1em;
+        }
+
+        h2 {
+            color: #ffd700;
+            margin: 40px 0 20px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #ffd700;
+            font-size: 2em;
+        }
+
+        h3 {
+            color: #00ff88;
+            margin: 30px 0 15px;
+            font-size: 1.5em;
+        }
+
+        h4 {
+            color: #ff6b6b;
+            margin: 20px 0 10px;
+        }
+
+        .section {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 30px;
+            margin: 25px 0;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .mermaid {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            margin: 20px 0;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 14px;
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        th,
+        td {
+            padding: 14px 16px;
+            text-align: left;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        th {
+            background: rgba(0, 212, 255, 0.3);
+            color: #00d4ff;
+            font-weight: 600;
+        }
+
+        tr:hover {
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        code {
+            background: rgba(0, 0, 0, 0.4);
+            padding: 3px 8px;
+            border-radius: 4px;
+            color: #00ff88;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 0.9em;
+        }
+
+        pre {
+            background: rgba(0, 0, 0, 0.5);
+            padding: 20px;
+            border-radius: 10px;
+            overflow-x: auto;
+            margin: 15px 0;
+            border-left: 4px solid #00d4ff;
+        }
+
+        .highlight {
+            background: linear-gradient(135deg, rgba(0, 212, 255, 0.15), rgba(0, 150, 200, 0.15));
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 4px solid #00d4ff;
+            margin: 20px 0;
+        }
+
+        .warning {
+            background: linear-gradient(135deg, rgba(255, 193, 7, 0.15), rgba(200, 150, 0, 0.15));
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 4px solid #ffc107;
+            margin: 20px 0;
+        }
+
+        .success {
+            background: linear-gradient(135deg, rgba(0, 255, 136, 0.15), rgba(0, 200, 100, 0.15));
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 4px solid #00ff88;
+            margin: 20px 0;
+        }
+
+        ul,
+        ol {
+            padding-left: 25px;
+            margin: 15px 0;
+        }
+
+        li {
+            margin: 10px 0;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.85em;
+            font-weight: 600;
+            margin: 0 5px;
+        }
+
+        .badge-ai {
+            background: #9c27b0;
+            color: white;
+        }
+
+        .badge-s3 {
+            background: #ff9800;
+            color: white;
+        }
+
+        .badge-crud {
+            background: #2196f3;
+            color: white;
+        }
+
+        .badge-bulk {
+            background: #4caf50;
+            color: white;
+        }
+
+        .toc {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 25px;
+            border-radius: 12px;
+            margin: 30px 0;
+        }
+
+        .toc a {
+            color: #00d4ff;
+            text-decoration: none;
+        }
+
+        .toc a:hover {
+            text-decoration: underline;
+            color: #00ff88;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .grid-2 {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>🛍️ Product Module</h1>
+        <p class="subtitle">Architecture, Flow Diagrams & AI Integration</p>
+
+        <!-- Table of Contents -->
+        <div class="toc">
+            <h3>📑 Mục Lục</h3>
+            <ol>
+                <li><a href="#overview">Tổng quan Module</a></li>
+                <li><a href="#architecture">Kiến trúc tổng thể</a></li>
+                <li><a href="#components">Các thành phần chính</a></li>
+                <li><a href="#image-asset">Image Asset Service (AI Integration)</a></li>
+                <li><a href="#product-flow">Product Management Flow</a></li>
+                <li><a href="#bulk-operations">Bulk Operations</a></li>
+                <li><a href="#ai-classification">AI Classification với Gemini</a></li>
+                <li><a href="#entities">Database Entities</a></li>
+            </ol>
+        </div>
+
+        <!-- Section 1: Overview -->
+        <div class="section" id="overview">
+            <h2>1️⃣ Tổng quan Module</h2>
+
+            <div class="highlight">
+                <strong>Product Module</strong> là module quản lý sản phẩm may đo với các tính năng:
+                <ul>
+                    <li>✅ CRUD operations cho Products</li>
+                    <li>🤖 AI-powered image classification với Gemini Vision</li>
+                    <li>☁️ S3 storage integration</li>
+                    <li>📦 Bulk upload & processing</li>
+                    <li>🎨 Style & Category management</li>
+                    <li>📊 Trend analysis</li>
+                    <li>🔍 Advanced filtering & search</li>
+                </ul>
+            </div>
+
+            <h3>📊 Module Statistics</h3>
+            <table>
+                <tr>
+                    <th>Component</th>
+                    <th>Count</th>
+                    <th>Description</th>
+                </tr>
+                <tr>
+                    <td>Controllers</td>
+                    <td>7</td>
+                    <td>Product, ImageAsset, BulkProduct, Style, Trend, CategoryTemplate, ProductConfiguration</td>
+                </tr>
+                <tr>
+                    <td>Services</td>
+                    <td>17</td>
+                    <td>Bao gồm AI Vision, Classification, Bulk Processing</td>
+                </tr>
+                <tr>
+                    <td>Entities</td>
+                    <td>9</td>
+                    <td>Product, ImageAsset, Style, CategoryTemplate, etc.</td>
+                </tr>
+                <tr>
+                    <td>DTOs</td>
+                    <td>25+</td>
+                    <td>Request/Response objects</td>
+                </tr>
+                <tr>
+                    <td>Repositories</td>
+                    <td>9</td>
+                    <td>JPA repositories</td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- Section 2: Architecture -->
+        <div class="section" id="architecture">
+            <h2>2️⃣ Kiến trúc tổng thể</h2>
+
+            <div class="mermaid">
+                flowchart TB
+                subgraph Client["Client Layer"]
+                UI["React Frontend"]
+                end
+
+                subgraph Controllers["Controller Layer"]
+                PC["ProductController"]
+                IAC["ImageAssetController<br />(AI Integration)"]
+                BPC["BulkProductController"]
+                SC["StyleController"]
+                TAC["TrendAnalysisController"]
+                end
+
+                subgraph Services["Service Layer"]
+                PS["ProductService"]
+                IAS["ImageAssetService"]
+                AIVS["AIVisionService<br />(Gemini)"]
+                ICS["ImageClassificationService"]
+                BPS["BulkProductService"]
+                SS["StyleService"]
+                TAS["TrendAnalysisService"]
+                end
+
+                subgraph External["External Services"]
+                S3["AWS S3<br />(Image Storage)"]
+                Gemini["Google Gemini AI<br />(Vision API)"]
+                end
+
+                subgraph Data["Data Layer"]
+                DB[(MySQL Database)]
+                end
+
+                UI --> PC
+                UI --> IAC
+                UI --> BPC
+
+                PC --> PS
+                IAC --> IAS
+                IAC --> AIVS
+                BPC --> BPS
+                SC --> SS
+                TAC --> TAS
+
+                IAS --> ICS
+                IAS --> S3
+                AIVS --> Gemini
+                ICS --> Gemini
+
+                PS --> DB
+                IAS --> DB
+                BPS --> DB
+
+                style Gemini fill:#9c27b0,color:white
+                style S3 fill:#ff9800,color:white
+                style AIVS fill:#9c27b0,color:white
+                style ICS fill:#9c27b0,color:white
+            </div>
+
+            <h3>🔑 Key Features</h3>
+            <div class="grid-2">
+                <div class="success">
+                    <h4>🤖 AI-Powered</h4>
+                    <ul>
+                        <li>Automatic image classification</li>
+                        <li>Category detection</li>
+                        <li>Gender identification</li>
+                        <li>Style analysis</li>
+                        <li>Bulk AI processing</li>
+                    </ul>
+                </div>
+                <div class="success">
+                    <h4>☁️ Cloud Integration</h4>
+                    <ul>
+                        <li>S3 image storage</li>
+                        <li>Pre-signed URLs</li>
+                        <li>Automatic cleanup</li>
+                        <li>CDN-ready</li>
+                        <li>Checksum validation</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 3: Components -->
+        <div class="section" id="components">
+            <h2>3️⃣ Các thành phần chính</h2>
+
+            <h3>📦 Controllers</h3>
+            <table>
+                <tr>
+                    <th>Controller</th>
+                    <th>Endpoint</th>
+                    <th>Chức năng</th>
+                    <th>Tags</th>
+                </tr>
+                <tr>
+                    <td><code>ProductController</code></td>
+                    <td>/api/v1/products</td>
+                    <td>CRUD operations cho products</td>
+                    <td><span class="badge badge-crud">CRUD</span></td>
+                </tr>
+                <tr>
+                    <td><code>ImageAssetController</code></td>
+                    <td>/api/v1/image-assets</td>
+                    <td>Upload, classify, manage images với AI</td>
+                    <td><span class="badge badge-ai">AI</span> <span class="badge badge-s3">S3</span></td>
+                </tr>
+                <tr>
+                    <td><code>BulkProductController</code></td>
+                    <td>/api/v1/bulk-products</td>
+                    <td>Bulk upload & processing</td>
+                    <td><span class="badge badge-bulk">Bulk</span> <span class="badge badge-ai">AI</span></td>
+                </tr>
+                <tr>
+                    <td><code>StyleController</code></td>
+                    <td>/api/v1/styles</td>
+                    <td>Style management & filtering</td>
+                    <td><span class="badge badge-crud">CRUD</span></td>
+                </tr>
+                <tr>
+                    <td><code>TrendAnalysisController</code></td>
+                    <td>/api/v1/trends</td>
+                    <td>Trend analysis & insights</td>
+                    <td><span class="badge badge-ai">AI</span></td>
+                </tr>
+            </table>
+
+            <h3>⚙️ Core Services</h3>
+            <table>
+                <tr>
+                    <th>Service</th>
+                    <th>Responsibility</th>
+                </tr>
+                <tr>
+                    <td><code>ProductService</code></td>
+                    <td>Product CRUD, filtering, search</td>
+                </tr>
+                <tr>
+                    <td><code>ImageAssetService</code></td>
+                    <td>Image management, S3 upload, AI classification</td>
+                </tr>
+                <tr>
+                    <td><code>AIVisionService</code></td>
+                    <td>Gemini Vision API integration</td>
+                </tr>
+                <tr>
+                    <td><code>ImageClassificationService</code></td>
+                    <td>AI-based image classification logic</td>
+                </tr>
+                <tr>
+                    <td><code>BulkProductService</code></td>
+                    <td>Batch processing, async jobs</td>
+                </tr>
+                <tr>
+                    <td><code>DuplicateCheckService</code></td>
+                    <td>Checksum-based duplicate detection</td>
+                </tr>
+                <tr>
+                    <td><code>FilenameParserService</code></td>
+                    <td>Extract metadata from filenames</td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- Section 4: Image Asset Service -->
+        <div class="section" id="image-asset">
+            <h2>4️⃣ Image Asset Service (AI Integration)</h2>
+
+            <div class="highlight">
+                <strong>ImageAssetService</strong> là service phức tạp nhất trong module, tích hợp:
+                <ul>
+                    <li>🤖 Gemini Vision AI cho classification</li>
+                    <li>☁️ AWS S3 cho storage</li>
+                    <li>🔍 Duplicate detection với checksum</li>
+                    <li>📦 Bulk processing</li>
+                </ul>
+            </div>
+
+            <h3>🔄 Image Upload & Classification Flow</h3>
+            <div class="mermaid">
+                sequenceDiagram
+                participant U as User
+                participant C as ImageAssetController
+                participant IAS as ImageAssetService
+                participant AI as GeminiVisionService
+                participant S3 as AWS S3
+                participant DB as Database
+
+                U->>C: POST /upload-and-classify<br />(multipart file)
+                C->>IAS: uploadAndClassify(file)
+
+                IAS->>IAS: Calculate checksum (MD5)
+                IAS->>DB: Check duplicate by checksum
+
+                alt Duplicate Found
+                DB-->>IAS: Existing ImageAsset
+                IAS-->>C: Return existing asset
+                C-->>U: 200 OK (existing)
+                else New Image
+                IAS->>S3: Upload image
+                S3-->>IAS: S3 URL
+
+                IAS->>AI: analyzeImage(imageUrl)
+                AI->>AI: Call Gemini Vision API
+                AI-->>IAS: Classification result<br />(category, gender, type)
+
+                IAS->>DB: Save ImageAsset + Checksum
+                DB-->>IAS: Saved entity
+
+                IAS-->>C: ImageAssetResponse
+                C-->>U: 201 Created
+                end
+            </div>
+
+            <h3>🎯 AI Classification Endpoints</h3>
+            <table>
+                <tr>
+                    <th>Endpoint</th>
+                    <th>Method</th>
+                    <th>Description</th>
+                </tr>
+                <tr>
+                    <td>/upload-and-classify</td>
+                    <td>POST</td>
+                    <td>Upload + auto-classify với AI</td>
+                </tr>
+                <tr>
+                    <td>/analyze-with-ai</td>
+                    <td>POST</td>
+                    <td>Upload + phân tích chi tiết + URL</td>
+                </tr>
+                <tr>
+                    <td>/analyze-only</td>
+                    <td>POST</td>
+                    <td>Chỉ phân tích (không upload) - preview</td>
+                </tr>
+                <tr>
+                    <td>/save-with-metadata</td>
+                    <td>POST</td>
+                    <td>Upload với metadata đã chỉnh sửa</td>
+                </tr>
+                <tr>
+                    <td>/analyze-bulk</td>
+                    <td>POST</td>
+                    <td>Phân tích nhiều ảnh cùng lúc</td>
+                </tr>
+            </table>
+
+            <h3>🔍 Duplicate Detection</h3>
+            <pre><code>// Flow kiểm tra duplicate
+1. Calculate MD5 checksum của file
+2. Query ImageChecksumEntity by checksum
+3. If exists:
+   - Return existing ImageAsset
+   - Log: "Duplicate detected"
+4. Else:
+   - Upload to S3
+   - Classify with AI
+   - Save new ImageAsset + Checksum</code></pre>
+        </div>
+
+        <!-- Section 5: Product Flow -->
+        <div class="section" id="product-flow">
+            <h2>5️⃣ Product Management Flow</h2>
+
+            <h3>📝 Create Product Flow</h3>
+            <div class="mermaid">
+                flowchart TB
+                Start([User creates product])
+
+                Start --> Validate[Validate ProductRequest]
+                Validate --> GenKey[Generate unique product key]
+                GenKey --> GenSlug[Generate slug from name]
+                GenSlug --> SaveDB[Save to database]
+                SaveDB --> Return[Return ProductDetailResponse]
+
+                style Start fill:#4CAF50,color:white
+                style Return fill:#2196F3,color:white
+            </div>
+
+            <h3>🔄 Update Product Flow</h3>
+            <div class="mermaid">
+                flowchart TB
+                Start([User updates product])
+
+                Start --> FindByKey[Find product by key/slug]
+                FindByKey --> Check{Exists?}
+                Check -->|No| Error404[Throw NotFoundException]
+                Check -->|Yes| Update[Update fields]
+                Update --> UpdateSlug[Update slug if name changed]
+                UpdateSlug --> SaveDB[Save to database]
+                SaveDB --> Return[Return updated response]
+
+                style Start fill:#FF9800,color:white
+                style Error404 fill:#f44336,color:white
+                style Return fill:#2196F3,color:white
+            </div>
+
+            <h3>🗑️ Soft Delete Flow</h3>
+            <pre><code>// Soft delete implementation
+public void delete(String key) {
+    ProductEntity product = findByKeyOrSlug(key);
+    product.setIsDeleted(true);
+    productRepository.save(product);
+    // Product vẫn trong DB nhưng isDeleted = true
+}</code></pre>
+        </div>
+
+        <!-- Section 6: Bulk Operations -->
+        <div class="section" id="bulk-operations">
+            <h2>6️⃣ Bulk Operations</h2>
+
+            <div class="highlight">
+                <strong>BulkProductService</strong> xử lý upload hàng loạt sản phẩm với:
+                <ul>
+                    <li>📦 Async processing với job tracking</li>
+                    <li>🤖 AI classification cho mỗi image</li>
+                    <li>📊 Progress tracking</li>
+                    <li>❌ Error handling & rollback</li>
+                </ul>
+            </div>
+
+            <h3>🔄 Bulk Upload Flow</h3>
+            <div class="mermaid">
+                sequenceDiagram
+                participant U as User
+                participant C as BulkProductController
+                participant BPS as BulkProductService
+                participant AI as ImageClassificationService
+                participant DB as Database
+
+                U->>C: POST /bulk-upload<br />(multiple files)
+                C->>BPS: submitBulkUpload(files)
+
+                BPS->>DB: Create BulkUploadJob<br />(status: PENDING)
+                DB-->>BPS: Job ID
+
+                BPS-->>C: Job created
+                C-->>U: 202 Accepted<br />(jobId)
+
+                Note over BPS: Async Processing
+
+                loop For each file
+                BPS->>AI: classifyImage(file)
+                AI-->>BPS: Classification result
+                BPS->>DB: Save ImageAsset
+                BPS->>DB: Update job progress
+                end
+
+                BPS->>DB: Update job status: COMPLETED
+
+                U->>C: GET /bulk-upload/{jobId}/status
+                C->>BPS: getJobStatus(jobId)
+                BPS->>DB: Query job
+                DB-->>BPS: Job details
+                BPS-->>C: JobStatusResponse
+                C-->>U: Progress: 80/100
+            </div>
+
+            <h3>📊 Job Status Tracking</h3>
+            <table>
+                <tr>
+                    <th>Status</th>
+                    <th>Description</th>
+                </tr>
+                <tr>
+                    <td>PENDING</td>
+                    <td>Job created, waiting to process</td>
+                </tr>
+                <tr>
+                    <td>PROCESSING</td>
+                    <td>Currently processing files</td>
+                </tr>
+                <tr>
+                    <td>COMPLETED</td>
+                    <td>All files processed successfully</td>
+                </tr>
+                <tr>
+                    <td>FAILED</td>
+                    <td>Job failed with errors</td>
+                </tr>
+                <tr>
+                    <td>PARTIAL</td>
+                    <td>Some files succeeded, some failed</td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- Section 7: AI Classification -->
+        <div class="section" id="ai-classification">
+            <h2>7️⃣ AI Classification với Gemini</h2>
+
+            <h3>🤖 Gemini Vision Integration</h3>
+            <div class="mermaid">
+                flowchart LR
+                subgraph Input["Input"]
+                IMG["Image File"]
+                end
+
+                subgraph Processing["AI Processing"]
+                B64["Convert to Base64"]
+                API["Gemini Vision API"]
+                Parse["Parse JSON Response"]
+                end
+
+                subgraph Output["Classification Result"]
+                CAT["Category<br />(Suit, Dress, etc)"]
+                GEN["Gender<br />(Male, Female, Unisex)"]
+                TYPE["Type<br />(Formal, Casual)"]
+                end
+
+                IMG --> B64
+                B64 --> API
+                API --> Parse
+                Parse --> CAT
+                Parse --> GEN
+                Parse --> TYPE
+
+                style API fill:#9c27b0,color:white
+            </div>
+
+            <h3>📋 Classification Categories</h3>
+            <div class="grid-2">
+                <div>
+                    <h4>Category</h4>
+                    <ul>
+                        <li>Suit (Vest)</li>
+                        <li>Dress (Váy)</li>
+                        <li>Shirt (Áo sơ mi)</li>
+                        <li>Pants (Quần)</li>
+                        <li>Ao Dai (Áo dài)</li>
+                        <li>Accessories</li>
+                    </ul>
+                </div>
+                <div>
+                    <h4>Gender & Type</h4>
+                    <ul>
+                        <li><strong>Gender:</strong> Male, Female, Unisex</li>
+                        <li><strong>Type:</strong> Formal, Casual, Business</li>
+                        <li><strong>Occasion:</strong> Wedding, Party, Office</li>
+                    </ul>
+                </div>
+            </div>
+
+            <h3>🔧 AI Service Implementation</h3>
+            <pre><code>@Service
+public class GeminiVisionService {
+    
+    public ProductAnalysisResult analyzeImage(String imageUrl) {
+        // 1. Download image from URL
+        byte[] imageBytes = downloadImage(imageUrl);
+        
+        // 2. Convert to Base64
+        String base64Image = Base64.getEncoder()
+            .encodeToString(imageBytes);
+        
+        // 3. Call Gemini API
+        String prompt = """
+            Analyze this clothing image and return JSON:
+            {
+                "category": "Suit/Dress/Shirt/...",
+                "gender": "Male/Female/Unisex",
+                "type": "Formal/Casual",
+                "description": "..."
+            }
+            """;
+        
+        String response = callGeminiAPI(base64Image, prompt);
+        
+        // 4. Parse response
+        return parseAnalysisResult(response);
+    }
+}</code></pre>
+        </div>
+
+        <!-- Section 8: Entities -->
+        <div class="section" id="entities">
+            <h2>8️⃣ Database Entities</h2>
+
+            <h3>📊 Entity Relationship Diagram</h3>
+            <div class="mermaid">
+                erDiagram
+                PRODUCT ||--o{ IMAGE_ASSET : "has many"
+                PRODUCT ||--o| PRODUCT_TEMPLATE : "based on"
+                PRODUCT ||--o| STYLE : "belongs to"
+                PRODUCT ||--o| CATEGORY_TEMPLATE : "uses"
+
+                IMAGE_ASSET ||--|| IMAGE_CHECKSUM : "has"
+
+                BULK_UPLOAD_JOB ||--o{ BULK_UPLOAD_JOB_FILE : "contains"
+
+                PRODUCT {
+                bigint id PK
+                string key UK
+                string name
+                string slug
+                text description
+                decimal price
+                string category
+                string type
+                json gallery
+                boolean isDeleted
+                }
+
+                IMAGE_ASSET {
+                bigint id PK
+                string url
+                string category
+                string gender
+                string type
+                text aiDescription
+                datetime createdAt
+                }
+
+                IMAGE_CHECKSUM {
+                bigint id PK
+                string checksum UK
+                bigint imageAssetId FK
+                }
+
+                STYLE {
+                bigint id PK
+                string name
+                string description
+                json characteristics
+                }
+            </div>
+
+            <h3>📝 Key Entities</h3>
+            <table>
+                <tr>
+                    <th>Entity</th>
+                    <th>Purpose</th>
+                    <th>Key Fields</th>
+                </tr>
+                <tr>
+                    <td><code>ProductEntity</code></td>
+                    <td>Main product data</td>
+                    <td>key, name, price, category, gallery (JSON)</td>
+                </tr>
+                <tr>
+                    <td><code>ImageAssetEntity</code></td>
+                    <td>Image với AI metadata</td>
+                    <td>url, category, gender, aiDescription</td>
+                </tr>
+                <tr>
+                    <td><code>ImageChecksumEntity</code></td>
+                    <td>Duplicate detection</td>
+                    <td>checksum (MD5), imageAssetId</td>
+                </tr>
+                <tr>
+                    <td><code>StyleEntity</code></td>
+                    <td>Product styles</td>
+                    <td>name, characteristics (JSON)</td>
+                </tr>
+                <tr>
+                    <td><code>BulkUploadJobEntity</code></td>
+                    <td>Bulk job tracking</td>
+                    <td>status, totalFiles, processedFiles</td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- Footer -->
+        <div class="section" style="text-align: center; margin-top: 50px;">
+            <p style="color: #888;">Created for Tailor Shop Project</p>
+            <p style="color: #666; font-size: 12px;">Product Module Documentation - 2024</p>
+            <a href="index.html" style="color: #00d4ff; text-decoration: none;">← Quay lại danh sách</a>
+        </div>
+    </div>
+
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            securityLevel: 'loose'
+        });
+    </script>
+</body>
+
+</html>
