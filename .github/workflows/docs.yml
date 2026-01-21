@@ -4,7 +4,7 @@ on:
   push:
     branches: [ main ]
     paths:
-      - 'tailor_shop/src/**'
+      - 'backend/src/**'
       - 'docs/**'
   workflow_dispatch:
 
@@ -24,13 +24,13 @@ jobs:
           distribution: 'temurin'
 
       - name: 📖 Generate Javadoc
-        working-directory: ./tailor_shop
+        working-directory: ./backend
         run: mvn javadoc:javadoc -B
 
       - name: 📁 Prepare docs folder
         run: |
           mkdir -p docs/javadoc
-          cp -r tailor_shop/target/site/apidocs/* docs/javadoc/ || true
+          cp -r backend/target/site/apidocs/* docs/javadoc/ || true
 
       - name: 📤 Upload documentation
         uses: actions/upload-artifact@v4

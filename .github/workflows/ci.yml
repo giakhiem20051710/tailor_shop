@@ -62,12 +62,12 @@ jobs:
             ${{ runner.os }}-maven-
 
       - name: 🔨 Build with Maven
-        working-directory: ./tailor_shop
+        working-directory: ./backend
         run: |
           mvn clean compile -DskipTests -B
         
       - name: 🧪 Run Tests
-        working-directory: ./tailor_shop
+        working-directory: ./backend
         env:
           SPRING_DATASOURCE_URL: jdbc:mysql://localhost:3306/tailor_shop_test
           SPRING_DATASOURCE_USERNAME: root
@@ -82,10 +82,10 @@ jobs:
         if: always()
         with:
           name: backend-test-results
-          path: tailor_shop/target/surefire-reports/
+          path: backend/target/surefire-reports/
 
       - name: 📈 Generate Test Coverage Report
-        working-directory: ./tailor_shop
+        working-directory: ./backend
         run: |
           mvn jacoco:report -B
           
@@ -93,7 +93,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: coverage-report
-          path: tailor_shop/target/site/jacoco/
+          path: backend/target/site/jacoco/
 
   # ============================================
   # Frontend Build & Test
@@ -111,18 +111,18 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-          cache-dependency-path: my-react-app/package-lock.json
+          cache-dependency-path: frontend/package-lock.json
 
       - name: 📥 Install dependencies
-        working-directory: ./my-react-app
+        working-directory: ./frontend
         run: npm ci
 
       - name: 🔍 Lint check
-        working-directory: ./my-react-app
+        working-directory: ./frontend
         run: npm run lint || true  # Don't fail on lint warnings
         
       - name: 🏗️ Build production bundle
-        working-directory: ./my-react-app
+        working-directory: ./frontend
         run: npm run build
         env:
           VITE_API_BASE_URL: http://localhost:8083/api/v1
@@ -131,7 +131,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: frontend-build
-          path: my-react-app/dist/
+          path: frontend/dist/
 
   # ============================================
   # Docker Build Verification
@@ -151,7 +151,7 @@ jobs:
       - name: 🔨 Build Backend Docker Image
         uses: docker/build-push-action@v5
         with:
-          context: ./tailor_shop
+          context: ./backend
           push: false
           tags: tailor-shop-backend:test
           cache-from: type=gha
@@ -160,7 +160,7 @@ jobs:
       - name: 🔨 Build Frontend Docker Image
         uses: docker/build-push-action@v5
         with:
-          context: ./my-react-app
+          context: ./frontend
           push: false
           tags: tailor-shop-frontend:test
           cache-from: type=gha
