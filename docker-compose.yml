@@ -10,7 +10,7 @@ services:
       MYSQL_USER: ${MYSQL_USER:-tailor_user}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD:-tailor_password}
     ports:
-      - "${MYSQL_PORT:-3306}:3306"
+      - "${MYSQL_PORT:-3308}:3306"
     volumes:
       - mysql_data:/var/lib/mysql
       - ./backend/src/main/resources/db:/docker-entrypoint-initdb.d
@@ -20,7 +20,8 @@ services:
       test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD:-rootpassword}" ]
       interval: 10s
       timeout: 5s
-      retries: 5
+      retries: 10
+      start_period: 60s
     command: --default-authentication-plugin=mysql_native_password --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
 
   # Spring Boot Backend
@@ -34,12 +35,10 @@ services:
       mysql:
         condition: service_healthy
     environment:
-      SPRING_PROFILES_ACTIVE: docker
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/${MYSQL_DATABASE:-tailor_shop}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&createDatabaseIfNotExist=true
-      SPRING_DATASOURCE_USERNAME: ${MYSQL_USER:-tailor_user}
-      SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASSWORD:-tailor_password}
-      MYSQL_USER: ${MYSQL_USER:-tailor_user}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-tailor_password}
+      # Database - must match application.yml variable names (DB_*)
+      DB_URL: jdbc:mysql://mysql:3306/${MYSQL_DATABASE:-tailor_shop}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&createDatabaseIfNotExist=true
+      DB_USERNAME: root
+      DB_PASSWORD: ${MYSQL_ROOT_PASSWORD:-rootpassword}
       JWT_SECRET: ${JWT_SECRET:-change-me-256-bit-secret-key-min-length-32-bytes!!!}
       MAIL_HOST: ${MAIL_HOST:-smtp.gmail.com}
       MAIL_PORT: ${MAIL_PORT:-587}
@@ -63,7 +62,6 @@ services:
       start_period: 60s
     volumes:
       - ./backend/uploads:/app/uploads
-    command: [ "java", "-jar", "app.jar", "--spring.profiles.active=docker" ]
 
   # React Frontend
   frontend:
@@ -94,3 +92,4 @@ volumes:
 networks:
   tailor-shop-network:
     driver: bridge
+    name: tailor-shop-network

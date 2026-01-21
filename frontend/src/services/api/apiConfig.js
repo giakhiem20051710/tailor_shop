@@ -8,7 +8,7 @@ export const API_CONFIG = {
   // In dev, use full URL
   // Check if running in Docker by checking if VITE_API_BASE_URL is set or use relative path
   BASE_URL: import.meta.env.VITE_API_BASE_URL ||
-    (window.location.hostname === 'localhost' && window.location.port !== '80'
+    (window.location.hostname === 'localhost' && window.location.port !== '' && window.location.port !== '80'
       ? 'http://localhost:8083/api/v1'
       : '/api/v1'),
   TIMEOUT: 30000, // 30 seconds
