@@ -1,0 +1,93 @@
+{
+  "version": "1.0",
+  "name": "Product Detail Design",
+  "description": "Trang chi tiết sản phẩm - áo dài, vest, váy",
+  "canvas": {
+    "width": 1440,
+    "height": 1200,
+    "background": "#FFFFFF"
+  },
+  "designTokens": {
+    "colors": {
+      "primary": "#1a1a2e",
+      "secondary": "#c9a96e",
+      "accent": "#d4af37",
+      "background": "#faf9f6",
+      "success": "#28a745",
+      "warning": "#ffc107"
+    }
+  },
+  "components": [
+    {
+      "id": "product-gallery",
+      "type": "image-gallery",
+      "name": "Product Image Gallery",
+      "props": {
+        "layout": "main-with-thumbnails",
+        "zoomEnabled": true,
+        "360viewEnabled": true
+      }
+    },
+    {
+      "id": "product-info",
+      "type": "section",
+      "name": "Product Information",
+      "props": {
+        "fields": ["name", "price", "description", "fabric", "sizes"]
+      }
+    },
+    {
+      "id": "fabric-selector",
+      "type": "selector",
+      "name": "Fabric Selector",
+      "props": {
+        "type": "swatch",
+        "multiSelect": false
+      }
+    },
+    {
+      "id": "size-guide",
+      "type": "modal",
+      "name": "Size Guide Modal",
+      "props": {
+        "triggerText": "Hướng dẫn chọn size"
+      }
+    },
+    {
+      "id": "customization-options",
+      "type": "form",
+      "name": "Customization Options",
+      "props": {
+        "fields": [
+          {"name": "collar", "type": "select", "label": "Kiểu cổ"},
+          {"name": "sleeve", "type": "select", "label": "Kiểu tay"},
+          {"name": "length", "type": "select", "label": "Độ dài"}
+        ]
+      }
+    },
+    {
+      "id": "add-to-cart",
+      "type": "button",
+      "name": "Add to Cart Button",
+      "props": {
+        "variant": "primary",
+        "size": "large",
+        "text": "Thêm vào giỏ hàng"
+      }
+    }
+  ],
+  "artboards": [
+    {
+      "id": "desktop",
+      "name": "Desktop",
+      "width": 1440,
+      "height": 1200
+    },
+    {
+      "id": "mobile",
+      "name": "Mobile",
+      "width": 375,
+      "height": 812
+    }
+  ]
+}

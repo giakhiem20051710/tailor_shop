@@ -1,0 +1,1241 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DDD với gRPC Communication - Kiến Trúc & Thiết Kế</title>
+    <style>
+        :root {
+            --primary: #667eea;
+            --primary-dark: #5a67d8;
+            --secondary: #48bb78;
+            --accent: #ed8936;
+            --bg-dark: #1a202c;
+            --bg-card: #2d3748;
+            --text: #e2e8f0;
+            --text-muted: #a0aec0;
+            --border: #4a5568;
+            --success: #48bb78;
+            --warning: #ed8936;
+            --error: #fc8181;
+            --info: #63b3ed;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text);
+            line-height: 1.7;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        /* Header */
+        .header {
+            text-align: center;
+            padding: 3rem 0;
+            background: linear-gradient(135deg, var(--primary) 0%, #764ba2 100%);
+            border-radius: 20px;
+            margin-bottom: 3rem;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+        }
+        
+        .header h1 {
+            font-size: 2.8rem;
+            margin-bottom: 1rem;
+            position: relative;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            position: relative;
+        }
+        
+        /* Navigation */
+        .nav {
+            background: var(--bg-card);
+            border-radius: 15px;
+            padding: 1rem 2rem;
+            margin-bottom: 2rem;
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            justify-content: center;
+            border: 1px solid var(--border);
+        }
+        
+        .nav a {
+            color: var(--text);
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+        
+        .nav a:hover {
+            background: var(--primary);
+            transform: translateY(-2px);
+        }
+        
+        /* Section */
+        .section {
+            background: var(--bg-card);
+            border-radius: 20px;
+            padding: 2.5rem;
+            margin-bottom: 2rem;
+            border: 1px solid var(--border);
+        }
+        
+        .section h2 {
+            color: var(--primary);
+            font-size: 1.8rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        
+        .section h3 {
+            color: var(--secondary);
+            font-size: 1.4rem;
+            margin: 1.5rem 0 1rem;
+        }
+        
+        .section h4 {
+            color: var(--accent);
+            font-size: 1.2rem;
+            margin: 1.2rem 0 0.8rem;
+        }
+        
+        .section p {
+            color: var(--text-muted);
+            margin-bottom: 1rem;
+        }
+        
+        /* Architecture Diagram */
+        .diagram-container {
+            background: #1e2433;
+            border-radius: 15px;
+            padding: 2rem;
+            margin: 2rem 0;
+            overflow-x: auto;
+        }
+        
+        .architecture-diagram {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+            min-width: 900px;
+        }
+        
+        .layer {
+            display: flex;
+            gap: 1rem;
+            align-items: stretch;
+        }
+        
+        .layer-label {
+            writing-mode: vertical-rl;
+            text-orientation: mixed;
+            background: linear-gradient(180deg, var(--primary) 0%, var(--primary-dark) 100%);
+            padding: 1rem 0.5rem;
+            border-radius: 10px;
+            font-weight: bold;
+            text-align: center;
+            min-width: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .layer-content {
+            flex: 1;
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+        
+        .box {
+            background: var(--bg-card);
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            padding: 1.2rem;
+            min-width: 200px;
+            flex: 1;
+            transition: all 0.3s ease;
+        }
+        
+        .box:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        
+        .box.domain {
+            border-color: var(--secondary);
+            background: linear-gradient(135deg, rgba(72, 187, 120, 0.1) 0%, transparent 100%);
+        }
+        
+        .box.application {
+            border-color: var(--primary);
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, transparent 100%);
+        }
+        
+        .box.infrastructure {
+            border-color: var(--accent);
+            background: linear-gradient(135deg, rgba(237, 137, 54, 0.1) 0%, transparent 100%);
+        }
+        
+        .box.interface {
+            border-color: var(--info);
+            background: linear-gradient(135deg, rgba(99, 179, 237, 0.1) 0%, transparent 100%);
+        }
+        
+        .box h5 {
+            font-size: 1rem;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .box ul {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            padding-left: 1.2rem;
+        }
+        
+        .box li {
+            margin: 0.3rem 0;
+        }
+        
+        /* gRPC Flow Diagram */
+        .grpc-flow {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 2rem;
+            flex-wrap: wrap;
+        }
+        
+        .service-node {
+            background: linear-gradient(135deg, var(--bg-card) 0%, #3d4a5c 100%);
+            border: 2px solid var(--primary);
+            border-radius: 15px;
+            padding: 1.5rem;
+            text-align: center;
+            min-width: 180px;
+            position: relative;
+        }
+        
+        .service-node.bounded-context {
+            border-color: var(--secondary);
+        }
+        
+        .service-node h5 {
+            color: var(--text);
+            margin-bottom: 0.5rem;
+        }
+        
+        .service-node span {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+        
+        .arrow {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: var(--accent);
+            font-size: 0.75rem;
+            padding: 0 0.5rem;
+        }
+        
+        .arrow svg {
+            width: 60px;
+            height: 20px;
+        }
+        
+        /* Code Block */
+        .code-block {
+            background: #0d1117;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            overflow-x: auto;
+            border: 1px solid #30363d;
+        }
+        
+        .code-block pre {
+            margin: 0;
+            color: #c9d1d9;
+            font-family: 'Fira Code', 'Consolas', monospace;
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+        
+        .code-block .comment { color: #8b949e; }
+        .code-block .keyword { color: #ff7b72; }
+        .code-block .string { color: #a5d6ff; }
+        .code-block .type { color: #79c0ff; }
+        .code-block .function { color: #d2a8ff; }
+        .code-block .annotation { color: #ffa657; }
+        
+        .code-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid #30363d;
+        }
+        
+        .code-header span {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+        
+        .code-lang {
+            background: var(--primary);
+            padding: 0.2rem 0.6rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+        }
+        
+        /* Info Cards */
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin: 1.5rem 0;
+        }
+        
+        .info-card {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, transparent 100%);
+            border: 1px solid var(--border);
+            border-radius: 15px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+        }
+        
+        .info-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        .info-card.green {
+            background: linear-gradient(135deg, rgba(72, 187, 120, 0.1) 0%, transparent 100%);
+            border-color: var(--secondary);
+        }
+        
+        .info-card.orange {
+            background: linear-gradient(135deg, rgba(237, 137, 54, 0.1) 0%, transparent 100%);
+            border-color: var(--accent);
+        }
+        
+        .info-card h4 {
+            color: var(--text);
+            margin-bottom: 0.8rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .info-card p {
+            font-size: 0.9rem;
+        }
+        
+        /* Comparison Table */
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.5rem 0;
+            background: var(--bg-dark);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        
+        .comparison-table th,
+        .comparison-table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .comparison-table th {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            font-weight: 600;
+        }
+        
+        .comparison-table tr:hover {
+            background: rgba(102, 126, 234, 0.1);
+        }
+        
+        .comparison-table td:first-child {
+            font-weight: 500;
+            color: var(--secondary);
+        }
+        
+        /* Alert Boxes */
+        .alert {
+            padding: 1.2rem 1.5rem;
+            border-radius: 12px;
+            margin: 1.5rem 0;
+            display: flex;
+            gap: 1rem;
+            align-items: flex-start;
+        }
+        
+        .alert.info {
+            background: rgba(99, 179, 237, 0.1);
+            border-left: 4px solid var(--info);
+        }
+        
+        .alert.success {
+            background: rgba(72, 187, 120, 0.1);
+            border-left: 4px solid var(--success);
+        }
+        
+        .alert.warning {
+            background: rgba(237, 137, 54, 0.1);
+            border-left: 4px solid var(--warning);
+        }
+        
+        .alert-icon {
+            font-size: 1.5rem;
+        }
+        
+        .alert-content h5 {
+            margin-bottom: 0.3rem;
+        }
+        
+        .alert-content p {
+            margin: 0;
+            font-size: 0.9rem;
+        }
+        
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-muted);
+            border-top: 1px solid var(--border);
+            margin-top: 3rem;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+            
+            .header h1 {
+                font-size: 1.8rem;
+            }
+            
+            .section {
+                padding: 1.5rem;
+            }
+            
+            .layer {
+                flex-direction: column;
+            }
+            
+            .layer-label {
+                writing-mode: horizontal-tb;
+                min-width: auto;
+            }
+            
+            .grpc-flow {
+                flex-direction: column;
+            }
+            
+            .arrow {
+                transform: rotate(90deg);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <h1>🏛️ DDD với gRPC Communication</h1>
+            <p>Kiến trúc Domain-Driven Design kết hợp gRPC cho Microservices</p>
+        </header>
+        
+        <!-- Navigation -->
+        <nav class="nav">
+            <a href="#overview">Tổng quan</a>
+            <a href="#ddd-layers">DDD Layers</a>
+            <a href="#grpc-basics">gRPC Basics</a>
+            <a href="#bounded-context">Bounded Context</a>
+            <a href="#communication">Giao tiếp</a>
+            <a href="#implementation">Triển khai</a>
+            <a href="#best-practices">Best Practices</a>
+        </nav>
+        
+        <!-- Section 1: Tổng quan -->
+        <section id="overview" class="section">
+            <h2>📚 1. Tổng quan DDD + gRPC</h2>
+            
+            <p><strong>Domain-Driven Design (DDD)</strong> là phương pháp thiết kế phần mềm tập trung vào <em>domain</em> (nghiệp vụ) và <em>logic nghiệp vụ</em>. Khi kết hợp với <strong>gRPC</strong>, ta có thể xây dựng hệ thống microservices hiệu năng cao với giao tiếp type-safe.</p>
+            
+            <div class="info-grid">
+                <div class="info-card">
+                    <h4>🎯 DDD là gì?</h4>
+                    <p>Phương pháp thiết kế phần mềm đặt <strong>domain logic</strong> (nghiệp vụ) làm trung tâm. Mọi thiết kế đều xuất phát từ việc hiểu sâu nghiệp vụ.</p>
+                </div>
+                <div class="info-card green">
+                    <h4>⚡ gRPC là gì?</h4>
+                    <p>Framework RPC hiệu năng cao của Google, sử dụng <strong>Protocol Buffers</strong> để serialize, hỗ trợ streaming và đa ngôn ngữ.</p>
+                </div>
+                <div class="info-card orange">
+                    <h4>🔗 Tại sao kết hợp?</h4>
+                    <p>DDD chia hệ thống thành các <strong>Bounded Context</strong> độc lập. gRPC cung cấp cách giao tiếp nhanh, type-safe giữa các context.</p>
+                </div>
+            </div>
+            
+            <div class="alert info">
+                <span class="alert-icon">💡</span>
+                <div class="alert-content">
+                    <h5>Khi nào dùng DDD + gRPC?</h5>
+                    <p>Phù hợp với hệ thống phức tạp, nhiều domain, cần hiệu năng cao và type safety. Không phù hợp cho CRUD đơn giản.</p>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Section 2: DDD Layers -->
+        <section id="ddd-layers" class="section">
+            <h2>🏗️ 2. Các Layers trong DDD</h2>
+            
+            <p>DDD chia ứng dụng thành các layer rõ ràng, mỗi layer có trách nhiệm riêng:</p>
+            
+            <div class="diagram-container">
+                <div class="architecture-diagram">
+                    <!-- Interface Layer -->
+                    <div class="layer">
+                        <div class="layer-label" style="background: linear-gradient(180deg, #63b3ed 0%, #4299e1 100%);">Interface</div>
+                        <div class="layer-content">
+                            <div class="box interface">
+                                <h5>🌐 REST Controllers</h5>
+                                <ul>
+                                    <li>Nhận HTTP requests</li>
+                                    <li>Validate input cơ bản</li>
+                                    <li>Chuyển đổi DTO ↔ Command</li>
+                                </ul>
+                            </div>
+                            <div class="box interface">
+                                <h5>⚡ gRPC Services</h5>
+                                <ul>
+                                    <li>Expose gRPC endpoints</li>
+                                    <li>Handle streaming</li>
+                                    <li>Protobuf ↔ Domain mapping</li>
+                                </ul>
+                            </div>
+                            <div class="box interface">
+                                <h5>📨 Message Listeners</h5>
+                                <ul>
+                                    <li>Kafka/RabbitMQ consumers</li>
+                                    <li>Event handlers</li>
+                                    <li>Async processing</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Application Layer -->
+                    <div class="layer">
+                        <div class="layer-label" style="background: linear-gradient(180deg, #667eea 0%, #5a67d8 100%);">Application</div>
+                        <div class="layer-content">
+                            <div class="box application">
+                                <h5>📋 Application Services</h5>
+                                <ul>
+                                    <li>Orchestrate use cases</li>
+                                    <li>Transaction management</li>
+                                    <li>Gọi Domain Services</li>
+                                </ul>
+                            </div>
+                            <div class="box application">
+                                <h5>📦 Command/Query Handlers</h5>
+                                <ul>
+                                    <li>CQRS pattern</li>
+                                    <li>Handle commands (write)</li>
+                                    <li>Handle queries (read)</li>
+                                </ul>
+                            </div>
+                            <div class="box application">
+                                <h5>🔄 DTOs / Mappers</h5>
+                                <ul>
+                                    <li>Data transfer objects</li>
+                                    <li>MapStruct / ModelMapper</li>
+                                    <li>Input/Output contracts</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Domain Layer -->
+                    <div class="layer">
+                        <div class="layer-label" style="background: linear-gradient(180deg, #48bb78 0%, #38a169 100%);">Domain</div>
+                        <div class="layer-content">
+                            <div class="box domain">
+                                <h5>🎯 Entities</h5>
+                                <ul>
+                                    <li>Identity-based objects</li>
+                                    <li>Business logic</li>
+                                    <li>Lifecycle management</li>
+                                </ul>
+                            </div>
+                            <div class="box domain">
+                                <h5>💎 Value Objects</h5>
+                                <ul>
+                                    <li>Immutable objects</li>
+                                    <li>No identity (equality by value)</li>
+                                    <li>Money, Address, Email...</li>
+                                </ul>
+                            </div>
+                            <div class="box domain">
+                                <h5>📦 Aggregates</h5>
+                                <ul>
+                                    <li>Cluster of entities</li>
+                                    <li>Consistency boundary</li>
+                                    <li>Aggregate Root</li>
+                                </ul>
+                            </div>
+                            <div class="box domain">
+                                <h5>⚙️ Domain Services</h5>
+                                <ul>
+                                    <li>Cross-entity logic</li>
+                                    <li>Business rules</li>
+                                    <li>Stateless operations</li>
+                                </ul>
+                            </div>
+                            <div class="box domain">
+                                <h5>📢 Domain Events</h5>
+                                <ul>
+                                    <li>Something happened</li>
+                                    <li>Decouple modules</li>
+                                    <li>OrderCreated, PaymentReceived</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Infrastructure Layer -->
+                    <div class="layer">
+                        <div class="layer-label" style="background: linear-gradient(180deg, #ed8936 0%, #dd6b20 100%);">Infrastructure</div>
+                        <div class="layer-content">
+                            <div class="box infrastructure">
+                                <h5>🗄️ Repositories</h5>
+                                <ul>
+                                    <li>JPA/Hibernate impl</li>
+                                    <li>Data access</li>
+                                    <li>Query methods</li>
+                                </ul>
+                            </div>
+                            <div class="box infrastructure">
+                                <h5>📡 gRPC Clients</h5>
+                                <ul>
+                                    <li>Call other services</li>
+                                    <li>Protobuf stubs</li>
+                                    <li>Retry/Circuit breaker</li>
+                                </ul>
+                            </div>
+                            <div class="box infrastructure">
+                                <h5>🔧 External Services</h5>
+                                <ul>
+                                    <li>Email, SMS, S3</li>
+                                    <li>Payment gateways</li>
+                                    <li>Third-party APIs</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="alert success">
+                <span class="alert-icon">✅</span>
+                <div class="alert-content">
+                    <h5>Dependency Rule</h5>
+                    <p>Dependencies chỉ chạy từ ngoài vào trong: Interface → Application → Domain. Domain layer KHÔNG BAO GIỜ phụ thuộc vào các layer khác.</p>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Section 3: gRPC Basics -->
+        <section id="grpc-basics" class="section">
+            <h2>⚡ 3. gRPC Fundamentals</h2>
+            
+            <h3>3.1 Protocol Buffers (Protobuf)</h3>
+            <p>gRPC sử dụng Protocol Buffers làm IDL (Interface Definition Language) và format serialize:</p>
+            
+            <div class="code-block">
+                <div class="code-header">
+                    <span>order_service.proto</span>
+                    <span class="code-lang">Protobuf</span>
+                </div>
+                <pre><span class="keyword">syntax</span> = <span class="string">"proto3"</span>;
+
+<span class="keyword">package</span> tailor.order;
+
+<span class="keyword">option</span> java_package = <span class="string">"com.tailor.grpc.order"</span>;
+<span class="keyword">option</span> java_multiple_files = <span class="keyword">true</span>;
+
+<span class="comment">// Request message</span>
+<span class="keyword">message</span> <span class="type">CreateOrderRequest</span> {
+    <span class="type">string</span> customer_id = 1;
+    <span class="type">string</span> fabric_id = 2;
+    <span class="keyword">repeated</span> <span class="type">Measurement</span> measurements = 3;
+    <span class="type">OrderType</span> order_type = 4;
+}
+
+<span class="comment">// Response message</span>
+<span class="keyword">message</span> <span class="type">OrderResponse</span> {
+    <span class="type">string</span> order_id = 1;
+    <span class="type">OrderStatus</span> status = 2;
+    <span class="type">int64</span> created_at = 3;
+}
+
+<span class="comment">// Enum</span>
+<span class="keyword">enum</span> <span class="type">OrderStatus</span> {
+    PENDING = 0;
+    CONFIRMED = 1;
+    IN_PRODUCTION = 2;
+    COMPLETED = 3;
+}
+
+<span class="comment">// Service definition</span>
+<span class="keyword">service</span> <span class="type">OrderService</span> {
+    <span class="comment">// Unary RPC</span>
+    <span class="keyword">rpc</span> <span class="function">CreateOrder</span>(<span class="type">CreateOrderRequest</span>) <span class="keyword">returns</span> (<span class="type">OrderResponse</span>);
+    
+    <span class="comment">// Server streaming</span>
+    <span class="keyword">rpc</span> <span class="function">GetOrderUpdates</span>(<span class="type">OrderIdRequest</span>) <span class="keyword">returns</span> (<span class="keyword">stream</span> <span class="type">OrderResponse</span>);
+    
+    <span class="comment">// Client streaming</span>
+    <span class="keyword">rpc</span> <span class="function">BatchCreateOrders</span>(<span class="keyword">stream</span> <span class="type">CreateOrderRequest</span>) <span class="keyword">returns</span> (<span class="type">BatchOrderResponse</span>);
+    
+    <span class="comment">// Bidirectional streaming</span>
+    <span class="keyword">rpc</span> <span class="function">OrderChat</span>(<span class="keyword">stream</span> <span class="type">ChatMessage</span>) <span class="keyword">returns</span> (<span class="keyword">stream</span> <span class="type">ChatMessage</span>);
+}</pre>
+            </div>
+            
+            <h3>3.2 gRPC Communication Types</h3>
+            
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>Type</th>
+                        <th>Description</th>
+                        <th>Use Case</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Unary</td>
+                        <td>1 request → 1 response</td>
+                        <td>CRUD operations, simple queries</td>
+                    </tr>
+                    <tr>
+                        <td>Server Streaming</td>
+                        <td>1 request → N responses</td>
+                        <td>Real-time updates, large data download</td>
+                    </tr>
+                    <tr>
+                        <td>Client Streaming</td>
+                        <td>N requests → 1 response</td>
+                        <td>File upload, batch insert</td>
+                    </tr>
+                    <tr>
+                        <td>Bidirectional</td>
+                        <td>N requests ↔ N responses</td>
+                        <td>Chat, real-time collaboration</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+        
+        <!-- Section 4: Bounded Context -->
+        <section id="bounded-context" class="section">
+            <h2>🔲 4. Bounded Context & Context Map</h2>
+            
+            <h3>4.1 Bounded Context là gì?</h3>
+            <p><strong>Bounded Context</strong> là ranh giới logic xác định phạm vi mà một model (domain) có ý nghĩa. Mỗi context có ngôn ngữ riêng (Ubiquitous Language).</p>
+            
+            <div class="diagram-container">
+                <div class="grpc-flow">
+                    <div class="service-node bounded-context">
+                        <h5>📦 Order Context</h5>
+                        <span>Order, OrderItem<br>OrderStatus, Shipping</span>
+                    </div>
+                    
+                    <div class="arrow">
+                        <span>gRPC</span>
+                        <svg viewBox="0 0 60 20">
+                            <defs>
+                                <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                                    <polygon points="0 0, 10 3.5, 0 7" fill="#ed8936"/>
+                                </marker>
+                            </defs>
+                            <line x1="0" y1="10" x2="50" y2="10" stroke="#ed8936" stroke-width="2" marker-end="url(#arrowhead)"/>
+                        </svg>
+                    </div>
+                    
+                    <div class="service-node bounded-context">
+                        <h5>👤 Customer Context</h5>
+                        <span>Customer, Address<br>Measurements, Profile</span>
+                    </div>
+                    
+                    <div class="arrow">
+                        <span>gRPC</span>
+                        <svg viewBox="0 0 60 20">
+                            <line x1="0" y1="10" x2="50" y2="10" stroke="#ed8936" stroke-width="2" marker-end="url(#arrowhead)"/>
+                        </svg>
+                    </div>
+                    
+                    <div class="service-node bounded-context">
+                        <h5>🧵 Fabric Context</h5>
+                        <span>Fabric, FabricType<br>Inventory, Supplier</span>
+                    </div>
+                    
+                    <div class="arrow">
+                        <span>gRPC</span>
+                        <svg viewBox="0 0 60 20">
+                            <line x1="0" y1="10" x2="50" y2="10" stroke="#ed8936" stroke-width="2" marker-end="url(#arrowhead)"/>
+                        </svg>
+                    </div>
+                    
+                    <div class="service-node bounded-context">
+                        <h5>💳 Payment Context</h5>
+                        <span>Invoice, Payment<br>Refund, Transaction</span>
+                    </div>
+                </div>
+            </div>
+            
+            <h3>4.2 Context Map Patterns</h3>
+            
+            <div class="info-grid">
+                <div class="info-card">
+                    <h4>🤝 Partnership</h4>
+                    <p>Hai team hợp tác chặt chẽ, cùng phát triển interface. Thay đổi được thực hiện đồng thời ở cả hai bên.</p>
+                </div>
+                <div class="info-card green">
+                    <h4>📤 Customer-Supplier</h4>
+                    <p>Upstream (supplier) cung cấp API, downstream (customer) sử dụng. Supplier ưu tiên nhu cầu của customer.</p>
+                </div>
+                <div class="info-card orange">
+                    <h4>🛡️ Anti-Corruption Layer</h4>
+                    <p>Layer trung gian để dịch model của hệ thống bên ngoài sang model của context hiện tại. Bảo vệ domain khỏi "ô nhiễm".</p>
+                </div>
+                <div class="info-card">
+                    <h4>📢 Published Language</h4>
+                    <p>Ngôn ngữ chung được công bố (như Protobuf schema). Các context giao tiếp qua ngôn ngữ này.</p>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Section 5: Communication Patterns -->
+        <section id="communication" class="section">
+            <h2>📡 5. Patterns Giao tiếp giữa Contexts</h2>
+            
+            <h3>5.1 Synchronous (gRPC)</h3>
+            <p>Dùng khi cần response ngay lập tức và consistency cao:</p>
+            
+            <div class="code-block">
+                <div class="code-header">
+                    <span>OrderApplicationService.java</span>
+                    <span class="code-lang">Java</span>
+                </div>
+                <pre><span class="annotation">@Service</span>
+<span class="keyword">public class</span> <span class="type">OrderApplicationService</span> {
+
+    <span class="keyword">private final</span> <span class="type">OrderRepository</span> orderRepository;
+    <span class="keyword">private final</span> <span class="type">CustomerServiceGrpc.CustomerServiceBlockingStub</span> customerClient;
+    <span class="keyword">private final</span> <span class="type">FabricServiceGrpc.FabricServiceBlockingStub</span> fabricClient;
+
+    <span class="annotation">@Transactional</span>
+    <span class="keyword">public</span> <span class="type">OrderResponse</span> <span class="function">createOrder</span>(<span class="type">CreateOrderCommand</span> command) {
+        <span class="comment">// 1. Gọi Customer Context để validate customer</span>
+        <span class="type">CustomerResponse</span> customer = customerClient.<span class="function">getCustomer</span>(
+            <span class="type">CustomerIdRequest</span>.<span class="function">newBuilder</span>()
+                .<span class="function">setCustomerId</span>(command.<span class="function">getCustomerId</span>())
+                .<span class="function">build</span>()
+        );
+        
+        <span class="comment">// 2. Gọi Fabric Context để check inventory</span>
+        <span class="type">FabricAvailabilityResponse</span> fabric = fabricClient.<span class="function">checkAvailability</span>(
+            <span class="type">FabricIdRequest</span>.<span class="function">newBuilder</span>()
+                .<span class="function">setFabricId</span>(command.<span class="function">getFabricId</span>())
+                .<span class="function">setQuantity</span>(command.<span class="function">getQuantity</span>())
+                .<span class="function">build</span>()
+        );
+        
+        <span class="keyword">if</span> (!fabric.<span class="function">getIsAvailable</span>()) {
+            <span class="keyword">throw new</span> <span class="type">InsufficientInventoryException</span>(<span class="string">"Fabric not available"</span>);
+        }
+        
+        <span class="comment">// 3. Tạo Order trong Domain</span>
+        <span class="type">Order</span> order = <span class="type">Order</span>.<span class="function">create</span>(
+            <span class="keyword">new</span> <span class="type">CustomerId</span>(customer.<span class="function">getId</span>()),
+            <span class="keyword">new</span> <span class="type">FabricId</span>(fabric.<span class="function">getFabricId</span>()),
+            <span class="type">Measurements</span>.<span class="function">from</span>(command.<span class="function">getMeasurements</span>())
+        );
+        
+        orderRepository.<span class="function">save</span>(order);
+        
+        <span class="keyword">return</span> <span class="type">OrderMapper</span>.<span class="function">toResponse</span>(order);
+    }
+}</pre>
+            </div>
+            
+            <h3>5.2 Asynchronous (Events + gRPC)</h3>
+            <p>Dùng Domain Events kết hợp gRPC cho eventual consistency:</p>
+            
+            <div class="code-block">
+                <div class="code-header">
+                    <span>OrderEventPublisher.java</span>
+                    <span class="code-lang">Java</span>
+                </div>
+                <pre><span class="annotation">@Component</span>
+<span class="keyword">public class</span> <span class="type">OrderEventPublisher</span> {
+
+    <span class="keyword">private final</span> <span class="type">KafkaTemplate</span>&lt;<span class="type">String</span>, <span class="type">OrderEvent</span>&gt; kafka;
+    <span class="keyword">private final</span> <span class="type">NotificationServiceGrpc.NotificationServiceStub</span> notificationClient;
+
+    <span class="annotation">@TransactionalEventListener</span>(phase = <span class="type">TransactionPhase</span>.AFTER_COMMIT)
+    <span class="keyword">public void</span> <span class="function">handleOrderCreated</span>(<span class="type">OrderCreatedEvent</span> event) {
+        <span class="comment">// 1. Publish to Kafka for other services</span>
+        kafka.<span class="function">send</span>(<span class="string">"order.created"</span>, event.<span class="function">getOrderId</span>(), event);
+        
+        <span class="comment">// 2. Call Notification service via gRPC (async)</span>
+        notificationClient.<span class="function">sendNotification</span>(
+            <span class="type">NotificationRequest</span>.<span class="function">newBuilder</span>()
+                .<span class="function">setUserId</span>(event.<span class="function">getCustomerId</span>())
+                .<span class="function">setType</span>(<span class="type">NotificationType</span>.ORDER_CREATED)
+                .<span class="function">setPayload</span>(event.<span class="function">toJson</span>())
+                .<span class="function">build</span>(),
+            <span class="keyword">new</span> <span class="type">StreamObserver</span>&lt;<span class="type">NotificationResponse</span>&gt;() {
+                <span class="annotation">@Override</span>
+                <span class="keyword">public void</span> <span class="function">onNext</span>(<span class="type">NotificationResponse</span> response) {
+                    log.<span class="function">info</span>(<span class="string">"Notification sent: {}"</span>, response.<span class="function">getId</span>());
+                }
+                <span class="comment">// ... onError, onCompleted</span>
+            }
+        );
+    }
+}</pre>
+            </div>
+            
+            <div class="alert warning">
+                <span class="alert-icon">⚠️</span>
+                <div class="alert-content">
+                    <h5>Lưu ý về Distributed Transaction</h5>
+                    <p>Tránh distributed transaction (2PC) khi có thể. Sử dụng <strong>Saga Pattern</strong> với compensating transactions hoặc <strong>Outbox Pattern</strong> để đảm bảo reliability.</p>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Section 6: Implementation -->
+        <section id="implementation" class="section">
+            <h2>🛠️ 6. Triển khai gRPC trong Spring Boot</h2>
+            
+            <h3>6.1 Project Structure</h3>
+            
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Project Structure</span>
+                    <span class="code-lang">Tree</span>
+                </div>
+                <pre>order-service/
+├── src/main/java/com/tailor/order/
+│   ├── <span class="type">domain/</span>                      <span class="comment"># Domain Layer</span>
+│   │   ├── model/
+│   │   │   ├── Order.java            <span class="comment"># Aggregate Root</span>
+│   │   │   ├── OrderItem.java        <span class="comment"># Entity</span>
+│   │   │   └── OrderStatus.java      <span class="comment"># Value Object</span>
+│   │   ├── event/
+│   │   │   └── OrderCreatedEvent.java
+│   │   ├── repository/
+│   │   │   └── OrderRepository.java  <span class="comment"># Interface only!</span>
+│   │   └── service/
+│   │       └── OrderDomainService.java
+│   │
+│   ├── <span class="type">application/</span>                 <span class="comment"># Application Layer</span>
+│   │   ├── command/
+│   │   │   └── CreateOrderCommand.java
+│   │   ├── query/
+│   │   │   └── GetOrderQuery.java
+│   │   ├── service/
+│   │   │   └── OrderApplicationService.java
+│   │   └── dto/
+│   │       └── OrderResponse.java
+│   │
+│   ├── <span class="type">infrastructure/</span>              <span class="comment"># Infrastructure Layer</span>
+│   │   ├── persistence/
+│   │   │   └── JpaOrderRepository.java
+│   │   ├── grpc/
+│   │   │   ├── client/
+│   │   │   │   ├── CustomerGrpcClient.java
+│   │   │   │   └── FabricGrpcClient.java
+│   │   │   └── server/
+│   │   │       └── OrderGrpcService.java
+│   │   └── messaging/
+│   │       └── KafkaOrderPublisher.java
+│   │
+│   └── <span class="type">interface/</span>                   <span class="comment"># Interface Layer</span>
+│       ├── rest/
+│       │   └── OrderController.java
+│       └── grpc/
+│           └── OrderGrpcEndpoint.java
+│
+├── src/main/proto/
+│   └── order_service.proto           <span class="comment"># Protobuf definitions</span>
+│
+└── pom.xml</pre>
+            </div>
+            
+            <h3>6.2 gRPC Server Implementation</h3>
+            
+            <div class="code-block">
+                <div class="code-header">
+                    <span>OrderGrpcService.java</span>
+                    <span class="code-lang">Java</span>
+                </div>
+                <pre><span class="annotation">@GrpcService</span>
+<span class="keyword">public class</span> <span class="type">OrderGrpcService</span> <span class="keyword">extends</span> <span class="type">OrderServiceGrpc.OrderServiceImplBase</span> {
+
+    <span class="keyword">private final</span> <span class="type">OrderApplicationService</span> orderService;
+    <span class="keyword">private final</span> <span class="type">OrderProtoMapper</span> mapper;
+
+    <span class="annotation">@Override</span>
+    <span class="keyword">public void</span> <span class="function">createOrder</span>(
+            <span class="type">CreateOrderRequest</span> request,
+            <span class="type">StreamObserver</span>&lt;<span class="type">OrderResponse</span>&gt; responseObserver) {
+        
+        <span class="keyword">try</span> {
+            <span class="comment">// Convert Protobuf → Command</span>
+            <span class="type">CreateOrderCommand</span> command = mapper.<span class="function">toCommand</span>(request);
+            
+            <span class="comment">// Execute use case</span>
+            <span class="type">OrderDto</span> result = orderService.<span class="function">createOrder</span>(command);
+            
+            <span class="comment">// Convert Domain → Protobuf Response</span>
+            <span class="type">OrderResponse</span> response = mapper.<span class="function">toProto</span>(result);
+            
+            responseObserver.<span class="function">onNext</span>(response);
+            responseObserver.<span class="function">onCompleted</span>();
+            
+        } <span class="keyword">catch</span> (<span class="type">DomainException</span> e) {
+            responseObserver.<span class="function">onError</span>(
+                <span class="type">Status</span>.INVALID_ARGUMENT
+                    .<span class="function">withDescription</span>(e.<span class="function">getMessage</span>())
+                    .<span class="function">asRuntimeException</span>()
+            );
+        }
+    }
+
+    <span class="annotation">@Override</span>
+    <span class="keyword">public void</span> <span class="function">getOrderUpdates</span>(
+            <span class="type">OrderIdRequest</span> request,
+            <span class="type">StreamObserver</span>&lt;<span class="type">OrderResponse</span>&gt; responseObserver) {
+        
+        <span class="comment">// Server streaming: push updates as they happen</span>
+        orderService.<span class="function">subscribeToOrderUpdates</span>(request.<span class="function">getOrderId</span>())
+            .<span class="function">subscribe</span>(
+                order -> responseObserver.<span class="function">onNext</span>(mapper.<span class="function">toProto</span>(order)),
+                error -> responseObserver.<span class="function">onError</span>(<span class="type">Status</span>.INTERNAL.<span class="function">asRuntimeException</span>()),
+                () -> responseObserver.<span class="function">onCompleted</span>()
+            );
+    }
+}</pre>
+            </div>
+            
+            <h3>6.3 gRPC Client với Anti-Corruption Layer</h3>
+            
+            <div class="code-block">
+                <div class="code-header">
+                    <span>CustomerGrpcClient.java (Anti-Corruption Layer)</span>
+                    <span class="code-lang">Java</span>
+                </div>
+                <pre><span class="annotation">@Component</span>
+<span class="keyword">public class</span> <span class="type">CustomerGrpcClient</span> <span class="keyword">implements</span> <span class="type">CustomerPort</span> {
+    <span class="comment">// CustomerPort là interface ở Domain layer</span>
+
+    <span class="keyword">private final</span> <span class="type">CustomerServiceGrpc.CustomerServiceBlockingStub</span> stub;
+
+    <span class="keyword">public</span> <span class="function">CustomerGrpcClient</span>(
+            <span class="annotation">@GrpcClient</span>(<span class="string">"customer-service"</span>) <span class="type">Channel</span> channel) {
+        <span class="keyword">this</span>.stub = <span class="type">CustomerServiceGrpc</span>.<span class="function">newBlockingStub</span>(channel)
+            .<span class="function">withDeadlineAfter</span>(5, <span class="type">TimeUnit</span>.SECONDS);
+    }
+
+    <span class="annotation">@Override</span>
+    <span class="keyword">public</span> <span class="type">Optional</span>&lt;<span class="type">Customer</span>&gt; <span class="function">findById</span>(<span class="type">CustomerId</span> customerId) {
+        <span class="keyword">try</span> {
+            <span class="comment">// Call external gRPC service</span>
+            <span class="type">CustomerProto</span> proto = stub.<span class="function">getCustomer</span>(
+                <span class="type">CustomerIdRequest</span>.<span class="function">newBuilder</span>()
+                    .<span class="function">setId</span>(customerId.<span class="function">getValue</span>())
+                    .<span class="function">build</span>()
+            );
+            
+            <span class="comment">// ACL: Convert external model → OUR domain model</span>
+            <span class="keyword">return</span> <span class="type">Optional</span>.<span class="function">of</span>(<span class="function">toDomainCustomer</span>(proto));
+            
+        } <span class="keyword">catch</span> (<span class="type">StatusRuntimeException</span> e) {
+            <span class="keyword">if</span> (e.<span class="function">getStatus</span>().<span class="function">getCode</span>() == <span class="type">Status.Code</span>.NOT_FOUND) {
+                <span class="keyword">return</span> <span class="type">Optional</span>.<span class="function">empty</span>();
+            }
+            <span class="keyword">throw new</span> <span class="type">ExternalServiceException</span>(<span class="string">"Customer service error"</span>, e);
+        }
+    }
+
+    <span class="comment">// Anti-Corruption Layer: Translate external model to our domain</span>
+    <span class="keyword">private</span> <span class="type">Customer</span> <span class="function">toDomainCustomer</span>(<span class="type">CustomerProto</span> proto) {
+        <span class="keyword">return new</span> <span class="type">Customer</span>(
+            <span class="keyword">new</span> <span class="type">CustomerId</span>(proto.<span class="function">getId</span>()),
+            <span class="keyword">new</span> <span class="type">CustomerName</span>(proto.<span class="function">getFirstName</span>(), proto.<span class="function">getLastName</span>()),
+            <span class="keyword">new</span> <span class="type">Email</span>(proto.<span class="function">getEmail</span>()),
+            <span class="function">toAddress</span>(proto.<span class="function">getAddress</span>())  <span class="comment">// Convert nested</span>
+        );
+    }
+}</pre>
+            </div>
+        </section>
+        
+        <!-- Section 7: Best Practices -->
+        <section id="best-practices" class="section">
+            <h2>✨ 7. Best Practices</h2>
+            
+            <div class="info-grid">
+                <div class="info-card green">
+                    <h4>✅ DO: Keep Domain Pure</h4>
+                    <p>Domain layer không biết về gRPC, REST, hay database. Chỉ chứa business logic thuần túy.</p>
+                </div>
+                <div class="info-card green">
+                    <h4>✅ DO: Use ACL</h4>
+                    <p>Luôn dùng Anti-Corruption Layer khi gọi service khác. Dịch external model sang domain model của bạn.</p>
+                </div>
+                <div class="info-card green">
+                    <h4>✅ DO: Define Clear Contracts</h4>
+                    <p>Protobuf schema là contract. Version hóa cẩn thận, dùng field numbers không thay đổi.</p>
+                </div>
+                <div class="info-card green">
+                    <h4>✅ DO: Handle Failures</h4>
+                    <p>Implement retry, circuit breaker, timeout cho gRPC calls. Dùng Resilience4j hoặc Istio.</p>
+                </div>
+                <div class="info-card orange">
+                    <h4>❌ DON'T: Shared Database</h4>
+                    <p>Mỗi Bounded Context có database riêng. Không share tables giữa các services.</p>
+                </div>
+                <div class="info-card orange">
+                    <h4>❌ DON'T: Anemic Domain</h4>
+                    <p>Domain entities phải chứa behavior, không chỉ data. Tránh "getter/setter only" entities.</p>
+                </div>
+                <div class="info-card orange">
+                    <h4>❌ DON'T: Expose Domain to gRPC</h4>
+                    <p>Không return Domain entities trực tiếp qua gRPC. Luôn map sang Protobuf messages.</p>
+                </div>
+                <div class="info-card orange">
+                    <h4>❌ DON'T: Synchronous Everything</h4>
+                    <p>Không phải mọi thứ cần sync call. Dùng events/messaging cho eventual consistency khi phù hợp.</p>
+                </div>
+            </div>
+            
+            <h3>7.1 Error Handling Strategy</h3>
+            
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>Domain Exception</th>
+                        <th>gRPC Status</th>
+                        <th>Mô tả</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>EntityNotFoundException</td>
+                        <td>NOT_FOUND</td>
+                        <td>Resource không tồn tại</td>
+                    </tr>
+                    <tr>
+                        <td>ValidationException</td>
+                        <td>INVALID_ARGUMENT</td>
+                        <td>Input không hợp lệ</td>
+                    </tr>
+                    <tr>
+                        <td>BusinessRuleException</td>
+                        <td>FAILED_PRECONDITION</td>
+                        <td>Vi phạm business rule</td>
+                    </tr>
+                    <tr>
+                        <td>ConflictException</td>
+                        <td>ALREADY_EXISTS</td>
+                        <td>Duplicate resource</td>
+                    </tr>
+                    <tr>
+                        <td>UnauthorizedException</td>
+                        <td>UNAUTHENTICATED</td>
+                        <td>Chưa xác thực</td>
+                    </tr>
+                    <tr>
+                        <td>ForbiddenException</td>
+                        <td>PERMISSION_DENIED</td>
+                        <td>Không có quyền</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+        
+        <!-- Summary -->
+        <section class="section">
+            <h2>📋 Tóm tắt</h2>
+            
+            <div class="alert success">
+                <span class="alert-icon">🎯</span>
+                <div class="alert-content">
+                    <h5>Key Takeaways</h5>
+                    <p>
+                        1. <strong>DDD Layers:</strong> Interface → Application → Domain → Infrastructure<br>
+                        2. <strong>Bounded Context:</strong> Mỗi context có domain model riêng, giao tiếp qua gRPC<br>
+                        3. <strong>ACL:</strong> Dịch external models sang domain models<br>
+                        4. <strong>gRPC:</strong> Type-safe, high performance, support streaming<br>
+                        5. <strong>Events:</strong> Dùng cho eventual consistency giữa contexts
+                    </p>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Footer -->
+        <footer class="footer">
+            <p>📚 DDD + gRPC Architecture Documentation | Tailor Shop Project</p>
+            <p>Tạo bởi Antigravity AI • 2026</p>
+        </footer>
+    </div>
+</body>
+</html>

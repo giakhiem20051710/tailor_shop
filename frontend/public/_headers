@@ -1,0 +1,7 @@
+/* Cloudflare Pages Redirect Rules */
+/* Handle SPA routing - redirect all paths to index.html */
+
+/*
+  X-Frame-Options: DENY
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin

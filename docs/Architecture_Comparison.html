@@ -1,0 +1,1285 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>So sánh N-Layer vs Clean Architecture vs DDD</title>
+    <style>
+        :root {
+            --primary: #667eea;
+            --primary-dark: #5a67d8;
+            --secondary: #48bb78;
+            --accent: #ed8936;
+            --nlayer: #e53e3e;
+            --clean: #38a169;
+            --ddd: #3182ce;
+            --bg-dark: #1a202c;
+            --bg-card: #2d3748;
+            --text: #e2e8f0;
+            --text-muted: #a0aec0;
+            --border: #4a5568;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text);
+            line-height: 1.7;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            padding: 3rem 2rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            border-radius: 20px;
+            margin-bottom: 2rem;
+            position: relative;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .tab {
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+
+        .tab.nlayer {
+            background: rgba(229, 62, 62, 0.2);
+            border-color: var(--nlayer);
+            color: var(--nlayer);
+        }
+
+        .tab.clean {
+            background: rgba(56, 161, 105, 0.2);
+            border-color: var(--clean);
+            color: var(--clean);
+        }
+
+        .tab.ddd {
+            background: rgba(49, 130, 206, 0.2);
+            border-color: var(--ddd);
+            color: var(--ddd);
+        }
+
+        .tab:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .tab.active {
+            transform: scale(1.05);
+        }
+
+        /* Content Sections */
+        .section {
+            background: var(--bg-card);
+            border-radius: 20px;
+            padding: 2.5rem;
+            margin-bottom: 2rem;
+            border: 1px solid var(--border);
+        }
+
+        .section h2 {
+            font-size: 1.8rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .section h3 {
+            color: var(--secondary);
+            font-size: 1.3rem;
+            margin: 1.5rem 0 1rem;
+        }
+
+        .section h4 {
+            color: var(--accent);
+            font-size: 1.1rem;
+            margin: 1rem 0 0.5rem;
+        }
+
+        .section p {
+            color: var(--text-muted);
+            margin-bottom: 1rem;
+        }
+
+        /* Comparison Grid */
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        @media (max-width: 900px) {
+            .comparison-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .arch-card {
+            background: var(--bg-dark);
+            border-radius: 16px;
+            padding: 1.5rem;
+            border: 2px solid;
+            transition: all 0.3s ease;
+        }
+
+        .arch-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4);
+        }
+
+        .arch-card.nlayer {
+            border-color: var(--nlayer);
+        }
+
+        .arch-card.clean {
+            border-color: var(--clean);
+        }
+
+        .arch-card.ddd {
+            border-color: var(--ddd);
+        }
+
+        .arch-card h3 {
+            text-align: center;
+            padding: 0.5rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+
+        .arch-card.nlayer h3 {
+            background: rgba(229, 62, 62, 0.2);
+            color: var(--nlayer);
+        }
+
+        .arch-card.clean h3 {
+            background: rgba(56, 161, 105, 0.2);
+            color: var(--clean);
+        }
+
+        .arch-card.ddd h3 {
+            background: rgba(49, 130, 206, 0.2);
+            color: var(--ddd);
+        }
+
+        .arch-card ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .arch-card li {
+            padding: 0.5rem 0;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.9rem;
+        }
+
+        .arch-card li:last-child {
+            border-bottom: none;
+        }
+
+        /* Diagram Container */
+        .diagram-box {
+            background: #1e2433;
+            border-radius: 15px;
+            padding: 2rem;
+            margin: 1.5rem 0;
+            overflow-x: auto;
+        }
+
+        /* Layer Diagram */
+        .layers-diagram {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .layer-box {
+            padding: 1rem 2rem;
+            text-align: center;
+            border-radius: 10px;
+            font-weight: 600;
+            position: relative;
+        }
+
+        .layer-box::after {
+            content: '↓';
+            position: absolute;
+            bottom: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 1.2rem;
+            color: var(--text-muted);
+        }
+
+        .layer-box:last-child::after {
+            display: none;
+        }
+
+        /* Clean Architecture Circles */
+        .clean-diagram {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem;
+        }
+
+        .circle {
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: 600;
+            text-align: center;
+            padding: 10px;
+        }
+
+        .circle-outer {
+            width: 350px;
+            height: 350px;
+            background: rgba(237, 137, 54, 0.15);
+            border: 3px solid var(--accent);
+        }
+
+        .circle-mid {
+            width: 260px;
+            height: 260px;
+            background: rgba(102, 126, 234, 0.15);
+            border: 3px solid var(--primary);
+        }
+
+        .circle-inner {
+            width: 170px;
+            height: 170px;
+            background: rgba(72, 187, 120, 0.2);
+            border: 3px solid var(--secondary);
+        }
+
+        .circle-core {
+            width: 90px;
+            height: 90px;
+            background: linear-gradient(135deg, var(--secondary), #2f855a);
+            font-size: 0.85rem;
+        }
+
+        /* DDD Hexagonal */
+        .hex-diagram {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+            padding: 1rem;
+        }
+
+        .hex-box {
+            padding: 1rem 1.5rem;
+            border-radius: 12px;
+            text-align: center;
+            min-width: 140px;
+        }
+
+        .hex-core {
+            background: linear-gradient(135deg, var(--ddd), #2b6cb0);
+            padding: 2rem;
+            font-size: 1.1rem;
+        }
+
+        .hex-port {
+            background: rgba(49, 130, 206, 0.2);
+            border: 2px solid var(--ddd);
+        }
+
+        .hex-adapter {
+            background: rgba(237, 137, 54, 0.2);
+            border: 2px solid var(--accent);
+        }
+
+        .arrow-left,
+        .arrow-right {
+            font-size: 1.5rem;
+            color: var(--text-muted);
+        }
+
+        /* Code Block */
+        .code-block {
+            background: #0d1117;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            overflow-x: auto;
+            border: 1px solid #30363d;
+        }
+
+        .code-block pre {
+            margin: 0;
+            color: #c9d1d9;
+            font-family: 'Fira Code', 'Consolas', monospace;
+            font-size: 0.85rem;
+            line-height: 1.5;
+        }
+
+        .code-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid #30363d;
+        }
+
+        .code-header span {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        .code-lang {
+            background: var(--primary);
+            padding: 0.2rem 0.6rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+        }
+
+        .code-lang.nlayer {
+            background: var(--nlayer);
+        }
+
+        .code-lang.clean {
+            background: var(--clean);
+        }
+
+        .code-lang.ddd {
+            background: var(--ddd);
+        }
+
+        .comment {
+            color: #8b949e;
+        }
+
+        .keyword {
+            color: #ff7b72;
+        }
+
+        .string {
+            color: #a5d6ff;
+        }
+
+        .type {
+            color: #79c0ff;
+        }
+
+        .function {
+            color: #d2a8ff;
+        }
+
+        .annotation {
+            color: #ffa657;
+        }
+
+        /* Comparison Table */
+        .comp-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.5rem 0;
+            font-size: 0.9rem;
+        }
+
+        .comp-table th,
+        .comp-table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .comp-table th {
+            background: var(--bg-dark);
+            font-weight: 600;
+        }
+
+        .comp-table th:nth-child(2) {
+            color: var(--nlayer);
+        }
+
+        .comp-table th:nth-child(3) {
+            color: var(--clean);
+        }
+
+        .comp-table th:nth-child(4) {
+            color: var(--ddd);
+        }
+
+        .comp-table tr:hover {
+            background: rgba(102, 126, 234, 0.05);
+        }
+
+        .comp-table td:first-child {
+            font-weight: 500;
+            color: var(--text);
+        }
+
+        /* Alert */
+        .alert {
+            padding: 1.2rem 1.5rem;
+            border-radius: 12px;
+            margin: 1.5rem 0;
+            display: flex;
+            gap: 1rem;
+            align-items: flex-start;
+        }
+
+        .alert.tip {
+            background: rgba(72, 187, 120, 0.1);
+            border-left: 4px solid var(--secondary);
+        }
+
+        .alert.warn {
+            background: rgba(237, 137, 54, 0.1);
+            border-left: 4px solid var(--accent);
+        }
+
+        .alert.info {
+            background: rgba(99, 179, 237, 0.1);
+            border-left: 4px solid #63b3ed;
+        }
+
+        .alert-icon {
+            font-size: 1.5rem;
+        }
+
+        .alert-content h5 {
+            margin-bottom: 0.3rem;
+        }
+
+        .alert-content p {
+            margin: 0;
+            font-size: 0.9rem;
+        }
+
+        /* Folder Structure */
+        .folder-tree {
+            background: #0d1117;
+            padding: 1.5rem;
+            border-radius: 12px;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.85rem;
+            line-height: 1.8;
+            color: #8b949e;
+        }
+
+        .folder-tree .folder {
+            color: #79c0ff;
+        }
+
+        .folder-tree .file {
+            color: #c9d1d9;
+        }
+
+        .folder-tree .layer-label {
+            color: #8b949e;
+            font-style: italic;
+        }
+
+        /* Pros/Cons */
+        .pros-cons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+
+        @media (max-width: 600px) {
+            .pros-cons {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .pros,
+        .cons {
+            padding: 1rem;
+            border-radius: 10px;
+        }
+
+        .pros {
+            background: rgba(72, 187, 120, 0.1);
+            border: 1px solid var(--secondary);
+        }
+
+        .cons {
+            background: rgba(229, 62, 62, 0.1);
+            border: 1px solid var(--nlayer);
+        }
+
+        .pros h5 {
+            color: var(--secondary);
+            margin-bottom: 0.5rem;
+        }
+
+        .cons h5 {
+            color: var(--nlayer);
+            margin-bottom: 0.5rem;
+        }
+
+        .pros ul,
+        .cons ul {
+            padding-left: 1.2rem;
+            font-size: 0.9rem;
+        }
+
+        .pros li,
+        .cons li {
+            margin: 0.3rem 0;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-muted);
+            border-top: 1px solid var(--border);
+            margin-top: 2rem;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <h1>🏗️ So sánh Software Architecture</h1>
+            <p>N-Layer vs Clean Architecture vs Domain-Driven Design</p>
+        </header>
+
+        <!-- Quick Tabs -->
+        <div class="tabs">
+            <a href="#nlayer" class="tab nlayer">📦 N-Layer</a>
+            <a href="#clean" class="tab clean">🧅 Clean Architecture</a>
+            <a href="#ddd" class="tab ddd">🎯 DDD</a>
+            <a href="#compare" class="tab"
+                style="background: var(--bg-card); border-color: var(--border); color: var(--text);">📊 So sánh</a>
+        </div>
+
+        <!-- Overview Cards -->
+        <section class="section">
+            <h2>📋 Tổng quan nhanh</h2>
+
+            <div class="comparison-grid">
+                <div class="arch-card nlayer">
+                    <h3>📦 N-Layer</h3>
+                    <ul>
+                        <li><strong>Độ phức tạp:</strong> ⭐ Thấp</li>
+                        <li><strong>Learning curve:</strong> Dễ học</li>
+                        <li><strong>Phù hợp:</strong> CRUD apps, MVP</li>
+                        <li><strong>Dependency:</strong> Từ trên xuống dưới</li>
+                        <li><strong>Testing:</strong> Khó mock</li>
+                        <li><strong>Coupling:</strong> Cao</li>
+                    </ul>
+                </div>
+
+                <div class="arch-card clean">
+                    <h3>🧅 Clean Architecture</h3>
+                    <ul>
+                        <li><strong>Độ phức tạp:</strong> ⭐⭐ Trung bình</li>
+                        <li><strong>Learning curve:</strong> Trung bình</li>
+                        <li><strong>Phù hợp:</strong> Medium apps</li>
+                        <li><strong>Dependency:</strong> Từ ngoài vào trong</li>
+                        <li><strong>Testing:</strong> Dễ test</li>
+                        <li><strong>Coupling:</strong> Thấp</li>
+                    </ul>
+                </div>
+
+                <div class="arch-card ddd">
+                    <h3>🎯 DDD</h3>
+                    <ul>
+                        <li><strong>Độ phức tạp:</strong> ⭐⭐⭐ Cao</li>
+                        <li><strong>Learning curve:</strong> Khó</li>
+                        <li><strong>Phù hợp:</strong> Complex domain</li>
+                        <li><strong>Dependency:</strong> Domain là trung tâm</li>
+                        <li><strong>Testing:</strong> Rất dễ test</li>
+                        <li><strong>Coupling:</strong> Rất thấp</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- N-LAYER SECTION -->
+        <section id="nlayer" class="section">
+            <h2 style="color: var(--nlayer);">📦 1. N-Layer Architecture</h2>
+
+            <p>Kiến trúc truyền thống nhất, chia ứng dụng thành các tầng (layers) nằm chồng lên nhau. Mỗi tầng chỉ giao
+                tiếp với tầng ngay bên dưới.</p>
+
+            <h3>1.1 Cấu trúc Layers</h3>
+
+            <div class="diagram-box">
+                <div class="layers-diagram">
+                    <div class="layer-box" style="background: linear-gradient(135deg, #63b3ed, #4299e1);">
+                        🌐 Presentation Layer<br><small>Controllers, Views, API</small>
+                    </div>
+                    <div class="layer-box" style="background: linear-gradient(135deg, #667eea, #5a67d8);">
+                        ⚙️ Business Logic Layer<br><small>Services, Business Rules</small>
+                    </div>
+                    <div class="layer-box" style="background: linear-gradient(135deg, #ed8936, #dd6b20);">
+                        🗄️ Data Access Layer<br><small>Repositories, ORM</small>
+                    </div>
+                    <div class="layer-box" style="background: linear-gradient(135deg, #48bb78, #38a169);">
+                        💾 Database<br><small>MySQL, PostgreSQL</small>
+                    </div>
+                </div>
+            </div>
+
+            <h3>1.2 Folder Structure</h3>
+
+            <div class="folder-tree">
+                <span class="folder">src/</span>
+                ├── <span class="folder">Controllers/</span> <span class="layer-label"># Presentation Layer</span>
+                │ ├── <span class="file">CustomerController.java</span>
+                │ └── <span class="file">OrderController.java</span>
+                ├── <span class="folder">Services/</span> <span class="layer-label"># Business Logic Layer</span>
+                │ ├── <span class="file">CustomerService.java</span>
+                │ └── <span class="file">OrderService.java</span>
+                ├── <span class="folder">Repositories/</span> <span class="layer-label"># Data Access Layer</span>
+                │ ├── <span class="file">CustomerRepository.java</span>
+                │ └── <span class="file">OrderRepository.java</span>
+                ├── <span class="folder">Models/</span> <span class="layer-label"># Shared Entities</span>
+                │ ├── <span class="file">Customer.java</span>
+                │ └── <span class="file">Order.java</span>
+                └── <span class="file">Application.java</span>
+            </div>
+
+            <h3>1.3 Code Example</h3>
+
+            <div class="code-block">
+                <div class="code-header">
+                    <span>CustomerService.java (N-Layer)</span>
+                    <span class="code-lang nlayer">N-Layer</span>
+                </div>
+                <pre><span class="annotation">@Service</span>
+<span class="keyword">public class</span> <span class="type">CustomerService</span> {
+
+    <span class="comment">// ⚠️ Phụ thuộc TRỰC TIẾP vào implementation</span>
+    <span class="keyword">private final</span> <span class="type">CustomerRepository</span> customerRepository;
+    <span class="keyword">private final</span> <span class="type">OrderRepository</span> orderRepository;  <span class="comment">// Cross-layer access!</span>
+
+    <span class="keyword">public</span> <span class="type">CustomerWithOrders</span> <span class="function">getCustomerWithOrders</span>(<span class="type">Long</span> customerId) {
+        <span class="comment">// Đơn giản, dễ hiểu</span>
+        <span class="type">Customer</span> customer = customerRepository.<span class="function">findById</span>(customerId)
+            .<span class="function">orElseThrow</span>(() -> <span class="keyword">new</span> <span class="type">NotFoundException</span>(<span class="string">"Customer not found"</span>));
+        
+        <span class="comment">// ⚠️ Service gọi TRỰC TIẾP repository của domain khác</span>
+        <span class="type">List</span>&lt;<span class="type">Order</span>&gt; orders = orderRepository.<span class="function">findByCustomerId</span>(customerId);
+        
+        <span class="keyword">return new</span> <span class="type">CustomerWithOrders</span>(customer, orders);
+    }
+    
+    <span class="annotation">@Transactional</span>
+    <span class="keyword">public</span> <span class="type">Customer</span> <span class="function">createCustomer</span>(<span class="type">CustomerDto</span> dto) {
+        <span class="type">Customer</span> customer = <span class="keyword">new</span> <span class="type">Customer</span>();
+        customer.<span class="function">setName</span>(dto.<span class="function">getName</span>());
+        customer.<span class="function">setEmail</span>(dto.<span class="function">getEmail</span>());
+        <span class="comment">// Entity là "anemic" - chỉ có getters/setters</span>
+        <span class="keyword">return</span> customerRepository.<span class="function">save</span>(customer);
+    }
+}</pre>
+            </div>
+
+            <div class="pros-cons">
+                <div class="pros">
+                    <h5>✅ Ưu điểm</h5>
+                    <ul>
+                        <li>Dễ hiểu, dễ học</li>
+                        <li>Phù hợp cho CRUD đơn giản</li>
+                        <li>Ít boilerplate code</li>
+                        <li>Triển khai nhanh</li>
+                    </ul>
+                </div>
+                <div class="cons">
+                    <h5>❌ Nhược điểm</h5>
+                    <ul>
+                        <li>Coupling cao giữa layers</li>
+                        <li>Khó test (khó mock)</li>
+                        <li>Business logic bị phân tán</li>
+                        <li>Khó mở rộng khi phức tạp</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- CLEAN ARCHITECTURE SECTION -->
+        <section id="clean" class="section">
+            <h2 style="color: var(--clean);">🧅 2. Clean Architecture</h2>
+
+            <p>Kiến trúc "hình tròn" của Uncle Bob, dependency đi từ ngoài vào trong. Core business logic không phụ
+                thuộc vào framework hay database.</p>
+
+            <h3>2.1 The Onion Model</h3>
+
+            <div class="diagram-box">
+                <div class="clean-diagram">
+                    <div class="circle circle-outer">
+                        <div class="circle circle-mid">
+                            <div class="circle circle-inner">
+                                <div class="circle circle-core">
+                                    Entities
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div
+                    style="display: flex; justify-content: space-around; margin-top: 1rem; flex-wrap: wrap; gap: 0.5rem;">
+                    <span style="color: var(--secondary);">🟢 Entities (Core)</span>
+                    <span style="color: #68d391;">🟢 Use Cases</span>
+                    <span style="color: var(--primary);">🔵 Interface Adapters</span>
+                    <span style="color: var(--accent);">🟠 Frameworks & Drivers</span>
+                </div>
+            </div>
+
+            <div class="alert tip">
+                <span class="alert-icon">💡</span>
+                <div class="alert-content">
+                    <h5>Dependency Rule</h5>
+                    <p>Dependencies chỉ đi từ NGOÀI vào TRONG. Outer layers phụ thuộc inner layers, KHÔNG BAO GIỜ ngược
+                        lại. Inner layers không biết gì về outer layers.</p>
+                </div>
+            </div>
+
+            <h3>2.2 Folder Structure</h3>
+
+            <div class="folder-tree">
+                <span class="folder">src/</span>
+                ├── <span class="folder">domain/</span> <span class="layer-label"># Entities (Core)</span>
+                │ ├── <span class="file">Customer.java</span>
+                │ └── <span class="file">Order.java</span>
+                ├── <span class="folder">application/</span> <span class="layer-label"># Use Cases</span>
+                │ ├── <span class="folder">usecases/</span>
+                │ │ ├── <span class="file">CreateCustomerUseCase.java</span>
+                │ │ └── <span class="file">GetCustomerOrdersUseCase.java</span>
+                │ └── <span class="folder">ports/</span> <span class="layer-label"># Interfaces (không impl)</span>
+                │ ├── <span class="file">CustomerRepository.java</span> <span class="layer-label"># interface</span>
+                │ └── <span class="file">OrderRepository.java</span> <span class="layer-label"># interface</span>
+                ├── <span class="folder">adapters/</span> <span class="layer-label"># Interface Adapters</span>
+                │ ├── <span class="folder">in/</span>
+                │ │ └── <span class="file">CustomerController.java</span>
+                │ └── <span class="folder">out/</span>
+                │ ├── <span class="file">JpaCustomerRepository.java</span> <span class="layer-label"># implements
+                    port</span>
+                │ └── <span class="file">JpaOrderRepository.java</span>
+                └── <span class="folder">infrastructure/</span> <span class="layer-label"># Frameworks & Drivers</span>
+                ├── <span class="file">DatabaseConfig.java</span>
+                └── <span class="file">WebConfig.java</span>
+            </div>
+
+            <h3>2.3 Code Example</h3>
+
+            <div class="code-block">
+                <div class="code-header">
+                    <span>GetCustomerOrdersUseCase.java (Clean Architecture)</span>
+                    <span class="code-lang clean">Clean</span>
+                </div>
+                <pre><span class="comment">// APPLICATION LAYER - Use Case</span>
+<span class="annotation">@UseCase</span>
+<span class="keyword">public class</span> <span class="type">GetCustomerOrdersUseCase</span> {
+
+    <span class="comment">// ✅ Phụ thuộc vào INTERFACE (Port), không phải implementation</span>
+    <span class="keyword">private final</span> <span class="type">CustomerRepository</span> customerRepository;  <span class="comment">// interface</span>
+    <span class="keyword">private final</span> <span class="type">OrderRepository</span> orderRepository;        <span class="comment">// interface</span>
+
+    <span class="keyword">public</span> <span class="type">CustomerWithOrdersDto</span> <span class="function">execute</span>(<span class="type">Long</span> customerId) {
+        <span class="comment">// ✅ Use case chứa business logic</span>
+        <span class="type">Customer</span> customer = customerRepository.<span class="function">findById</span>(customerId)
+            .<span class="function">orElseThrow</span>(() -> <span class="keyword">new</span> <span class="type">CustomerNotFoundException</span>(customerId));
+        
+        <span class="type">List</span>&lt;<span class="type">Order</span>&gt; orders = orderRepository.<span class="function">findByCustomerId</span>(customerId);
+        
+        <span class="comment">// Business rule: chỉ hiển thị orders active</span>
+        <span class="type">List</span>&lt;<span class="type">Order</span>&gt; activeOrders = orders.<span class="function">stream</span>()
+            .<span class="function">filter</span>(<span class="type">Order</span>::isActive)
+            .<span class="function">toList</span>();
+        
+        <span class="keyword">return new</span> <span class="type">CustomerWithOrdersDto</span>(customer, activeOrders);
+    }
+}
+
+<span class="comment">// PORT (Interface) - Defined in application layer</span>
+<span class="keyword">public interface</span> <span class="type">CustomerRepository</span> {
+    <span class="type">Optional</span>&lt;<span class="type">Customer</span>&gt; <span class="function">findById</span>(<span class="type">Long</span> id);
+    <span class="type">Customer</span> <span class="function">save</span>(<span class="type">Customer</span> customer);
+}
+
+<span class="comment">// ADAPTER (Implementation) - In infrastructure layer</span>
+<span class="annotation">@Repository</span>
+<span class="keyword">public class</span> <span class="type">JpaCustomerRepository</span> <span class="keyword">implements</span> <span class="type">CustomerRepository</span> {
+    
+    <span class="keyword">private final</span> <span class="type">JpaCustomerJpaRepository</span> jpaRepo;  <span class="comment">// Spring Data JPA</span>
+    
+    <span class="annotation">@Override</span>
+    <span class="keyword">public</span> <span class="type">Optional</span>&lt;<span class="type">Customer</span>&gt; <span class="function">findById</span>(<span class="type">Long</span> id) {
+        <span class="keyword">return</span> jpaRepo.<span class="function">findById</span>(id)
+            .<span class="function">map</span>(<span class="keyword">this</span>::<span class="function">toDomain</span>);  <span class="comment">// Convert Entity → Domain</span>
+    }
+}</pre>
+            </div>
+
+            <div class="pros-cons">
+                <div class="pros">
+                    <h5>✅ Ưu điểm</h5>
+                    <ul>
+                        <li>Core không phụ thuộc framework</li>
+                        <li>Dễ test với mock</li>
+                        <li>Dễ thay đổi DB/Framework</li>
+                        <li>Business logic tập trung</li>
+                    </ul>
+                </div>
+                <div class="cons">
+                    <h5>❌ Nhược điểm</h5>
+                    <ul>
+                        <li>Nhiều boilerplate (interfaces)</li>
+                        <li>Mapping giữa layers</li>
+                        <li>Overkill cho CRUD đơn giản</li>
+                        <li>Learning curve cao hơn</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- DDD SECTION -->
+        <section id="ddd" class="section">
+            <h2 style="color: var(--ddd);">🎯 3. Domain-Driven Design (DDD)</h2>
+
+            <p>Không chỉ là kiến trúc, DDD là <strong>cách tư duy</strong> đặt domain (nghiệp vụ) làm trung tâm. Kết hợp
+                với Hexagonal Architecture (Ports & Adapters).</p>
+
+            <h3>3.1 Hexagonal Architecture (Ports & Adapters)</h3>
+
+            <div class="diagram-box">
+                <div class="hex-diagram">
+                    <div class="hex-box hex-adapter">🌐 REST<br>Controller</div>
+                    <span class="arrow-right">→</span>
+                    <div class="hex-box hex-port">📥 Input<br>Port</div>
+                    <span class="arrow-right">→</span>
+                    <div class="hex-box hex-core">🎯 DOMAIN<br>Core</div>
+                    <span class="arrow-right">→</span>
+                    <div class="hex-box hex-port">📤 Output<br>Port</div>
+                    <span class="arrow-right">→</span>
+                    <div class="hex-box hex-adapter">🗄️ Database<br>Adapter</div>
+                </div>
+            </div>
+
+            <h3>3.2 Bounded Contexts</h3>
+
+            <div class="alert info">
+                <span class="alert-icon">🔲</span>
+                <div class="alert-content">
+                    <h5>Bounded Context = Module độc lập</h5>
+                    <p>Mỗi context có model riêng, database riêng (lý tưởng), và giao tiếp với context khác qua
+                        <strong>public interfaces</strong> hoặc <strong>events</strong>. KHÔNG BAO GIỜ truy cập trực
+                        tiếp repository của context khác.</p>
+                </div>
+            </div>
+
+            <h3>3.3 Folder Structure</h3>
+
+            <div class="folder-tree">
+                <span class="folder">src/</span>
+                ├── <span class="folder">customer/</span> <span class="layer-label"># Bounded Context: Customer</span>
+                │ ├── <span class="folder">domain/</span>
+                │ │ ├── <span class="folder">model/</span>
+                │ │ │ ├── <span class="file">Customer.java</span> <span class="layer-label"># Aggregate Root</span>
+                │ │ │ ├── <span class="file">CustomerId.java</span> <span class="layer-label"># Value Object</span>
+                │ │ │ └── <span class="file">Email.java</span> <span class="layer-label"># Value Object</span>
+                │ │ ├── <span class="folder">event/</span>
+                │ │ │ └── <span class="file">CustomerCreatedEvent.java</span>
+                │ │ ├── <span class="folder">repository/</span>
+                │ │ │ └── <span class="file">CustomerRepository.java</span> <span class="layer-label"># interface
+                    only</span>
+                │ │ └── <span class="folder">service/</span>
+                │ │ └── <span class="file">CustomerDomainService.java</span>
+                │ ├── <span class="folder">application/</span>
+                │ │ ├── <span class="file">CustomerApplicationService.java</span>
+                │ │ ├── <span class="folder">command/</span>
+                │ │ │ └── <span class="file">CreateCustomerCommand.java</span>
+                │ │ └── <span class="folder">port/</span>
+                │ │ └── <span class="file">OrderServicePort.java</span> <span class="layer-label"># Gọi Order
+                    context</span>
+                │ └── <span class="folder">infrastructure/</span>
+                │ ├── <span class="file">JpaCustomerRepository.java</span>
+                │ └── <span class="file">OrderServiceAdapter.java</span> <span class="layer-label"># Impl of port</span>
+                │
+                ├── <span class="folder">order/</span> <span class="layer-label"># Bounded Context: Order</span>
+                │ ├── <span class="folder">domain/</span>
+                │ ├── <span class="folder">application/</span>
+                │ │ └── <span class="file">OrderApplicationService.java</span> <span class="layer-label"># Public
+                    interface</span>
+                │ └── <span class="folder">infrastructure/</span>
+                │
+                └── <span class="folder">shared/</span> <span class="layer-label"># Shared Kernel</span>
+                └── <span class="file">Money.java</span>
+            </div>
+
+            <h3>3.4 Code Example - Giao tiếp giữa Contexts</h3>
+
+            <div class="alert warn">
+                <span class="alert-icon">⚠️</span>
+                <div class="alert-content">
+                    <h5>Đây là điểm em hỏi!</h5>
+                    <p>Customer KHÔNG truy cập OrderRepository trực tiếp. Customer gọi qua OrderApplicationService
+                        (public interface của Order context).</p>
+                </div>
+            </div>
+
+            <div class="code-block">
+                <div class="code-header">
+                    <span>CustomerApplicationService.java (DDD - Cross-Context Call)</span>
+                    <span class="code-lang ddd">DDD</span>
+                </div>
+                <pre><span class="comment">// CUSTOMER CONTEXT - Application Layer</span>
+<span class="annotation">@Service</span>
+<span class="keyword">public class</span> <span class="type">CustomerApplicationService</span> {
+
+    <span class="keyword">private final</span> <span class="type">CustomerRepository</span> customerRepository;
+    
+    <span class="comment">// ✅ Port để gọi Order context (interface, không phải implementation)</span>
+    <span class="keyword">private final</span> <span class="type">OrderServicePort</span> orderServicePort;
+
+    <span class="keyword">public</span> <span class="type">CustomerWithOrdersDto</span> <span class="function">getCustomerWithOrders</span>(<span class="type">CustomerId</span> customerId) {
+        <span class="comment">// 1. Lấy customer từ repo của context này</span>
+        <span class="type">Customer</span> customer = customerRepository.<span class="function">findById</span>(customerId)
+            .<span class="function">orElseThrow</span>(() -> <span class="keyword">new</span> <span class="type">CustomerNotFoundException</span>(customerId));
+        
+        <span class="comment">// 2. ✅ Gọi Order context qua PORT (không gọi OrderRepository!)</span>
+        <span class="type">List</span>&lt;<span class="type">OrderSummary</span>&gt; orders = orderServicePort.<span class="function">getOrdersByCustomerId</span>(customerId);
+        
+        <span class="keyword">return new</span> <span class="type">CustomerWithOrdersDto</span>(customer, orders);
+    }
+}
+
+<span class="comment">// PORT - Định nghĩa trong Customer context</span>
+<span class="keyword">public interface</span> <span class="type">OrderServicePort</span> {
+    <span class="type">List</span>&lt;<span class="type">OrderSummary</span>&gt; <span class="function">getOrdersByCustomerId</span>(<span class="type">CustomerId</span> customerId);
+}
+
+<span class="comment">// ADAPTER - Triển khai trong Customer infrastructure</span>
+<span class="annotation">@Component</span>
+<span class="keyword">public class</span> <span class="type">OrderServiceAdapter</span> <span class="keyword">implements</span> <span class="type">OrderServicePort</span> {
+    
+    <span class="comment">// Gọi Order context's PUBLIC service (không phải repository)</span>
+    <span class="keyword">private final</span> <span class="type">OrderApplicationService</span> orderService;  <span class="comment">// From Order context</span>
+    
+    <span class="annotation">@Override</span>
+    <span class="keyword">public</span> <span class="type">List</span>&lt;<span class="type">OrderSummary</span>&gt; <span class="function">getOrdersByCustomerId</span>(<span class="type">CustomerId</span> customerId) {
+        <span class="comment">// Gọi public method của Order context</span>
+        <span class="keyword">return</span> orderService.<span class="function">findOrdersByCustomer</span>(customerId.<span class="function">getValue</span>());
+    }
+}</pre>
+            </div>
+
+            <div class="code-block">
+                <div class="code-header">
+                    <span>OrderApplicationService.java (Order Context - Public Interface)</span>
+                    <span class="code-lang ddd">DDD</span>
+                </div>
+                <pre><span class="comment">// ORDER CONTEXT - Public Application Service</span>
+<span class="annotation">@Service</span>
+<span class="keyword">public class</span> <span class="type">OrderApplicationService</span> {
+
+    <span class="keyword">private final</span> <span class="type">OrderRepository</span> orderRepository;  <span class="comment">// Private to this context</span>
+
+    <span class="comment">// ✅ Public method - Other contexts can call this</span>
+    <span class="keyword">public</span> <span class="type">List</span>&lt;<span class="type">OrderSummary</span>&gt; <span class="function">findOrdersByCustomer</span>(<span class="type">String</span> customerId) {
+        <span class="type">List</span>&lt;<span class="type">Order</span>&gt; orders = orderRepository.<span class="function">findByCustomerId</span>(customerId);
+        
+        <span class="comment">// Trả về DTO, KHÔNG trả về domain entity</span>
+        <span class="keyword">return</span> orders.<span class="function">stream</span>()
+            .<span class="function">map</span>(<span class="keyword">this</span>::<span class="function">toSummary</span>)
+            .<span class="function">toList</span>();
+    }
+    
+    <span class="keyword">private</span> <span class="type">OrderSummary</span> <span class="function">toSummary</span>(<span class="type">Order</span> order) {
+        <span class="keyword">return new</span> <span class="type">OrderSummary</span>(
+            order.<span class="function">getId</span>().<span class="function">getValue</span>(),
+            order.<span class="function">getStatus</span>().<span class="function">name</span>(),
+            order.<span class="function">getTotalAmount</span>().<span class="function">getValue</span>()
+        );
+    }
+}</pre>
+            </div>
+
+            <h3>3.5 Rich Domain Model</h3>
+
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Customer.java (Rich Domain Entity)</span>
+                    <span class="code-lang ddd">DDD</span>
+                </div>
+                <pre><span class="comment">// ✅ RICH Domain Entity - Có behavior, không chỉ data</span>
+<span class="keyword">public class</span> <span class="type">Customer</span> {
+    
+    <span class="keyword">private final</span> <span class="type">CustomerId</span> id;
+    <span class="keyword">private</span> <span class="type">CustomerName</span> name;
+    <span class="keyword">private</span> <span class="type">Email</span> email;
+    <span class="keyword">private</span> <span class="type">CustomerStatus</span> status;
+    <span class="keyword">private</span> <span class="type">List</span>&lt;<span class="type">DomainEvent</span>&gt; domainEvents = <span class="keyword">new</span> <span class="type">ArrayList</span>&lt;&gt;();
+    
+    <span class="comment">// Private constructor - use factory method</span>
+    <span class="keyword">private</span> <span class="function">Customer</span>(<span class="type">CustomerId</span> id, <span class="type">CustomerName</span> name, <span class="type">Email</span> email) {
+        <span class="keyword">this</span>.id = id;
+        <span class="keyword">this</span>.name = name;
+        <span class="keyword">this</span>.email = email;
+        <span class="keyword">this</span>.status = <span class="type">CustomerStatus</span>.ACTIVE;
+    }
+    
+    <span class="comment">// ✅ Factory method with validation</span>
+    <span class="keyword">public static</span> <span class="type">Customer</span> <span class="function">create</span>(<span class="type">CustomerName</span> name, <span class="type">Email</span> email) {
+        <span class="type">Customer</span> customer = <span class="keyword">new</span> <span class="type">Customer</span>(
+            <span class="type">CustomerId</span>.<span class="function">generate</span>(),
+            name,
+            email
+        );
+        
+        <span class="comment">// Raise domain event</span>
+        customer.<span class="function">addDomainEvent</span>(<span class="keyword">new</span> <span class="type">CustomerCreatedEvent</span>(customer.id));
+        
+        <span class="keyword">return</span> customer;
+    }
+    
+    <span class="comment">// ✅ Business behavior - không dùng setter!</span>
+    <span class="keyword">public void</span> <span class="function">changeEmail</span>(<span class="type">Email</span> newEmail) {
+        <span class="keyword">if</span> (<span class="keyword">this</span>.status == <span class="type">CustomerStatus</span>.SUSPENDED) {
+            <span class="keyword">throw new</span> <span class="type">BusinessException</span>(<span class="string">"Cannot change email for suspended customer"</span>);
+        }
+        <span class="keyword">this</span>.email = newEmail;
+        <span class="keyword">this</span>.<span class="function">addDomainEvent</span>(<span class="keyword">new</span> <span class="type">CustomerEmailChangedEvent</span>(<span class="keyword">this</span>.id, newEmail));
+    }
+    
+    <span class="comment">// ✅ Business rule encapsulated in entity</span>
+    <span class="keyword">public void</span> <span class="function">suspend</span>(<span class="type">String</span> reason) {
+        <span class="keyword">if</span> (<span class="keyword">this</span>.status == <span class="type">CustomerStatus</span>.SUSPENDED) {
+            <span class="keyword">throw new</span> <span class="type">BusinessException</span>(<span class="string">"Customer already suspended"</span>);
+        }
+        <span class="keyword">this</span>.status = <span class="type">CustomerStatus</span>.SUSPENDED;
+        <span class="keyword">this</span>.<span class="function">addDomainEvent</span>(<span class="keyword">new</span> <span class="type">CustomerSuspendedEvent</span>(<span class="keyword">this</span>.id, reason));
+    }
+}</pre>
+            </div>
+
+            <div class="pros-cons">
+                <div class="pros">
+                    <h5>✅ Ưu điểm</h5>
+                    <ul>
+                        <li>Domain logic tập trung, phong phú</li>
+                        <li>Rất dễ test business rules</li>
+                        <li>Bounded contexts độc lập</li>
+                        <li>Phù hợp microservices</li>
+                        <li>Dễ maintain lâu dài</li>
+                    </ul>
+                </div>
+                <div class="cons">
+                    <h5>❌ Nhược điểm</h5>
+                    <ul>
+                        <li>Learning curve cao</li>
+                        <li>Nhiều boilerplate</li>
+                        <li>Overkill cho CRUD đơn giản</li>
+                        <li>Cần team hiểu domain sâu</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- COMPARISON SECTION -->
+        <section id="compare" class="section">
+            <h2>📊 4. So sánh Chi tiết</h2>
+
+            <table class="comp-table">
+                <thead>
+                    <tr>
+                        <th>Tiêu chí</th>
+                        <th>📦 N-Layer</th>
+                        <th>🧅 Clean</th>
+                        <th>🎯 DDD</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Dependency Direction</td>
+                        <td>Top → Down</td>
+                        <td>Outside → Inside</td>
+                        <td>→ Domain ←</td>
+                    </tr>
+                    <tr>
+                        <td>Domain nhận biết DB?</td>
+                        <td>Có (import JPA)</td>
+                        <td>Không</td>
+                        <td>Không</td>
+                    </tr>
+                    <tr>
+                        <td>Cross-module access</td>
+                        <td>Gọi trực tiếp Repo</td>
+                        <td>Qua Use Case</td>
+                        <td>Qua Application Service</td>
+                    </tr>
+                    <tr>
+                        <td>Entity style</td>
+                        <td>Anemic (getters/setters)</td>
+                        <td>Anemic hoặc Rich</td>
+                        <td>Rich (có behavior)</td>
+                    </tr>
+                    <tr>
+                        <td>Business logic ở đâu?</td>
+                        <td>Service layer</td>
+                        <td>Use Cases</td>
+                        <td>Domain + Application</td>
+                    </tr>
+                    <tr>
+                        <td>Test effort</td>
+                        <td>Khó (cần DB)</td>
+                        <td>Dễ (mock interfaces)</td>
+                        <td>Rất dễ (pure domain)</td>
+                    </tr>
+                    <tr>
+                        <td>Số lượng files</td>
+                        <td>Ít</td>
+                        <td>Nhiều</td>
+                        <td>Rất nhiều</td>
+                    </tr>
+                    <tr>
+                        <td>Phù hợp cho</td>
+                        <td>CRUD, MVP, nhỏ</td>
+                        <td>Medium apps</td>
+                        <td>Complex domain</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>4.1 Khi nào dùng kiến trúc nào?</h3>
+
+            <div class="comparison-grid">
+                <div class="arch-card nlayer">
+                    <h3>📦 Dùng N-Layer khi</h3>
+                    <ul>
+                        <li>App nhỏ, đơn giản</li>
+                        <li>CRUD là chính</li>
+                        <li>Team junior</li>
+                        <li>Deadline gấp</li>
+                        <li>Không cần nhiều test</li>
+                    </ul>
+                </div>
+
+                <div class="arch-card clean">
+                    <h3>🧅 Dùng Clean khi</h3>
+                    <ul>
+                        <li>Cần test nhiều</li>
+                        <li>Có thể đổi DB/Framework</li>
+                        <li>Team senior</li>
+                        <li>Cần maintainability</li>
+                        <li>Medium complexity</li>
+                    </ul>
+                </div>
+
+                <div class="arch-card ddd">
+                    <h3>🎯 Dùng DDD khi</h3>
+                    <ul>
+                        <li>Domain phức tạp</li>
+                        <li>Nhiều business rules</li>
+                        <li>Microservices</li>
+                        <li>Long-term project</li>
+                        <li>Team hiểu domain</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- Summary -->
+        <section class="section">
+            <h2>🎯 Tóm tắt cho Em</h2>
+
+            <div class="alert tip">
+                <span class="alert-icon">✅</span>
+                <div class="alert-content">
+                    <h5>Câu hỏi của em: CustomerService gọi CardRepository như thế nào?</h5>
+                    <p>
+                        <strong>N-Layer:</strong> CustomerService có thể inject CardRepository trực tiếp (nhưng không
+                        nên!)<br>
+                        <strong>Clean/DDD:</strong> CustomerService gọi qua <code>CardServicePort</code> hoặc
+                        <code>CardApplicationService</code>.<br>
+                        <strong>Microservices:</strong> CustomerService gọi CardService qua gRPC/REST.
+                    </p>
+                </div>
+            </div>
+
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Tóm tắt Communication Pattern</span>
+                    <span class="code-lang">Pattern</span>
+                </div>
+                <pre><span class="comment">// ❌ SAI (N-Layer style, coupling cao)</span>
+<span class="keyword">class</span> <span class="type">CustomerService</span> {
+    <span class="type">CardRepository</span> cardRepo;  <span class="comment">// Truy cập trực tiếp repo của module khác</span>
+}
+
+<span class="comment">// ✅ ĐÚNG (Clean/DDD style)</span>
+<span class="keyword">class</span> <span class="type">CustomerApplicationService</span> {
+    <span class="type">CardServicePort</span> cardService;  <span class="comment">// Interface/Port</span>
+}
+
+<span class="keyword">interface</span> <span class="type">CardServicePort</span> {
+    <span class="type">List</span>&lt;<span class="type">CardDto</span>&gt; <span class="function">getCardsByCustomerId</span>(<span class="type">String</span> customerId);
+}
+
+<span class="keyword">class</span> <span class="type">CardServiceAdapter</span> <span class="keyword">implements</span> <span class="type">CardServicePort</span> {
+    <span class="type">CardApplicationService</span> cardService;  <span class="comment">// Gọi public service của Card context</span>
+    
+    <span class="type">List</span>&lt;<span class="type">CardDto</span>&gt; <span class="function">getCardsByCustomerId</span>(<span class="type">String</span> id) {
+        <span class="keyword">return</span> cardService.<span class="function">findCardsByCustomer</span>(id);
+    }
+}</pre>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>📚 Software Architecture Comparison | Tailor Shop Docs</p>
+            <p>Created by Antigravity AI • 2026</p>
+        </footer>
+    </div>
+</body>
+
+</html>

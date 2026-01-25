@@ -14,6 +14,7 @@ export default function Sidebar({ onNavigate }) {
     { label: "Hóa đơn", path: "/invoice" },
     { label: "🎟️ Mã giảm giá", path: "/admin/promotions" },
     { label: "⚡ Flash Sale", path: "/admin/flash-sales" },
+    { label: "🎯 Thử thách", path: "/admin/challenges" },
     { label: "Giao dịch", path: "/transactions" },
     { label: "Kho vải", path: "/fabric-inventory" },
     { label: "Vải / Booking", path: "/fabric-requests" },

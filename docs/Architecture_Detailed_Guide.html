@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hướng dẫn Chi tiết: N-Layer vs Clean vs DDD</title>
+    <style>
+        :root {
+            --primary: #667eea;
+            --secondary: #48bb78;
+            --accent: #ed8936;
+            --nlayer: #e53e3e;
+            --clean: #38a169;
+            --ddd: #3182ce;
+            --bg-dark: #1a202c;
+            --bg-card: #2d3748;
+            --text: #e2e8f0;
+            --text-muted: #a0aec0;
+            --border: #4a5568;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: var(--bg-dark);
+            color: var(--text);
+            line-height: 1.8;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .header {
+            text-align: center;
+            padding: 3rem;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 20px;
+            margin-bottom: 2rem;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .header p {
+            opacity: 0.9;
+        }
+
+        .section {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            border: 1px solid var(--border);
+        }
+
+        .section h2 {
+            font-size: 1.6rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .section h3 {
+            color: var(--secondary);
+            font-size: 1.2rem;
+            margin: 1.5rem 0 1rem;
+        }
+
+        .section p {
+            color: var(--text-muted);
+            margin-bottom: 1rem;
+        }
+
+        .highlight-box {
+            background: #1e2433;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            border-left: 4px solid var(--primary);
+        }
+
+        .highlight-box.red {
+            border-left-color: var(--nlayer);
+        }
+
+        .highlight-box.green {
+            border-left-color: var(--clean);
+        }
+
+        .highlight-box.blue {
+            border-left-color: var(--ddd);
+        }
+
+        .highlight-box h4 {
+            margin-bottom: 0.5rem;
+        }
+
+        .diagram-box {
+            background: #1e2433;
+            border-radius: 12px;
+            padding: 2rem;
+            margin: 1.5rem 0;
+            overflow-x: auto;
+        }
+
+        .layer-stack {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .layer {
+            padding: 1rem;
+            text-align: center;
+            border-radius: 8px;
+            font-weight: 600;
+            position: relative;
+        }
+
+        .layer::after {
+            content: '↓';
+            position: absolute;
+            bottom: -18px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: var(--text-muted);
+        }
+
+        .layer:last-child::after {
+            display: none;
+        }
+
+        .flow-diagram {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            padding: 1rem;
+        }
+
+        .flow-box {
+            padding: 0.8rem 1.2rem;
+            border-radius: 8px;
+            text-align: center;
+            min-width: 100px;
+            font-size: 0.9rem;
+        }
+
+        .flow-arrow {
+            color: var(--accent);
+            font-size: 1.5rem;
+        }
+
+        .code-block {
+            background: #0d1117;
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            overflow-x: auto;
+            font-family: 'Consolas', monospace;
+            font-size: 0.85rem;
+            line-height: 1.6;
+            border: 1px solid #30363d;
+        }
+
+        .code-block .comment {
+            color: #8b949e;
+        }
+
+        .code-block .keyword {
+            color: #ff7b72;
+        }
+
+        .code-block .type {
+            color: #79c0ff;
+        }
+
+        .code-block .string {
+            color: #a5d6ff;
+        }
+
+        .code-block .annotation {
+            color: #ffa657;
+        }
+
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.5rem 0;
+            font-size: 0.9rem;
+        }
+
+        .comparison-table th,
+        .comparison-table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .comparison-table th {
+            background: var(--bg-dark);
+        }
+
+        .step-list {
+            counter-reset: step;
+            list-style: none;
+            padding: 0;
+        }
+
+        .step-list li {
+            position: relative;
+            padding-left: 3rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .step-list li::before {
+            counter-increment: step;
+            content: counter(step);
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 2rem;
+            height: 2rem;
+            background: var(--primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .card {
+            background: var(--bg-dark);
+            border-radius: 12px;
+            padding: 1.5rem;
+            border: 2px solid;
+        }
+
+        .card.red {
+            border-color: var(--nlayer);
+        }
+
+        .card.green {
+            border-color: var(--clean);
+        }
+
+        .card.blue {
+            border-color: var(--ddd);
+        }
+
+        .card h4 {
+            margin-bottom: 1rem;
+        }
+
+        .card ul {
+            padding-left: 1.2rem;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .card li {
+            margin: 0.5rem 0;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-muted);
+            border-top: 1px solid var(--border);
+            margin-top: 2rem;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+
+        <header class="header">
+            <h1>🏗️ Hướng dẫn Kiến trúc Phần mềm</h1>
+            <p>N-Layer vs Clean Architecture vs DDD - Giải thích chi tiết từ cơ bản</p>
+        </header>
+
+        <!-- PHẦN 1: KHÁI NIỆM CƠ BẢN -->
+        <section class="section">
+            <h2>📚 Phần 1: Tại sao cần Kiến trúc?</h2>
+
+            <p>Kiến trúc phần mềm giúp:</p>
+            <ul class="step-list">
+                <li><strong>Tổ chức code:</strong> Biết đặt file ở đâu, class nào thuộc module nào</li>
+                <li><strong>Dễ bảo trì:</strong> Thay đổi 1 phần không ảnh hưởng phần khác</li>
+                <li><strong>Dễ test:</strong> Có thể test từng phần riêng biệt</li>
+                <li><strong>Dễ mở rộng:</strong> Thêm tính năng mới không phá vỡ code cũ</li>
+            </ul>
+
+            <div class="highlight-box">
+                <h4>💡 Câu hỏi quan trọng nhất</h4>
+                <p>Khi bạn cần thay đổi database từ MySQL sang MongoDB, bạn phải sửa bao nhiêu file?</p>
+                <p><strong>N-Layer:</strong> Sửa rất nhiều file (coupling cao)</p>
+                <p><strong>Clean/DDD:</strong> Chỉ sửa 1-2 file Infrastructure (coupling thấp)</p>
+            </div>
+        </section>
+
+        <!-- PHẦN 2: N-LAYER -->
+        <section class="section">
+            <h2 style="color: var(--nlayer);">📦 Phần 2: N-Layer Architecture</h2>
+
+            <h3>2.1 Ý tưởng chính</h3>
+            <p><strong>Chia theo tầng KỸ THUẬT</strong> - Mỗi tầng làm một nhiệm vụ kỹ thuật riêng, gọi xuống tầng bên
+                dưới.</p>
+
+            <div class="diagram-box">
+                <div class="layer-stack">
+                    <div class="layer" style="background: linear-gradient(135deg, #63b3ed, #4299e1);">🌐 Presentation
+                        Layer<br><small>Controllers, API endpoints</small></div>
+                    <div class="layer" style="background: linear-gradient(135deg, #667eea, #5a67d8);">⚙️ Business Logic
+                        Layer<br><small>Services - xử lý nghiệp vụ</small></div>
+                    <div class="layer" style="background: linear-gradient(135deg, #ed8936, #dd6b20);">🗄️ Data Access
+                        Layer<br><small>Repositories - đọc/ghi DB</small></div>
+                    <div class="layer" style="background: linear-gradient(135deg, #48bb78, #38a169);">💾 Database</div>
+                </div>
+            </div>
+
+            <h3>2.2 Cấu trúc thư mục</h3>
+            <div class="code-block">
+                src/
+                ├── controllers/ <span class="comment"># Presentation Layer</span>
+                │ ├── CustomerController.java
+                │ └── OrderController.java
+                ├── services/ <span class="comment"># Business Logic Layer</span>
+                │ ├── CustomerService.java
+                │ └── OrderService.java
+                ├── repositories/ <span class="comment"># Data Access Layer</span>
+                │ ├── CustomerRepository.java
+                │ └── OrderRepository.java
+                └── models/ <span class="comment"># Entities (shared)</span>
+                ├── Customer.java
+                └── Order.java
+            </div>
+
+            <h3>2.3 Flow hoạt động</h3>
+            <div class="diagram-box">
+                <div class="flow-diagram">
+                    <div class="flow-box" style="background: #4299e1;">User Request</div>
+                    <span class="flow-arrow">→</span>
+                    <div class="flow-box" style="background: #5a67d8;">Controller</div>
+                    <span class="flow-arrow">→</span>
+                    <div class="flow-box" style="background: #667eea;">Service</div>
+                    <span class="flow-arrow">→</span>
+                    <div class="flow-box" style="background: #dd6b20;">Repository</div>
+                    <span class="flow-arrow">→</span>
+                    <div class="flow-box" style="background: #38a169;">Database</div>
+                </div>
+            </div>
+
+            <h3>2.4 Code ví dụ</h3>
+            <div class="code-block">
+                <span class="annotation">@Service</span>
+                <span class="keyword">public class</span> <span class="type">CustomerService</span> {
+
+                <span class="comment">// Inject trực tiếp implementation</span>
+                <span class="annotation">@Autowired</span>
+                <span class="keyword">private</span> <span class="type">CustomerRepository</span> customerRepository;
+
+                <span class="comment">// ⚠️ Có thể inject repository của module khác!</span>
+                <span class="annotation">@Autowired</span>
+                <span class="keyword">private</span> <span class="type">OrderRepository</span> orderRepository;
+
+                <span class="keyword">public</span> <span class="type">Customer</span> createCustomer(<span
+                    class="type">CustomerDto</span> dto) {
+                <span class="type">Customer</span> customer = <span class="keyword">new</span> <span
+                    class="type">Customer</span>();
+                customer.setName(dto.getName()); <span class="comment">// Anemic entity</span>
+                customer.setEmail(dto.getEmail());
+                <span class="keyword">return</span> customerRepository.save(customer);
+                }
+                }
+            </div>
+
+            <div class="highlight-box red">
+                <h4>⚠️ Vấn đề của N-Layer</h4>
+                <ul>
+                    <li><strong>Coupling cao:</strong> Service phụ thuộc trực tiếp vào Repository implementation</li>
+                    <li><strong>Cross-module access:</strong> CustomerService có thể gọi OrderRepository trực tiếp</li>
+                    <li><strong>Anemic model:</strong> Entity chỉ có getter/setter, không có behavior</li>
+                    <li><strong>Khó test:</strong> Cần database thật để test Service</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- PHẦN 3: CLEAN ARCHITECTURE -->
+        <section class="section">
+            <h2 style="color: var(--clean);">🧅 Phần 3: Clean Architecture</h2>
+
+            <h3>3.1 Ý tưởng chính</h3>
+            <p><strong>Dependencies đi từ NGOÀI VÀO TRONG</strong> - Core business không biết về database hay framework.
+            </p>
+
+            <div class="highlight-box green">
+                <h4>🔑 Dependency Rule (Quy tắc quan trọng nhất!)</h4>
+                <p>Code ở vòng trong <strong>KHÔNG ĐƯỢC</strong> biết bất cứ điều gì về code ở vòng ngoài.</p>
+                <p>Entity không import Spring. Use Case không import JPA. Chỉ có Infrastructure mới biết về framework.
+                </p>
+            </div>
+
+            <h3>3.2 Mô hình vòng tròn (Onion)</h3>
+            <div class="diagram-box">
+                <div style="text-align: center;">
+                    <div
+                        style="display: inline-block; padding: 20px; border-radius: 50%; border: 3px solid var(--accent); background: rgba(237,137,54,0.1); width: 320px; height: 320px;">
+                        <div
+                            style="padding: 15px; border-radius: 50%; border: 3px solid var(--primary); background: rgba(102,126,234,0.1); width: 260px; height: 260px; margin: 0 auto;">
+                            <div
+                                style="padding: 15px; border-radius: 50%; border: 3px solid #68d391; background: rgba(104,211,145,0.1); width: 200px; height: 200px; margin: 0 auto;">
+                                <div
+                                    style="padding: 30px; border-radius: 50%; background: linear-gradient(135deg, var(--secondary), #2f855a); width: 140px; height: 140px; margin: 0 auto; display: flex; align-items: center; justify-content: center;">
+                                    <strong>Entities</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div style="display: flex; justify-content: center; gap: 2rem; margin-top: 1rem; flex-wrap: wrap;">
+                    <span style="color: var(--secondary);">🟢 Entities (Core)</span>
+                    <span style="color: #68d391;">🟢 Use Cases</span>
+                    <span style="color: var(--primary);">🔵 Interface Adapters</span>
+                    <span style="color: var(--accent);">🟠 Frameworks</span>
+                </div>
+            </div>
+
+            <h3>3.3 Giải thích từng layer</h3>
+            <table class="comparison-table">
+                <tr>
+                    <th>Layer</th>
+                    <th>Chứa gì?</th>
+                    <th>Ví dụ</th>
+                </tr>
+                <tr>
+                    <td style="color: var(--secondary);"><strong>Entities</strong></td>
+                    <td>Domain models, business objects</td>
+                    <td>Customer.java, Order.java</td>
+                </tr>
+                <tr>
+                    <td style="color: #68d391;"><strong>Use Cases</strong></td>
+                    <td>Application logic, business rules</td>
+                    <td>CreateCustomerUseCase, GetOrdersUseCase</td>
+                </tr>
+                <tr>
+                    <td style="color: var(--primary);"><strong>Interface Adapters</strong></td>
+                    <td>Controllers, Presenters, Repository impl</td>
+                    <td>CustomerController, JpaCustomerRepository</td>
+                </tr>
+                <tr>
+                    <td style="color: var(--accent);"><strong>Frameworks</strong></td>
+                    <td>Spring, JPA, Database drivers</td>
+                    <td>Spring Boot, Hibernate, MySQL driver</td>
+                </tr>
+            </table>
+
+            <h3>3.4 Cấu trúc thư mục</h3>
+            <div class="code-block">
+                src/
+                ├── domain/ <span class="comment"># Entities (Core - innermost)</span>
+                │ ├── Customer.java
+                │ └── Order.java
+                ├── application/ <span class="comment"># Use Cases</span>
+                │ ├── usecases/
+                │ │ ├── CreateCustomerUseCase.java
+                │ │ └── GetCustomerOrdersUseCase.java
+                │ └── ports/ <span class="comment"># Interfaces (NOT impl!)</span>
+                │ ├── CustomerRepository.java <span class="comment"># interface only</span>
+                │ └── OrderRepository.java <span class="comment"># interface only</span>
+                ├── adapters/ <span class="comment"># Interface Adapters</span>
+                │ ├── in/
+                │ │ └── CustomerController.java
+                │ └── out/
+                │ └── JpaCustomerRepository.java <span class="comment"># implements port</span>
+                └── infrastructure/ <span class="comment"># Frameworks & Drivers</span>
+                └── config/
+                └── DatabaseConfig.java
+            </div>
+
+            <h3>3.5 Code ví dụ - Dependency Inversion</h3>
+            <div class="code-block">
+                <span class="comment">// 1. PORT (Interface) - Định nghĩa ở APPLICATION layer</span>
+                <span class="keyword">public interface</span> <span class="type">CustomerRepository</span> {
+                <span class="type">Optional</span>&lt;<span class="type">Customer</span>&gt; findById(<span
+                    class="type">String</span> id);
+                <span class="type">Customer</span> save(<span class="type">Customer</span> customer);
+                }
+
+                <span class="comment">// 2. USE CASE - Phụ thuộc vào INTERFACE, không phải implementation</span>
+                <span class="keyword">public class</span> <span class="type">CreateCustomerUseCase</span> {
+
+                <span class="keyword">private final</span> <span class="type">CustomerRepository</span> repository;
+                <span class="comment">// Interface!</span>
+
+                <span class="keyword">public</span> <span class="type">Customer</span> execute(<span
+                    class="type">CreateCustomerCommand</span> cmd) {
+                <span class="type">Customer</span> customer = <span class="keyword">new</span> <span
+                    class="type">Customer</span>(cmd.getName(), cmd.getEmail());
+                <span class="keyword">return</span> repository.save(customer);
+                }
+                }
+
+                <span class="comment">// 3. ADAPTER - Implement interface, ở INFRASTRUCTURE layer</span>
+                <span class="annotation">@Repository</span>
+                <span class="keyword">public class</span> <span class="type">JpaCustomerRepository</span> <span
+                    class="keyword">implements</span> <span class="type">CustomerRepository</span> {
+
+                <span class="annotation">@Autowired</span>
+                <span class="keyword">private</span> <span class="type">SpringDataCustomerRepo</span> jpaRepo;
+
+                <span class="annotation">@Override</span>
+                <span class="keyword">public</span> <span class="type">Customer</span> save(<span
+                    class="type">Customer</span> customer) {
+                <span class="type">CustomerEntity</span> entity = toEntity(customer);
+                <span class="type">CustomerEntity</span> saved = jpaRepo.save(entity);
+                <span class="keyword">return</span> toDomain(saved);
+                }
+                }
+            </div>
+
+            <div class="highlight-box green">
+                <h4>✅ Lợi ích của Clean Architecture</h4>
+                <ul>
+                    <li><strong>Dễ test:</strong> Mock interface CustomerRepository dễ dàng</li>
+                    <li><strong>Dễ đổi DB:</strong> Chỉ cần tạo MongoCustomerRepository implements CustomerRepository
+                    </li>
+                    <li><strong>Core độc lập:</strong> Domain và Use Cases không biết về Spring, JPA</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- PHẦN 4: DDD -->
+        <section class="section">
+            <h2 style="color: var(--ddd);">🎯 Phần 4: Domain-Driven Design (DDD)</h2>
+
+            <h3>4.1 Ý tưởng chính</h3>
+            <p><strong>Chia theo NGHIỆP VỤ (Domain)</strong> - Không phải theo kỹ thuật. Mỗi "nghiệp vụ" là một Bounded
+                Context độc lập.</p>
+
+            <div class="highlight-box blue">
+                <h4>🔑 Bounded Context = Module nghiệp vụ độc lập</h4>
+                <p>Customer Context, Order Context, Card Context - mỗi context có:</p>
+                <ul>
+                    <li>Database riêng (lý tưởng)</li>
+                    <li>Domain model riêng</li>
+                    <li>Repository riêng (private)</li>
+                    <li>Giao tiếp với context khác qua <strong>public interface</strong></li>
+                </ul>
+            </div>
+
+            <h3>4.2 Các khái niệm DDD</h3>
+            <table class="comparison-table">
+                <tr>
+                    <th>Khái niệm</th>
+                    <th>Giải thích</th>
+                    <th>Ví dụ</th>
+                </tr>
+                <tr>
+                    <td><strong>Bounded Context</strong></td>
+                    <td>Ranh giới nghiệp vụ độc lập</td>
+                    <td>Customer BC, Order BC, Payment BC</td>
+                </tr>
+                <tr>
+                    <td><strong>Aggregate</strong></td>
+                    <td>Nhóm entities liên quan, có 1 Root</td>
+                    <td>Order (root) + OrderItems</td>
+                </tr>
+                <tr>
+                    <td><strong>Entity</strong></td>
+                    <td>Object có ID duy nhất</td>
+                    <td>Customer(id), Order(id)</td>
+                </tr>
+                <tr>
+                    <td><strong>Value Object</strong></td>
+                    <td>Object không có ID, so sánh bằng value</td>
+                    <td>Money, Email, Address</td>
+                </tr>
+                <tr>
+                    <td><strong>Domain Event</strong></td>
+                    <td>Sự kiện nghiệp vụ đã xảy ra</td>
+                    <td>OrderCreated, CustomerSuspended</td>
+                </tr>
+                <tr>
+                    <td><strong>Domain Service</strong></td>
+                    <td>Logic span nhiều entities</td>
+                    <td>TransferMoneyService</td>
+                </tr>
+            </table>
+
+            <h3>4.3 Cấu trúc Bounded Context</h3>
+            <div class="code-block">
+                customer/ <span class="comment"># BOUNDED CONTEXT: Customer</span>
+                ├── domain/ <span class="comment"># Domain Layer (CORE)</span>
+                │ ├── model/
+                │ │ ├── Customer.java <span class="comment"># Aggregate Root</span>
+                │ │ ├── CustomerId.java <span class="comment"># Value Object</span>
+                │ │ └── Email.java <span class="comment"># Value Object</span>
+                │ ├── event/
+                │ │ └── CustomerCreatedEvent.java
+                │ ├── repository/
+                │ │ └── CustomerRepository.java <span class="comment"># Interface ONLY</span>
+                │ └── service/
+                │ └── CustomerDomainService.java
+                ├── application/ <span class="comment"># Application Layer</span>
+                │ ├── CustomerApplicationService.java
+                │ └── port/
+                │ └── CardServicePort.java <span class="comment"># Gọi Card context</span>
+                └── infrastructure/ <span class="comment"># Infrastructure Layer</span>
+                ├── JpaCustomerRepository.java
+                └── CardServiceAdapter.java
+            </div>
+
+            <h3>4.4 Giao tiếp giữa Bounded Contexts</h3>
+            <p><strong>⚠️ QUAN TRỌNG:</strong> Context A KHÔNG được gọi trực tiếp Repository của Context B!</p>
+
+            <div class="diagram-box">
+                <div class="flow-diagram">
+                    <div class="flow-box" style="background: var(--ddd); min-width: 150px;">
+                        <strong>Customer Context</strong><br>
+                        <small>CustomerAppService</small>
+                    </div>
+                    <span class="flow-arrow">→</span>
+                    <div class="flow-box" style="background: var(--accent); min-width: 120px;">
+                        <strong>Port</strong><br>
+                        <small>CardServicePort</small>
+                    </div>
+                    <span class="flow-arrow">→</span>
+                    <div class="flow-box" style="background: var(--secondary); min-width: 150px;">
+                        <strong>Card Context</strong><br>
+                        <small>CardAppService</small>
+                    </div>
+                </div>
+            </div>
+
+            <h3>4.5 Code ví dụ - Cross-Context Communication</h3>
+            <div class="code-block">
+                <span class="comment">// ❌ SAI - Gọi trực tiếp CardRepository</span>
+                <span class="keyword">public class</span> <span class="type">CustomerService</span> {
+                <span class="keyword">private</span> <span class="type">CardRepository</span> cardRepo; <span
+                    class="comment">// KHÔNG ĐƯỢC!</span>
+                }
+
+                <span class="comment">// ✅ ĐÚNG - Gọi qua Port → CardApplicationService</span>
+                <span class="keyword">public class</span> <span class="type">CustomerApplicationService</span> {
+
+                <span class="keyword">private final</span> <span class="type">CustomerRepository</span> customerRepo;
+                <span class="keyword">private final</span> <span class="type">CardServicePort</span> cardServicePort;
+                <span class="comment">// Interface!</span>
+
+                <span class="keyword">public</span> <span class="type">CustomerWithCards</span>
+                getCustomerWithCards(<span class="type">String</span> customerId) {
+                <span class="type">Customer</span> customer = customerRepo.findById(customerId);
+
+                <span class="comment">// Gọi Card context qua PORT</span>
+                <span class="type">List</span>&lt;<span class="type">CardDto</span>&gt; cards =
+                cardServicePort.getCardsByCustomerId(customerId);
+
+                <span class="keyword">return new</span> <span class="type">CustomerWithCards</span>(customer, cards);
+                }
+                }
+
+                <span class="comment">// Port interface (trong Customer context)</span>
+                <span class="keyword">public interface</span> <span class="type">CardServicePort</span> {
+                <span class="type">List</span>&lt;<span class="type">CardDto</span>&gt; getCardsByCustomerId(<span
+                    class="type">String</span> customerId);
+                }
+
+                <span class="comment">// Adapter (implement Port, gọi Card's public service)</span>
+                <span class="keyword">public class</span> <span class="type">CardServiceAdapter</span> <span
+                    class="keyword">implements</span> <span class="type">CardServicePort</span> {
+
+                <span class="keyword">private final</span> <span class="type">CardApplicationService</span> cardService;
+                <span class="comment">// From Card context</span>
+
+                <span class="annotation">@Override</span>
+                <span class="keyword">public</span> <span class="type">List</span>&lt;<span
+                    class="type">CardDto</span>&gt; getCardsByCustomerId(<span class="type">String</span> id) {
+                <span class="keyword">return</span> cardService.findCardsByCustomer(id); <span class="comment">// Public
+                    method</span>
+                }
+                }
+            </div>
+
+            <h3>4.6 Rich Domain Model</h3>
+            <div class="code-block">
+                <span class="comment">// Rich Entity - Có behavior, không chỉ getter/setter</span>
+                <span class="keyword">public class</span> <span class="type">Customer</span> {
+
+                <span class="keyword">private</span> <span class="type">CustomerId</span> id;
+                <span class="keyword">private</span> <span class="type">Email</span> email;
+                <span class="keyword">private</span> <span class="type">CustomerStatus</span> status;
+                <span class="keyword">private</span> <span class="type">List</span>&lt;<span
+                    class="type">DomainEvent</span>&gt; events = <span class="keyword">new</span> ArrayList&lt;&gt;();
+
+                <span class="comment">// Factory method</span>
+                <span class="keyword">public static</span> <span class="type">Customer</span> create(<span
+                    class="type">String</span> name, <span class="type">Email</span> email) {
+                <span class="type">Customer</span> c = <span class="keyword">new</span> <span
+                    class="type">Customer</span>(<span class="type">CustomerId</span>.generate(), name, email);
+                c.addEvent(<span class="keyword">new</span> <span class="type">CustomerCreatedEvent</span>(c.id));
+                <span class="keyword">return</span> c;
+                }
+
+                <span class="comment">// Business behavior - KHÔNG dùng setter!</span>
+                <span class="keyword">public void</span> suspend(<span class="type">String</span> reason) {
+                <span class="keyword">if</span> (<span class="keyword">this</span>.status == SUSPENDED) {
+                <span class="keyword">throw new</span> <span class="type">BusinessException</span>(<span
+                    class="string">"Already suspended"</span>);
+                }
+                <span class="keyword">this</span>.status = SUSPENDED;
+                <span class="keyword">this</span>.addEvent(<span class="keyword">new</span> <span
+                    class="type">CustomerSuspendedEvent</span>(<span class="keyword">this</span>.id, reason));
+                }
+                }
+            </div>
+        </section>
+
+        <!-- PHẦN 5: SO SÁNH -->
+        <section class="section">
+            <h2>📊 Phần 5: So sánh Tổng kết</h2>
+
+            <table class="comparison-table">
+                <tr>
+                    <th>Tiêu chí</th>
+                    <th style="color: var(--nlayer);">N-Layer</th>
+                    <th style="color: var(--clean);">Clean</th>
+                    <th style="color: var(--ddd);">DDD</th>
+                </tr>
+                <tr>
+                    <td>Chia theo</td>
+                    <td>Kỹ thuật</td>
+                    <td>Vòng tròn</td>
+                    <td>Nghiệp vụ</td>
+                </tr>
+                <tr>
+                    <td>Dependency</td>
+                    <td>Top → Down</td>
+                    <td>Outside → Inside</td>
+                    <td>→ Domain ←</td>
+                </tr>
+                <tr>
+                    <td>Cross-module</td>
+                    <td>Gọi trực tiếp Repo</td>
+                    <td>Qua Use Case</td>
+                    <td>Qua App Service</td>
+                </tr>
+                <tr>
+                    <td>Entity style</td>
+                    <td>Anemic</td>
+                    <td>Có thể Rich</td>
+                    <td>Rich (bắt buộc)</td>
+                </tr>
+                <tr>
+                    <td>Test effort</td>
+                    <td>Khó</td>
+                    <td>Dễ</td>
+                    <td>Rất dễ</td>
+                </tr>
+                <tr>
+                    <td>Phù hợp</td>
+                    <td>CRUD đơn giản</td>
+                    <td>Medium apps</td>
+                    <td>Complex domain</td>
+                </tr>
+            </table>
+
+            <h3>Khi nào dùng?</h3>
+            <div class="grid-2">
+                <div class="card red">
+                    <h4 style="color: var(--nlayer);">📦 Dùng N-Layer khi</h4>
+                    <ul>
+                        <li>App nhỏ, CRUD đơn giản</li>
+                        <li>Deadline gấp, cần MVP</li>
+                        <li>Team junior</li>
+                        <li>Không cần test nhiều</li>
+                    </ul>
+                </div>
+                <div class="card green">
+                    <h4 style="color: var(--clean);">🧅 Dùng Clean khi</h4>
+                    <ul>
+                        <li>Cần testability cao</li>
+                        <li>Có thể thay đổi framework</li>
+                        <li>Medium complexity</li>
+                        <li>Team có kinh nghiệm</li>
+                    </ul>
+                </div>
+                <div class="card blue">
+                    <h4 style="color: var(--ddd);">🎯 Dùng DDD khi</h4>
+                    <ul>
+                        <li>Domain phức tạp</li>
+                        <li>Nhiều business rules</li>
+                        <li>Microservices</li>
+                        <li>Long-term project</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <footer class="footer">
+            <p>📚 Software Architecture Guide | Tailor Shop Docs</p>
+            <p>Created by Antigravity AI • 2026</p>
+        </footer>
+
+    </div>
+</body>
+
+</html>

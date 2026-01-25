@@ -149,14 +149,15 @@ export default function RoleBasedLoginPage() {
       });
 
       const responseData = response?.data ?? response?.responseData ?? response;
+      const tokenPayload = responseData?.data ?? responseData;
       const isSuccess =
         response?.success === true ||
         response?.responseStatus?.responseCode === "200" ||
-        !!responseData?.accessToken ||
-        !!responseData?.token;
+        !!tokenPayload?.accessToken ||
+        !!tokenPayload?.token;
 
       if (isSuccess && responseData) {
-        const token = responseData.token ?? responseData.accessToken;
+        const token = tokenPayload.token ?? tokenPayload.accessToken;
         if (token) {
           localStorage.setItem("token", token);
         }

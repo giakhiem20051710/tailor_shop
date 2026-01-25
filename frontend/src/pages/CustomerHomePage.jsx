@@ -423,6 +423,13 @@ const CustomerHomePage = () => {
                 >
                   Tìm hiểu quy trình
                 </button>
+                <button
+                  className="px-5 py-2.5 text-[13px] border border-[#1B4332] text-[#1B4332] rounded-full hover:bg-[#1B4332] hover:text-white transition-colors bg-white/70 flex items-center gap-2"
+                  onClick={() => navigate("/customer/wallet")}
+                >
+                  <span>💎</span>
+                  Ví xu & Thử thách
+                </button>
               </div>
             </div>
 

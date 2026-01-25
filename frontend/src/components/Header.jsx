@@ -254,7 +254,7 @@ const Header = ({ currentPage = "" }) => {
       {/* Hàng dưới: menu + HCM / giờ / hotline */}
       <div className="bg-[#FFFBF2] border-b border-[#F3F4F6]">
         <div className="max-w-7xl mx-auto px-5 lg:px-8 flex items-center justify-between h-9 text-[11px]">
-          <nav className="flex items-center gap-6 uppercase tracking-[0.16em] text-[#374151]">
+          <nav className="flex items-center gap-4 uppercase tracking-[0.12em] text-[#374151] whitespace-nowrap overflow-x-auto scrollbar-hide">
             <a
               href="/customer-home"
               className={`hover:text-[#111827] transition-colors ${isActive("/customer-home") ? "text-[#111827] font-semibold" : ""
@@ -382,6 +382,17 @@ const Header = ({ currentPage = "" }) => {
               }}
             >
               ƯU ĐÃI
+            </a>
+            <a
+              href="/customer/wallet"
+              className={`hover:text-[#111827] transition-colors ${isActive("/customer/wallet") ? "text-[#111827] font-semibold" : ""
+                }`}
+              onClick={(e) => {
+                e.preventDefault();
+                navigate("/customer/wallet");
+              }}
+            >
+              XU & THỬ
             </a>
             <a
               href="/articles"
@@ -640,6 +651,18 @@ const Header = ({ currentPage = "" }) => {
                 }`}
             >
               YÊU THÍCH
+            </a>
+            <a
+              href="/customer/wallet"
+              onClick={(e) => {
+                e.preventDefault();
+                navigate("/customer/wallet");
+                setShowMobileMenu(false);
+              }}
+              className={`block px-4 py-3 rounded-lg transition-colors ${isActive("/customer/wallet") ? "bg-[#111827] text-white" : "text-[#374151] hover:bg-[#F9FAFB]"
+                }`}
+            >
+              XU & THỬ THÁCH
             </a>
             {currentUser && (
               <a
