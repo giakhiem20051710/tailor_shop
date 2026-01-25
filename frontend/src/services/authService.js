@@ -19,9 +19,12 @@ class AuthService {
       { includeAuth: false }
     );
     
-    // Store token if provided
-    if (response.data?.token) {
-      localStorage.setItem('token', response.data.token);
+    // Store token if provided (support wrapped responses)
+    const responseData = response?.data ?? response?.responseData ?? response;
+    const tokenPayload = responseData?.data ?? responseData;
+    const token = tokenPayload?.accessToken || tokenPayload?.token;
+    if (token) {
+      localStorage.setItem('token', token);
     }
     
     return response;

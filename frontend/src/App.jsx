@@ -84,6 +84,13 @@ const CategoryTemplatePage = lazy(() => import("./pages/CategoryTemplatePage.jsx
 const FlashSalePage = lazy(() => import("./pages/FlashSalePage.jsx"));
 const FlashSaleManagementPage = lazy(() => import("./pages/FlashSaleManagementPage.jsx"));
 
+// Gamification
+const ChallengesPage = lazy(() => import("./pages/ChallengesPage.jsx"));
+const ChallengeManagementPage = lazy(() => import("./pages/ChallengeManagementPage.jsx"));
+const CheckinPage = lazy(() => import("./pages/CheckinPage.jsx"));
+const WalletPage = lazy(() => import("./pages/WalletPage.jsx"));
+const TransactionHistoryPage = lazy(() => import("./pages/TransactionHistoryPage.jsx"));
+
 // Tailor Dashboard
 const TailorDashboardPage = lazy(() => import("./pages/TailorDashboardPage.jsx"));
 const TailorOrderDetailPage = lazy(() => import("./pages/TailorOrderDetailPage.jsx"));
@@ -124,6 +131,10 @@ export default function App() {
 
           {/* Flash Sale Page */}
           <Route path="/flash-sale" element={<FlashSalePage />} />
+
+          {/* Gamification - Seasonal Challenges */}
+          <Route path="/S" element={<ChallengesPage />} />
+          <Route path="/checkin" element={<CheckinPage />} />
 
           {/* Fabrics Page */}
           <Route path="/fabrics" element={<FabricsPage />} />
@@ -199,6 +210,7 @@ export default function App() {
             {/* Promotions & Flash Sales - Admin/Staff only */}
             <Route path="/admin/promotions" element={<StaffAndAdmin><PromotionManagementPage /></StaffAndAdmin>} />
             <Route path="/admin/flash-sales" element={<StaffAndAdmin><FlashSaleManagementPage /></StaffAndAdmin>} />
+            <Route path="/admin/challenges" element={<StaffAndAdmin><ChallengeManagementPage /></StaffAndAdmin>} />
 
             {/* Fabric Management - Admin/Staff only */}
             <Route path="/fabric-requests" element={<StaffAndAdmin><FabricRequestsPage /></StaffAndAdmin>} />
@@ -225,6 +237,8 @@ export default function App() {
           <Route path="/customer/orders/:id" element={<AuthenticatedOnly><CustomerOrderDetailPage /></AuthenticatedOnly>} />
           <Route path="/customer/orders/:orderId/review" element={<AuthenticatedOnly><ProductReviewPage /></AuthenticatedOnly>} />
           <Route path="/customer/invoices/:id" element={<AuthenticatedOnly><CustomerInvoiceDetailPage /></AuthenticatedOnly>} />
+          <Route path="/customer/wallet" element={<AuthenticatedOnly><WalletPage /></AuthenticatedOnly>} />
+          <Route path="/customer/transactions" element={<AuthenticatedOnly><TransactionHistoryPage /></AuthenticatedOnly>} />
         </Routes>
       </Suspense>
       {/* Chat Widget - hiển thị trên tất cả các trang */}

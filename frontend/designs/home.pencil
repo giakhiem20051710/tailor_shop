@@ -1,0 +1,90 @@
+{
+  "version": "1.0",
+  "name": "HomePage Design",
+  "description": "Trang chủ My Hiền Tailor - Atelier may đo cao cấp",
+  "canvas": {
+    "width": 1440,
+    "height": 900,
+    "background": "#FFFFFF"
+  },
+  "designTokens": {
+    "colors": {
+      "primary": "#1a1a2e",
+      "secondary": "#c9a96e",
+      "accent": "#d4af37",
+      "background": "#faf9f6",
+      "text": "#333333",
+      "textLight": "#666666"
+    },
+    "typography": {
+      "fontFamily": "Playfair Display, serif",
+      "headingFont": "Playfair Display, serif",
+      "bodyFont": "Open Sans, sans-serif"
+    },
+    "spacing": {
+      "xs": 4,
+      "sm": 8,
+      "md": 16,
+      "lg": 24,
+      "xl": 32,
+      "xxl": 48
+    }
+  },
+  "components": [
+    {
+      "id": "hero-section",
+      "type": "section",
+      "name": "Hero Section",
+      "props": {
+        "title": "My Hiền Tailor",
+        "subtitle": "Atelier may đo áo dài, vest, đầm cao cấp",
+        "highlights": [
+          {"label": "Khách hàng thân thiết", "value": "12.4K+"},
+          {"label": "Đảm bảo form dáng", "value": "100%"},
+          {"label": "Thời gian hoàn thiện", "value": "72H"}
+        ]
+      }
+    },
+    {
+      "id": "categories-nav",
+      "type": "navigation",
+      "name": "Category Navigation",
+      "props": {
+        "items": ["Tất cả", "Áo dài", "Vest", "Váy", "Đồng phục"]
+      }
+    },
+    {
+      "id": "service-pillars",
+      "type": "card-grid",
+      "name": "Service Pillars",
+      "props": {
+        "columns": 3,
+        "cards": [
+          {"title": "Atelier Service", "icon": "🎩", "tag": "Signature"},
+          {"title": "Digital Fitting", "icon": "📱", "tag": "Tech-enabled"},
+          {"title": "Material Library", "icon": "🧵", "tag": "Curated"}
+        ]
+      }
+    }
+  ],
+  "artboards": [
+    {
+      "id": "desktop",
+      "name": "Desktop 1440px",
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "id": "tablet",
+      "name": "Tablet 768px",
+      "width": 768,
+      "height": 1024
+    },
+    {
+      "id": "mobile",
+      "name": "Mobile 375px",
+      "width": 375,
+      "height": 812
+    }
+  ]
+}

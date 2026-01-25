@@ -109,6 +109,14 @@ export default function DashboardPage() {
           <div className="font-semibold text-gray-900">Khách hàng</div>
           <div className="text-sm text-gray-500">Danh sách khách hàng</div>
         </button>
+        <button
+          onClick={() => navigate("/admin/challenges")}
+          className="bg-white p-5 rounded-2xl shadow border border-gray-200 hover:shadow-lg transition text-left"
+        >
+          <div className="text-2xl mb-2">🎯</div>
+          <div className="font-semibold text-gray-900">Thử thách</div>
+          <div className="text-sm text-gray-500">Quản lý gamification</div>
+        </button>
       </div>
 
       {/* CARDS */}

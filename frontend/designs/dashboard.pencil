@@ -1,0 +1,76 @@
+{
+  "version": "1.0",
+  "name": "Dashboard Design",
+  "description": "Trang dashboard cho khách hàng và thợ may",
+  "canvas": {
+    "width": 1440,
+    "height": 900,
+    "background": "#faf9f6"
+  },
+  "components": [
+    {
+      "id": "sidebar",
+      "type": "navigation",
+      "name": "Sidebar Navigation",
+      "props": {
+        "position": "left",
+        "width": 280,
+        "items": [
+          {"icon": "home", "label": "Tổng quan", "path": "/dashboard"},
+          {"icon": "shopping-bag", "label": "Đơn hàng", "path": "/orders"},
+          {"icon": "calendar", "label": "Lịch hẹn", "path": "/appointments"},
+          {"icon": "heart", "label": "Yêu thích", "path": "/favorites"},
+          {"icon": "ruler", "label": "Số đo", "path": "/measurements"},
+          {"icon": "settings", "label": "Cài đặt", "path": "/settings"}
+        ]
+      }
+    },
+    {
+      "id": "stats-cards",
+      "type": "card-grid",
+      "name": "Statistics Cards",
+      "props": {
+        "columns": 4,
+        "cards": [
+          {"title": "Đơn hàng", "value": "12", "trend": "+2"},
+          {"title": "Đang xử lý", "value": "3", "status": "active"},
+          {"title": "Hoàn thành", "value": "9", "status": "success"},
+          {"title": "Điểm tích lũy", "value": "2,450", "unit": "điểm"}
+        ]
+      }
+    },
+    {
+      "id": "recent-orders",
+      "type": "table",
+      "name": "Recent Orders Table",
+      "props": {
+        "columns": ["Mã đơn", "Sản phẩm", "Ngày đặt", "Trạng thái", "Thao tác"],
+        "pagination": true,
+        "pageSize": 5
+      }
+    },
+    {
+      "id": "upcoming-appointments",
+      "type": "list",
+      "name": "Upcoming Appointments",
+      "props": {
+        "layout": "timeline",
+        "showDate": true
+      }
+    }
+  ],
+  "artboards": [
+    {
+      "id": "desktop",
+      "name": "Desktop",
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "id": "tablet",
+      "name": "Tablet",
+      "width": 1024,
+      "height": 768
+    }
+  ]
+}

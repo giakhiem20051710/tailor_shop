@@ -4,6 +4,7 @@ import { getCurrentUser } from "../utils/authStorage";
 import { orderService, appointmentService, measurementService, userService, workingSlotService } from "../services";
 import Header from "../components/Header.jsx";
 import CustomerHistory from "../components/CustomerHistory.jsx";
+import ChallengesWidget from "../components/ChallengesWidget.jsx";
 import { showSuccess, showError } from "../components/NotificationToast.jsx";
 import {
   Tag, ProgressSteps, StatCard, TabPill,
@@ -580,6 +581,44 @@ function CustomerDashboardPage() {
               textColor="text-white"
             />
           </section>
+
+          <section className="grid gap-4 md:grid-cols-4">
+            <button
+              onClick={() => navigate("/customer/wallet")}
+              className="bg-white rounded-2xl p-4 border border-amber-100 shadow-sm text-left hover:shadow-md transition-all"
+            >
+              <p className="text-xs uppercase tracking-widest text-amber-600">Ví xu</p>
+              <p className="mt-2 text-lg font-semibold text-slate-900">💎 Xem số dư</p>
+              <p className="text-xs text-slate-500 mt-1">Quản lý xu & ưu đãi</p>
+            </button>
+            <button
+              onClick={() => navigate("/customer/transactions")}
+              className="bg-white rounded-2xl p-4 border border-amber-100 shadow-sm text-left hover:shadow-md transition-all"
+            >
+              <p className="text-xs uppercase tracking-widest text-amber-600">Giao dịch</p>
+              <p className="mt-2 text-lg font-semibold text-slate-900">📜 Lịch sử xu</p>
+              <p className="text-xs text-slate-500 mt-1">Thu/chi & hết hạn</p>
+            </button>
+            <button
+              onClick={() => navigate("/checkin")}
+              className="bg-white rounded-2xl p-4 border border-amber-100 shadow-sm text-left hover:shadow-md transition-all"
+            >
+              <p className="text-xs uppercase tracking-widest text-amber-600">Điểm danh</p>
+              <p className="mt-2 text-lg font-semibold text-slate-900">📅 Nhận xu</p>
+              <p className="text-xs text-slate-500 mt-1">Tăng streak mỗi ngày</p>
+            </button>
+            <button
+              onClick={() => navigate("/S")}
+              className="bg-white rounded-2xl p-4 border border-amber-100 shadow-sm text-left hover:shadow-md transition-all"
+            >
+              <p className="text-xs uppercase tracking-widest text-amber-600">Thử thách</p>
+              <p className="mt-2 text-lg font-semibold text-slate-900">🏆 Xem thử thách</p>
+              <p className="text-xs text-slate-500 mt-1">Hoàn thành nhận thưởng</p>
+            </button>
+          </section>
+
+          {/* Thử thách của tôi */}
+          <ChallengesWidget />
 
           {/* HÀNH TRÌNH ĐƠN HÀNG GẦN ĐÂY */}
           {recentOrders.length > 0 && (

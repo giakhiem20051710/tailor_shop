@@ -21,6 +21,8 @@ export { default as invoiceService } from './invoiceService.js';
 export { default as reviewService } from './reviewService.js';
 export { default as measurementService } from './measurementService.js';
 export { default as imageAssetService } from './imageAssetService.js';
+export { default as gamificationService } from './gamificationService.js';
+export { default as pointsService } from './pointsService.js';
 
 // Export httpClient for advanced usage
 export { default as httpClient } from './api/httpClient.js';

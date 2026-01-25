@@ -1,0 +1,1391 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tailor Shop - System Architecture Diagram</title>
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --secondary: #10b981;
+            --accent: #f59e0b;
+            --danger: #ef4444;
+            --bg-dark: #0f172a;
+            --bg-card: #1e293b;
+            --bg-light: #334155;
+            --text: #f1f5f9;
+            --text-muted: #94a3b8;
+            --border: #475569;
+            --frontend: #3b82f6;
+            --backend: #10b981;
+            --database: #f59e0b;
+            --external: #ec4899;
+            --monitoring: #8b5cf6;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text);
+            line-height: 1.7;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            padding: 3rem 2rem;
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #ec4899 100%);
+            border-radius: 24px;
+            margin-bottom: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+        }
+
+        .header h1 {
+            font-size: 2.8rem;
+            margin-bottom: 0.5rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Navigation */
+        .nav {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .nav-btn {
+            padding: 0.8rem 1.5rem;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid var(--border);
+            background: var(--bg-card);
+            color: var(--text);
+        }
+
+        .nav-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .nav-btn.active {
+            background: var(--primary);
+            border-color: var(--primary);
+        }
+
+        /* Section */
+        .section {
+            background: var(--bg-card);
+            border-radius: 24px;
+            padding: 2.5rem;
+            margin-bottom: 2rem;
+            border: 1px solid var(--border);
+        }
+
+        .section h2 {
+            font-size: 1.8rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .section h3 {
+            color: var(--secondary);
+            font-size: 1.4rem;
+            margin: 1.5rem 0 1rem;
+        }
+
+        /* Architecture Overview */
+        .arch-overview {
+            background: linear-gradient(180deg, var(--bg-dark) 0%, var(--bg-light) 100%);
+            border-radius: 20px;
+            padding: 3rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Layers */
+        .layer {
+            padding: 1.5rem;
+            border-radius: 16px;
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        .layer-title {
+            font-size: 1rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .layer-frontend {
+            background: rgba(59, 130, 246, 0.1);
+            border: 2px solid var(--frontend);
+        }
+
+        .layer-backend {
+            background: rgba(16, 185, 129, 0.1);
+            border: 2px solid var(--backend);
+        }
+
+        .layer-database {
+            background: rgba(245, 158, 11, 0.1);
+            border: 2px solid var(--database);
+        }
+
+        .layer-external {
+            background: rgba(236, 72, 153, 0.1);
+            border: 2px solid var(--external);
+        }
+
+        .layer-monitoring {
+            background: rgba(139, 92, 246, 0.1);
+            border: 2px solid var(--monitoring);
+        }
+
+        /* Component Grid */
+        .component-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 1rem;
+        }
+
+        .component {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 1rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            border: 1px solid var(--border);
+        }
+
+        .component:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        }
+
+        .component-icon {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .component-name {
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+
+        .component-tech {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            margin-top: 0.3rem;
+        }
+
+        /* Arrows */
+        .arrow-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 60px;
+            position: relative;
+        }
+
+        .arrow {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: var(--text-muted);
+        }
+
+        .arrow-line {
+            width: 4px;
+            height: 30px;
+            background: linear-gradient(180deg, var(--primary) 0%, var(--secondary) 100%);
+            border-radius: 2px;
+        }
+
+        .arrow-head {
+            width: 0;
+            height: 0;
+            border-left: 8px solid transparent;
+            border-right: 8px solid transparent;
+            border-top: 10px solid var(--secondary);
+        }
+
+        .arrow-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-left: 1rem;
+        }
+
+        /* Flow Diagram */
+        .flow-diagram {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            padding: 2rem;
+            background: var(--bg-dark);
+            border-radius: 16px;
+            margin-top: 1.5rem;
+        }
+
+        .flow-row {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .flow-box {
+            padding: 1rem 1.5rem;
+            border-radius: 12px;
+            font-weight: 600;
+            text-align: center;
+            min-width: 120px;
+            position: relative;
+        }
+
+        .flow-arrow {
+            font-size: 1.5rem;
+            color: var(--text-muted);
+        }
+
+        .flow-user {
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+        }
+
+        .flow-frontend {
+            background: linear-gradient(135deg, #3b82f6, #06b6d4);
+        }
+
+        .flow-api {
+            background: linear-gradient(135deg, #10b981, #059669);
+        }
+
+        .flow-service {
+            background: linear-gradient(135deg, #14b8a6, #0d9488);
+        }
+
+        .flow-db {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+        }
+
+        .flow-external {
+            background: linear-gradient(135deg, #ec4899, #db2777);
+        }
+
+        /* Module Grid */
+        .module-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .module-card {
+            background: var(--bg-dark);
+            border-radius: 16px;
+            padding: 1.5rem;
+            border: 1px solid var(--border);
+            transition: all 0.3s ease;
+        }
+
+        .module-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+            border-color: var(--primary);
+        }
+
+        .module-icon {
+            font-size: 2.5rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .module-name {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .module-desc {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        /* Docker Diagram */
+        .docker-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .docker-card {
+            background: var(--bg-dark);
+            border-radius: 16px;
+            padding: 1.5rem;
+            border: 2px solid;
+            position: relative;
+        }
+
+        .docker-card::before {
+            content: '🐳';
+            position: absolute;
+            top: -12px;
+            right: 10px;
+            font-size: 1.5rem;
+        }
+
+        .docker-mysql {
+            border-color: var(--database);
+        }
+
+        .docker-app {
+            border-color: var(--backend);
+        }
+
+        .docker-frontend {
+            border-color: var(--frontend);
+        }
+
+        .docker-prometheus {
+            border-color: var(--monitoring);
+        }
+
+        .docker-grafana {
+            border-color: #f472b6;
+        }
+
+        .docker-port {
+            display: inline-block;
+            background: var(--bg-light);
+            padding: 0.3rem 0.6rem;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            margin-top: 0.5rem;
+            font-family: monospace;
+        }
+
+        /* Connection Lines */
+        .connections {
+            background: var(--bg-dark);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-top: 1.5rem;
+        }
+
+        .connection-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .connection-row:last-child {
+            border-bottom: none;
+        }
+
+        .connection-from,
+        .connection-to {
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-weight: 600;
+            min-width: 150px;
+            text-align: center;
+        }
+
+        .connection-line {
+            flex: 1;
+            height: 3px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            position: relative;
+            margin: 0 1rem;
+        }
+
+        .connection-label {
+            position: absolute;
+            top: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--bg-card);
+            padding: 0.25rem 0.75rem;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            white-space: nowrap;
+        }
+
+        /* Tech Stack */
+        .tech-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .tech-item {
+            background: var(--bg-dark);
+            border-radius: 12px;
+            padding: 1rem;
+            text-align: center;
+            border: 1px solid var(--border);
+        }
+
+        .tech-logo {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .tech-name {
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .tech-version {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        /* Legend */
+        .legend {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            flex-wrap: wrap;
+            margin-top: 2rem;
+            padding: 1.5rem;
+            background: var(--bg-dark);
+            border-radius: 12px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 4px;
+        }
+
+        /* Mermaid-like Diagram */
+        .diagram-container {
+            background: #1a1b26;
+            border-radius: 16px;
+            padding: 2rem;
+            margin-top: 1.5rem;
+            overflow-x: auto;
+        }
+
+        .diagram-title {
+            text-align: center;
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            color: var(--secondary);
+        }
+
+        /* Interactive Diagram SVG */
+        .svg-diagram {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            display: block;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-muted);
+            border-top: 1px solid var(--border);
+            margin-top: 2rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.8rem;
+            }
+
+            .section {
+                padding: 1.5rem;
+            }
+
+            .component-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <h1>🏗️ Tailor Shop System Architecture</h1>
+            <p>Comprehensive overview of the entire system components and interactions</p>
+        </header>
+
+        <!-- Navigation -->
+        <nav class="nav">
+            <a href="#overview" class="nav-btn active">📋 Overview</a>
+            <a href="#layers" class="nav-btn">📚 Layers</a>
+            <a href="#modules" class="nav-btn">📦 Modules</a>
+            <a href="#docker" class="nav-btn">🐳 Docker</a>
+            <a href="#dataflow" class="nav-btn">🔄 Data Flow</a>
+            <a href="#tech" class="nav-btn">🛠️ Tech Stack</a>
+        </nav>
+
+        <!-- Section 1: Overview -->
+        <section id="overview" class="section">
+            <h2>📋 System Overview</h2>
+
+            <div class="arch-overview">
+                <!-- User Layer -->
+                <div class="layer layer-frontend">
+                    <div class="layer-title" style="color: var(--frontend);">
+                        👤 Client Layer (Browser)
+                    </div>
+                    <div class="component-grid">
+                        <div class="component">
+                            <div class="component-icon">🌐</div>
+                            <div class="component-name">React SPA</div>
+                            <div class="component-tech">Vite + React 18</div>
+                        </div>
+                        <div class="component">
+                            <div class="component-icon">🎨</div>
+                            <div class="component-name">Pages (63+)</div>
+                            <div class="component-tech">JSX Components</div>
+                        </div>
+                        <div class="component">
+                            <div class="component-icon">⚙️</div>
+                            <div class="component-name">Services (23+)</div>
+                            <div class="component-tech">API Clients</div>
+                        </div>
+                        <div class="component">
+                            <div class="component-icon">🧩</div>
+                            <div class="component-name">Components (68+)</div>
+                            <div class="component-tech">Reusable UI</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Arrow -->
+                <div class="arrow-container">
+                    <div class="arrow">
+                        <div class="arrow-line"></div>
+                        <div class="arrow-head"></div>
+                    </div>
+                    <span class="arrow-label">HTTP/REST API (JSON)</span>
+                </div>
+
+                <!-- Backend Layer -->
+                <div class="layer layer-backend">
+                    <div class="layer-title" style="color: var(--backend);">
+                        ⚙️ Backend Layer (Spring Boot)
+                    </div>
+                    <div class="component-grid">
+                        <div class="component">
+                            <div class="component-icon">🔐</div>
+                            <div class="component-name">Security</div>
+                            <div class="component-tech">JWT + Spring Security</div>
+                        </div>
+                        <div class="component">
+                            <div class="component-icon">🎯</div>
+                            <div class="component-name">Controllers</div>
+                            <div class="component-tech">REST Endpoints</div>
+                        </div>
+                        <div class="component">
+                            <div class="component-icon">💼</div>
+                            <div class="component-name">Services</div>
+                            <div class="component-tech">Business Logic</div>
+                        </div>
+                        <div class="component">
+                            <div class="component-icon">📁</div>
+                            <div class="component-name">Repositories</div>
+                            <div class="component-tech">JPA/Hibernate</div>
+                        </div>
+                        <div class="component">
+                            <div class="component-icon">📊</div>
+                            <div class="component-name">Domain</div>
+                            <div class="component-tech">Entities + Enums</div>
+                        </div>
+                        <div class="component">
+                            <div class="component-icon">📨</div>
+                            <div class="component-name">Events</div>
+                            <div class="component-tech">Domain Events</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Arrow -->
+                <div class="arrow-container">
+                    <div class="arrow">
+                        <div class="arrow-line"></div>
+                        <div class="arrow-head"></div>
+                    </div>
+                    <span class="arrow-label">JDBC Connection</span>
+                </div>
+
+                <!-- Database Layer -->
+                <div class="layer layer-database">
+                    <div class="layer-title" style="color: var(--database);">
+                        🗄️ Data Layer
+                    </div>
+                    <div class="component-grid">
+                        <div class="component">
+                            <div class="component-icon">🐬</div>
+                            <div class="component-name">MySQL 8.0</div>
+                            <div class="component-tech">Primary Database</div>
+                        </div>
+                        <div class="component">
+                            <div class="component-icon">📁</div>
+                            <div class="component-name">File Storage</div>
+                            <div class="component-tech">Local Uploads</div>
+                        </div>
+                        <div class="component">
+                            <div class="component-icon">☁️</div>
+                            <div class="component-name">AWS S3</div>
+                            <div class="component-tech">Cloud Storage</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- External Services -->
+                <div class="layer layer-external" style="margin-top: 2rem;">
+                    <div class="layer-title" style="color: var(--external);">
+                        🌍 External Services
+                    </div>
+                    <div class="component-grid">
+                        <div class="component">
+                            <div class="component-icon">🤖</div>
+                            <div class="component-name">Gemini AI</div>
+                            <div class="component-tech">AI Recommendations</div>
+                        </div>
+                        <div class="component">
+                            <div class="component-icon">📧</div>
+                            <div class="component-name">Gmail SMTP</div>
+                            <div class="component-tech">Email Service</div>
+                        </div>
+                        <div class="component">
+                            <div class="component-icon">💳</div>
+                            <div class="component-name">Payment Gateway</div>
+                            <div class="component-tech">Sandbox</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Monitoring Layer -->
+                <div class="layer layer-monitoring" style="margin-top: 2rem;">
+                    <div class="layer-title" style="color: var(--monitoring);">
+                        📊 Monitoring & Observability
+                    </div>
+                    <div class="component-grid">
+                        <div class="component">
+                            <div class="component-icon">📈</div>
+                            <div class="component-name">Prometheus</div>
+                            <div class="component-tech">Metrics Collection</div>
+                        </div>
+                        <div class="component">
+                            <div class="component-icon">📉</div>
+                            <div class="component-name">Grafana</div>
+                            <div class="component-tech">Visualization</div>
+                        </div>
+                        <div class="component">
+                            <div class="component-icon">❤️</div>
+                            <div class="component-name">Actuator</div>
+                            <div class="component-tech">Health Checks</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Legend -->
+            <div class="legend">
+                <div class="legend-item">
+                    <div class="legend-color" style="background: var(--frontend);"></div>
+                    <span>Frontend</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: var(--backend);"></div>
+                    <span>Backend</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: var(--database);"></div>
+                    <span>Database</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: var(--external);"></div>
+                    <span>External</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: var(--monitoring);"></div>
+                    <span>Monitoring</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 2: Detailed Layers -->
+        <section id="layers" class="section">
+            <h2>📚 Architecture Layers (DDD-Inspired)</h2>
+
+            <div class="diagram-container">
+                <div class="diagram-title">Backend Module Structure</div>
+
+                <svg class="svg-diagram" viewBox="0 0 800 500" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Background -->
+                    <rect x="10" y="10" width="780" height="480" rx="20" fill="#1e293b" stroke="#475569" />
+
+                    <!-- Controller Layer -->
+                    <g transform="translate(50, 40)">
+                        <rect width="700" height="70" rx="10" fill="rgba(59, 130, 246, 0.2)" stroke="#3b82f6"
+                            stroke-width="2" />
+                        <text x="20" y="25" fill="#3b82f6" font-weight="bold" font-size="14">CONTROLLER LAYER</text>
+                        <text x="20" y="50" fill="#94a3b8" font-size="12">REST Controllers • Request Validation •
+                            Response Mapping</text>
+
+                        <rect x="450" y="15" width="100" height="40" rx="8" fill="#3b82f6" />
+                        <text x="475" y="40" fill="white" font-size="11">@RestController</text>
+
+                        <rect x="560" y="15" width="80" height="40" rx="8" fill="#3b82f6" />
+                        <text x="575" y="40" fill="white" font-size="11">@GetMapping</text>
+                    </g>
+
+                    <!-- Arrow -->
+                    <path d="M400 120 L400 145" stroke="url(#arrow-gradient)" stroke-width="3"
+                        marker-end="url(#arrowhead)" />
+                    <text x="420" y="135" fill="#94a3b8" font-size="10">DTO</text>
+
+                    <!-- Service Layer -->
+                    <g transform="translate(50, 155)">
+                        <rect width="700" height="90" rx="10" fill="rgba(16, 185, 129, 0.2)" stroke="#10b981"
+                            stroke-width="2" />
+                        <text x="20" y="25" fill="#10b981" font-weight="bold" font-size="14">SERVICE LAYER</text>
+                        <text x="20" y="50" fill="#94a3b8" font-size="12">Business Logic • Transaction Management •
+                            Validation</text>
+                        <text x="20" y="70" fill="#94a3b8" font-size="11">• FabricService • OrderService •
+                            FlashSaleService • AuthService...</text>
+
+                        <rect x="480" y="15" width="80" height="30" rx="6" fill="#10b981" />
+                        <text x="495" y="35" fill="white" font-size="10">Interface</text>
+
+                        <rect x="570" y="15" width="120" height="30" rx="6" fill="#059669" />
+                        <text x="590" y="35" fill="white" font-size="10">Implementation</text>
+                    </g>
+
+                    <!-- Arrow -->
+                    <path d="M400 255 L400 280" stroke="url(#arrow-gradient)" stroke-width="3"
+                        marker-end="url(#arrowhead)" />
+                    <text x="420" y="270" fill="#94a3b8" font-size="10">Entity</text>
+
+                    <!-- Domain Layer -->
+                    <g transform="translate(50, 290)">
+                        <rect width="700" height="80" rx="10" fill="rgba(245, 158, 11, 0.2)" stroke="#f59e0b"
+                            stroke-width="2" />
+                        <text x="20" y="25" fill="#f59e0b" font-weight="bold" font-size="14">DOMAIN LAYER</text>
+                        <text x="20" y="50" fill="#94a3b8" font-size="12">Entities • Enums • Domain Events • Value
+                            Objects (future)</text>
+
+                        <rect x="400" y="15" width="80" height="50" rx="6" fill="rgba(245, 158, 11, 0.3)"
+                            stroke="#f59e0b" />
+                        <text x="415" y="35" fill="#f59e0b" font-size="10">@Entity</text>
+                        <text x="415" y="50" fill="#94a3b8" font-size="9">FabricEntity</text>
+
+                        <rect x="490" y="15" width="70" height="50" rx="6" fill="rgba(245, 158, 11, 0.3)"
+                            stroke="#f59e0b" />
+                        <text x="505" y="35" fill="#f59e0b" font-size="10">Enum</text>
+                        <text x="495" y="50" fill="#94a3b8" font-size="9">OrderStatus</text>
+
+                        <rect x="570" y="15" width="80" height="50" rx="6" fill="rgba(245, 158, 11, 0.3)"
+                            stroke="#f59e0b" />
+                        <text x="585" y="35" fill="#f59e0b" font-size="10">Event</text>
+                        <text x="575" y="50" fill="#94a3b8" font-size="9">OrderCreated</text>
+                    </g>
+
+                    <!-- Arrow -->
+                    <path d="M400 380 L400 405" stroke="url(#arrow-gradient)" stroke-width="3"
+                        marker-end="url(#arrowhead)" />
+
+                    <!-- Repository Layer -->
+                    <g transform="translate(50, 415)">
+                        <rect width="700" height="60" rx="10" fill="rgba(139, 92, 246, 0.2)" stroke="#8b5cf6"
+                            stroke-width="2" />
+                        <text x="20" y="25" fill="#8b5cf6" font-weight="bold" font-size="14">REPOSITORY LAYER</text>
+                        <text x="20" y="45" fill="#94a3b8" font-size="12">JPA Repositories • Custom Queries • Spring
+                            Data</text>
+
+                        <rect x="500" y="10" width="190" height="40" rx="6" fill="#8b5cf6" />
+                        <text x="515" y="35" fill="white" font-size="10">extends JpaRepository</text>
+                    </g>
+
+                    <!-- Gradient Definition -->
+                    <defs>
+                        <linearGradient id="arrow-gradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" stop-color="#6366f1" />
+                            <stop offset="100%" stop-color="#10b981" />
+                        </linearGradient>
+                        <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+                            <polygon points="0 0, 10 3.5, 0 7" fill="#10b981" />
+                        </marker>
+                    </defs>
+                </svg>
+            </div>
+        </section>
+
+        <!-- Section 3: Modules -->
+        <section id="modules" class="section">
+            <h2>📦 Backend Modules (15 Bounded Contexts)</h2>
+
+            <div class="module-grid">
+                <div class="module-card">
+                    <div class="module-icon">👤</div>
+                    <div class="module-name">User</div>
+                    <div class="module-desc">User management, profiles, roles</div>
+                </div>
+                <div class="module-card">
+                    <div class="module-icon">🔐</div>
+                    <div class="module-name">Auth</div>
+                    <div class="module-desc">Authentication, JWT, login/register</div>
+                </div>
+                <div class="module-card">
+                    <div class="module-icon">🧵</div>
+                    <div class="module-name">Fabric</div>
+                    <div class="module-desc">Fabric catalog, inventory, holds</div>
+                </div>
+                <div class="module-card">
+                    <div class="module-icon">📦</div>
+                    <div class="module-name">Product</div>
+                    <div class="module-desc">Products, categories, images</div>
+                </div>
+                <div class="module-card">
+                    <div class="module-icon">📋</div>
+                    <div class="module-name">Order</div>
+                    <div class="module-desc">Order processing, timeline, status</div>
+                </div>
+                <div class="module-card">
+                    <div class="module-icon">🛒</div>
+                    <div class="module-name">Cart</div>
+                    <div class="module-desc">Shopping cart management</div>
+                </div>
+                <div class="module-card">
+                    <div class="module-icon">💰</div>
+                    <div class="module-name">Billing</div>
+                    <div class="module-desc">Invoices, payments, receipts</div>
+                </div>
+                <div class="module-card">
+                    <div class="module-icon">⚡</div>
+                    <div class="module-name">Flash Sale</div>
+                    <div class="module-desc">Limited-time deals, discounts</div>
+                </div>
+                <div class="module-card">
+                    <div class="module-icon">🎁</div>
+                    <div class="module-name">Promotion</div>
+                    <div class="module-desc">Promo codes, discounts</div>
+                </div>
+                <div class="module-card">
+                    <div class="module-icon">📅</div>
+                    <div class="module-name">Appointment</div>
+                    <div class="module-desc">Booking, scheduling, slots</div>
+                </div>
+                <div class="module-card">
+                    <div class="module-icon">📏</div>
+                    <div class="module-name">Measurement</div>
+                    <div class="module-desc">Customer measurements</div>
+                </div>
+                <div class="module-card">
+                    <div class="module-icon">⭐</div>
+                    <div class="module-name">Review</div>
+                    <div class="module-desc">Ratings, reviews, feedback</div>
+                </div>
+                <div class="module-card">
+                    <div class="module-icon">❤️</div>
+                    <div class="module-name">Favorite</div>
+                    <div class="module-desc">Wishlist, liked products</div>
+                </div>
+                <div class="module-card">
+                    <div class="module-icon">📢</div>
+                    <div class="module-name">Notification</div>
+                    <div class="module-desc">Push, email notifications</div>
+                </div>
+                <div class="module-card">
+                    <div class="module-icon">📡</div>
+                    <div class="module-name">Event</div>
+                    <div class="module-desc">Domain events, async processing</div>
+                </div>
+            </div>
+
+            <h3>Frontend Services Mapping</h3>
+            <div class="connections">
+                <div class="connection-row">
+                    <div class="connection-from flow-frontend">fabricService.js</div>
+                    <div class="connection-line">
+                        <span class="connection-label">GET/POST /api/fabrics</span>
+                    </div>
+                    <div class="connection-to flow-api">FabricController</div>
+                </div>
+                <div class="connection-row">
+                    <div class="connection-from flow-frontend">orderService.js</div>
+                    <div class="connection-line">
+                        <span class="connection-label">GET/POST /api/orders</span>
+                    </div>
+                    <div class="connection-to flow-api">OrderController</div>
+                </div>
+                <div class="connection-row">
+                    <div class="connection-from flow-frontend">authService.js</div>
+                    <div class="connection-line">
+                        <span class="connection-label">POST /api/auth/*</span>
+                    </div>
+                    <div class="connection-to flow-api">AuthController</div>
+                </div>
+                <div class="connection-row">
+                    <div class="connection-from flow-frontend">flashSaleService.js</div>
+                    <div class="connection-line">
+                        <span class="connection-label">GET/POST /api/flash-sales</span>
+                    </div>
+                    <div class="connection-to flow-api">FlashSaleController</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 4: Docker Infrastructure -->
+        <section id="docker" class="section">
+            <h2>🐳 Docker Infrastructure</h2>
+
+            <div class="docker-grid">
+                <div class="docker-card docker-mysql">
+                    <div class="module-icon">🐬</div>
+                    <div class="module-name">MySQL 8.0</div>
+                    <div class="module-desc">tailor-shop-mysql</div>
+                    <div class="docker-port">:3306</div>
+                    <div style="margin-top: 0.5rem; font-size: 0.8rem; color: var(--text-muted);">
+                        Volume: mysql_data
+                    </div>
+                </div>
+
+                <div class="docker-card docker-app">
+                    <div class="module-icon">☕</div>
+                    <div class="module-name">Spring Boot App</div>
+                    <div class="module-desc">tailor-shop-app</div>
+                    <div class="docker-port">:8083</div>
+                    <div style="margin-top: 0.5rem; font-size: 0.8rem; color: var(--text-muted);">
+                        Depends: mysql
+                    </div>
+                </div>
+
+                <div class="docker-card docker-frontend">
+                    <div class="module-icon">⚛️</div>
+                    <div class="module-name">React Frontend</div>
+                    <div class="module-desc">tailor-shop-frontend</div>
+                    <div class="docker-port">:5173 (dev) / :80 (prod)</div>
+                    <div style="margin-top: 0.5rem; font-size: 0.8rem; color: var(--text-muted);">
+                        Nginx serving
+                    </div>
+                </div>
+
+                <div class="docker-card docker-prometheus">
+                    <div class="module-icon">📈</div>
+                    <div class="module-name">Prometheus</div>
+                    <div class="module-desc">tailor-shop-prometheus</div>
+                    <div class="docker-port">:9090</div>
+                    <div style="margin-top: 0.5rem; font-size: 0.8rem; color: var(--text-muted);">
+                        Scrapes /actuator/prometheus
+                    </div>
+                </div>
+
+                <div class="docker-card docker-grafana">
+                    <div class="module-icon">📊</div>
+                    <div class="module-name">Grafana</div>
+                    <div class="module-desc">tailor-shop-grafana</div>
+                    <div class="docker-port">:3000</div>
+                    <div style="margin-top: 0.5rem; font-size: 0.8rem; color: var(--text-muted);">
+                        Dashboards for metrics
+                    </div>
+                </div>
+            </div>
+
+            <div class="diagram-container">
+                <div class="diagram-title">Docker Network: tailor-shop-network</div>
+                <svg class="svg-diagram" viewBox="0 0 800 300" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Network Background -->
+                    <rect x="10" y="10" width="780" height="280" rx="20" fill="#1e293b" stroke="#475569" />
+                    <text x="400" y="40" text-anchor="middle" fill="#94a3b8" font-size="12">Docker Bridge Network</text>
+
+                    <!-- MySQL -->
+                    <rect x="50" y="70" width="120" height="80" rx="10" fill="#f59e0b" />
+                    <text x="110" y="100" text-anchor="middle" fill="white" font-weight="bold">MySQL</text>
+                    <text x="110" y="120" text-anchor="middle" fill="white" font-size="10">:3306</text>
+                    <text x="110" y="140" text-anchor="middle" fill="rgba(255,255,255,0.7)" font-size="9">tailor_shop
+                        DB</text>
+
+                    <!-- App -->
+                    <rect x="250" y="70" width="140" height="80" rx="10" fill="#10b981" />
+                    <text x="320" y="100" text-anchor="middle" fill="white" font-weight="bold">Spring Boot</text>
+                    <text x="320" y="120" text-anchor="middle" fill="white" font-size="10">:8083</text>
+                    <text x="320" y="140" text-anchor="middle" fill="rgba(255,255,255,0.7)" font-size="9">REST
+                        API</text>
+
+                    <!-- Frontend -->
+                    <rect x="470" y="70" width="120" height="80" rx="10" fill="#3b82f6" />
+                    <text x="530" y="100" text-anchor="middle" fill="white" font-weight="bold">React</text>
+                    <text x="530" y="120" text-anchor="middle" fill="white" font-size="10">:5173</text>
+                    <text x="530" y="140" text-anchor="middle" fill="rgba(255,255,255,0.7)" font-size="9">Frontend
+                        UI</text>
+
+                    <!-- Prometheus -->
+                    <rect x="250" y="190" width="120" height="70" rx="10" fill="#8b5cf6" />
+                    <text x="310" y="220" text-anchor="middle" fill="white" font-weight="bold">Prometheus</text>
+                    <text x="310" y="240" text-anchor="middle" fill="white" font-size="10">:9090</text>
+
+                    <!-- Grafana -->
+                    <rect x="430" y="190" width="120" height="70" rx="10" fill="#ec4899" />
+                    <text x="490" y="220" text-anchor="middle" fill="white" font-weight="bold">Grafana</text>
+                    <text x="490" y="240" text-anchor="middle" fill="white" font-size="10">:3000</text>
+
+                    <!-- Connections -->
+                    <path d="M170 110 L250 110" stroke="#94a3b8" stroke-width="2" stroke-dasharray="5,3" />
+                    <text x="210" y="100" text-anchor="middle" fill="#94a3b8" font-size="9">JDBC</text>
+
+                    <path d="M390 110 L470 110" stroke="#94a3b8" stroke-width="2" stroke-dasharray="5,3" />
+                    <text x="430" y="100" text-anchor="middle" fill="#94a3b8" font-size="9">HTTP</text>
+
+                    <path d="M310 150 L310 190" stroke="#94a3b8" stroke-width="2" stroke-dasharray="5,3" />
+                    <text x="340" y="175" fill="#94a3b8" font-size="9">scrape</text>
+
+                    <path d="M370 225 L430 225" stroke="#94a3b8" stroke-width="2" stroke-dasharray="5,3" />
+                    <text x="400" y="215" text-anchor="middle" fill="#94a3b8" font-size="9">query</text>
+
+                    <!-- External User -->
+                    <rect x="650" y="90" width="100" height="50" rx="10" fill="#6366f1" />
+                    <text x="700" y="120" text-anchor="middle" fill="white" font-weight="bold">User</text>
+
+                    <path d="M590 110 L650 110" stroke="#6366f1" stroke-width="2" />
+                    <text x="620" y="100" text-anchor="middle" fill="#94a3b8" font-size="9">Browser</text>
+                </svg>
+            </div>
+        </section>
+
+        <!-- Section 5: Data Flow -->
+        <section id="dataflow" class="section">
+            <h2>🔄 Request/Response Data Flow</h2>
+
+            <h3>Example: User Placing an Order</h3>
+            <div class="flow-diagram">
+                <div class="flow-row">
+                    <div class="flow-box flow-user">👤 User</div>
+                    <span class="flow-arrow">→</span>
+                    <div class="flow-box flow-frontend">React UI<br><small>OrderPage.jsx</small></div>
+                    <span class="flow-arrow">→</span>
+                    <div class="flow-box flow-frontend">orderService.js<br><small>API Client</small></div>
+                </div>
+                <div class="flow-row">
+                    <span class="flow-arrow" style="transform: rotate(90deg);">→</span>
+                </div>
+                <div class="flow-row">
+                    <div class="flow-box flow-api">OrderController<br><small>@PostMapping</small></div>
+                    <span class="flow-arrow">→</span>
+                    <div class="flow-box flow-service">OrderService<br><small>Business Logic</small></div>
+                    <span class="flow-arrow">→</span>
+                    <div class="flow-box flow-service">Domain Events<br><small>OrderCreated</small></div>
+                </div>
+                <div class="flow-row">
+                    <span class="flow-arrow" style="transform: rotate(90deg);">→</span>
+                </div>
+                <div class="flow-row">
+                    <div class="flow-box flow-db">OrderRepository<br><small>JPA Query</small></div>
+                    <span class="flow-arrow">→</span>
+                    <div class="flow-box flow-db">MySQL<br><small>orders table</small></div>
+                </div>
+                <div class="flow-row">
+                    <span class="flow-arrow" style="transform: rotate(90deg);">→</span>
+                </div>
+                <div class="flow-row">
+                    <div class="flow-box flow-external">Email Service<br><small>Notification</small></div>
+                    <span class="flow-arrow">→</span>
+                    <div class="flow-box flow-external">📧 Gmail<br><small>Order Confirmation</small></div>
+                </div>
+            </div>
+
+            <h3>Cross-Module Communication</h3>
+            <div class="diagram-container">
+                <svg class="svg-diagram" viewBox="0 0 800 350" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Background -->
+                    <rect x="10" y="10" width="780" height="330" rx="20" fill="#1e293b" stroke="#475569" />
+
+                    <!-- Order Module -->
+                    <g transform="translate(50, 50)">
+                        <rect width="200" height="120" rx="12" fill="rgba(16, 185, 129, 0.2)" stroke="#10b981"
+                            stroke-width="2" />
+                        <text x="100" y="25" text-anchor="middle" fill="#10b981" font-weight="bold">ORDER MODULE</text>
+                        <rect x="20" y="40" width="160" height="30" rx="6" fill="#10b981" />
+                        <text x="100" y="60" text-anchor="middle" fill="white" font-size="11">OrderService</text>
+                        <rect x="20" y="80" width="160" height="25" rx="6" fill="rgba(16, 185, 129, 0.5)" />
+                        <text x="100" y="97" text-anchor="middle" fill="white" font-size="10">OrderRepository</text>
+                    </g>
+
+                    <!-- Fabric Module -->
+                    <g transform="translate(300, 50)">
+                        <rect width="200" height="120" rx="12" fill="rgba(245, 158, 11, 0.2)" stroke="#f59e0b"
+                            stroke-width="2" />
+                        <text x="100" y="25" text-anchor="middle" fill="#f59e0b" font-weight="bold">FABRIC MODULE</text>
+                        <rect x="20" y="40" width="160" height="30" rx="6" fill="#f59e0b" />
+                        <text x="100" y="60" text-anchor="middle" fill="white" font-size="11">FabricService</text>
+                        <rect x="20" y="80" width="160" height="25" rx="6" fill="rgba(245, 158, 11, 0.5)" />
+                        <text x="100" y="97" text-anchor="middle" fill="white" font-size="10">FabricRepository</text>
+                    </g>
+
+                    <!-- Billing Module -->
+                    <g transform="translate(550, 50)">
+                        <rect width="200" height="120" rx="12" fill="rgba(139, 92, 246, 0.2)" stroke="#8b5cf6"
+                            stroke-width="2" />
+                        <text x="100" y="25" text-anchor="middle" fill="#8b5cf6" font-weight="bold">BILLING
+                            MODULE</text>
+                        <rect x="20" y="40" width="160" height="30" rx="6" fill="#8b5cf6" />
+                        <text x="100" y="60" text-anchor="middle" fill="white" font-size="11">InvoiceService</text>
+                        <rect x="20" y="80" width="160" height="25" rx="6" fill="rgba(139, 92, 246, 0.5)" />
+                        <text x="100" y="97" text-anchor="middle" fill="white" font-size="10">InvoiceRepository</text>
+                    </g>
+
+                    <!-- Arrows between modules -->
+                    <path d="M250 110 L300 110" stroke="#94a3b8" stroke-width="2" marker-end="url(#arrowhead2)" />
+                    <text x="275" y="100" text-anchor="middle" fill="#94a3b8" font-size="9">getFabric()</text>
+
+                    <path d="M500 110 L550 110" stroke="#94a3b8" stroke-width="2" marker-end="url(#arrowhead2)" />
+                    <text x="525" y="100" text-anchor="middle" fill="#94a3b8" font-size="9">createInvoice()</text>
+
+                    <!-- Event Module -->
+                    <g transform="translate(300, 220)">
+                        <rect width="200" height="100" rx="12" fill="rgba(236, 72, 153, 0.2)" stroke="#ec4899"
+                            stroke-width="2" />
+                        <text x="100" y="25" text-anchor="middle" fill="#ec4899" font-weight="bold">EVENT BUS</text>
+                        <rect x="20" y="45" width="70" height="40" rx="6" fill="rgba(236, 72, 153, 0.5)" />
+                        <text x="55" y="70" text-anchor="middle" fill="white" font-size="9">OrderCreated</text>
+                        <rect x="110" y="45" width="70" height="40" rx="6" fill="rgba(236, 72, 153, 0.5)" />
+                        <text x="145" y="70" text-anchor="middle" fill="white" font-size="9">PaymentDone</text>
+                    </g>
+
+                    <!-- Event connections -->
+                    <path d="M150 170 L350 220" stroke="#ec4899" stroke-width="2" stroke-dasharray="5,3" />
+                    <path d="M400 170 L400 220" stroke="#ec4899" stroke-width="2" stroke-dasharray="5,3" />
+                    <path d="M650 170 L450 220" stroke="#ec4899" stroke-width="2" stroke-dasharray="5,3" />
+
+                    <text x="230" y="195" fill="#ec4899" font-size="9">publish</text>
+                    <text x="410" y="195" fill="#ec4899" font-size="9">listen</text>
+                    <text x="560" y="195" fill="#ec4899" font-size="9">publish</text>
+
+                    <!-- Arrow marker -->
+                    <defs>
+                        <marker id="arrowhead2" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+                            <polygon points="0 0, 10 3.5, 0 7" fill="#94a3b8" />
+                        </marker>
+                    </defs>
+                </svg>
+            </div>
+        </section>
+
+        <!-- Section 6: Tech Stack -->
+        <section id="tech" class="section">
+            <h2>🛠️ Technology Stack</h2>
+
+            <h3>Backend</h3>
+            <div class="tech-grid">
+                <div class="tech-item">
+                    <div class="tech-logo">☕</div>
+                    <div class="tech-name">Java</div>
+                    <div class="tech-version">17 LTS</div>
+                </div>
+                <div class="tech-item">
+                    <div class="tech-logo">🍃</div>
+                    <div class="tech-name">Spring Boot</div>
+                    <div class="tech-version">3.x</div>
+                </div>
+                <div class="tech-item">
+                    <div class="tech-logo">🔐</div>
+                    <div class="tech-name">Spring Security</div>
+                    <div class="tech-version">JWT Auth</div>
+                </div>
+                <div class="tech-item">
+                    <div class="tech-logo">📊</div>
+                    <div class="tech-name">Spring Data JPA</div>
+                    <div class="tech-version">Hibernate</div>
+                </div>
+                <div class="tech-item">
+                    <div class="tech-logo">🐬</div>
+                    <div class="tech-name">MySQL</div>
+                    <div class="tech-version">8.0</div>
+                </div>
+                <div class="tech-item">
+                    <div class="tech-logo">📦</div>
+                    <div class="tech-name">Maven</div>
+                    <div class="tech-version">Build Tool</div>
+                </div>
+            </div>
+
+            <h3>Frontend</h3>
+            <div class="tech-grid">
+                <div class="tech-item">
+                    <div class="tech-logo">⚛️</div>
+                    <div class="tech-name">React</div>
+                    <div class="tech-version">18.x</div>
+                </div>
+                <div class="tech-item">
+                    <div class="tech-logo">⚡</div>
+                    <div class="tech-name">Vite</div>
+                    <div class="tech-version">Build Tool</div>
+                </div>
+                <div class="tech-item">
+                    <div class="tech-logo">🧭</div>
+                    <div class="tech-name">React Router</div>
+                    <div class="tech-version">v6</div>
+                </div>
+                <div class="tech-item">
+                    <div class="tech-logo">🌐</div>
+                    <div class="tech-name">Axios</div>
+                    <div class="tech-version">HTTP Client</div>
+                </div>
+                <div class="tech-item">
+                    <div class="tech-logo">🎨</div>
+                    <div class="tech-name">CSS</div>
+                    <div class="tech-version">Custom Styles</div>
+                </div>
+            </div>
+
+            <h3>DevOps & Infrastructure</h3>
+            <div class="tech-grid">
+                <div class="tech-item">
+                    <div class="tech-logo">🐳</div>
+                    <div class="tech-name">Docker</div>
+                    <div class="tech-version">Compose</div>
+                </div>
+                <div class="tech-item">
+                    <div class="tech-logo">🔄</div>
+                    <div class="tech-name">GitHub Actions</div>
+                    <div class="tech-version">CI/CD</div>
+                </div>
+                <div class="tech-item">
+                    <div class="tech-logo">📈</div>
+                    <div class="tech-name">Prometheus</div>
+                    <div class="tech-version">Metrics</div>
+                </div>
+                <div class="tech-item">
+                    <div class="tech-logo">📊</div>
+                    <div class="tech-name">Grafana</div>
+                    <div class="tech-version">Dashboards</div>
+                </div>
+                <div class="tech-item">
+                    <div class="tech-logo">☁️</div>
+                    <div class="tech-name">AWS S3</div>
+                    <div class="tech-version">Storage</div>
+                </div>
+            </div>
+
+            <h3>External Services</h3>
+            <div class="tech-grid">
+                <div class="tech-item">
+                    <div class="tech-logo">🤖</div>
+                    <div class="tech-name">Gemini AI</div>
+                    <div class="tech-version">Recommendations</div>
+                </div>
+                <div class="tech-item">
+                    <div class="tech-logo">📧</div>
+                    <div class="tech-name">Gmail SMTP</div>
+                    <div class="tech-version">Email</div>
+                </div>
+                <div class="tech-item">
+                    <div class="tech-logo">💳</div>
+                    <div class="tech-name">Payment</div>
+                    <div class="tech-version">Sandbox</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>📐 Tailor Shop System Architecture | Created for Learning & Documentation</p>
+            <p>Generated by Antigravity AI • January 2026</p>
+        </footer>
+    </div>
+
+    <script>
+        // Smooth scrolling for navigation
+        document.querySelectorAll('.nav-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                const target = document.querySelector(btn.getAttribute('href'));
+                target.scrollIntoView({ behavior: 'smooth' });
+
+                // Update active state
+                document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+            });
+        });
+
+        // Update active nav on scroll
+        window.addEventListener('scroll', () => {
+            const sections = document.querySelectorAll('.section');
+            const navBtns = document.querySelectorAll('.nav-btn');
+
+            let current = '';
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop;
+                if (scrollY >= sectionTop - 200) {
+                    current = section.getAttribute('id');
+                }
+            });
+
+            navBtns.forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.getAttribute('href') === '#' + current) {
+                    btn.classList.add('active');
+                }
+            });
+        });
+    </script>
+</body>
+
+</html>
