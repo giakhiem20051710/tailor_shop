@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chiến Lược Ôn Thi FPT Fresher Java</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
+    <style>
+        :root {
+            --fpt-orange: #F26F21;
+            --dark: #1E293B;
+            --light: #F8FAFC;
+            --success: #10B981;
+            --warning: #F59E0B;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #F1F5F9;
+            color: #334155;
+            line-height: 1.6;
+            padding: 40px 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .alert-box {
+            background: #FEF2F2;
+            border-left: 5px solid #EF4444;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+
+        .alert-title {
+            color: #EF4444;
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+            border-top: 5px solid var(--fpt-orange);
+        }
+
+        h1 { color: var(--dark); text-align: center; margin-bottom: 10px; }
+        h2 { color: var(--fpt-orange); font-size: 1.4rem; margin-bottom: 15px; border-bottom: 1px solid #E2E8F0; padding-bottom: 10px;}
+        
+        .timeline { margin-top: 20px; }
+        .day {
+            display: flex;
+            margin-bottom: 15px;
+            background: var(--light);
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid var(--success);
+        }
+        .day-title { font-weight: bold; width: 120px; flex-shrink: 0; color: var(--dark); }
+        .day-content { flex-grow: 1; }
+
+        .tag {
+            display: inline-block;
+            background: #E0E7FF;
+            color: #4F46E5;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            margin: 3px;
+        }
+
+        code {
+            background: #F1F5F9;
+            color: #D97706;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1><i class="fa-solid fa-graduation-cap" style="color: var(--fpt-orange);"></i> Kế Hoạch Đột Phá: FPT Fresher Java</h1>
+    <p style="text-align: center; color: #64748B; margin-bottom: 30px;">Lịch thi: Thứ 2, 16/03/2026 lúc 09:00 sáng</p>
+
+    <div class="alert-box">
+        <div class="alert-title"><i class="fa-solid fa-bell"></i> DỪNG NGAY VIỆC ÔN HỆ THỐNG PHỨC TẠP!</div>
+        <p>Bình tĩnh lại nào! Theo nội dung Email, đây KHÔNG PHẢI là vòng Phỏng vấn đối mặt (Nơi hỏi về Redis, Docker, System Design). Đây là <strong>Vòng kiểm tra đầu vào (Placement Test) cho Freshers</strong> làm bài trên máy tính trong 120 phút.</p>
+        <p>Tức là họ sẽ <strong>không hỏi mấy cái vĩ mô</strong> mà chúng ta vừa ôn đâu! Họ sẽ kiểm tra nền tảng gốc rễ (Core Java, Toán học cơ bản và Thuật toán mảng). Những gì tụi mình ôn nãy giờ để dành cho vòng Phỏng Vấn (Face-to-Face) sau khi bạn pass bài test này!</p>
+    </div>
+
+    <div class="card">
+        <h2><i class="fa-solid fa-list-check"></i> Phân Tích Đề Thi & Trọng Tâm Ôn Tập</h2>
+        
+        <h3 style="color: var(--dark);"><i class="fa-solid fa-1"></i> Part 1: 20 Câu Trắc Nghiệm (Multiple-choice)</h3>
+        <p>Thường xoay quanh những cạm bẫy của Java Core. Hãy tập trung ôn:</p>
+        <ul>
+            <li><strong>OOP:</strong> Tính Kế thừa, Đa hình (Overloading vs Overriding), Đóng gói, Trừu tượng (Abstract class vs Interface).</li>
+            <li><strong>Java Core:</strong> String Pool (so sánh <code>==</code> và <code>.equals()</code>), final, static keyword.</li>
+            <li><strong>Collections Framework:</strong> Điểm khác biệt giữa <code>ArrayList</code>, <code>LinkedList</code>, <code>HashSet</code>, <code>HashMap</code>.</li>
+            <li><strong>Exceptions:</strong> Checked vs Unchecked Exception, cấu trúc <code>try-catch-finally</code> (lệnh finally luôn chạy).</li>
+            <li><strong>SQL Cơ bản:</strong> SELECT, JOIN (Inner, Left), GROUP BY, HAVING, subqueries.</li>
+        </ul>
+
+        <h3 style="color: var(--dark); margin-top: 25px;"><i class="fa-solid fa-code"></i> Part 2: 2 Bài Code Chạy Testcase (Math & Array)</h3>
+        <p>Họ chỉ rõ 2 chủ đề luôn rồi, mức độ khó ngang ngửa LeetCode Easy. Bạn Code bằng Java và phải compile thành công.</p>
+        <div>
+            <span class="tag">Math Challenge</span>
+            Bài toán dùng vòng lặp, toán học: Kiểm tra số Nguyên tố (Prime), Số hoàn hảo, Dãy Fibonacci, Tính giai thừa, Đảo ngược số (Reverse Integer), Kiểm tra số đối xứng (Palindrome number).
+        </div>
+        <div style="margin-top: 10px;">
+            <span class="tag">Array Challenge</span>
+            Xử lý mảng (1 chiều): Tìm phần tử lớn nhất/nhỏ nhất, Đảo ngược mảng, Tìm 2 số có tổng bằng target (Two Sum), Tìm phần tử xuất hiện nhiều nhất, Xóa phần tử trùng lặp (Remove duplicates).
+        </div>
+
+        <h3 style="color: var(--dark); margin-top: 25px;"><i class="fa-solid fa-language"></i> Part 3: EnglishScore App (40 Phút)</h3>
+        <p>Đây là bài test Tiếng Anh của British Council trên điện thoại. Gồm: Ngữ pháp, Từ vựng, Nghe và Đọc hiểu. Mức độ khá dễ (Cỡ A2-B1). Nhớ tải App trước ở nhà, lập tài khoản và làm thử một bài Mock Test trên đó cho quen giao diện nhé!</p>
+    </div>
+
+    <div class="card">
+        <h2><i class="fa-solid fa-calendar-day"></i> Lộ Trình 3 Ngày Chạy Nước Rút</h2>
+        <div class="timeline">
+            <div class="day">
+                <div class="day-title">Tối Nay (T6)</div>
+                <div class="day-content">
+                    <strong>Ôn Java Core & Trắc nghiệm:</strong> Giở lại mấy bài học Java Core. Đọc kỹ lại cách String hoạt động, phân biệt Interface và Abstract Class. Ôn lại cấu trúc dữ liệu Collections (List, Set, Map).
+                </div>
+            </div>
+            <div class="day">
+                <div class="day-title">Thứ 7</div>
+                <div class="day-content">
+                    <strong>Nghiền nát LeetCode vòng gửi xe:</strong> Mở LeetCode hoặc HackerRank, search các bài chuyên về <strong>Math</strong> và <strong>Array</strong> cấp độ Easy. Làm khoảng 5 bài Math và 5 bài Array bằng Java. Ghi nhớ các hàm Math.abs(), Math.max() và cách dùng vòng lặp for thần thánh.
+                </div>
+            </div>
+            <div class="day">
+                <div class="day-title">Chủ Nhật</div>
+                <div class="day-content">
+                    <strong>Tổng duyệt & Tiếng Anh:</strong> Tải App EnglishScore về test thử giao diện. Lướt qua xem lại SQL căn bản (Cú pháp JOIN). Tối ngủ sớm chuẩn bị Căn cước công dân (CCCD) bỏ vô balo.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

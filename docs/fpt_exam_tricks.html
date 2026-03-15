@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bí Kíp Trị Tủ: Đề FPT Fresher Đợt Này</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
+    <style>
+        :root {
+            --dark: #1E293B;
+            --primary: #8B5CF6; /* Violet */
+            --danger: #E11D48; /* Rose */
+            --success: #059669; /* Emerald */
+            --bg-light: #F8FAFC;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #F1F5F9;
+            color: #334155;
+            line-height: 1.6;
+            padding: 40px 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        h1 { color: var(--dark); text-align: center; margin-bottom: 40px; font-size: 2.2rem; }
+        
+        .section-card {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 40px;
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+            border-top: 5px solid var(--primary);
+        }
+
+        .section-card.code-challenge { border-top-color: var(--success); }
+        .section-card.tricks { border-top-color: var(--danger); }
+
+        .section-title {
+            color: var(--dark);
+            font-size: 1.6rem;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            border-bottom: 2px solid #E2E8F0;
+            padding-bottom: 10px;
+        }
+
+        .content-block {
+            margin-bottom: 25px;
+            background: var(--bg-light);
+            padding: 20px;
+            border-radius: 8px;
+        }
+
+        .highlight-title { font-weight: bold; font-size: 1.1rem; color: var(--primary); margin-bottom: 15px; }
+        .highlight-title.code { color: var(--success); }
+        .highlight-title.trick { color: var(--danger); }
+
+        .code-block {
+            background: #1E293B;
+            color: #E2E8F0;
+            padding: 20px;
+            border-radius: 6px;
+            font-family: 'Consolas', monospace;
+            overflow-x: auto;
+            margin: 15px 0;
+            line-height: 1.4;
+        }
+
+        .comment { color: #64748B; font-style: italic; }
+        .keyword { color: #F59E0B; }
+        .string { color: #A78BFA; }
+        .method { color: #38BDF8; }
+
+        .tips {
+            font-size: 0.95rem;
+            margin-top: 15px;
+            padding: 15px;
+            background: #FEF2F2;
+            border-left: 4px solid var(--danger);
+            border-radius: 6px;
+            color: #9F1239;
+        }
+
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { border: 1px solid #CBD5E1; padding: 10px; text-align: left; }
+        th { background: #E2E8F0; color: var(--dark); }
+
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1><i class="fa-solid fa-crosshairs" style="color: var(--danger);"></i> Giải Mã Đề Rò Rỉ: FPT Fresher Java</h1>
+
+    <!-- 1. TECHNICAL: BÀI CODE THỰC HÀNH -->
+    <div class="section-card code-challenge">
+        <h2 class="section-title"><i class="fa-solid fa-laptop-code" style="color: var(--success);"></i> Phần 1: Technical Code (Code Chạy Testcase)</h2>
+        
+        <div class="content-block">
+            <div class="highlight-title code">🟢 Bài 1 (Math): Tìm Ước Chung Lớn Nhất (UCLN - GCD) của 2 số int</div>
+            <p><strong>Bí kíp:</strong> Đừng dùng vòng lặp trừ từ từ (quá chậm). Hãy dùng <span style="font-weight:bold; color: var(--success);">Thuật toán Euclid (Sử dụng phép chia lấy dư <code>%</code>)</span>. Nếu a hoặc b bằng 0, UCLN là số khác 0 còn lại.</p>
+            <div class="code-block">
+<span class="keyword">public static int</span> <span class="method">findUCLN</span>(<span class="keyword">int</span> a, <span class="keyword">int</span> b) {
+    <span class="comment">// Đảm bảo số dương (Math.abs) vì UCLN luôn dương</span>
+    a = Math.abs(a);
+    b = Math.abs(b);
+    
+    <span class="comment">// Thuật toán Euclid tối ưu</span>
+    <span class="keyword">while</span> (b != 0) {
+        <span class="keyword">int</span> temp = b;
+        b = a % b;   <span class="comment">// Lấy số lớn CHIA DƯ cho số nhỏ</span>
+        a = temp;    <span class="comment">// Đẩy số nhỏ lên làm gốc cho lần lặp tiếp theo</span>
+    }
+    <span class="keyword">return</span> a;
+}
+            </div>
+            <div class="tips">⚠️ Nhớ kỹ: Toán tử <strong>%</strong> (Modulus) là vũ khí hạng nặng cho mọi bài toán Array/Math. Cứ nhắc tới UCLN là gõ "b = a % b".</div>
+        </div>
+
+        <div class="content-block">
+            <div class="highlight-title code">🟢 Bài 2 (String/Array): Trả về boolean xem các ký tự của String 1 có nằm hết trong String 2 không?</div>
+            <p><strong>Bí kíp:</strong> Bài này dịch ra tiếng Anh là "Anagram" hoặc "Subset checker". Không được dùng 2 vòng lặp <code>for</code> lồng nhau (O(N^2) quá chậm, máy rớt testcase).<br>
+            Hãy dùng <strong>Mảng đếm tần suất (Frequency Array)</strong> 256 phần tử đại diện cho bảng mã ASCII.</p>
+            <div class="code-block">
+<span class="keyword">public static boolean</span> <span class="method">isS1InS2</span>(String s1, String s2) {
+    <span class="comment">// Bước 1: Tạo cái rổ đếm ký tự của kho S2</span>
+    <span class="keyword">int</span>[] countS2 = <span class="keyword">new int</span>[256]; 
+    
+    <span class="comment">// Bỏ đồ kho S2 vô rổ</span>
+    <span class="keyword">for</span> (<span class="keyword">int</span> i = 0; i &lt; s2.length(); i++) {
+        <span class="keyword">char</span> c = s2.charAt(i);
+        countS2[c]++; <span class="comment">// Ví dụ: Chữ 'A' cất vô ngăn 'A' + 1 cái</span>
+    }
+    
+    <span class="comment">// Bước 2: Đi siêu thị lấy rổ của S2 trả tiền (Duyệt S1)</span>
+    <span class="keyword">for</span> (<span class="keyword">int</span> i = 0; i &lt; s1.length(); i++) {
+        <span class="keyword">char</span> c = s1.charAt(i);
+        countS2[c]--; <span class="comment">// Lấy chữ nào ra thì trừ kho chữ đó</span>
+        
+        <span class="comment">// Nếu ngăn tủ bị ÂM -> Tức là S1 đòi món đồ mà kho S2 không có!</span>
+        <span class="keyword">if</span> (countS2[c] &lt; 0) {
+            <span class="keyword">return false</span>; <span class="comment">// Toang! Báo false ngay</span>
+        }
+    }
+    
+    <span class="keyword">return true</span>; <span class="comment">// Duyệt êm xuôi nghĩa là đồ gì của S1 thì S2 đều có đủ mớ</span>
+}
+            </div>
+            <div class="tips">🌟 Tuyệt chiêu: Dùng mảng đếm <code>int[] count = new int[256];</code> là chiêu thức kinh điển của dân FAANG (Google, FB) để giải bài toán Chuỗi O(N).</div>
+        </div>
+    </div>
+
+    <!-- 2. LÝ THUYẾT: CÁC TRICK HAY NHẦM (MCQ) -->
+    <div class="section-card tricks">
+        <h2 class="section-title"><i class="fa-solid fa-bomb" style="color: var(--danger);"></i> Phần 2: Cạm Bẫy Trắc Nghiệm (Core Syntax & OOP)</h2>
+
+        <div class="content-block">
+            <div class="highlight-title trick">🔴 Bẫy 1: Sự Mập Mờ Giữa `sum(int a, int b)` và `sum(Integer a, Integer b)`</div>
+            <p>Khác nhau hoàn toàn về BẢN CHẤT LƯU TRỮ và HIỆU NĂNG!</p>
+            <table>
+                <tr>
+                    <th>Đặc điểm</th>
+                    <th>Kiểu Nguyên Thủy <code>int</code></th>
+                    <th>Kiểu Đóng Gói (Wrapper Class) <code>Integer</code></th>
+                </tr>
+                <tr>
+                    <td>Trọng lượng</td>
+                    <td>Siêu nhẹ (Chiếm đúng 4 byte). Tính toán thẳng trên CPU.</td>
+                    <td>Siêu nặng (Là một Object/Cục gạch). Nằm trên Heap Memory.</td>
+                </tr>
+                <tr>
+                    <td>Giá trị Mặc định</td>
+                    <td>Mặc định là <code>0</code>.</td>
+                    <td>Mặc định là <code>null</code>. (Giúp ta dễ kiểm tra khách có nhập tuối hay bỏ trống không).</td>
+                </tr>
+                <tr>
+                    <td>Dùng cho Collections?</td>
+                    <td>CẤM DÙNG! <code>List&lt;int&gt;</code> sẽ báo LỖI BIÊN DỊCH.</td>
+                    <td>BẮT BUỘC! Chỉ chơi với <code>List&lt;Integer&gt;</code>.</td>
+                </tr>
+            </table>
+            <div class="tips">Lưu ý: Bàn tay vô hình của Java sẽ tự động biến <code>int</code> thành <code>Integer</code> (Autoboxing) và ngược lại (Unboxing) nếu bạn viết lộn xộn, tuy nhiên quá trình nhảy biến này ngốn RẤT NHIỀU HIỆU NĂNG (Gây chậm rùa nếu nằm trong for 1 tỷ vòng).</div>
+        </div>
+
+        <div class="content-block">
+            <div class="highlight-title trick">🔴 Bẫy 2: "Tiền tố" và "Hậu tố" (Prefix vs Postfix)</div>
+            <p>Họ cực kỳ thích hỏi cái Đoạn Code In Ra Output liên quan đến <code>++i</code> và <code>i++</code>.</p>
+            <div class="code-block" style="border-left-color: var(--danger);">
+<span class="keyword">int</span> a = 5;
+<span class="keyword">int</span> b = ++a; <span class="comment">// Tiền tố (Cộng trước, Dùng sau). a biến thành 6 ngay, rồi nhét 6 vô cho b. (b=6, a=6)</span>
+<span class="keyword">int</span> c = a++; <span class="comment">// Hậu tố (Dùng trước rồi mới Cộng sau). Móc c = 6. Xong việc mới âm thầm tăng a thành 7.</span>
+
+System.out.println(a + " " + b + " " + c); <span class="comment">// Output: 7 6 6</span>
+            </div>
+        </div>
+
+        <div class="content-block">
+            <div class="highlight-title trick">🔴 Bẫy 3: Ưu Tiên Toán Tử (Bodmas & Logic)</div>
+            <p>Thứ tự ưu tiên đụng độ: <strong>NGOẶC ()  >>  NHÂN/CHIA/DƯ (*, /, %) >> CỘNG/TRỪ (+, -) >> SO SÁNH (>, <)  >> CHỮ VÀ (&&) >> CHỮ HOẶC (||)</strong>.</p>
+            
+            <p><strong>Cú lừa ngoạn mục nhất của Java là chữ `&&` (Và Ngắn Mạch):</strong></p>
+            <div class="code-block" style="border-left-color: var(--danger);">
+<span class="keyword">int</span> x = 0;
+<span class="keyword">if</span> (<span class="keyword">false</span> && (++x > 0)) {  }
+System.out.println(x); <span class="comment">// BẠN ĐOÁN X LÀ MẤY??? LÀ 0, CHỨ HIÔNG PHẢI 1 ĐÂU NHA!!</span>
+            </div>
+            <div class="tips"><strong>Short-circuit Logic:</strong> Vì chữ <code>&&</code> bắt buộc cả 2 bên phải đúng mới Tới. Thằng Java nhìn thấy vế trái là <code>false</code> rồi, nó biếng đổi, <strong>NÓ BỎ QUA LUÔN VẾ PHẢI</strong> chả thèm chạy đoạn `++x`. Nên rốt cục x vẫn mù u bằng 0! Nếu là dấu <code>||</code> (Hoặc), nó thấy vế trái True, nó cũng thèm đếch chạy rế phải.</div>
+        </div>
+        
+    </div>
+</div>
+
+</body>
+</html>

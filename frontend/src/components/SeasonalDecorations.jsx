@@ -69,7 +69,7 @@ export function SeasonalBanner() {
     }
 
     const handleBannerClick = () => {
-        navigate('/S');
+        navigate('/challenges');
     };
 
     return (

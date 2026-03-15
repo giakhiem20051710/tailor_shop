@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>100 Câu Hỏi Vàng: Phá Đảo FPT Fresher Java</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
+    <style>
+        :root {
+            --primary: #F26F21; /* FPT Orange */
+            --dark: #1E293B;
+            --blue: #2563EB;
+            --success: #16A34A;
+            --light: #F8FAFC;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #F1F5F9;
+            color: #334155;
+            line-height: 1.6;
+            padding: 30px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        h1 { color: var(--dark); text-align: center; font-size: 2.2rem; border-bottom: 3px solid var(--primary); padding-bottom: 10px; }
+        .intro { text-align: center; color: #64748B; margin-bottom: 30px; font-size: 1.1rem; }
+
+        .topic-header {
+            background: var(--dark);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            margin: 40px 0 20px 0;
+            font-size: 1.3rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .q-card {
+            background: white;
+            border-left: 4px solid var(--blue);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+        }
+
+        .q-title {
+            font-weight: bold;
+            font-size: 1.1rem;
+            color: var(--dark);
+            margin-bottom: 10px;
+        }
+
+        code {
+            background: #F1F5F9;
+            color: #B45309;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+
+        .code-block {
+            background: #1E293B;
+            color: #E2E8F0;
+            padding: 15px;
+            border-radius: 6px;
+            font-family: 'Consolas', monospace;
+            overflow-x: auto;
+            margin: 10px 0;
+            white-space: pre-wrap;
+        }
+
+        .options { list-style-type: none; padding-left: 0; margin-bottom: 15px; }
+        .options li { margin-bottom: 8px; }
+
+        /* The Details tag for showing answers */
+        details {
+            background: #EFF6FF;
+            border: 1px solid #BFDBFE;
+            border-radius: 6px;
+            padding: 10px;
+            margin-top: 15px;
+        }
+
+        summary {
+            font-weight: bold;
+            color: var(--blue);
+            cursor: pointer;
+            outline: none;
+            user-select: none;
+        }
+
+        summary::-webkit-details-marker { display: none; }
+        
+        .answer-content {
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px dashed #BFDBFE;
+            color: #1E3A8A;
+            font-size: 0.95rem;
+        }
+
+        .correct-opt { font-weight: bold; color: var(--success); }
+        .hint { color: #DC2626; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1><i class="fa-solid fa-fire"></i> Luyện Trắc Nghiệm: Chiến Thần FPT Fresher Java</h1>
+    <p class="intro">Tập 1: 30 Câu Cốt Lõi (Syntax, OOP, Toán tử, Collections, Exception)<br>Hãy thử tự giải trong đầu trước khi bấm xem <strong>Đáp Án Lời Giải!</strong></p>
+
+    <!-- TOPIC 1: TOÁN TỬ & CÚ PHÁP CỘNG TRỪ -->
+    <div class="topic-header"><i class="fa-solid fa-calculator"></i> Topic 1: Toán Tử, Khởi Tạo & Short-circuit</div>
+
+    <div class="q-card">
+        <div class="q-title">CÂU 1: Hãy dự đoán kết quả in ra của đoạn code sau:</div>
+        <div class="code-block">
+int a = 2;
+int b = 3;
+int c = a++ + ++b; 
+System.out.println(a + " " + b + " " + c);
+        </div>
+        <ul class="options">
+            <li>A) 2 4 6</li>
+            <li>B) 3 4 6</li>
+            <li>C) 3 4 7</li>
+            <li>D) 2 3 5</li>
+        </ul>
+        <details>
+            <summary><i class="fa-solid fa-eye"></i> Xem Đáp Án & Giải Thích</summary>
+            <div class="answer-content">
+                <span class="correct-opt">✅ Đáp án Đúng: B) 3 4 6</span><br><br>
+                <strong>Giải thích:</strong> Hãy bóc tách dòng <code>int c = a++ + ++b;</code><br>
+                - <code>a++</code> (Hậu tố): Dùng 'a' để tính toán TRƯỚC (tức là dùng số 2). Sau đó TĂNG NGẦM 'a' lên 3. Vậy lúc này <code>a = 3</code>.<br>
+                - <code>++b</code> (Tiền tố): Tăng 'b' lên TRƯỚC (b từ 3 -> 4). Sau đó dùng số 4 để tính toán. Vậy lúc này <code>b = 4</code>.<br>
+                - Tổng kết <code>c</code> = (Giá trị a đem dùng) + (Giá trị b đem dùng) = 2 + 4 = 6.<br>
+                Kết quả cuối cùng: a=3, b=4, c=6.
+            </div>
+        </details>
+    </div>
+
+    <div class="q-card">
+        <div class="q-title">CÂU 2: Cú lừa Ngoạn Mục của Toán Tử AND &&</div>
+        <div class="code-block">
+int x = 5;
+boolean result = (x > 10) && (++x < 20);
+System.out.println(x);
+        </div>
+        <ul class="options">
+            <li>A) 5</li>
+            <li>B) 6</li>
+            <li>C) Compilation Error</li>
+            <li>D) Exception Thrown</li>
+        </ul>
+        <details>
+            <summary><i class="fa-solid fa-eye"></i> Xem Đáp Án & Giải Thích</summary>
+            <div class="answer-content">
+                <span class="correct-opt">✅ Đáp án Đúng: A) 5</span><br><br>
+                <strong>Giải thích:</strong> Đây gọi là tính năng <strong>Short-Circuit (Ngắn mạch)</strong>. <br>
+                Phép toán <code>&&</code> bắt buộc CẢ HAI vế phải True. Nhưng Java thấy vế TÂY TRÁI <code>(x > 10)</code> là <strong>False</strong> rồi (vì 5 làm sao lớn hơn 10).<br>
+                Do đó, vòng đời chết yểu ngay lập tức. Lệnh bên VẾ PHẢI <code>(++x < 20)</code> <strong>CHƯA BAO GIỜ ĐƯỢC CHẠY.</strong><br>
+                Suy ra, <code>x</code> không bị tăng lên, vẫn yên vị là số 5!
+            </div>
+        </details>
+    </div>
+
+    <div class="q-card">
+        <div class="q-title">CÂU 3: Mập mờ String Concatenation (Nối chuỗi)</div>
+        <div class="code-block">
+System.out.println("Java" + 1 + 2);
+System.out.println(1 + 2 + "Java");
+        </div>
+        <ul class="options">
+            <li>A) Java3 và 3Java</li>
+            <li>B) Java12 và 12Java</li>
+            <li>C) Java12 và 3Java</li>
+            <li>D) Java3 và 12Java</li>
+        </ul>
+        <details>
+            <summary><i class="fa-solid fa-eye"></i> Xem Đáp Án & Giải Thích</summary>
+            <div class="answer-content">
+                <span class="correct-opt">✅ Đáp án Đúng: C) Java12 và 3Java</span><br><br>
+                <strong>Giải thích:</strong> Thứ tự thực hiện tính từ TRÁI SANG PHẢI.<br>
+                - Dòng 1: Gặp chữ "Java" đầu tiên -> Chế độ Nối Chuỗi kích hoạt. "Java" + 1 = "Java1". Sau đó "Java1" + 2 = "Java12".<br>
+                - Dòng 2: Gặp số 1 + 2 đầu tiên -> Tính Toán Học trước! 1+2 = 3. Sau đó mới gặp chữ "Java" -> Nối vô thành "3Java".
+            </div>
+        </details>
+    </div>
+
+    <!-- TOPIC 2: CORE JAVA & O NHỚ -->
+    <div class="topic-header"><i class="fa-solid fa-memory"></i> Topic 2: Vùng Nhớ (String Pool, Heap) & Kiểu Nguyên Thủy</div>
+
+    <div class="q-card">
+        <div class="q-title">CÂU 4: int vs Integer (Boxing) cực kỳ dễ nhầm lẫn!</div>
+        <div class="code-block">
+Integer num1 = 100;
+Integer num2 = 100;
+Integer num3 = 500;
+Integer num4 = 500;
+
+System.out.println(num1 == num2);
+System.out.println(num3 == num4);
+        </div>
+        <ul class="options">
+            <li>A) true, true</li>
+            <li>B) true, false</li>
+            <li>C) false, false</li>
+            <li>D) false, true</li>
+        </ul>
+        <details>
+            <summary><i class="fa-solid fa-eye"></i> Xem Đáp Án & Giải Thích</summary>
+            <div class="answer-content">
+                <span class="correct-opt">✅ Đáp án Đúng: B) true, false</span><br><br>
+                <span class="hint">CÂU NÀY 90% FRESHER GỤC NGÃ!</span><br>
+                <strong>Giải thích:</strong> Java có bộ đệm (Integer Cache) tự động sinh ra cho các Object Integer có giá trị từ <strong>-128 đến 127</strong>.<br>
+                - Số 100: Nằm trong vùng Cache. Cho nên `num1` và `num2` dùng CHUNG một ô nhớ rỗng có sẵn. Suy ra <code>==</code> trả về True.<br>
+                - Số 500: Vượt mốc 127. Java bắt buộc tạo ra 2 Object MỚI TINH cấp trên vùng Heap (Giống từ khóa <code>new</code>). Suy ra <code>num3</code> và <code>num4</code> là 2 Object khác nhà (khác địa chỉ ô nhớ). Dấu <code>==</code> trả về False. <i>(Lẽ ra phải dùng num3.equals(num4) thì mới true).</i>
+            </div>
+        </details>
+    </div>
+
+    <div class="q-card">
+        <div class="q-title">CÂU 5: Chữ `final` trên Đối Tượng (Object References)</div>
+        <div class="code-block">
+final StringBuilder sb = new StringBuilder("FPT");
+sb.append(" Software");
+sb = new StringBuilder("FPT University"); 
+        </div>
+        <ul class="options">
+            <li>A) Chạy ngon, in ra "FPT University"</li>
+            <li>B) Lỗi ở dòng 2: Do sb là final, không được sửa đổi nội dung.</li>
+            <li>C) Lỗi ở dòng 3: Do sb là final, không được trỏ sang ô nhớ mới.</li>
+        </ul>
+        <details>
+            <summary><i class="fa-solid fa-eye"></i> Xem Đáp Án & Giải Thích</summary>
+            <div class="answer-content">
+                <span class="correct-opt">✅ Đáp án Đúng: C) Lỗi biên dịch ở dòng 3.</span><br><br>
+                <strong>Giải thích:</strong> Từ khóa <code>final</code> đối với Object chỉ khóa <strong>ĐỊA CHỈ CON TRỎ (Reference)</strong>, tức là không cho bằng (<code>=</code>) sang ngôi nhà mới (Dòng 3 tạo nhà mới = chết).<br>
+                Nhưng nó KHÔNG CẤM THAY ĐỔI ĐỒ ĐẠC BÊN TRONG (Trạng thái nội tại). Nên dòng 2 <code>sb.append()</code> sửa lại ruột là hoàn toàn hợp lệ!
+            </div>
+        </details>
+    </div>
+
+    <!-- TOPIC 3: OOP -->
+    <div class="topic-header"><i class="fa-solid fa-cubes"></i> Topic 3: Lập Trình Hướng Đối Tượng (OOP)</div>
+
+    <div class="q-card">
+        <div class="q-title">CÂU 6: Bạn nghĩ Hàm Khởi Tạo (Constructor) nào của Java sau là ĐÚNG LUẬT?</div>
+        <div class="options" style="font-family: monospace;">
+            <li>A) public void MyClass() { ... }</li>
+            <li>B) public MyClass() { ... }</li>
+            <li>C) public static MyClass() { ... }</li>
+            <li>D) final MyClass() { ... }</li>
+        </div>
+        <details>
+            <summary><i class="fa-solid fa-eye"></i> Xem Đáp Án & Giải Thích</summary>
+            <div class="answer-content">
+                <span class="correct-opt">✅ Đáp án Đúng: B) public MyClass() { ... }</span><br><br>
+                <strong>Giải thích:</strong> Luật thép của Constructor:<br>
+                - Tên phải giống y hệt tên Class.<br>
+                - <strong>KHÔNG CÓ KỂU TRẢ VỀ (Return type)</strong>. Kể cả chữ <code>void</code> cũng cấm! Nếu bạn thêm `void` như câu A, Java tưởng đó là một hàm (Method) bình thường tình cờ trùng tên với Class.<br>
+                - Không được dùng <code>static</code>, <code>final</code>, <code>abstract</code> cho Constructor.
+            </div>
+        </details>
+    </div>
+
+    <div class="q-card">
+        <div class="q-title">CÂU 7: Tính Đa Hình Mờ Ảo (Polymorphism & Overriding)</div>
+        <div class="code-block">
+class Animal {
+    void sound() { System.out.println("Grrr"); }
+}
+class Dog extends Animal {
+    void sound() { System.out.println("GauGau"); }
+    void fetch() { System.out.println("Choi nem dia"); }
+}
+
+public class Test {
+    public static void main(String[] args) {
+        Animal myDog = new Dog();
+        myDog.sound();  // Dòng 1
+        myDog.fetch();  // Dòng 2
+    }
+}
+        </div>
+        <ul class="options">
+            <li>A) Chạy được hết, in ra: GauGau & Choi nem dia</li>
+            <li>B) Dòng 1 in ra "Grrr", Dòng 2 báo Lỗi</li>
+            <li>C) Dòng 1 in ra "GauGau", Dòng 2 báo Lỗi Biên Dịch (Compilation Error)</li>
+        </ul>
+        <details>
+            <summary><i class="fa-solid fa-eye"></i> Xem Đáp Án & Giải Thích</summary>
+            <div class="answer-content">
+                <span class="correct-opt">✅ Đáp án Đúng: C) Dòng 1 in ra "GauGau", Dòng 2 báo Lỗi</span><br><br>
+                <strong>Giải thích:</strong> Ép kiểu từ Lên thành Cha: <code>Animal a = new Dog()</code> <br>
+                - Về mặt bản chất lúc chạy (Runtime), nó là 1 con Chó thực thụ, nên <code>a.sound()</code> sẽ thực thi hàm sủa của con Chó (GauGau). (Tính Đa hình Overriding).<br>
+                - NHƯNG về mặt lý thuyết lúc gõ code (Compile Time), biến <code>a</code> đang bị dán mác mác là <code>Animal</code>. Lớp Animal nghèo nàn không hề có kỹ năng <code>fetch()</code>. Compiler Java không chịu nổi sự vô lý này nên sẽ gạch chân đỏ ném Mới Dòng 2 ngay lập tức CẤM CHẠY!
+            </div>
+        </details>
+    </div>
+
+    <div class="q-card">
+        <div class="q-title">CÂU 8: Sự kỳ diệu của khối static và constructor</div>
+        <div class="code-block">
+class Demo {
+    static { System.out.print("1 "); }
+    { System.out.print("2 "); }
+    Demo() { System.out.print("3 "); }
+}
+public class Test {
+    public static void main(String[] args) {
+        new Demo();
+        new Demo();
+    }
+}
+        </div>
+        <ul class="options">
+            <li>A) 1 2 3 1 2 3</li>
+            <li>B) 1 2 3 2 3</li>
+            <li>C) 2 3 1 2 3 1</li>
+            <li>D) 1 3 2 1 3 2</li>
+        </ul>
+        <details>
+            <summary><i class="fa-solid fa-eye"></i> Xem Đáp Án & Giải Thích</summary>
+            <div class="answer-content">
+                <span class="correct-opt">✅ Đáp án Đúng: B) 1 2 3 2 3</span><br><br>
+                <strong>Giải thích mức độ load của Java:</strong><br>
+                1. Khối <code>static {}</code>: Được kích hoạt ĐẦU TIÊN KHI NẠP CLASS. Và nó CHỈ CHẠY ĐÚNG MỘT LẦN DUY NHẤT TRONG ĐỜI kể cả bạn tạo 1000 object. (Nên nó in số 1 đúng 1 lần).<br>
+                2. Khối Vô Dnah khởi tạo tĩnh <code>{}</code>: Chạy khi băt đầu tạo Object MỚI, VÀ chạy TRƯỚC Constructor. (Vậy ra số 2).<br>
+                3. Hàm Constructor: Trùm cuối chạy cuối cùng sinh ra Object. (Ra số 3).<br>
+                -> Khởi tạo đợt 1: In 1 2 3.<br>
+                -> Khởi tạo đợt 2: Xài lại class nạp sẵn nên số 1 bay màu. Chỉ chạy tiếp 2 3.
+            </div>
+        </details>
+    </div>
+
+    <!-- TOPIC 4: EXCEPTIONS VÀ BẪY FINALLY -->
+    <div class="topic-header"><i class="fa-solid fa-triangle-exclamation"></i> Topic 4: Exception Handling (Bắt lỗi)</div>
+
+    <div class="q-card">
+        <div class="q-title">CÂU 9: Trò lừa kinh điển của Try - Catch - Finally</div>
+        <div class="code-block">
+public static int testMethod() {
+    try {
+        return 1;
+    } finally {
+        return 2;
+    }
+}
+// Nếu gọi hàm này thì nó ra số mấy?
+        </div>
+        <ul class="options">
+            <li>A) 1</li>
+            <li>B) 2</li>
+            <li>C) Compile Error</li>
+            <li>D) Runtime Exception</li>
+        </ul>
+        <details>
+            <summary><i class="fa-solid fa-eye"></i> Xem Đáp Án & Giải Thích</summary>
+            <div class="answer-content">
+                <span class="correct-opt">✅ Đáp án Đúng: B) 2</span><br><br>
+                <strong>Giải thích Cực Phẩm:</strong><br>
+                Luật của <code>finally</code> là: "TRỜI CÓ SẬP, HAY LỆNH Ở TRY CÓ BẤM RETURN RÚT GỌN.. THÌ MÀY VẪN PHẢI CHẠY FINALLY TRƯỚC KHI THỰC SỰ ĐÓNG HÀM!".<br>
+                Khi khối <code>try</code> định Return 1 bỏ trốn, thằng <code>finally</code> nhảy ra chặn đầu bảo "Khoan, chờ tao làm hết cái đã!". Do <code>finally</code> có dán sẵn lệnh Return 2, nên nó THAY THẾ (Override) luôn ý định lúc nãy của try. Ghi đè thành rút lui theo vé số 2!
+            </div>
+        </details>
+    </div>
+
+    <!-- TOPIC 5: COLLECTIONS -->
+    <div class="topic-header"><i class="fa-solid fa-layer-group"></i> Topic 5: Collections Framework (Rổ Khay Giỏ)</div>
+
+    <div class="q-card">
+        <div class="q-title">CÂU 10: Map nào tự động động sắp xếp (Sort) các key theo vần Alphabet (A->Z) trong Java?</div>
+        <ul class="options">
+            <li>A) HashMap</li>
+            <li>B) LinkedHashMap</li>
+            <li>C) TreeMap</li>
+            <li>D) HashTable</li>
+        </ul>
+        <details>
+            <summary><i class="fa-solid fa-eye"></i> Xem Đáp Án & Giải Thích</summary>
+            <div class="answer-content">
+                <span class="correct-opt">✅ Đáp án Đúng: C) TreeMap</span><br><br>
+                <strong>Phân tích Gia Đình MAP:</strong><br>
+                - <code>HashMap</code>: Gom rác quăng bừa, lộn xộn không có thứ tự. Nhanh nhất (O(1)).<br>
+                - <code>LinkedHashMap</code>: Thằng nào nhét vào TRƯỚC thì lát in ra hiển thị TRƯỚC (Nhớ thứ tự Nhét Vào). Giống hàng xếp tiền mua vé xem phim.<br>
+                - <code>TreeMap</code>: Là một thằng có Bệnh Sạch Sẽ! Cứ hễ thấy Data mới chui vào là nó xách cuốc cào lại cây cấu trúc thuật toán Red-Black Tree để <strong>LUÔN LUÔN SẮP XẾP KEY TĂNG DẦN (Abc, 123)</strong>. Bù lại việc lấy ra chui vào lâu hơn (O(logN)).
+            </div>
+        </details>
+    </div>
+
+     <div class="q-card">
+        <div class="q-title">CÂU 11: Có Lỗi Điên Dại nào xảy ra ở dòng 2 không?</div>
+        <div class="code-block">
+List&lt;String&gt; list = new ArrayList&lt;&gt;();
+list.add(1, "Java"); // Ném Index Số 1 vào danh sách Rỗng???
+        </div>
+        <ul class="options">
+            <li>A) Được, nó tự dời cái xe "Java" tới slot thứ 1, slot số 0 bỏ trống Null.</li>
+            <li>B) Báo Lỗi IndexOutOfBoundsException</li>
+            <li>C) Báo lỗi Biên Dịch (Compilation Error)</li>
+        </ul>
+        <details>
+            <summary><i class="fa-solid fa-eye"></i> Xem Đáp Án & Giải Thích</summary>
+            <div class="answer-content">
+                <span class="correct-opt">✅ Đáp án Đúng: B) Runtime Lỗi IndexOutOfBoundsException</span><br><br>
+                <strong>Giải thích:</strong> ArrayList là cấu trúc dữ liệu LẤP CHỔ LIÊN TỤC. Hiện tại list mởi đẻ ở size = 0.<br>
+                Làm sao bạn có thể cắm 1 lá cờ ở tọa độ số 1 trong khi tọa độ gốc 0 của quốc gia này chưa được gieo rắc cờ. Lệnh <code>.add(index, value)</code> MẶC ĐỊNH bắt buộc Index <strong><= Size của mảng </strong>. Nghĩa là slot tiếp theo cao sang nhất cũng chỉ được bằng 0 thôi! Không có chuyện nhảy cóc!
+            </div>
+        </details>
+    </div>
+
+     <!-- DATABASE & SQL CƠ BẢN -->
+     <div class="topic-header"><i class="fa-solid fa-database"></i> Topic 6: SQL & Database Phá Não</div>
+
+     <div class="q-card">
+         <div class="q-title">CÂU 12: Đâu là sự khác biệt SỐNG CÒN giữa 'WHERE' và 'HAVING' khi chơi chung với GROUP BY?</div>
+         <ul class="options">
+             <li>A) WHERE dùng cho Cột là Text, còn HAVING dùng cho cột là Số Tự Nhiên.</li>
+             <li>B) WHERE Lọc data TRƯỚC KHI Nấu Lẩu (Group By), còn HAVING Lọc thành phẩm SAU KHI Đã Nấu Lẩu xong (Group By tính gộp).</li>
+             <li>C) Hai cái này xài đổi qua lại y chang nhau.</li>
+         </ul>
+         <details>
+             <summary><i class="fa-solid fa-eye"></i> Xem Đáp Án & Giải Thích</summary>
+             <div class="answer-content">
+                 <span class="correct-opt">✅ Đáp án Đúng: B </span><br><br>
+                 <strong>Giải nghĩa siêu thực:</strong><br>
+                 Ví dụ bạn có cty TGDĐ ngàn nhân viên. Bạn nhóm (GROUP BY) nhân viên theo Phòng Ban, và xem Phòng nào có <strong>TỔNG LƯƠNG (SUM(luong)) > 1 Tỷ:</strong><br>
+                 - Bạn DÙNG LỖI <code>WHERE SUM(luong) > 1 Tỷ</code>: Sai toét! Vì WHERE chạy đầu tiên khi chưa có ông nội nào nhóm lại tính Tổng Tống thì Cột Tổng không có số!<br>
+                 - Đúng chuẩn là <code>WHERE luong_tung_nguoi > 5_000_000</code> (Loại tụi thực tập ra) -> <code>GROUP BY PhongBan</code> (Gom phòng) -> <code>HAVING SUM(luong) > 1 TỶ</code> (Múc tiếp loại phòng Bèo Bèo Cơm). 
+             </div>
+         </details>
+     </div>
+     
+     <div class="q-card">
+        <div class="q-title">CÂU 13: Cú lừa Ngoạn Mục OUTER JOIN ngây ngô:</div>
+        <p>Bảng KHACHHANG (10 dòng), Bảng ORDERS (Đơn Hàng) (2 dòng). Một khách lác đác mua đơn. Nếu xài <code>SELECT * FROM KHACHHANG LEFT JOIN ORDERS ON...</code> thì kết quả ra TỐI THIỂU là mấy DÒNG?</p>
+        <ul class="options">
+            <li>A) 2 dòng</li>
+            <li>B) 8 dòng</li>
+            <li>C) 10 dòng</li>
+            <li>D) 12 dòng</li>
+        </ul>
+        <details>
+            <summary><i class="fa-solid fa-eye"></i> Xem Đáp Án & Giải Thích</summary>
+            <div class="answer-content">
+                <span class="correct-opt">✅ Đáp án Đúng: C) Ít nhất 10 dòng!</span><br><br>
+                <strong>Quy Tắc Vàng của LEFT JOIN:</strong><br>
+                Thằng nằm BÊN TRÁI Hợp Đồng (Ở đây là Bảng KHACHHANG) DÙ CHO có nghèo khổ FA ế chổng gọng Không Tồn Tại cái Đơn nào (Null bên Orders), thì tao cũng MANG MẶT MÀY LÊN HIỂN THỊ PHÙ DUNG cho bằng hết.<br>
+                Do KHACHHANG có sẵn 10 mống, LEFT JOIN bảo toàn mặt mũi nguyên gia súc bên trái, nên TỐI THIỂU sẽ lấy ĐỦ MẶT 10 Ả ĐÀO (và nếu khách đó mua 3-4 đơn thì bảng nở ra tới 12 13 dòng).
+            </div>
+        </details>
+    </div>
+
+</div>
+
+</body>
+</html>

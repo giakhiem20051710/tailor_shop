@@ -46,32 +46,37 @@ public class SecurityConfig {
         http
                 // === CSRF: Disabled for stateless REST API ===
                 .csrf(csrf -> csrf.disable())
-                
+
                 // === CORS: Use configurable origins ===
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                
+
                 // === Session: Stateless (JWT-based) ===
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                
+
                 // === Security Headers (IMPORTANT for production) ===
                 .headers(headers -> headers
                         // Prevent MIME type sniffing
-                        .contentTypeOptions(contentTypeOptions -> {})
+                        .contentTypeOptions(contentTypeOptions -> {
+                        })
                         // Prevent clickjacking
                         .frameOptions(frameOptions -> frameOptions.deny())
                         // XSS protection
-                        .xssProtection(xss -> xss.headerValue(XXssProtectionHeaderWriter.HeaderValue.ENABLED_MODE_BLOCK))
+                        .xssProtection(
+                                xss -> xss.headerValue(XXssProtectionHeaderWriter.HeaderValue.ENABLED_MODE_BLOCK))
                         // Cache control for security
-                        .cacheControl(cacheControl -> {})
-                )
-                
+                        .cacheControl(cacheControl -> {
+                        }))
+
                 // === Authorization Rules ===
                 .authorizeHttpRequests(auth -> auth
                         // Public: Auth endpoints
                         .requestMatchers("/api/v1/auth/**").permitAll()
+                        // Public: WebSocket endpoint (auth via STOMP)
+                        .requestMatchers("/ws/**").permitAll()
                         // Public: Health check only (not all actuator!)
                         .requestMatchers("/actuator/health").permitAll()
                         .requestMatchers("/actuator/info").permitAll()
+                        .requestMatchers("/actuator/prometheus").permitAll()
                         // Secure other actuator endpoints
                         .requestMatchers("/actuator/**").hasRole("ADMIN")
                         // Public: CORS preflight
@@ -87,7 +92,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/v1/image-assets/**").authenticated()
                         // All other requests require authentication
                         .anyRequest().authenticated())
-                
+
                 // === Authentication ===
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(jwtAuthFilter(), UsernamePasswordAuthenticationFilter.class);
@@ -121,11 +126,11 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        
+
         // Parse origins from config (comma-separated string)
         List<String> origins = Arrays.asList(allowedOriginsConfig.split(","));
         configuration.setAllowedOrigins(origins.stream().map(String::trim).toList());
-        
+
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);

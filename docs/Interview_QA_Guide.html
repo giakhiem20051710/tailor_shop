@@ -1,0 +1,2730 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tailor Shop - Interview Q&A Guide</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f0f23 0%, #1a1a3e 50%, #0f0f23 100%);
+            color: #eee;
+            min-height: 100vh;
+            line-height: 1.7;
+        }
+
+        /* ===== NAVIGATION ===== */
+        .nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(15, 15, 35, 0.95);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(0, 217, 255, 0.2);
+            z-index: 1000;
+            padding: 0 40px;
+        }
+
+        .nav-inner {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 64px;
+        }
+
+        .nav-brand {
+            font-size: 1.3em;
+            font-weight: 700;
+            color: #00d9ff;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            max-width: 70%;
+            scrollbar-width: none;
+        }
+
+        .nav-links::-webkit-scrollbar {
+            display: none;
+        }
+
+        .nav-link {
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            white-space: nowrap;
+            text-decoration: none;
+            color: #aaa;
+            transition: all 0.3s;
+            border: 1px solid transparent;
+        }
+
+        .nav-link:hover,
+        .nav-link.active {
+            color: #00d9ff;
+            background: rgba(0, 217, 255, 0.1);
+            border-color: rgba(0, 217, 255, 0.3);
+        }
+
+        /* ===== HERO ===== */
+        .hero {
+            padding: 120px 40px 60px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(ellipse at center, rgba(0, 217, 255, 0.05) 0%, transparent 70%);
+            animation: pulse-bg 8s ease-in-out infinite;
+        }
+
+        @keyframes pulse-bg {
+            0%, 100% { opacity: 0.5; }
+            50% { opacity: 1; }
+        }
+
+        .hero h1 {
+            font-size: 3.5em;
+            color: #00d9ff;
+            text-shadow: 0 0 40px rgba(0, 217, 255, 0.4);
+            margin-bottom: 15px;
+            position: relative;
+        }
+
+        .hero .subtitle {
+            font-size: 1.3em;
+            color: #888;
+            margin-bottom: 30px;
+            position: relative;
+        }
+
+        .stats-row {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            flex-wrap: wrap;
+            position: relative;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2.5em;
+            font-weight: 800;
+            background: linear-gradient(135deg, #00d9ff, #00ff88);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .stat-label {
+            font-size: 0.85em;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* ===== TOC ===== */
+        .toc-section {
+            max-width: 1200px;
+            margin: 0 auto 60px;
+            padding: 0 40px;
+        }
+
+        .toc-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 16px;
+        }
+
+        .toc-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+            padding: 20px;
+            cursor: pointer;
+            text-decoration: none;
+            color: inherit;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            transition: all 0.3s;
+        }
+
+        .toc-card:hover {
+            transform: translateY(-3px);
+            border-color: rgba(0, 217, 255, 0.4);
+            box-shadow: 0 8px 30px rgba(0, 217, 255, 0.15);
+            background: rgba(0, 217, 255, 0.05);
+        }
+
+        .toc-icon {
+            font-size: 2em;
+            flex-shrink: 0;
+        }
+
+        .toc-info h3 {
+            color: #00d9ff;
+            font-size: 1em;
+            margin-bottom: 4px;
+        }
+
+        .toc-info p {
+            color: #888;
+            font-size: 0.8em;
+        }
+
+        /* ===== MAIN CONTENT ===== */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 40px 80px;
+        }
+
+        /* ===== SECTION ===== */
+        .section {
+            margin-bottom: 70px;
+            scroll-margin-top: 80px;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid rgba(0, 217, 255, 0.2);
+        }
+
+        .section-icon {
+            font-size: 2em;
+        }
+
+        .section-header h2 {
+            font-size: 1.8em;
+            color: #ffd700;
+            text-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
+        }
+
+        .section-header .q-count {
+            margin-left: auto;
+            background: rgba(255, 215, 0, 0.15);
+            color: #ffd700;
+            padding: 4px 14px;
+            border-radius: 20px;
+            font-size: 0.75em;
+            font-weight: 700;
+        }
+
+        /* ===== QA CARD ===== */
+        .qa-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+            margin-bottom: 20px;
+            overflow: hidden;
+            transition: all 0.3s;
+        }
+
+        .qa-card:hover {
+            border-color: rgba(0, 217, 255, 0.3);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .qa-card.hot {
+            border-left: 4px solid #ff6b6b;
+        }
+
+        .qa-question {
+            padding: 20px 25px;
+            cursor: pointer;
+            display: flex;
+            align-items: flex-start;
+            gap: 15px;
+            user-select: none;
+            transition: background 0.2s;
+        }
+
+        .qa-question:hover {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .q-number {
+            flex-shrink: 0;
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #00d9ff, #0088ff);
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 0.85em;
+        }
+
+        .qa-card.hot .q-number {
+            background: linear-gradient(135deg, #ff6b6b, #ff4757);
+        }
+
+        .q-text {
+            flex: 1;
+            font-size: 1.1em;
+            font-weight: 600;
+            color: #eee;
+            padding-top: 5px;
+        }
+
+        .hot-badge {
+            flex-shrink: 0;
+            background: rgba(255, 107, 107, 0.2);
+            color: #ff6b6b;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            margin-top: 5px;
+        }
+
+        .q-toggle {
+            flex-shrink: 0;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.05);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+            margin-top: 3px;
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        .qa-card.open .q-toggle {
+            transform: rotate(180deg);
+            color: #00d9ff;
+            background: rgba(0, 217, 255, 0.1);
+        }
+
+        .qa-answer {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .qa-card.open .qa-answer {
+            max-height: 3000px;
+        }
+
+        .answer-content {
+            padding: 0 25px 25px;
+            padding-left: 76px;
+            color: #ccc;
+        }
+
+        .answer-content p {
+            margin-bottom: 12px;
+        }
+
+        .answer-content strong {
+            color: #00d9ff;
+        }
+
+        .answer-content em {
+            color: #ffd700;
+            font-style: normal;
+        }
+
+        /* ===== CODE ===== */
+        .code-block {
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 16px 20px;
+            margin: 12px 0;
+            font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+            font-size: 0.85em;
+            overflow-x: auto;
+            line-height: 1.6;
+            color: #e0e0e0;
+        }
+
+        .code-block .keyword {
+            color: #c792ea;
+        }
+
+        .code-block .string {
+            color: #c3e88d;
+        }
+
+        .code-block .comment {
+            color: #546e7a;
+        }
+
+        .code-block .annotation {
+            color: #ffcb6b;
+        }
+
+        .inline-code {
+            background: rgba(0, 217, 255, 0.1);
+            color: #00d9ff;
+            padding: 2px 8px;
+            border-radius: 5px;
+            font-family: 'Cascadia Code', 'Fira Code', monospace;
+            font-size: 0.9em;
+        }
+
+        /* ===== TABLE ===== */
+        .answer-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+            font-size: 0.9em;
+        }
+
+        .answer-table th {
+            background: rgba(0, 217, 255, 0.1);
+            color: #00d9ff;
+            text-align: left;
+            padding: 10px 15px;
+            border-bottom: 2px solid rgba(0, 217, 255, 0.2);
+            font-weight: 700;
+        }
+
+        .answer-table td {
+            padding: 10px 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            color: #ccc;
+        }
+
+        .answer-table tr:hover td {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        /* ===== FLOW STEPS ===== */
+        .flow-steps {
+            margin: 15px 0;
+            padding-left: 0;
+            list-style: none;
+            counter-reset: step;
+        }
+
+        .flow-steps li {
+            counter-increment: step;
+            position: relative;
+            padding: 10px 15px 10px 55px;
+            margin-bottom: 8px;
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 10px;
+            border-left: 3px solid rgba(0, 217, 255, 0.3);
+        }
+
+        .flow-steps li::before {
+            content: counter(step);
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #00d9ff, #0088ff);
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 0.8em;
+        }
+
+        /* ===== TAGS ===== */
+        .tag-row {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin: 10px 0;
+        }
+
+        .tag {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 700;
+        }
+
+        .tag-blue {
+            background: rgba(0, 217, 255, 0.15);
+            color: #00d9ff;
+        }
+
+        .tag-green {
+            background: rgba(0, 255, 136, 0.15);
+            color: #00ff88;
+        }
+
+        .tag-yellow {
+            background: rgba(255, 215, 0, 0.15);
+            color: #ffd700;
+        }
+
+        .tag-red {
+            background: rgba(255, 107, 107, 0.15);
+            color: #ff6b6b;
+        }
+
+        .tag-purple {
+            background: rgba(199, 146, 234, 0.15);
+            color: #c792ea;
+        }
+
+        /* ===== DIAGRAM ===== */
+        .diagram-box {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(0, 217, 255, 0.2);
+            border-radius: 12px;
+            padding: 20px;
+            margin: 15px 0;
+            font-family: 'Cascadia Code', monospace;
+            font-size: 0.85em;
+            overflow-x: auto;
+            white-space: pre;
+            line-height: 1.8;
+            color: #aaa;
+        }
+
+        .diagram-box .highlight {
+            color: #00d9ff;
+            font-weight: 700;
+        }
+
+        .diagram-box .arrow {
+            color: #ffd700;
+        }
+
+        .diagram-box .label {
+            color: #00ff88;
+        }
+
+        /* ===== KEY POINT ===== */
+        .key-point {
+            background: linear-gradient(135deg, rgba(0, 217, 255, 0.08), rgba(0, 136, 255, 0.05));
+            border: 1px solid rgba(0, 217, 255, 0.2);
+            border-radius: 10px;
+            padding: 15px 20px;
+            margin: 12px 0;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+        }
+
+        .key-point .kp-icon {
+            font-size: 1.2em;
+            flex-shrink: 0;
+        }
+
+        .key-point p {
+            margin: 0;
+        }
+
+        /* ===== BACK TO TOP ===== */
+        .back-to-top {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #00d9ff, #0088ff);
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3em;
+            cursor: pointer;
+            box-shadow: 0 4px 20px rgba(0, 217, 255, 0.4);
+            transition: all 0.3s;
+            opacity: 0;
+            pointer-events: none;
+            z-index: 999;
+            text-decoration: none;
+        }
+
+        .back-to-top.visible {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .back-to-top:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 30px rgba(0, 217, 255, 0.6);
+        }
+
+        /* ===== FOOTER ===== */
+        .footer {
+            text-align: center;
+            padding: 30px 40px;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            color: #555;
+            font-size: 0.85em;
+        }
+
+        .footer a {
+            color: #00d9ff;
+            text-decoration: none;
+        }
+
+        /* ===== SEARCH ===== */
+        .search-box {
+            max-width: 500px;
+            margin: 0 auto 50px;
+            position: relative;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 14px 20px 14px 48px;
+            border-radius: 50px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.05);
+            color: #eee;
+            font-size: 1em;
+            outline: none;
+            transition: all 0.3s;
+        }
+
+        .search-box input:focus {
+            border-color: rgba(0, 217, 255, 0.5);
+            box-shadow: 0 0 20px rgba(0, 217, 255, 0.15);
+        }
+
+        .search-box input::placeholder {
+            color: #666;
+        }
+
+        .search-box .search-icon {
+            position: absolute;
+            left: 18px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 1.1em;
+            color: #666;
+        }
+
+        .search-box .search-count {
+            position: absolute;
+            right: 18px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 0.8em;
+            color: #666;
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 768px) {
+            .nav {
+                padding: 0 20px;
+            }
+
+            .nav-links {
+                display: none;
+            }
+
+            .hero {
+                padding: 100px 20px 40px;
+            }
+
+            .hero h1 {
+                font-size: 2em;
+            }
+
+            .stats-row {
+                gap: 20px;
+            }
+
+            .stat-number {
+                font-size: 1.8em;
+            }
+
+            .container,
+            .toc-section {
+                padding: 0 20px;
+            }
+
+            .toc-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .section-header h2 {
+                font-size: 1.3em;
+            }
+
+            .answer-content {
+                padding-left: 25px;
+            }
+
+            .q-text {
+                font-size: 1em;
+            }
+        }
+
+        /* ===== PROGRESS BAR ===== */
+        .progress-bar {
+            position: fixed;
+            top: 64px;
+            left: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #00d9ff, #00ff88, #ffd700);
+            z-index: 999;
+            transition: width 0.1s;
+            width: 0%;
+        }
+
+        /* ===== EXPAND/COLLAPSE ALL ===== */
+        .controls {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .ctrl-btn {
+            padding: 8px 18px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.03);
+            color: #aaa;
+            font-size: 0.8em;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .ctrl-btn:hover {
+            border-color: rgba(0, 217, 255, 0.4);
+            color: #00d9ff;
+            background: rgba(0, 217, 255, 0.05);
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- NAVIGATION -->
+    <nav class="nav">
+        <div class="nav-inner">
+            <a href="index.html" class="nav-brand">👔 Tailor Shop Docs</a>
+            <div class="nav-links">
+                <a href="#architecture" class="nav-link">Kiến trúc</a>
+                <a href="#security" class="nav-link">Security</a>
+                <a href="#redis" class="nav-link">Redis</a>
+                <a href="#flashsale" class="nav-link">Flash Sale</a>
+                <a href="#events" class="nav-link">Events</a>
+                <a href="#database" class="nav-link">Database</a>
+                <a href="#ai" class="nav-link">AI/ML</a>
+                <a href="#frontend" class="nav-link">Frontend</a>
+                <a href="#devops" class="nav-link">DevOps</a>
+                <a href="#patterns" class="nav-link">Patterns</a>
+                <a href="#business" class="nav-link">Business</a>
+                <a href="#advanced" class="nav-link">Nâng cao</a>
+                <a href="#testing" class="nav-link">Testing</a>
+                <a href="#behavioral" class="nav-link">Behavioral</a>
+                <a href="#why-questions" class="nav-link">WHY ❓</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="progress-bar" id="progressBar"></div>
+
+    <!-- HERO -->
+    <section class="hero" id="top">
+        <h1>📋 Interview Q&A Guide</h1>
+        <p class="subtitle">Bộ câu hỏi phỏng vấn toàn diện cho project <strong>My Hiền Tailor Shop</strong></p>
+        <div class="stats-row">
+            <div class="stat-item">
+                <div class="stat-number">53</div>
+                <div class="stat-label">Câu hỏi</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">15</div>
+                <div class="stat-label">Chủ đề</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">16</div>
+                <div class="stat-label">Modules</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">14</div>
+                <div class="stat-label">Design Patterns</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SEARCH -->
+    <div class="search-box">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="searchInput" placeholder="Tìm kiếm câu hỏi..." oninput="filterQuestions(this.value)">
+        <span class="search-count" id="searchCount"></span>
+    </div>
+
+    <!-- TABLE OF CONTENTS -->
+    <section class="toc-section">
+        <div class="toc-grid">
+            <a href="#architecture" class="toc-card">
+                <span class="toc-icon">🏗️</span>
+                <div class="toc-info">
+                    <h3>I. Kiến trúc tổng thể</h3>
+                    <p>3 câu hỏi • Modular Monolith, Tech Stack</p>
+                </div>
+            </a>
+            <a href="#security" class="toc-card">
+                <span class="toc-icon">🔐</span>
+                <div class="toc-info">
+                    <h3>II. Security & Auth</h3>
+                    <p>3 câu hỏi • JWT, Roles, Headers</p>
+                </div>
+            </a>
+            <a href="#redis" class="toc-card">
+                <span class="toc-icon">⚡</span>
+                <div class="toc-info">
+                    <h3>III. Redis & Caching</h3>
+                    <p>2 câu hỏi • Cache TTL, Rate Limiting</p>
+                </div>
+            </a>
+            <a href="#flashsale" class="toc-card">
+                <span class="toc-icon">🔥</span>
+                <div class="toc-info">
+                    <h3>IV. Flash Sale & Concurrency</h3>
+                    <p>2 câu hỏi • Pessimistic Lock, Reservation</p>
+                </div>
+            </a>
+            <a href="#events" class="toc-card">
+                <span class="toc-icon">📡</span>
+                <div class="toc-info">
+                    <h3>V. Event-Driven Architecture</h3>
+                    <p>2 câu hỏi • Events, DLQ, Retry</p>
+                </div>
+            </a>
+            <a href="#database" class="toc-card">
+                <span class="toc-icon">🗄️</span>
+                <div class="toc-info">
+                    <h3>VI. Database & Migrations</h3>
+                    <p>2 câu hỏi • Flyway, Relationship Patterns</p>
+                </div>
+            </a>
+            <a href="#ai" class="toc-card">
+                <span class="toc-icon">🤖</span>
+                <div class="toc-info">
+                    <h3>VII. AI & Image Processing</h3>
+                    <p>2 câu hỏi • Gemini Vision, Bulk Upload</p>
+                </div>
+            </a>
+            <a href="#frontend" class="toc-card">
+                <span class="toc-icon">🎨</span>
+                <div class="toc-info">
+                    <h3>VIII. Frontend Architecture</h3>
+                    <p>4 câu hỏi • React, HTTP Client, WebSocket</p>
+                </div>
+            </a>
+            <a href="#devops" class="toc-card">
+                <span class="toc-icon">🐳</span>
+                <div class="toc-info">
+                    <h3>IX. DevOps & Deployment</h3>
+                    <p>3 câu hỏi • Docker, Monitoring, Production</p>
+                </div>
+            </a>
+            <a href="#patterns" class="toc-card">
+                <span class="toc-icon">🧩</span>
+                <div class="toc-info">
+                    <h3>X. Design Patterns</h3>
+                    <p>1 câu hỏi • 14 Patterns liệt kê</p>
+                </div>
+            </a>
+            <a href="#business" class="toc-card">
+                <span class="toc-icon">👔</span>
+                <div class="toc-info">
+                    <h3>XI. Business Domain</h3>
+                    <p>3 câu hỏi • Order, Gamification, Promotion</p>
+                </div>
+            </a>
+            <a href="#advanced" class="toc-card">
+                <span class="toc-icon">🚀</span>
+                <div class="toc-info">
+                    <h3>XII. Câu hỏi nâng cao</h3>
+                    <p>3 câu hỏi • Graceful Degradation, Scale, Wizard</p>
+                </div>
+            </a>
+            <a href="#testing" class="toc-card">
+                <span class="toc-icon">🧪</span>
+                <div class="toc-info">
+                    <h3>XIII. Testing</h3>
+                    <p>1 câu hỏi • Backend + E2E + API</p>
+                </div>
+            </a>
+            <a href="#behavioral" class="toc-card">
+                <span class="toc-icon">💬</span>
+                <div class="toc-info">
+                    <h3>XIV. Behavioral</h3>
+                    <p>2 câu hỏi • Challenges, Improvements</p>
+                </div>
+            </a>
+            <a href="#why-questions" class="toc-card" style="border-color: #f59e0b;">
+                <span class="toc-icon">❓</span>
+                <div class="toc-info">
+                    <h3>XV. Deep "WHY"</h3>
+                    <p>20 câu hỏi • Tại sao chọn giải pháp này?</p>
+                </div>
+            </a>
+        </div>
+    </section>
+
+    <!-- MAIN CONTENT -->
+    <div class="container">
+
+        <!-- ===== SECTION I: ARCHITECTURE ===== -->
+        <section class="section" id="architecture">
+            <div class="section-header">
+                <span class="section-icon">🏗️</span>
+                <h2>I. Tổng quan Kiến trúc</h2>
+                <span class="q-count">3 câu hỏi</span>
+            </div>
+
+            <div class="controls">
+                <button class="ctrl-btn" onclick="toggleAll(this.parentElement.parentElement, true)">▼ Mở tất cả</button>
+                <button class="ctrl-btn" onclick="toggleAll(this.parentElement.parentElement, false)">▲ Đóng tất cả</button>
+            </div>
+
+            <!-- Q1 -->
+            <div class="qa-card" data-q="1">
+                <div class="qa-question" onclick="toggleCard(this)">
+                    <span class="q-number">Q1</span>
+                    <span class="q-text">Mô tả kiến trúc tổng thể của project?</span>
+                    <span class="q-toggle">▼</span>
+                </div>
+                <div class="qa-answer">
+                    <div class="answer-content">
+                        <p>Project theo kiến trúc <strong>Modular Monolith</strong> gồm 3 service:</p>
+                        <div class="tag-row">
+                            <span class="tag tag-blue">Java 21</span>
+                            <span class="tag tag-green">Spring Boot 3.3</span>
+                            <span class="tag tag-yellow">React 18</span>
+                            <span class="tag tag-purple">Python FastAPI</span>
+                            <span class="tag tag-red">MySQL 8</span>
+                            <span class="tag tag-blue">Redis 7</span>
+                        </div>
+                        <div class="diagram-box"><span class="highlight">Frontend</span> (React 18 + Vite 5)       port 80/5173
+    <span class="arrow">│</span>
+    <span class="arrow">▼</span>  REST API
+<span class="highlight">Backend</span> (Spring Boot 3.3)         port 8083
+    <span class="arrow">├──▶</span> <span class="label">MySQL 8</span>     (port 3306)  — Primary DB
+    <span class="arrow">├──▶</span> <span class="label">Redis 7</span>     (port 6379)  — Cache + Rate Limit
+    <span class="arrow">├──▶</span> <span class="label">AWS S3</span>      — File Storage
+    <span class="arrow">└──▶</span> <span class="label">Gemini AI</span>   — Vision API
+
+<span class="highlight">Try-On Service</span> (FastAPI + OOTDiffusion) port 8084
+    <span class="arrow">└──▶</span> <span class="label">GPU/CUDA</span>    — AI Model Inference</div>
+                        <p>Communication giữa các module backend qua <strong>Spring Application Events</strong> (event-driven). Frontend kết nối real-time qua <strong>STOMP/SockJS WebSocket</strong>.</p>
+                        <p>Module structure: <span class="inline-code">auth</span>, <span class="inline-code">product</span>, <span class="inline-code">order</span>, <span class="inline-code">fabric</span>, <span class="inline-code">flashsale</span>, <span class="inline-code">favorite</span>, <span class="inline-code">review</span>, <span class="inline-code">gamification</span>, <span class="inline-code">billing</span>, <span class="inline-code">appointment</span>, <span class="inline-code">measurement</span>, <span class="inline-code">notification</span>, <span class="inline-code">promotion</span>, <span class="inline-code">cart</span>, <span class="inline-code">event</span>, <span class="inline-code">user</span> + config (security, redis, ratelimit, storage) + shared utilities.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Q2 -->
+            <div class="qa-card" data-q="2">
+                <div class="qa-question" onclick="toggleCard(this)">
+                    <span class="q-number">Q2</span>
+                    <span class="q-text">Tại sao chọn Modular Monolith thay vì Microservices?</span>
+                    <span class="q-toggle">▼</span>
+                </div>
+                <div class="qa-answer">
+                    <div class="answer-content">
+                        <p>Project có <strong>16 domain modules</strong> nhưng tất cả chạy trong 1 JVM. Lý do:</p>
+                        <ol class="flow-steps">
+                            <li><strong>Team nhỏ</strong> — deployment đơn giản hơn, giảm operational overhead (không cần service mesh, distributed tracing phức tạp)</li>
+                            <li><strong>Clean boundaries</strong> — mỗi module có <span class="inline-code">domain/repo/service/dto/controller</span> riêng biệt, sẵn sàng tách ra</li>
+                            <li><strong>Event-driven loose coupling</strong> — modules communicate qua Spring Events, dễ dàng chuyển sang message broker (Kafka/RabbitMQ) khi cần</li>
+                            <li><strong>Dễ scale đọc ngang</strong> — có thể tách module thành microservice sau nếu load tăng</li>
+                        </ol>
+                        <div class="key-point">
+                            <span class="kp-icon">💡</span>
+                            <p><strong>Key insight:</strong> Monolith-first approach — build monolith có boundaries tốt, rồi extract services khi thực sự cần. Tránh premature optimization.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Q3 -->
+            <div class="qa-card" data-q="3">
+                <div class="qa-question" onclick="toggleCard(this)">
+                    <span class="q-number">Q3</span>
+                    <span class="q-text">Liệt kê tất cả các module trong backend và chức năng?</span>
+                    <span class="q-toggle">▼</span>
+                </div>
+                <div class="qa-answer">
+                    <div class="answer-content">
+                        <table class="answer-table">
+                            <thead>
+                                <tr>
+                                    <th>Module</th>
+                                    <th>Chức năng</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr><td><span class="inline-code">auth</span></td><td>JWT login/register/refresh/password reset</td></tr>
+                                <tr><td><span class="inline-code">user</span></td><td>User CRUD, role management</td></tr>
+                                <tr><td><span class="inline-code">product</span></td><td>Products, image assets, bulk upload, styles, category templates, trend analysis</td></tr>
+                                <tr><td><span class="inline-code">order</span></td><td>Tailoring orders, timeline, payments, attachments, wizard flow</td></tr>
+                                <tr><td><span class="inline-code">fabric</span></td><td>Fabric CRUD, inventory, hold requests, AI analysis</td></tr>
+                                <tr><td><span class="inline-code">flashsale</span></td><td>Flash sale lifecycle: create → schedule → purchase → reserve → pay</td></tr>
+                                <tr><td><span class="inline-code">cart</span></td><td>Generic polymorphic cart (products + fabrics)</td></tr>
+                                <tr><td><span class="inline-code">favorite</span></td><td>Generic favorites (products + fabrics + image-assets)</td></tr>
+                                <tr><td><span class="inline-code">review</span></td><td>Multi-type reviews, moderation, helpful votes</td></tr>
+                                <tr><td><span class="inline-code">billing</span></td><td>Invoices, payment transactions, sandbox payments</td></tr>
+                                <tr><td><span class="inline-code">appointment</span></td><td>Appointments, working slots, scheduling</td></tr>
+                                <tr><td><span class="inline-code">measurement</span></td><td>Customer body measurements with versioning</td></tr>
+                                <tr><td><span class="inline-code">notification</span></td><td>WebSocket push + DB-persisted notifications</td></tr>
+                                <tr><td><span class="inline-code">promotion</span></td><td>Promotions/coupons: BOGO, percentage, fixed discount</td></tr>
+                                <tr><td><span class="inline-code">gamification</span></td><td>Points, check-in, streaks, seasonal challenges</td></tr>
+                                <tr><td><span class="inline-code">event</span></td><td>DLQ, failed event retry, @RetryableEvent AOP</td></tr>
+                            </tbody>
+                        </table>
+                        <p>Mỗi module follow pattern: <span class="inline-code">domain/</span> → <span class="inline-code">repository/</span> → <span class="inline-code">service/</span> → <span class="inline-code">dto/</span> → <span class="inline-code">controller/</span></p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ===== SECTION II: SECURITY ===== -->
+        <section class="section" id="security">
+            <div class="section-header">
+                <span class="section-icon">🔐</span>
+                <h2>II. Security & Authentication</h2>
+                <span class="q-count">3 câu hỏi</span>
+            </div>
+            <div class="controls">
+                <button class="ctrl-btn" onclick="toggleAll(this.parentElement.parentElement, true)">▼ Mở tất cả</button>
+                <button class="ctrl-btn" onclick="toggleAll(this.parentElement.parentElement, false)">▲ Đóng tất cả</button>
+            </div>
+
+            <!-- Q4 -->
+            <div class="qa-card" data-q="4">
+                <div class="qa-question" onclick="toggleCard(this)">
+                    <span class="q-number">Q4</span>
+                    <span class="q-text">Giải thích flow authentication?</span>
+                    <span class="q-toggle">▼</span>
+                </div>
+                <div class="qa-answer">
+                    <div class="answer-content">
+                        <ol class="flow-steps">
+                            <li>User POST <span class="inline-code">/api/v1/auth/login</span> với username/password</li>
+                            <li>Backend validate bằng <strong>BCrypt</strong>, tạo <strong>access token</strong> (30 phút, HMAC SHA-256) + <strong>refresh token</strong> (7 ngày)</li>
+                            <li>Token chứa claims: <span class="inline-code">sub</span> (userId), <span class="inline-code">roles</span>, <span class="inline-code">type</span> (access/refresh), <span class="inline-code">jti</span> (UUID cho revocation)</li>
+                            <li>Client gửi <span class="inline-code">Authorization: Bearer &lt;token&gt;</span> mỗi request</li>
+                            <li><span class="inline-code">JwtAuthFilter</span> (OncePerRequestFilter) validate token → load <span class="inline-code">CustomUserDetails</span> → set <span class="inline-code">SecurityContext</span></li>
+                            <li>Khi access token hết hạn, client gọi <span class="inline-code">/auth/refresh</span> với refresh token để lấy token mới</li>
+                        </ol>
+                        <div class="diagram-box">Client <span class="arrow">──POST──▶</span> <span class="highlight">/auth/login</span> {username, password}
+                  <span class="arrow">◀──────</span> {accessToken (30min), refreshToken (7d)}
+
+Client <span class="arrow">──GET───▶</span> <span class="highlight">/api/v1/products</span>
+  Header: Authorization: Bearer eyJhbG...
+                  <span class="arrow">◀──────</span> 200 OK + data
+
+<span class="comment">// Token expired:</span>
+Client <span class="arrow">──POST──▶</span> <span class="highlight">/auth/refresh</span> {refreshToken}
+                  <span class="arrow">◀──────</span> {newAccessToken, newRefreshToken}</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Q5 -->
+            <div class="qa-card" data-q="5">
+                <div class="qa-question" onclick="toggleCard(this)">
+                    <span class="q-number">Q5</span>
+                    <span class="q-text">Có bao nhiêu role? Role-based access hoạt động thế nào?</span>
+                    <span class="q-toggle">▼</span>
+                </div>
+                <div class="qa-answer">
+                    <div class="answer-content">
+                        <p><strong>4 roles:</strong></p>
+                        <div class="tag-row">
+                            <span class="tag tag-red">ADMIN</span>
+                            <span class="tag tag-yellow">STAFF</span>
+                            <span class="tag tag-purple">TAILOR</span>
+                            <span class="tag tag-green">CUSTOMER</span>
+                        </div>
+                        <p><strong>Backend:</strong> Controller dùng <span class="inline-code">@PreAuthorize("hasRole('ADMIN')")</span></p>
+                        <p><strong>Frontend:</strong> Dùng <span class="inline-code">ProtectedRoute</span> + <span class="inline-code">RoleGuard</span> components với các preset:</p>
+                        <table class="answer-table">
+                            <thead>
+                                <tr><th>Guard</th><th>Roles cho phép</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr><td><span class="inline-code">AdminOnly</span></td><td>ADMIN</td></tr>
+                                <tr><td><span class="inline-code">StaffAndAdmin</span></td><td>ADMIN, STAFF</td></tr>
+                                <tr><td><span class="inline-code">TailorAndAbove</span></td><td>ADMIN, STAFF, TAILOR</td></tr>
+                                <tr><td><span class="inline-code">AuthenticatedOnly</span></td><td>Any authenticated user</td></tr>
+                            </tbody>
+                        </table>
+                        <div class="key-point">
+                            <span class="kp-icon">🔑</span>
+                            <p>ADMIN role bypass tất cả role checks — có thể access mọi endpoint.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Q6 -->
+            <div class="qa-card" data-q="6">
+                <div class="qa-question" onclick="toggleCard(this)">
+                    <span class="q-number">Q6</span>
+                    <span class="q-text">Security headers nào được cấu hình?</span>
+                    <span class="q-toggle">▼</span>
+                </div>
+                <div class="qa-answer">
+                    <div class="answer-content">
+                        <p><strong>Spring Security:</strong></p>
+                        <ul class="flow-steps">
+                            <li>CSRF disabled (stateless JWT, không cần CSRF protection)</li>
+                            <li>CORS configurable từ env — <span class="inline-code">CORS_ALLOWED_ORIGINS</span></li>
+                            <li><span class="inline-code">X-XSS-Protection: 1; mode=block</span></li>
+                            <li><span class="inline-code">X-Frame-Options: DENY</span></li>
+                            <li><span class="inline-code">X-Content-Type-Options: nosniff</span></li>
+                            <li><span class="inline-code">Cache-Control: no-cache, no-store</span></li>
+                        </ul>
+                        <p><strong>Nginx (Frontend):</strong> thêm <span class="inline-code">X-Frame-Options: SAMEORIGIN</span>, gzip compression, static asset cache 1 year (<span class="inline-code">immutable</span>).</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ===== SECTION III: REDIS ===== -->
+        <section class="section" id="redis">
+            <div class="section-header">
+                <span class="section-icon">⚡</span>
+                <h2>III. Redis & Caching</h2>
+                <span class="q-count">2 câu hỏi</span>
+            </div>
+            <div class="controls">
+                <button class="ctrl-btn" onclick="toggleAll(this.parentElement.parentElement, true)">▼ Mở tất cả</button>
+                <button class="ctrl-btn" onclick="toggleAll(this.parentElement.parentElement, false)">▲ Đóng tất cả</button>
+            </div>
+
+            <!-- Q7 -->
+            <div class="qa-card" data-q="7">
+                <div class="qa-question" onclick="toggleCard(this)">
+                    <span class="q-number">Q7</span>
+                    <span class="q-text">Redis được dùng làm gì trong project? Chi tiết caching strategy?</span>
+                    <span class="q-toggle">▼</span>
+                </div>
+                <div class="qa-answer">
+                    <div class="answer-content">
+                        <p>Redis phục vụ <strong>3 mục đích chính</strong>:</p>
+                        <p><strong>1. Caching</strong> — 5 named caches với tiered TTL:</p>
+                        <table class="answer-table">
+                            <thead><tr><th>Cache Name</th><th>TTL</th><th>Lý do</th></tr></thead>
+                            <tbody>
+                                <tr><td><span class="inline-code">products</span></td><td>5 phút</td><td>Danh sách thay đổi thường xuyên</td></tr>
+                                <tr><td><span class="inline-code">product-detail</span></td><td>10 phút</td><td>Chi tiết sản phẩm ít thay đổi hơn</td></tr>
+                                <tr><td><span class="inline-code">fabrics</span></td><td>15 phút</td><td>Vải ít update</td></tr>
+                                <tr><td><span class="inline-code">image-assets</span></td><td>30 phút</td><td>Ảnh gần như static</td></tr>
+                                <tr><td><span class="inline-code">categories</span></td><td>1 giờ</td><td>Categories rất ít thay đổi</td></tr>
+                            </tbody>
+                        </table>
+                        <p><strong>2. Rate Limiting</strong> — Redis-based per-IP counter (100 req/min, 10 req/sec)</p>
+                        <p><strong>3. Flash Sale</strong> — hỗ trợ atomic operations cho inventory locking</p>
+                        <p><strong>Serialization:</strong> Jackson JSON với <span class="inline-code">JavaTimeModule</span>, conditional on <span class="inline-code">spring.data.redis.host</span></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Q8 -->
+            <div class="qa-card" data-q="8">
+                <div class="qa-question" onclick="toggleCard(this)">
+                    <span class="q-number">Q8</span>
+                    <span class="q-text">Rate limiting implementation chi tiết?</span>
+                    <span class="q-toggle">▼</span>
+                </div>
+                <div class="qa-answer">
+                    <div class="answer-content">
+                        <p>Custom <span class="inline-code">RateLimitFilter</span> (extends <span class="inline-code">OncePerRequestFilter</span>):</p>
+                        <ol class="flow-steps">
+                            <li>Extract client IP từ <span class="inline-code">X-Forwarded-For</span> / <span class="inline-code">X-Real-IP</span> headers (hỗ trợ reverse proxy)</li>
+                            <li>Check IP whitelist (<span class="inline-code">127.0.0.1</span>, <span class="inline-code">localhost</span>) — skip nếu whitelisted</li>
+                            <li>Redis key: IP-based counter với TTL 1 phút</li>
+                            <li>Increment counter, check limits: <strong>100 req/min</strong>, <strong>10 req/sec</strong></li>
+                            <li>Set response headers: <span class="inline-code">X-RateLimit-Limit</span>, <span class="inline-code">X-RateLimit-Remaining</span>, <span class="inline-code">X-RateLimit-Reset</span></li>
+                            <li>Vượt limit → trả 429 Too Many Requests</li>
+                        </ol>
+                        <div class="key-point">
+                            <span class="kp-icon">🛡️</span>
+                            <p><strong>Graceful degradation:</strong> Nếu Redis down → allow all traffic (fail-open strategy). Đảm bảo service availability.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ===== SECTION IV: FLASH SALE ===== -->
+        <section class="section" id="flashsale">
+            <div class="section-header">
+                <span class="section-icon">🔥</span>
+                <h2>IV. Flash Sale & Concurrency</h2>
+                <span class="q-count">2 câu hỏi</span>
+            </div>
+            <div class="controls">
+                <button class="ctrl-btn" onclick="toggleAll(this.parentElement.parentElement, true)">▼ Mở tất cả</button>
+                <button class="ctrl-btn" onclick="toggleAll(this.parentElement.parentElement, false)">▲ Đóng tất cả</button>
+            </div>
+
+            <!-- Q9 -->
+            <div class="qa-card hot" data-q="9">
+                <div class="qa-question" onclick="toggleCard(this)">
+                    <span class="q-number">Q9</span>
+                    <span class="q-text">Flash Sale xử lý high-concurrency thế nào?</span>
+                    <span class="hot-badge">⭐ HOT</span>
+                    <span class="q-toggle">▼</span>
+                </div>
+                <div class="qa-answer">
+                    <div class="answer-content">
+                        <p>Dùng <strong>SERIALIZABLE transaction isolation</strong> + <strong>Pessimistic Locking</strong>:</p>
+                        <ol class="flow-steps">
+                            <li><strong>LOCK</strong> flash sale row — <span class="inline-code">SELECT ... FOR UPDATE</span> via <span class="inline-code">@Lock(PESSIMISTIC_WRITE)</span> trên <span class="inline-code">findByIdForUpdate()</span></li>
+                            <li><strong>Validate</strong> — sale active, not expired, not sold out, not cancelled</li>
+                            <li><strong>Check minimum purchase</strong> quantity (<span class="inline-code">minPurchase</span>)</li>
+                            <li><strong>Check available stock</strong> — <span class="inline-code">totalQuantity - soldQuantity - reservedQuantity</span></li>
+                            <li><strong>Check per-user limit</strong> — sum of previous purchases against <span class="inline-code">maxPerUser</span></li>
+                            <li><strong>Create reservation</strong> — hold 10 phút (status <span class="inline-code">ACTIVE</span>, có <span class="inline-code">expiresAt</span>)</li>
+                            <li><strong>Atomic update</strong> — increment <span class="inline-code">reservedQuantity</span> trên flash sale entity</li>
+                            <li><strong>Create order</strong> — status <span class="inline-code">PENDING_PAYMENT</span>, deadline 10 phút</li>
+                        </ol>
+                        <div class="code-block"><span class="annotation">@Transactional</span>(isolation = Isolation.<span class="keyword">SERIALIZABLE</span>)
+<span class="keyword">public</span> PurchaseResult <span class="string">purchaseFlashSale</span>(Long flashSaleId, int quantity, Long userId) {
+    <span class="comment">// Step 1: Pessimistic lock</span>
+    FlashSaleEntity sale = repo.<span class="string">findByIdForUpdate</span>(flashSaleId);
+
+    <span class="comment">// Step 2-5: Business validations</span>
+    validateSale(sale);
+    checkAvailableStock(sale, quantity);
+    checkUserLimit(sale, userId);
+
+    <span class="comment">// Step 6-7: Create reservation + update stock</span>
+    FlashSaleReservation reservation = createReservation(sale, quantity, userId);
+    sale.setReservedQuantity(sale.getReservedQuantity() + quantity);
+
+    <span class="comment">// Step 8: Create order</span>
+    FlashSaleOrder order = createOrder(sale, reservation, userId);
+    <span class="keyword">return new</span> PurchaseResult(order, reservation);
+}</div>
+                        <p><strong>Scheduled Jobs:</strong></p>
+                        <ul class="flow-steps">
+                            <li>Auto-activate: <span class="inline-code">SCHEDULED</span> → <span class="inline-code">ACTIVE</span> khi đến startTime</li>
+                            <li>Auto-end: close sale khi hết endTime</li>
+                            <li>Release expired reservations — trả lại <span class="inline-code">reservedQuantity</span></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Q10 -->
+            <div class="qa-card" data-q="10">
+                <div class="qa-question" onclick="toggleCard(this)">
+                    <span class="q-number">Q10</span>
+                    <span class="q-text">Reservation Pattern là gì? Tại sao cần?</span>
+                    <span class="q-toggle">▼</span>
+                </div>
+                <div class="qa-answer">
+                    <div class="answer-content">
+                        <p><strong>Reservation Pattern</strong> = giữ hàng tạm thời trước khi thanh toán thực sự. Giải quyết vấn đề: user chọn mua nhưng chưa thanh toán → cần "hold" stock để người khác không mua mất.</p>
+                        <div class="diagram-box"><span class="highlight">Purchase</span> <span class="arrow">──▶</span> <span class="label">Reservation (ACTIVE, 10 min)</span> <span class="arrow">──▶</span> <span class="highlight">Payment</span> <span class="arrow">──▶</span> <span class="label">Confirm</span>
+                                    <span class="arrow">│</span>
+                              <span class="comment">timeout 10 min</span>
+                                    <span class="arrow">▼</span>
+                          <span class="label">EXPIRED → Release Stock</span></div>
+                        <p>Entity <span class="inline-code">FlashSaleReservation</span> có business methods:</p>
+                        <ul class="flow-steps">
+                            <li><span class="inline-code">isExpired()</span> — check if <span class="inline-code">expiresAt</span> đã qua</li>
+                            <li><span class="inline-code">isValid()</span> — active + not expired</li>
+                            <li><span class="inline-code">getRemainingSeconds()</span> — thời gian còn lại</li>
+                        </ul>
+                        <p>Nếu không pay trong 10 phút → reservation expired → release quantity → sản phẩm available lại.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ===== SECTION V: EVENTS ===== -->
+        <section class="section" id="events">
+            <div class="section-header">
+                <span class="section-icon">📡</span>
+                <h2>V. Event-Driven Architecture</h2>
+                <span class="q-count">2 câu hỏi</span>
+            </div>
+            <div class="controls">
+                <button class="ctrl-btn" onclick="toggleAll(this.parentElement.parentElement, true)">▼ Mở tất cả</button>
+                <button class="ctrl-btn" onclick="toggleAll(this.parentElement.parentElement, false)">▲ Đóng tất cả</button>
+            </div>
+
+            <!-- Q11 -->
+            <div class="qa-card hot" data-q="11">
+                <div class="qa-question" onclick="toggleCard(this)">
+                    <span class="q-number">Q11</span>
+                    <span class="q-text">Giải thích Event-Driven Architecture trong project?</span>
+                    <span class="hot-badge">⭐ HOT</span>
+                    <span class="q-toggle">▼</span>
+                </div>
+                <div class="qa-answer">
+                    <div class="answer-content">
+                        <p>Dùng <strong>Spring ApplicationEventPublisher</strong> + <span class="inline-code">@EventListener</span> cho loose coupling giữa modules:</p>
+                        <table class="answer-table">
+                            <thead><tr><th>Event</th><th>Listener</th><th>Side Effect</th></tr></thead>
+                            <tbody>
+                                <tr><td><span class="inline-code">OrderCreatedEvent</span></td><td>OrderEventListener</td><td>Auto-create invoice + appointment, reserve fabric</td></tr>
+                                <tr><td><span class="inline-code">OrderStatusChangedEvent</span></td><td>OrderEventListener</td><td>Timeline update, push notification</td></tr>
+                                <tr><td><span class="inline-code">OrderCancelledEvent</span></td><td>OrderEventListener</td><td>Release held fabric inventory</td></tr>
+                                <tr><td><span class="inline-code">FlashSalePurchaseEvent</span></td><td>FlashSaleEventListener</td><td>Analytics tracking, stock metrics</td></tr>
+                                <tr><td><span class="inline-code">ReservationExpiredEvent</span></td><td>FlashSaleEventListener</td><td>Release reserved quantity</td></tr>
+                                <tr><td><span class="inline-code">ReviewCreatedEvent</span></td><td>ReviewEventListener</td><td>Update product rating aggregates</td></tr>
+                                <tr><td><span class="inline-code">PromotionAppliedEvent</span></td><td>PromotionEventListener</td><td>Usage tracking, limit check</td></tr>
+                                <tr><td>All major events</td><td>NotificationEventListener</td><td>WebSocket push + DB persistence</td></tr>
+                            </tbody>
+                        </table>
+                        <p><strong>Async Thread Pools</strong> (via <span class="inline-code">AsyncEventConfig</span>):</p>
+                        <div class="tag-row">
+                            <span class="tag tag-blue">eventExecutor: 5-15 threads, queue 500</span>
+                            <span class="tag tag-green">notificationExecutor: 3-10 threads, queue 1000</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Q12 -->
+            <div class="qa-card hot" data-q="12">
+                <div class="qa-question" onclick="toggleCard(this)">
+                    <span class="q-number">Q12</span>
+                    <span class="q-text">Dead-Letter Queue (DLQ) hoạt động thế nào?</span>
+                    <span class="hot-badge">⭐ HOT</span>
+                    <span class="q-toggle">▼</span>
+                </div>
+                <div class="qa-answer">
+                    <div class="answer-content">
+                        <p>Custom DLQ infrastructure gồm 4 components:</p>
+                        <ol class="flow-steps">
+                            <li><strong><span class="inline-code">@RetryableEvent</span> annotation</strong> — đánh dấu event handlers cần retry. Config: <span class="inline-code">maxRetries</span> (default 3), <span class="inline-code">saveToDlq</span>, exception filters</li>
+                            <li><strong><span class="inline-code">RetryableEventAspect</span></strong> — AOP <span class="inline-code">@Around</span> advice, bọc handler với <strong>exponential backoff</strong> (base 100ms, max 5s, ±20% jitter)</li>
+                            <li><strong><span class="inline-code">EventRetryService</span></strong> — persist failures vào <span class="inline-code">failed_events</span> table, scheduled retry mỗi 60s</li>
+                            <li><strong><span class="inline-code">DlqAdminController</span></strong> — Admin API: <span class="inline-code">/api/v1/admin/dlq</span> — xem stats, retry/skip dead events</li>
+                        </ol>
+                        <div class="diagram-box"><span class="highlight">Event Handler</span> <span class="arrow">──▶</span> <span class="label">@RetryableEvent (AOP intercept)</span>
+      <span class="arrow">│</span>
+      <span class="arrow">├──</span> Success <span class="arrow">──▶</span> Done ✅
+      <span class="arrow">│</span>
+      <span class="arrow">└──</span> Fail <span class="arrow">──▶</span> Retry (exponential backoff, max 3x)
+                <span class="arrow">│</span>
+                <span class="arrow">├──</span> Retry success <span class="arrow">──▶</span> Done ✅
+                <span class="arrow">│</span>
+                <span class="arrow">└──</span> All retries fail <span class="arrow">──▶</span> <span class="highlight">Save to DLQ (failed_events table)</span>
+                            <span class="arrow">│</span>
+                  Status flow: <span class="label">PENDING → PROCESSING → PROCESSED | DEAD | SKIPPED</span>
+                            <span class="arrow">│</span>
+                  Scheduled job <span class="arrow">──▶</span> Retry every 60s
+                            <span class="arrow">│</span>
+                  Admin API <span class="arrow">──▶</span> Manual retry/skip</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ===== SECTION VI: DATABASE ===== -->
+        <section class="section" id="database">
+            <div class="section-header">
+                <span class="section-icon">🗄️</span>
+                <h2>VI. Database & Migrations</h2>
+                <span class="q-count">2 câu hỏi</span>
+            </div>
+            <div class="controls">
+                <button class="ctrl-btn" onclick="toggleAll(this.parentElement.parentElement, true)">▼ Mở tất cả</button>
+                <button class="ctrl-btn" onclick="toggleAll(this.parentElement.parentElement, false)">▲ Đóng tất cả</button>
+            </div>
+
+            <!-- Q13 -->
+            <div class="qa-card" data-q="13">
+                <div class="qa-question" onclick="toggleCard(this)">
+                    <span class="q-number">Q13</span>
+                    <span class="q-text">Database migration strategy?</span>
+                    <span class="q-toggle">▼</span>
+                </div>
+                <div class="qa-answer">
+                    <div class="answer-content">
+                        <p><strong>Flyway</strong> với 25+ migration files (V1→V25):</p>
+                        <table class="answer-table">
+                            <thead><tr><th>Version</th><th>Nội dung</th></tr></thead>
+                            <tbody>
+                                <tr><td>V1-V3</td><td>Users, roles (ADMIN/STAFF/TAILOR/CUSTOMER), phone constraint</td></tr>
+                                <tr><td>V4</td><td>Order module (orders, order_items, order_timeline, order_payments, order_attachments)</td></tr>
+                                <tr><td>V5-V6</td><td>Measurements, Appointments + working_slots</td></tr>
+                                <tr><td>V8</td><td>Billing (invoices, invoice_items, payment_transactions)</td></tr>
+                                <tr><td>V10</td><td>Promotions (promotions, promotion_usages)</td></tr>
+                                <tr><td>V11</td><td>Reviews (reviews, review_images, review_helpful_votes)</td></tr>
+                                <tr><td>V12-V14</td><td>Fabrics, fabric_inventory, fabric_hold_requests, cart</td></tr>
+                                <tr><td>V16-V18</td><td>Image assets, products, bulk upload jobs</td></tr>
+                                <tr><td>V20</td><td>Category templates + product configurations</td></tr>
+                                <tr><td>V21</td><td>Flash sales (4 tables)</td></tr>
+                                <tr><td>V25</td><td>Gamification tables</td></tr>
+                            </tbody>
+                        </table>
+                        <div class="key-point">
+                            <span class="kp-icon">⚠️</span>
+                            <p><strong>Lưu ý:</strong> Hiện tại Flyway <span class="inline-code">enabled: false</span>, đang dùng JPA <span class="inline-code">ddl-auto: update</span> cho development. Production nên enable Flyway.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Q14 -->
+            <div class="qa-card" data-q="14">
+                <div class="qa-question" onclick="toggleCard(this)">
+                    <span class="q-number">Q14</span>
+                    <span class="q-text">Có những relationship patterns nào đặc biệt trong DB design?</span>
+                    <span class="q-toggle">▼</span>
+                </div>
+                <div class="qa-answer">
+                    <div class="answer-content">
+                        <p><strong>1. Polymorphic Entity (Generic Type + ID)</strong></p>
+                        <p>Cart và Favorites không dùng FK cứng mà dùng <span class="inline-code">itemType + itemId</span>:</p>
+                        <div class="code-block"><span class="comment">// CartItem có thể chứa Product HOẶC Fabric</span>
+<span class="annotation">@Enumerated</span>(EnumType.STRING)
+<span class="keyword">private</span> CartItemType itemType;    <span class="comment">// PRODUCT | FABRIC</span>
+<span class="keyword">private</span> Long itemId;
+
+<span class="comment">// Favorite có thể chứa Product, Fabric, HOẶC ImageAsset</span>
+<span class="keyword">private</span> FavoriteItemType itemType; <span class="comment">// PRODUCT | FABRIC | IMAGE_ASSET</span>
+<span class="keyword">private</span> Long itemId;</div>
+
+                        <p><strong>2. Versioned Entity (Full History)</strong></p>
+                        <p>Measurements dùng <span class="inline-code">groupId + version + isLatest</span> để track lịch sử đo body:</p>
+                        <div class="code-block"><span class="keyword">private</span> String groupId;     <span class="comment">// Nhóm các versions lại</span>
+<span class="keyword">private</span> Integer version;    <span class="comment">// 1, 2, 3...</span>
+<span class="keyword">private</span> Boolean isLatest;   <span class="comment">// Chỉ 1 record là latest</span></div>
+
+                        <p><strong>3. Self-referential (Parent-Child)</strong></p>
+                        <p><span class="inline-code">SeasonalChallenge</span> có parent → subChallenges (tree structure cho challenges lồng nhau).</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ===== SECTION VII: AI ===== -->
+        <section class="section" id="ai">
+            <div class="section-header">
+                <span class="section-icon">🤖</span>
+                <h2>VII. AI & Image Processing</h2>
+                <span class="q-count">2 câu hỏi</span>
+            </div>
+            <div class="controls">
+                <button class="ctrl-btn" onclick="toggleAll(this.parentElement.parentElement, true)">▼ Mở tất cả</button>
+                <button class="ctrl-btn" onclick="toggleAll(this.parentElement.parentElement, false)">▲ Đóng tất cả</button>
+            </div>
+
+            <!-- Q15 -->
+            <div class="qa-card" data-q="15">
+                <div class="qa-question" onclick="toggleCard(this)">
+                    <span class="q-number">Q15</span>
+                    <span class="q-text">AI được tích hợp thế nào? Chi tiết từng service?</span>
+                    <span class="q-toggle">▼</span>
+                </div>
+                <div class="qa-answer">
+                    <div class="answer-content">
+                        <p><strong>1. Google Gemini Vision</strong> (Backend — Java)</p>
+                        <ol class="flow-steps">
+                            <li>Upload image → encode <strong>base64</strong></li>
+                            <li>Gọi Gemini API (<span class="inline-code">gemini-2.0-flash</span> / <span class="inline-code">gemini-2.5-pro</span>)</li>
+                            <li>Parse response → <span class="inline-code">ProductAnalysisResult</span></li>
+                            <li>Extract: category, type, gender, tags, description, occasion, season, silhouette, materials, colors, confidence score</li>
+                        </ol>
+                        <p>Custom prompts tuned cho Vietnamese tailoring products. 3-attempt retry. <span class="inline-code">AIRateLimiter</span> cho batch processing.</p>
+
+                        <p><strong>2. Virtual Try-On</strong> (Separate Python FastAPI service)</p>
+                        <table class="answer-table">
+                            <thead><tr><th>Endpoint</th><th>Chức năng</th></tr></thead>
+                            <tbody>
+                                <tr><td><span class="inline-code">POST /api/try-on</span></td><td>Nhận person_image + garment_image + category → AI try-on</td></tr>
+                                <tr><td><span class="inline-code">POST /api/segment</span></td><td>Remove background từ garment image (rembg)</td></tr>
+                                <tr><td><span class="inline-code">GET /api/health</span></td><td>Health check (gpu_available, model_loaded)</td></tr>
+                            </tbody>
+                        </table>
+                        <p>Model: <strong>OOTDiffusion</strong>. GPU support (CUDA). Rate limit: 10 req/min.</p>
+
+                        <p><strong>3. Fabric AI Analysis</strong> — <span class="inline-code">FabricAIService</span> dùng Gemini để phân tích hình ảnh vải tự động.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Q16 -->
+            <div class="qa-card" data-q="16">
+                <div class="qa-question" onclick="toggleCard(this)">
+                    <span class="q-number">Q16</span>
+                    <span class="q-text">Bulk image upload flow hoạt động thế nào?</span>
+                    <span class="q-toggle">▼</span>
+                </div>
+                <div class="qa-answer">
+                    <div class="answer-content">
+                        <ol class="flow-steps">
+                            <li><strong>Request pre-signed URLs</strong> — client gọi <span class="inline-code">POST /bulk-upload/presigned-urls</span> → nhận list S3 pre-signed URLs</li>
+                            <li><strong>Direct upload</strong> — client upload trực tiếp lên S3 (bypass server — giảm bandwidth)</li>
+                            <li><strong>Submit job</strong> — <span class="inline-code">POST /bulk-upload/submit</span> với list S3 keys → tạo <span class="inline-code">BulkUploadJobEntity</span> (status PENDING, UUID jobId)</li>
+                            <li><strong>Async processing</strong> — backend download từ S3 → Gemini AI analyze → generate thumbnail (300×300) + large (1200px width) → persist <span class="inline-code">ImageAssetEntity</span></li>
+                            <li><strong>Poll progress</strong> — client poll <span class="inline-code">GET /jobs/{jobId}</span> xem: totalFiles, processedFiles, successCount, failedCount</li>
+                            <li><strong>Auto-cleanup</strong> — job expires sau 24h</li>
+                        </ol>
+                        <div class="key-point">
+                            <span class="kp-icon">💡</span>
+                            <p><strong>Key insight:</strong> Pre-signed URLs cho phép client upload trực tiếp lên S3 mà không cần proxy qua server → giảm latency và server load đáng kể cho batch 200+ images.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ===== SECTION VIII: FRONTEND ===== -->
+        <section class="section" id="frontend">
+            <div class="section-header">
+                <span class="section-icon">🎨</span>
+                <h2>VIII. Frontend Architecture</h2>
+                <span class="q-count">4 câu hỏi</span>
+            </div>
+            <div class="controls">
+                <button class="ctrl-btn" onclick="toggleAll(this.parentElement.parentElement, true)">▼ Mở tất cả</button>
+                <button class="ctrl-btn" onclick="toggleAll(this.parentElement.parentElement, false)">▲ Đóng tất cả</button>
+            </div>
+
+            <!-- Q17 -->
+            <div class="qa-card" data-q="17">
+                <div class="qa-question" onclick="toggleCard(this)">
+                    <span class="q-number">Q17</span>
+                    <span class="q-text">State management approach?</span>
+                    <span class="q-toggle">▼</span>
+                </div>
+                <div class="qa-answer">
+                    <div class="answer-content">
+                        <p><strong>Không dùng Redux/Zustand/MobX</strong> — state management đơn giản:</p>
+                        <ul class="flow-steps">
+                            <li><span class="inline-code">useState</span> / <span class="inline-code">useEffect</span> — component-level state</li>
+                            <li><span class="inline-code">localStorage</span> — persistence layer chính (20+ <span class="inline-code">*Storage.js</span> utilities: auth, cart, favorites, orders, measurements...)</li>
+                            <li><strong>React Context</strong> — chỉ dùng cho 2 việc: <span class="inline-code">SeasonalThemeContext</span> (seasonal theming), <span class="inline-code">PageMetaProvider</span> (SEO)</li>
+                            <li><strong>Custom Hooks:</strong> <span class="inline-code">useAutoRefresh</span>, <span class="inline-code">useNotifications</span>, <span class="inline-code">useScrollAnimation</span>, <span class="inline-code">usePageMeta</span></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Q18 -->
+            <div class="qa-card" data-q="18">
+                <div class="qa-question" onclick="toggleCard(this)">
+                    <span class="q-number">Q18</span>
+                    <span class="q-text">Custom HTTP client có gì đặc biệt? Tại sao không dùng Axios?</span>
+                    <span class="q-toggle">▼</span>
+                </div>
+                <div class="qa-answer">
+                    <div class="answer-content">
+                        <p>Custom <strong>fetch-based HTTP client</strong> tự build, không dependency Axios:</p>
+                        <table class="answer-table">
+                            <thead><tr><th>Feature</th><th>Chi tiết</th></tr></thead>
+                            <tbody>
+                                <tr><td>Auto token injection</td><td><span class="inline-code">Bearer</span> token từ localStorage</td></tr>
+                                <tr><td>Interceptor chains</td><td>Request + Response interceptors (plugin architecture)</td></tr>
+                                <tr><td>Retry logic</td><td>3 attempts, exponential backoff, chỉ retry 5xx/network errors</td></tr>
+                                <tr><td>Timeout</td><td>30s default via <span class="inline-code">AbortController</span></td></tr>
+                                <tr><td>FormData support</td><td>Auto-remove <span class="inline-code">Content-Type</span> header cho multipart</td></tr>
+                                <tr><td>Error parsing</td><td>Handles multiple backend error formats</td></tr>
+                                <tr><td>Dev logging</td><td>Request/response logging chỉ trong dev mode</td></tr>
+                            </tbody>
+                        </table>
+                        <p><strong>Lý do không dùng Axios:</strong> Giảm bundle size, fetch API native đủ mạnh, toàn quyền control behavior.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Q19 -->
+            <div class="qa-card" data-q="19">
+                <div class="qa-question" onclick="toggleCard(this)">
+                    <span class="q-number">Q19</span>
+                    <span class="q-text">Lazy loading, code splitting, và performance optimization?</span>
+                    <span class="q-toggle">▼</span>
+                </div>
+                <div class="qa-answer">
+                    <div class="answer-content">
+                        <table class="answer-table">
+                            <thead><tr><th>Technique</th><th>Implementation</th></tr></thead>
+                            <tbody>
+                                <tr><td>Code splitting</td><td><span class="inline-code">React.lazy()</span> + <span class="inline-code">&lt;Suspense&gt;</span> cho 70+ page components</td></tr>
+                                <tr><td>Optimized images</td><td><span class="inline-code">OptimizedImage</span> component (lazy loading + intersection observer)</td></tr>
+                                <tr><td>Skeleton loading</td><td><span class="inline-code">Skeleton</span> component thay vì spinner</td></tr>
+                                <tr><td>Performance monitor</td><td>Web Vitals tracking (DNS, TCP, TTFB, TTI, page load) → localStorage</td></tr>
+                                <tr><td>Pre-bundled deps</td><td>Vite <span class="inline-code">optimizeDeps.include</span> cho react, react-dom, three.js, stomp.js</td></tr>
+                                <tr><td>Gzip compression</td><td>Nginx gzip cho JS/CSS/JSON/XML</td></tr>
+                                <tr><td>Cache headers</td><td>Static assets: <span class="inline-code">Cache-Control: public, immutable</span>, expires 1 year</td></tr>
+                                <tr><td>Service Worker</td><td><span class="inline-code">/sw.js</span> registered cho offline support (PWA-ready)</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Q20 -->
+            <div class="qa-card" data-q="20">
+                <div class="qa-question" onclick="toggleCard(this)">
+                    <span class="q-number">Q20</span>
+                    <span class="q-text">WebSocket / Real-time features implementation?</span>
+                    <span class="q-toggle">▼</span>
+                </div>
+                <div class="qa-answer">
+                    <div class="answer-content">
+                        <p><strong>STOMP over SockJS</strong> — hook <span class="inline-code">useNotifications</span>:</p>
+                        <div class="diagram-box"><span class="highlight">Backend</span> (Spring WebSocket + STOMP)
+    <span class="arrow">│</span>
+    <span class="arrow">├──</span> <span class="label">/user/{userId}/queue/notifications</span>  (user-specific)
+    <span class="arrow">│</span>
+    <span class="arrow">└──</span> <span class="label">/topic/notifications</span>               (broadcast)
+    <span class="arrow">│</span>
+    <span class="arrow">▼</span>
+<span class="highlight">Frontend</span> (@stomp/stompjs + sockjs-client)
+    <span class="arrow">├──</span> Max 50 notifications in state
+    <span class="arrow">├──</span> Reconnect delay: 5s
+    <span class="arrow">├──</span> Heartbeat: 10s in/out
+    <span class="arrow">└──</span> <span class="label">Fallback: REST polling mỗi 2 phút</span></div>
+                        <p><strong>Chat Widget:</strong> Client-side only (rule-based AI bot, pattern matching). <strong>StylistChatbot:</strong> Multi-step guided questionnaire (occasion → category → style → budget → product recommendations).</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ===== SECTION IX: DEVOPS ===== -->
+        <section class="section" id="devops">
+            <div class="section-header">
+                <span class="section-icon">🐳</span>
+                <h2>IX. DevOps & Deployment</h2>
+                <span class="q-count">3 câu hỏi</span>
+            </div>
+            <div class="controls">
+                <button class="ctrl-btn" onclick="toggleAll(this.parentElement.parentElement, true)">▼ Mở tất cả</button>
+                <button class="ctrl-btn" onclick="toggleAll(this.parentElement.parentElement, false)">▲ Đóng tất cả</button>
+            </div>
+
+            <!-- Q21 -->
+            <div class="qa-card" data-q="21">
+                <div class="qa-question" onclick="toggleCard(this)">
+                    <span class="q-number">Q21</span>
+                    <span class="q-text">Docker setup và multi-stage build?</span>
+                    <span class="q-toggle">▼</span>
+                </div>
+                <div class="qa-answer">
+                    <div class="answer-content">
+                        <p><strong>Multi-stage builds</strong> cho cả Backend và Frontend:</p>
+                        <table class="answer-table">
+                            <thead><tr><th>Service</th><th>Build stage</th><th>Runtime stage</th></tr></thead>
+                            <tbody>
+                                <tr><td>Backend</td><td><span class="inline-code">maven:3.9-temurin-21</span> → compile</td><td><span class="inline-code">eclipse-temurin:21-jre-jammy</span> (non-root user <span class="inline-code">spring</span>)</td></tr>
+                                <tr><td>Frontend</td><td><span class="inline-code">node:20-alpine</span> → npm build</td><td><span class="inline-code">nginx:alpine</span> (serve static)</td></tr>
+                                <tr><td>Try-On</td><td colspan="2"><span class="inline-code">python:3.10-slim</span> + CUDA support</td></tr>
+                            </tbody>
+                        </table>
+                        <p><strong>5 Compose files</strong> cho different environments:</p>
+                        <div class="tag-row">
+                            <span class="tag tag-blue">docker-compose.yml (base)</span>
+                            <span class="tag tag-green">full.yml (+ monitoring)</span>
+                            <span class="tag tag-red">prod.yml (resource limits)</span>
+                            <span class="tag tag-yellow">cloudflare.yml (tunnel)</span>
+                            <span class="tag tag-purple">local-db.yml (dev)</span>
+                        </div>
+                        <p>Security: non-root user trong backend container, health checks trên mọi service.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Q22 -->
+            <div class="qa-card" data-q="22">
+                <div class="qa-question" onclick="toggleCard(this)">
+                    <span class="q-number">Q22</span>
+                    <span class="q-text">Monitoring stack (Prometheus + Grafana)?</span>
+                    <span class="q-toggle">▼</span>
+                </div>
+                <div class="qa-answer">
+                    <div class="answer-content">
+                        <div class="diagram-box"><span class="highlight">Spring Boot Actuator</span>
+    <span class="arrow">│</span> expose <span class="label">/actuator/prometheus</span> (Micrometer)
+    <span class="arrow">▼</span>
+<span class="highlight">Prometheus</span> (port 9090)
+    <span class="arrow">│</span> scrape interval: 15s, retention: 15 days
+    <span class="arrow">▼</span>
+<span class="highlight">Grafana</span> (port 3000)
+    <span class="arrow">└──</span> Dashboards provisioned from config files</div>
+                        <p><strong>Custom metrics:</strong> <span class="inline-code">micrometer-registry-prometheus</span> expose JVM, HTTP, cache, DB connection pool metrics. Trend analysis endpoint <span class="inline-code">/api/trends/health</span> cho business metrics.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Q23 -->
+            <div class="qa-card" data-q="23">
+                <div class="qa-question" onclick="toggleCard(this)">
+                    <span class="q-number">Q23</span>
+                    <span class="q-text">Production optimization chi tiết?</span>
+                    <span class="q-toggle">▼</span>
+                </div>
+                <div class="qa-answer">
+                    <div class="answer-content">
+                        <p><span class="inline-code">docker-compose.prod.yml</span> overrides:</p>
+                        <table class="answer-table">
+                            <thead><tr><th>Service</th><th>CPU Limit</th><th>Memory</th></tr></thead>
+                            <tbody>
+                                <tr><td>Backend</td><td>2 CPUs</td><td>2 GB (reserve 1 GB)</td></tr>
+                                <tr><td>Frontend</td><td>1 CPU</td><td>512 MB (reserve 256 MB)</td></tr>
+                                <tr><td>MySQL</td><td>1 CPU</td><td>1 GB (reserve 512 MB)</td></tr>
+                            </tbody>
+                        </table>
+                        <p><strong>MySQL tuning:</strong> <span class="inline-code">max_connections=200</span>, <span class="inline-code">innodb_buffer_pool_size=512M</span></p>
+                        <p><strong>Nginx:</strong> gzip compression, static cache 1 year (immutable), security headers</p>
+                        <p><strong>Cloudflare Tunnel:</strong> Zero-trust access, không cần expose public ports</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ===== SECTION X: PATTERNS ===== -->
+        <section class="section" id="patterns">
+            <div class="section-header">
+                <span class="section-icon">🧩</span>
+                <h2>X. Design Patterns</h2>
+                <span class="q-count">1 câu hỏi</span>
+            </div>
+            <div class="controls">
+                <button class="ctrl-btn" onclick="toggleAll(this.parentElement.parentElement, true)">▼ Mở tất cả</button>
+                <button class="ctrl-btn" onclick="toggleAll(this.parentElement.parentElement, false)">▲ Đóng tất cả</button>
+            </div>
+
+            <!-- Q24 -->
+            <div class="qa-card hot" data-q="24">
+                <div class="qa-question" onclick="toggleCard(this)">
+                    <span class="q-number">Q24</span>
+                    <span class="q-text">Liệt kê tất cả Design Patterns sử dụng trong project?</span>
+                    <span class="hot-badge">⭐ HOT</span>
+                    <span class="q-toggle">▼</span>
+                </div>
+                <div class="qa-answer">
+                    <div class="answer-content">
+                        <table class="answer-table">
+                            <thead><tr><th>Pattern</th><th>Ví dụ cụ thể</th></tr></thead>
+                            <tbody>
+                                <tr><td><strong>Modular Monolith</strong></td><td>16 domain modules với clean boundaries</td></tr>
+                                <tr><td><strong>Repository</strong></td><td>Spring Data JPA + custom <span class="inline-code">@Query</span>, <span class="inline-code">@Lock(PESSIMISTIC_WRITE)</span></td></tr>
+                                <tr><td><strong>Service-Interface-Impl</strong></td><td>Mọi service có interface + implementation riêng</td></tr>
+                                <tr><td><strong>Builder</strong></td><td>Lombok <span class="inline-code">@Builder</span> trên entities + DTOs</td></tr>
+                                <tr><td><strong>Observer / Event-Driven</strong></td><td><span class="inline-code">ApplicationEventPublisher</span> + <span class="inline-code">@EventListener</span></td></tr>
+                                <tr><td><strong>Dead-Letter Queue</strong></td><td>Custom DLQ: annotation + AOP aspect + scheduled retry</td></tr>
+                                <tr><td><strong>AOP (Aspect-Oriented)</strong></td><td><span class="inline-code">RetryableEventAspect</span> wrap event handlers</td></tr>
+                                <tr><td><strong>Strategy</strong></td><td>Promotion types: PERCENTAGE, FIXED, BOGO, FREE_SHIPPING</td></tr>
+                                <tr><td><strong>Template Method</strong></td><td>Category templates define product structures</td></tr>
+                                <tr><td><strong>Polymorphic / Generic Entity</strong></td><td>Cart + Favorites dùng <span class="inline-code">itemType + itemId</span></td></tr>
+                                <tr><td><strong>Reservation</strong></td><td>Flash sale: hold 10 phút trước khi payment</td></tr>
+                                <tr><td><strong>Versioned Entity</strong></td><td>Measurement(<span class="inline-code">groupId, version, isLatest</span>)</td></tr>
+                                <tr><td><strong>Conditional Beans</strong></td><td><span class="inline-code">@ConditionalOnExpression</span> cho S3, Redis — graceful degradation</td></tr>
+                                <tr><td><strong>Saga-like Orchestration</strong></td><td>Order wizard: order → measurement → appointment → invoice</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ===== SECTION XI: BUSINESS ===== -->
+        <section class="section" id="business">
+            <div class="section-header">
+                <span class="section-icon">👔</span>
+                <h2>XI. Business Domain</h2>
+                <span class="q-count">3 câu hỏi</span>
+            </div>
+            <div class="controls">
+                <button class="ctrl-btn" onclick="toggleAll(this.parentElement.parentElement, true)">▼ Mở tất cả</button>
+                <button class="ctrl-btn" onclick="toggleAll(this.parentElement.parentElement, false)">▲ Đóng tất cả</button>
+            </div>
+
+            <!-- Q25 -->
+            <div class="qa-card" data-q="25">
+                <div class="qa-question" onclick="toggleCard(this)">
+                    <span class="q-number">Q25</span>
+                    <span class="q-text">Order lifecycle có bao nhiêu trạng thái? Flow thế nào?</span>
+                    <span class="q-toggle">▼</span>
+                </div>
+                <div class="qa-answer">
+                    <div class="answer-content">
+                        <p><strong>12 trạng thái</strong> trong order lifecycle:</p>
+                        <div class="diagram-box"><span class="label">PENDING</span> <span class="arrow">──▶</span> <span class="label">CONFIRMED</span> <span class="arrow">──▶</span> <span class="label">ASSIGNED</span> <span class="arrow">──▶</span> <span class="label">MEASURING</span>
+    <span class="arrow">│</span>                                                  <span class="arrow">│</span>
+    <span class="arrow">▼</span>                                                  <span class="arrow">▼</span>
+<span class="label">CANCELLED</span>                                       <span class="label">CUTTING</span> <span class="arrow">──▶</span> <span class="label">SEWING</span>
+                                                            <span class="arrow">│</span>
+                                                            <span class="arrow">▼</span>
+                                                     <span class="label">FITTING</span> <span class="arrow">──▶</span> <span class="label">ALTERING</span>
+                                                            <span class="arrow">│</span>
+                                                            <span class="arrow">▼</span>
+                                                     <span class="label">COMPLETED</span> <span class="arrow">──▶</span> <span class="label">DELIVERED</span></div>
+                        <p>Mỗi transition tạo <span class="inline-code">OrderTimeline</span> entry + trigger <span class="inline-code">OrderStatusChangedEvent</span> → push notification cho customer.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Q26 -->
+            <div class="qa-card" data-q="26">
+                <div class="qa-question" onclick="toggleCard(this)">
+                    <span class="q-number">Q26</span>
+                    <span class="q-text">Gamification system gồm những gì?</span>
+                    <span class="q-toggle">▼</span>
+                </div>
+                <div class="qa-answer">
+                    <div class="answer-content">
+                        <table class="answer-table">
+                            <thead><tr><th>Feature</th><th>Chi tiết</th></tr></thead>
+                            <tbody>
+                                <tr><td><strong>Points Wallet</strong></td><td>earn/spend/expire points. Entity: <span class="inline-code">UserPointsWallet</span> với <span class="inline-code">balance</span>, <span class="inline-code">totalEarned</span>, <span class="inline-code">totalSpent</span>, <span class="inline-code">totalExpired</span>. Methods: <span class="inline-code">addPoints()</span>, <span class="inline-code">spendPoints()</span>, <span class="inline-code">hasSufficientPoints()</span></td></tr>
+                                <tr><td><strong>Daily Check-in</strong></td><td>Consecutive day streaks, bonus points cho streaks dài</td></tr>
+                                <tr><td><strong>Seasonal Challenges</strong></td><td>Yearly challenges (Tết, Valentine, Summer...) với sub-challenges (tree structure), progress tracking, reward vouchers</td></tr>
+                                <tr><td><strong>Points Redemption</strong></td><td>Convert points thành discount, calculate redemption value</td></tr>
+                            </tbody>
+                        </table>
+                        <p><strong>Events:</strong> <span class="inline-code">OrderCompletedForChallengeEvent</span>, <span class="inline-code">ReviewSubmittedForChallengeEvent</span> → <span class="inline-code">GamificationEventListener</span> auto-update progress.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Q27 -->
+            <div class="qa-card" data-q="27">
+                <div class="qa-question" onclick="toggleCard(this)">
+                    <span class="q-number">Q27</span>
+                    <span class="q-text">Hệ thống Promotion/Coupon hỗ trợ những loại nào?</span>
+                    <span class="q-toggle">▼</span>
+                </div>
+                <div class="qa-answer">
+                    <div class="answer-content">
+                        <p><strong>4 loại promotion:</strong></p>
+                        <div class="tag-row">
+                            <span class="tag tag-green">PERCENTAGE — Giảm %</span>
+                            <span class="tag tag-blue">FIXED — Giảm số tiền cố định</span>
+                            <span class="tag tag-yellow">BOGO — Buy One Get One</span>
+                            <span class="tag tag-purple">FREE_SHIPPING — Miễn phí ship</span>
+                        </div>
+                        <p><strong>Features:</strong></p>
+                        <ul class="flow-steps">
+                            <li><span class="inline-code">maxUsageTotal</span> / <span class="inline-code">maxUsagePerUser</span> — giới hạn số lần dùng</li>
+                            <li><span class="inline-code">applicableProductIds</span> / <span class="inline-code">applicableCategoryIds</span> (JSON) — áp dụng cho SP/category cụ thể</li>
+                            <li><span class="inline-code">minOrderValue</span> — giá trị đơn hàng tối thiểu</li>
+                            <li><span class="inline-code">isPublic</span> / <span class="inline-code">isSingleUse</span> — public hay chỉ 1 lần</li>
+                            <li>Auto-apply: <span class="inline-code">POST /promotions/auto-apply</span></li>
+                            <li>Suggestions: <span class="inline-code">GET /promotions/suggestions</span>, <span class="inline-code">/available-for-cart</span></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ===== SECTION XII: ADVANCED ===== -->
+        <section class="section" id="advanced">
+            <div class="section-header">
+                <span class="section-icon">🚀</span>
+                <h2>XII. Câu hỏi nâng cao</h2>
+                <span class="q-count">3 câu hỏi</span>
+            </div>
+            <div class="controls">
+                <button class="ctrl-btn" onclick="toggleAll(this.parentElement.parentElement, true)">▼ Mở tất cả</button>
+                <button class="ctrl-btn" onclick="toggleAll(this.parentElement.parentElement, false)">▲ Đóng tất cả</button>
+            </div>
+
+            <!-- Q28 -->
+            <div class="qa-card" data-q="28">
+                <div class="qa-question" onclick="toggleCard(this)">
+                    <span class="q-number">Q28</span>
+                    <span class="q-text">Nếu Redis down, hệ thống xử lý thế nào? (Graceful Degradation)</span>
+                    <span class="q-toggle">▼</span>
+                </div>
+                <div class="qa-answer">
+                    <div class="answer-content">
+                        <p><strong>Graceful degradation</strong> — hệ thống vẫn hoạt động khi Redis unavailable:</p>
+                        <table class="answer-table">
+                            <thead><tr><th>Feature</th><th>Behavior khi Redis down</th></tr></thead>
+                            <tbody>
+                                <tr><td><strong>Rate Limiting</strong></td><td>Fail-open: allow all traffic. Service availability > security</td></tr>
+                                <tr><td><strong>Caching</strong></td><td><span class="inline-code">@ConditionalOnProperty</span> — cache miss → query DB trực tiếp. Slower but functional</td></tr>
+                                <tr><td><strong>Flash Sale</strong></td><td>Vẫn hoạt động qua DB pessimistic locking. Redis chỉ hỗ trợ, không critical</td></tr>
+                            </tbody>
+                        </table>
+                        <div class="key-point">
+                            <span class="kp-icon">💡</span>
+                            <p><strong>Implementation:</strong> <span class="inline-code">@ConditionalOnExpression</span> check S3/Redis credentials khi startup. Nếu thiếu → dùng mock implementation hoặc bypass.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Q29 -->
+            <div class="qa-card" data-q="29">
+                <div class="qa-question" onclick="toggleCard(this)">
+                    <span class="q-number">Q29</span>
+                    <span class="q-text">Làm sao scale hệ thống khi traffic tăng?</span>
+                    <span class="q-toggle">▼</span>
+                </div>
+                <div class="qa-answer">
+                    <div class="answer-content">
+                        <p><strong>4 chiến lược scale:</strong></p>
+                        <ol class="flow-steps">
+                            <li><strong>Horizontal (Microservices)</strong> — tách modules thành services riêng. Event-driven đã sẵn → chỉ cần đổi transport từ in-memory events sang message broker (Kafka/RabbitMQ)</li>
+                            <li><strong>Vertical</strong> — tăng resource limits trong <span class="inline-code">docker-compose.prod.yml</span> (CPU, memory)</li>
+                            <li><strong>Database</strong> — MySQL read replicas cho read-heavy queries, Redis cluster cho cache distribution</li>
+                            <li><strong>CDN + Caching</strong> — Cloudflare CDN (đã config), static assets cache immutable 1 year, Redis cache với tiered TTL</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Q30 -->
+            <div class="qa-card" data-q="30">
+                <div class="qa-question" onclick="toggleCard(this)">
+                    <span class="q-number">Q30</span>
+                    <span class="q-text">Giải thích flow tạo Order qua Wizard (Saga-like)?</span>
+                    <span class="q-toggle">▼</span>
+                </div>
+                <div class="qa-answer">
+                    <div class="answer-content">
+                        <p><strong>Saga-like orchestration</strong> — 1 API call <span class="inline-code">POST /orders/wizard</span> coordinate across 4 modules:</p>
+                        <div class="diagram-box"><span class="highlight">POST /orders/wizard</span>
+    <span class="arrow">│</span>
+    <span class="arrow">├──</span> <span class="label">Step 1: Create Order</span>
+    <span class="arrow">│</span>       (customer, products, note, expected budget)
+    <span class="arrow">│</span>
+    <span class="arrow">├──</span> <span class="label">Step 2: Create/Link Measurement</span>
+    <span class="arrow">│</span>       (body measurements for customer)
+    <span class="arrow">│</span>
+    <span class="arrow">├──</span> <span class="label">Step 3: Create Appointment</span>
+    <span class="arrow">│</span>       (fitting schedule, available slots check)
+    <span class="arrow">│</span>
+    <span class="arrow">└──</span> <span class="label">Step 4: Auto-generate Invoice</span>
+              (subtotal, tax, discount calculation)
+    <span class="arrow">│</span>
+    <span class="arrow">▼</span>
+<span class="highlight">Events Published:</span>
+    <span class="arrow">├──</span> OrderCreatedEvent <span class="arrow">→</span> reserve fabric inventory
+    <span class="arrow">├──</span> Send notification to customer
+    <span class="arrow">└──</span> Send notification to staff/admin</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ===== SECTION XIII: TESTING ===== -->
+        <section class="section" id="testing">
+            <div class="section-header">
+                <span class="section-icon">🧪</span>
+                <h2>XIII. Testing</h2>
+                <span class="q-count">1 câu hỏi</span>
+            </div>
+            <div class="controls">
+                <button class="ctrl-btn" onclick="toggleAll(this.parentElement.parentElement, true)">▼ Mở tất cả</button>
+                <button class="ctrl-btn" onclick="toggleAll(this.parentElement.parentElement, false)">▲ Đóng tất cả</button>
+            </div>
+
+            <!-- Q31 -->
+            <div class="qa-card" data-q="31">
+                <div class="qa-question" onclick="toggleCard(this)">
+                    <span class="q-number">Q31</span>
+                    <span class="q-text">Testing strategy toàn project?</span>
+                    <span class="q-toggle">▼</span>
+                </div>
+                <div class="qa-answer">
+                    <div class="answer-content">
+                        <table class="answer-table">
+                            <thead><tr><th>Layer</th><th>Framework</th><th>Coverage</th></tr></thead>
+                            <tbody>
+                                <tr><td><strong>Backend Unit/Integration</strong></td><td>Spring Boot Test + Spring Security Test + JUnit 5</td><td>Service + Controller tests</td></tr>
+                                <tr><td><strong>Frontend E2E</strong></td><td>Playwright v1.58</td><td>4 test files: auth, checkout, fabrics, flash-sale (smoke-level)</td></tr>
+                                <tr><td><strong>Try-On Service</strong></td><td><span class="inline-code">test_api.py</span></td><td>API endpoint testing</td></tr>
+                            </tbody>
+                        </table>
+                        <p><strong>E2E Test Details:</strong></p>
+                        <ul class="flow-steps">
+                            <li><span class="inline-code">auth.spec.js</span> — Login page display, invalid credentials, navigation</li>
+                            <li><span class="inline-code">checkout.spec.js</span> — Cart display, checkout form, payment method selection</li>
+                            <li><span class="inline-code">fabrics.spec.js</span> — Fabric listing, search/filter, add to cart</li>
+                            <li><span class="inline-code">flash-sale.spec.js</span> — Flash sale page, countdown timer, discounted prices</li>
+                        </ul>
+                        <p>Helper: <span class="inline-code">auth.helper.js</span> có <span class="inline-code">loginAsCustomer()</span>, <span class="inline-code">loginAsAdmin()</span>, <span class="inline-code">logout()</span></p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ===== SECTION XIV: BEHAVIORAL ===== -->
+        <section class="section" id="behavioral">
+            <div class="section-header">
+                <span class="section-icon">💬</span>
+                <h2>XIV. Behavioral / Situational</h2>
+                <span class="q-count">2 câu hỏi</span>
+            </div>
+            <div class="controls">
+                <button class="ctrl-btn" onclick="toggleAll(this.parentElement.parentElement, true)">▼ Mở tất cả</button>
+                <button class="ctrl-btn" onclick="toggleAll(this.parentElement.parentElement, false)">▲ Đóng tất cả</button>
+            </div>
+
+            <!-- Q32 -->
+            <div class="qa-card" data-q="32">
+                <div class="qa-question" onclick="toggleCard(this)">
+                    <span class="q-number">Q32</span>
+                    <span class="q-text">Khó khăn lớn nhất khi build project này? Cách giải quyết?</span>
+                    <span class="q-toggle">▼</span>
+                </div>
+                <div class="qa-answer">
+                    <div class="answer-content">
+                        <p><strong>Gợi ý trả lời:</strong></p>
+                        <p><strong>1. Flash Sale Concurrency</strong> — Race condition khi nhiều user mua cùng lúc. Giải quyết bằng <em>pessimistic locking + reservation pattern + scheduled cleanup</em>. Đã test với multiple concurrent requests — stock consistency đảm bảo 100%.</p>
+                        <p><strong>2. Event Reliability</strong> — Event handler fail dẫn đến data inconsistency. Giải quyết bằng custom DLQ với <em>@RetryableEvent + exponential backoff + dead letter persistence + admin retry API</em>.</p>
+                        <p><strong>3. AI Integration Stability</strong> — Gemini API rate limits và intermittent failures. Giải quyết bằng <em>3-retry strategy + AIRateLimiter + async batch processing + progress tracking</em>.</p>
+                        <p><strong>4. Cross-module Communication</strong> — Tight coupling giữa order/billing/appointment/measurement. Giải quyết bằng <em>event-driven architecture</em> — modules communicate qua events, không gọi trực tiếp.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Q33 -->
+            <div class="qa-card" data-q="33">
+                <div class="qa-question" onclick="toggleCard(this)">
+                    <span class="q-number">Q33</span>
+                    <span class="q-text">Nếu có thêm thời gian, sẽ cải thiện gì?</span>
+                    <span class="q-toggle">▼</span>
+                </div>
+                <div class="qa-answer">
+                    <div class="answer-content">
+                        <p><strong>Gợi ý trả lời (từ technical debt → innovation):</strong></p>
+                        <ol class="flow-steps">
+                            <li><strong>Message Broker</strong> — Migrate từ Spring Events (in-memory) sang Kafka/RabbitMQ cho reliable event delivery cross-service</li>
+                            <li><strong>Test Coverage</strong> — Tăng unit test coverage (services + repositories), integration tests cho critical flows (flash sale, order wizard)</li>
+                            <li><strong>CQRS</strong> — Implement Command Query Responsibility Segregation cho read-heavy endpoints (product catalog, trend analysis)</li>
+                            <li><strong>OAuth2/OpenID Connect</strong> — Migrate custom JWT sang Spring Authorization Server hoặc Keycloak cho SSO, social login</li>
+                            <li><strong>API Versioning</strong> — Formal versioning strategy (URL path hoặc header-based) thay vì chỉ <span class="inline-code">/api/v1</span></li>
+                            <li><strong>Kubernetes</strong> — Migrate từ Docker Compose sang K8s cho auto-scaling, self-healing, rolling updates</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ===== SECTION XV: WHY QUESTIONS ===== -->
+        <section class="section" id="why-questions">
+            <div class="section-header">
+                <span class="section-icon">❓</span>
+                <h2>XV. Deep "WHY" — Tại Sao Chọn Giải Pháp Này?</h2>
+                <span class="q-count">20 câu hỏi</span>
+            </div>
+            <div class="controls">
+                <button class="ctrl-btn" onclick="toggleAll(this.parentElement.parentElement, true)">▼ Mở tất cả</button>
+                <button class="ctrl-btn" onclick="toggleAll(this.parentElement.parentElement, false)">▲ Đóng tất cả</button>
+            </div>
+
+            <!-- Q34 -->
+            <div class="qa-card hot" data-q="34">
+                <div class="qa-question" onclick="toggleCard(this)">
+                    <span class="q-number">Q34</span>
+                    <span class="q-text">Tại sao chọn Java 21 thay vì Java 17?</span>
+                    <span class="hot-badge">❓ WHY</span>
+                    <span class="q-toggle">▼</span>
+                </div>
+                <div class="qa-answer">
+                    <div class="answer-content">
+                        <p>Java 21 là <strong>LTS mới nhất</strong> (Sep 2023), được chọn vì:</p>
+                        <ol class="flow-steps">
+                            <li><strong>Long-term support</strong> — LTS cycle dài hơn Java 17, nhận security patch đến ~2031. Đầu tư cho tương lai.</li>
+                            <li><strong>Record types</strong> — Project dùng <span class="inline-code">record</span> cho DTOs (<span class="inline-code">UserRequestDTO</span>, <span class="inline-code">NotificationResponse</span>, <span class="inline-code">DlqStats</span>). Records giảm boilerplate: auto-generated <span class="inline-code">equals()</span>, <span class="inline-code">hashCode()</span>, <span class="inline-code">toString()</span>.</li>
+                            <li><strong>Virtual Threads ready</strong> — Java 21 có Virtual Threads (Project Loom) GA. Dù chưa dùng, khi load tăng có thể enable ngay mà không cần refactor async code.</li>
+                            <li><strong>Spring Boot 3.3 alignment</strong> — Spring Boot 3.3.x có first-class Java 21 support, auto-configuration cho Virtual Threads.</li>
+                            <li><strong>Zero migration cost</strong> — Bắt đầu project mới với Java 21 không mất chi phí migration. Nếu dùng 17 rồi upgrade sau sẽ pain hơn.</li>
+                        </ol>
+                        <div class="key-point">
+                            <span class="kp-icon">💡</span>
+                            <p><strong>Trade-off:</strong> Một số library cũ (JavaFaker) dùng reflection nặng, có thể gặp compatibility issues. Nhưng lợi ích LTS + future-proofing outweigh risks.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Q35 -->
+            <div class="qa-card hot" data-q="35">
+                <div class="qa-question" onclick="toggleCard(this)">
+                    <span class="q-number">Q35</span>
+                    <span class="q-text">Tại sao dùng HMAC SHA-256 cho JWT thay vì RSA?</span>
+                    <span class="hot-badge">❓ WHY</span>
+                    <span class="q-toggle">▼</span>
+                </div>
+                <div class="qa-answer">
+                    <div class="answer-content">
+                        <p>JWT signing dùng <strong>symmetric HMAC-SHA256</strong> (<span class="inline-code">Keys.hmacShaKeyFor(secretBytes)</span>):</p>
+                        <ol class="flow-steps">
+                            <li><strong>Single-service architecture</strong> — Cả token issuer lẫn validator đều nằm trong cùng 1 Spring Boot app. Không cần asymmetric key vì không có service riêng chỉ verify mà không sign.</li>
+                            <li><strong>Đơn giản</strong> — Chỉ cần 1 env var <span class="inline-code">JWT_SECRET</span> (≥32 bytes). RSA cần generate key pair, lưu trữ, rotation, JWKS endpoint.</li>
+                            <li><strong>Performance</strong> — HMAC-SHA256 nhanh <strong>10-20x</strong> so với RSA-256. Quan trọng vì mỗi API request đều phải validate token.</li>
+                            <li><strong>Configuration tối thiểu</strong> — 1 biến <span class="inline-code">JWT_SECRET</span> trong <span class="inline-code">.env</span> vs quản lý public/private key files qua nhiều deployment.</li>
+                        </ol>
+                        <div class="key-point">
+                            <span class="kp-icon">🔄</span>
+                            <p><strong>Khi nào chuyển RSA?</strong> Khi tách sang microservices — auth service sign token, các service khác chỉ verify bằng public key. Hiện tại monolith → HMAC là optimal.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Q36 -->
+            <div class="qa-card hot" data-q="36">
+                <div class="qa-question" onclick="toggleCard(this)">
+                    <span class="q-number">Q36</span>
+                    <span class="q-text">Tại sao chọn BCrypt cho password hashing?</span>
+                    <span class="hot-badge">❓ WHY</span>
+                    <span class="q-toggle">▼</span>
+                </div>
+                <div class="qa-answer">
+                    <div class="answer-content">
+                        <p><span class="inline-code">new BCryptPasswordEncoder()</span> trong <span class="inline-code">SecurityConfig</span>:</p>
+                        <ol class="flow-steps">
+                            <li><strong>Spring Security default</strong> — BCrypt là recommended password encoder trong Spring ecosystem. Không cần thêm dependency.</li>
+                            <li><strong>Adaptive cost factor</strong> — Work factor có thể tăng khi hardware mạnh hơn (default strength 10 ≈ ~100ms per hash).</li>
+                            <li><strong>Built-in salt</strong> — Mỗi hash chứa unique per-password salt. Không cần quản lý salt storage riêng. Ngăn rainbow table attacks.</li>
+                            <li><strong>Battle-tested</strong> — Dùng production hàng thập kỷ, security properties được hiểu rõ.</li>
+                        </ol>
+                        <table class="answer-table">
+                            <thead><tr><th>Algorithm</th><th>Ưu điểm</th><th>Nhược điểm</th></tr></thead>
+                            <tbody>
+                                <tr><td><strong>BCrypt</strong> ✅</td><td>Spring default, adaptive, built-in salt</td><td>CPU-bound only (không memory-hard)</td></tr>
+                                <tr><td><strong>Argon2id</strong></td><td>Memory-hard, chống GPU attack tốt hơn</td><td>Cần thêm dependency, ít library support</td></tr>
+                                <tr><td><strong>scrypt</strong></td><td>Memory-hard</td><td>Ít phổ biến trong Java ecosystem</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Q37 -->
+            <div class="qa-card hot" data-q="37">
+                <div class="qa-question" onclick="toggleCard(this)">
+                    <span class="q-number">Q37</span>
+                    <span class="q-text">Tại sao chọn Pessimistic Locking thay vì Optimistic Locking cho Flash Sale?</span>
+                    <span class="hot-badge">❓ WHY</span>
+                    <span class="q-toggle">▼</span>
+                </div>
+                <div class="qa-answer">
+                    <div class="answer-content">
+                        <p>Flash sale dùng <span class="inline-code">@Lock(PESSIMISTIC_WRITE)</span> + <span class="inline-code">SERIALIZABLE</span> isolation:</p>
+                        <ol class="flow-steps">
+                            <li><strong>High contention</strong> — Hàng trăm/ngàn user mua cùng lúc trên cùng 1 sản phẩm. Optimistic locking (<span class="inline-code">@Version</span>) sẽ gây <em>massive retry storms</em> vì hầu hết transaction đều conflict.</li>
+                            <li><strong>Overselling = thảm họa</strong> — Bán quá stock là nghiêm trọng. <span class="inline-code">SELECT ... FOR UPDATE</span> đảm bảo <strong>không có 2 transaction đọc/sửa stock cùng lúc</strong>.</li>
+                            <li><strong>Đơn giản, chính xác</strong> — Lock row → validate → update → release. Không cần retry logic phức tạp như Optimistic.</li>
+                            <li><strong>MySQL InnoDB row-level lock</strong> — InnoDB hỗ trợ row-level locking native. Lock chỉ 1 row flash sale, không block toàn table.</li>
+                        </ol>
+                        <div class="diagram-box"><span class="highlight">Optimistic Locking (BAD for flash sale)</span>
+  Thread A: READ stock=10, version=1
+  Thread B: READ stock=10, version=1
+  Thread A: UPDATE stock=9, version=2 ✅
+  Thread B: UPDATE stock=9, version=2 ❌ <span class="comment">// OptimisticLockException → RETRY</span>
+  <span class="comment">// 1000 users → 999 retries → cascade failures</span>
+
+<span class="highlight">Pessimistic Locking (GOOD for flash sale)</span>
+  Thread A: SELECT ... FOR UPDATE → LOCKS row
+  Thread B: WAITS for lock...
+  Thread A: UPDATE stock=9, COMMIT → releases lock
+  Thread B: Gets lock → READ stock=9 → UPDATE stock=8 ✅
+  <span class="comment">// Serialized, no retries, correct every time</span></div>
+                        <div class="key-point">
+                            <span class="kp-icon">⚖️</span>
+                            <p><strong>Trade-off:</strong> Throughput thấp hơn (serialize transactions), nhưng <em>correctness > throughput</em> cho flash sale. Normal product purchase có thể dùng optimistic locking.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Q38 -->
+            <div class="qa-card hot" data-q="38">
+                <div class="qa-question" onclick="toggleCard(this)">
+                    <span class="q-number">Q38</span>
+                    <span class="q-text">Tại sao chọn Vite thay vì Webpack/CRA?</span>
+                    <span class="hot-badge">❓ WHY</span>
+                    <span class="q-toggle">▼</span>
+                </div>
+                <div class="qa-answer">
+                    <div class="answer-content">
+                        <p>Frontend dùng <strong>Vite 5</strong> với <span class="inline-code">@vitejs/plugin-react</span>:</p>
+                        <ol class="flow-steps">
+                            <li><strong>Dev server tức thì</strong> — Vite dùng native ES modules, không bundle khi dev. HMR update gần như instant dù project có 30+ dependencies.</li>
+                            <li><strong>esbuild</strong> — Transpilation/minification nhanh <strong>10-100x</strong> so với Webpack's Babel/Terser (esbuild viết bằng Go).</li>
+                            <li><strong>Zero-config</strong> — 50 dòng config vs 200+ dòng Webpack config cho cùng setup.</li>
+                            <li><strong>CRA deprecated</strong> — Create React App đã ngừng maintain. Vite là recommended replacement.</li>
+                            <li><strong>Production build</strong> — Dùng Rollup under the hood cho code-splitting và tree-shaking tối ưu.</li>
+                        </ol>
+                        <div class="key-point">
+                            <span class="kp-icon">⚠️</span>
+                            <p><strong>Trade-off:</strong> Một số CJS-only packages (<span class="inline-code">sockjs-client</span>) cần explicit <span class="inline-code">optimizeDeps.include</span> — đã config sẵn trong <span class="inline-code">vite.config.js</span>. Plugin ecosystem nhỏ hơn Webpack nhưng đang grow nhanh.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Q39 -->
+            <div class="qa-card hot" data-q="39">
+                <div class="qa-question" onclick="toggleCard(this)">
+                    <span class="q-number">Q39</span>
+                    <span class="q-text">Tại sao chọn Tailwind CSS thay vì Material UI / styled-components?</span>
+                    <span class="hot-badge">❓ WHY</span>
+                    <span class="q-toggle">▼</span>
+                </div>
+                <div class="qa-answer">
+                    <div class="answer-content">
+                        <p>Project dùng <strong>Tailwind CSS 3.4</strong> — không có thêm component library nào:</p>
+                        <ol class="flow-steps">
+                            <li><strong>Zero runtime</strong> — Khác CSS-in-JS (styled-components, Emotion), Tailwind generate static CSS tại build time. Không có JavaScript overhead.</li>
+                            <li><strong>Custom branding</strong> — Tailor shop cần thiết kế riêng biệt (Inter + Playfair Display fonts, custom animations). Material UI impose design language — Tailwind thì không.</li>
+                            <li><strong>Tree-shaking CSS</strong> — Chỉ CSS classes thực sự được dùng mới vào production bundle. <span class="inline-code">content</span> config scan <span class="inline-code">./src/**/*.{js,jsx}</span>.</li>
+                            <li><strong>Utility-first</strong> — Co-location styles cùng markup, không context-switching giữa files.</li>
+                            <li><strong>Không component lock-in</strong> — Không phụ thuộc library component, tự do custom mọi thứ.</li>
+                        </ol>
+                        <div class="key-point">
+                            <span class="kp-icon">🎨</span>
+                            <p><strong>Trade-off:</strong> Verbose class names, không có pre-built components (nhưng đây là intentional cho luxury brand). Custom keyframes/animations defined trong <span class="inline-code">tailwind.config.js</span>: <span class="inline-code">fade-in-up</span>, <span class="inline-code">shimmer</span>, <span class="inline-code">pulse-glow</span>.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Q40 -->
+            <div class="qa-card hot" data-q="40">
+                <div class="qa-question" onclick="toggleCard(this)">
+                    <span class="q-number">Q40</span>
+                    <span class="q-text">Tại sao tự viết HTTP client (fetch) thay vì dùng Axios?</span>
+                    <span class="hot-badge">❓ WHY</span>
+                    <span class="q-toggle">▼</span>
+                </div>
+                <div class="qa-answer">
+                    <div class="answer-content">
+                        <p>Custom <span class="inline-code">HttpClient</span> class 325 dòng wrap native <span class="inline-code">fetch</span> API:</p>
+                        <ol class="flow-steps">
+                            <li><strong>Zero dependencies</strong> — <span class="inline-code">fetch</span> native trong tất cả modern browsers + Node 18+. Bỏ ~13KB (gzipped) Axios dependency.</li>
+                            <li><strong>Full control</strong> — Custom interceptor chain, retry logic, timeout (<span class="inline-code">AbortController</span>), auto auth token injection. Tất cả tailored cho app's specific needs.</li>
+                            <li><strong>Bundle size matters</strong> — Project có Three.js (~600KB) + MediaPipe (~2MB) cho 3D/AR. Giảm dependency count ở chỗ có thể.</li>
+                            <li><strong>Modern API</strong> — <span class="inline-code">fetch</span> + <span class="inline-code">AbortController</span> là standard cách handle request cancellation. Axios vẫn wrap <span class="inline-code">XMLHttpRequest</span> (legacy).</li>
+                            <li><strong>API giống Axios</strong> — <span class="inline-code">api.get()</span>, <span class="inline-code">api.post()</span>, <span class="inline-code">api.put()</span>, <span class="inline-code">api.delete()</span> — team quen thuộc.</li>
+                        </ol>
+                        <div class="key-point">
+                            <span class="kp-icon">⚙️</span>
+                            <p><strong>Trade-off:</strong> 325 dòng code maintain (vs import Axios). Phải tự implement JSON parsing, error extraction, FormData handling. <span class="inline-code">fetch</span> không reject trên HTTP error status — phải handle trong <span class="inline-code">handleResponse</span>.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Q41 -->
+            <div class="qa-card hot" data-q="41">
+                <div class="qa-question" onclick="toggleCard(this)">
+                    <span class="q-number">Q41</span>
+                    <span class="q-text">Tại sao dùng localStorage thay vì Redux/Zustand cho state management?</span>
+                    <span class="hot-badge">❓ WHY</span>
+                    <span class="q-toggle">▼</span>
+                </div>
+                <div class="qa-answer">
+                    <div class="answer-content">
+                        <p>Project <strong>không dùng Redux, Zustand, MobX, Recoil</strong>. State lưu trong localStorage qua utility modules:</p>
+                        <div class="tag-row">
+                            <span class="tag tag-blue">fabricCartStorage</span>
+                            <span class="tag tag-green">loyaltyStorage</span>
+                            <span class="tag tag-yellow">favoriteStorage</span>
+                            <span class="tag tag-purple">orderStorage</span>
+                            <span class="tag tag-red">errorLogger</span>
+                        </div>
+                        <ol class="flow-steps">
+                            <li><strong>Server-authoritative state</strong> — State thật nằm ở backend (database). Frontend là <em>thin presentation layer</em>, fetch data on demand.</li>
+                            <li><strong>Đơn giản</strong> — Không reducers/actions/selectors boilerplate. Mỗi utility module chỉ là <span class="inline-code">getItems()/setItems()</span> wrapper.</li>
+                            <li><strong>Auto-persistence</strong> — localStorage tự persist qua page refresh, browser tabs. Redux/Zustand cần <span class="inline-code">redux-persist</span> middleware.</li>
+                            <li><strong>Minimal cross-component state</strong> — Hầu hết state là component-local hoặc page-scoped. Chỉ auth token + user data cần global → localStorage + Context đủ.</li>
+                        </ol>
+                        <div class="key-point">
+                            <span class="kp-icon">📊</span>
+                            <p><strong>Trade-off:</strong> Không reactive — update localStorage ở 1 component, component khác không tự re-render (mitigated bằng re-fetch API). 5-10MB storage limit. Không có dev tools inspect state.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Q42 -->
+            <div class="qa-card hot" data-q="42">
+                <div class="qa-question" onclick="toggleCard(this)">
+                    <span class="q-number">Q42</span>
+                    <span class="q-text">Tại sao chọn STOMP/SockJS thay vì plain WebSocket?</span>
+                    <span class="hot-badge">❓ WHY</span>
+                    <span class="q-toggle">▼</span>
+                </div>
+                <div class="qa-answer">
+                    <div class="answer-content">
+                        <p>WebSocket config: <span class="inline-code">@EnableWebSocketMessageBroker</span> + STOMP protocol + SockJS fallback:</p>
+                        <ol class="flow-steps">
+                            <li><strong>Message routing native</strong> — STOMP cung cấp <span class="inline-code">/topic</span> (broadcast) và <span class="inline-code">/queue</span> (point-to-point) destinations. User-specific notifications: <span class="inline-code">/user/{id}/queue/notifications</span> — routing tự động.</li>
+                            <li><strong>SockJS fallback</strong> — Transparent long-polling fallback khi WebSocket bị block bởi corporate firewalls hoặc proxies.</li>
+                            <li><strong>Spring integration</strong> — <span class="inline-code">spring-boot-starter-websocket</span> hỗ trợ STOMP first-class: <span class="inline-code">@MessageMapping</span>, <span class="inline-code">SimpMessagingTemplate</span>, user destination resolution.</li>
+                            <li><strong>Heartbeats</strong> — STOMP protocol có heartbeat negotiation (10s incoming/outgoing), tự động phát hiện dead connections.</li>
+                            <li><strong>Auto-reconnect</strong> — <span class="inline-code">@stomp/stompjs</span> Client handles reconnection delay 5s + fallback polling mỗi 2 phút.</li>
+                        </ol>
+                        <div class="key-point">
+                            <span class="kp-icon">🔌</span>
+                            <p><strong>Trade-off:</strong> STOMP frames thêm header overhead lên WebSocket frames. Thêm ~30KB dependencies (<span class="inline-code">@stomp/stompjs</span> + <span class="inline-code">sockjs-client</span>). Plain WebSocket nhẹ hơn nhưng phải tự implement routing/subscription.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Q43 -->
+            <div class="qa-card hot" data-q="43">
+                <div class="qa-question" onclick="toggleCard(this)">
+                    <span class="q-number">Q43</span>
+                    <span class="q-text">Tại sao chọn Gemini AI thay vì OpenAI GPT-4?</span>
+                    <span class="hot-badge">❓ WHY</span>
+                    <span class="q-toggle">▼</span>
+                </div>
+                <div class="qa-answer">
+                    <div class="answer-content">
+                        <p>Backend dùng <span class="inline-code">GeminiVisionService</span> gọi REST đến <span class="inline-code">generativelanguage.googleapis.com</span>:</p>
+                        <ol class="flow-steps">
+                            <li><strong>Chi phí thấp</strong> — Gemini 1.5 Flash rẻ hơn đáng kể so với GPT-4 Vision cho image analysis. Tailor shop cần analyze ảnh sản phẩm bulk → cost per request quan trọng.</li>
+                            <li><strong>Free tier hào phóng</strong> — 60 RPM, 1M tokens/day miễn phí. Lý tưởng cho development và testing.</li>
+                            <li><strong>Configurable model</strong> — <span class="inline-code">gemini.model</span> externalized trong <span class="inline-code">application.yml</span>. Switch giữa <span class="inline-code">gemini-1.5-flash</span> (nhanh/rẻ) ↔ <span class="inline-code">gemini-2.5-pro</span> (chất lượng cao) mà không đổi code.</li>
+                            <li><strong>Không cần SDK</strong> — Gọi REST trực tiếp qua <span class="inline-code">RestTemplate</span>, không phụ thuộc thêm vendor SDK.</li>
+                            <li><strong>Vision-first</strong> — Gemini multimodal capabilities phù hợp phân tích ảnh vải/quần áo (<span class="inline-code">ProductAnalysisResult</span>).</li>
+                        </ol>
+                        <div class="key-point">
+                            <span class="kp-icon">💰</span>
+                            <p><strong>Trade-off:</strong> Ecosystem nhỏ hơn OpenAI. GPT-4 Vision có thể chất lượng tốt hơn cho một số tasks. Codebase có <span class="inline-code">AIVisionService</span> (OpenAI stub) sẵn sàng switch nếu cần.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Q44 -->
+            <div class="qa-card hot" data-q="44">
+                <div class="qa-question" onclick="toggleCard(this)">
+                    <span class="q-number">Q44</span>
+                    <span class="q-text">Tại sao Flyway thay vì Liquibase? Và tại sao hiện tại disable Flyway?</span>
+                    <span class="hot-badge">❓ WHY</span>
+                    <span class="q-toggle">▼</span>
+                </div>
+                <div class="qa-answer">
+                    <div class="answer-content">
+                        <p><strong>Tại sao Flyway:</strong></p>
+                        <ol class="flow-steps">
+                            <li><strong>Plain SQL</strong> — Migrations là file <span class="inline-code">.sql</span> thuần. Project chỉ dùng MySQL → không cần Liquibase's XML/YAML abstraction.</li>
+                            <li><strong>Versioned sequential</strong> — <span class="inline-code">V1__init.sql</span> → <span class="inline-code">V25__gamification_tables.sql</span>. 25 migrations cho thấy schema evolution rõ ràng.</li>
+                            <li><strong>Developer-friendly</strong> — DBA và dev viết SQL trực tiếp, không cần học thêm DSL.</li>
+                            <li><strong>Spring Boot auto-config</strong> — Zero-config integration: chỉ cần dependency + migration files trên classpath.</li>
+                        </ol>
+                        <p><strong>Tại sao disable (<span class="inline-code">flyway.enabled: false</span>)?</strong></p>
+                        <ol class="flow-steps">
+                            <li><strong>Development speed</strong> — Hibernate <span class="inline-code">ddl-auto: update</span> tự sync schema khi thay đổi entities. Không cần viết migration file cho mỗi thay đổi nhỏ.</li>
+                            <li><strong>Dual strategy</strong> — Dev dùng <span class="inline-code">ddl-auto: update</span>, production enable Flyway cho controlled migrations. 25 migration files đã sẵn sàng.</li>
+                        </ol>
+                        <div class="key-point">
+                            <span class="kp-icon">🗄️</span>
+                            <p><strong>Trade-off:</strong> Liquibase có rollback generation, database-agnostic changesets. Nhưng project MySQL-only → SQL migrations đủ. No rollback migrations (<span class="inline-code">U__</span>) = forward-only strategy.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Q45 -->
+            <div class="qa-card hot" data-q="45">
+                <div class="qa-question" onclick="toggleCard(this)">
+                    <span class="q-number">Q45</span>
+                    <span class="q-text">Tại sao dùng multi-stage Docker builds?</span>
+                    <span class="hot-badge">❓ WHY</span>
+                    <span class="q-toggle">▼</span>
+                </div>
+                <div class="qa-answer">
+                    <div class="answer-content">
+                        <p>Cả Backend và Frontend Dockerfile đều 2 stages:</p>
+                        <div class="diagram-box"><span class="highlight">Backend Dockerfile</span>
+Stage 1: <span class="label">maven:3.9-eclipse-temurin-21</span> (builder)
+  → <span class="inline-code">mvn dependency:go-offline</span> (cache layer)
+  → <span class="inline-code">mvn package</span> → JAR file
+
+Stage 2: <span class="label">eclipse-temurin:21-jre-jammy</span> (runtime)
+  → Copy JAR only → non-root user
+
+<span class="highlight">Frontend Dockerfile</span>
+Stage 1: <span class="label">node:20-alpine</span> (builder)
+  → <span class="inline-code">npm ci</span> → <span class="inline-code">vite build</span> → static files
+
+Stage 2: <span class="label">nginx:alpine</span> (serving)
+  → Copy dist/ only → custom nginx.conf</div>
+                        <ol class="flow-steps">
+                            <li><strong>Image size</strong> — JDK ~800MB vs JRE ~200MB. node_modules ~500MB+ vs nginx + static ~30MB. Multi-stage loại bỏ build tools khỏi runtime.</li>
+                            <li><strong>Security</strong> — Runtime images không chứa compilers, package managers, source code. Non-root user cho backend. Attack surface nhỏ nhất.</li>
+                            <li><strong>Cache optimization</strong> — <span class="inline-code">pom.xml</span>/<span class="inline-code">package.json</span> copy trước cho dependency caching. Source changes không invalidate dependency layer.</li>
+                            <li><strong>Separation of concerns</strong> — Build environment (Maven/Node) decoupled khỏi runtime (JRE/Nginx).</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Q46 -->
+            <div class="qa-card hot" data-q="46">
+                <div class="qa-question" onclick="toggleCard(this)">
+                    <span class="q-number">Q46</span>
+                    <span class="q-text">Tại sao chọn FastAPI (Python) cho Try-On service thay vì tích hợp vào Java backend?</span>
+                    <span class="hot-badge">❓ WHY</span>
+                    <span class="q-toggle">▼</span>
+                </div>
+                <div class="qa-answer">
+                    <div class="answer-content">
+                        <ol class="flow-steps">
+                            <li><strong>Python ML ecosystem</strong> — PyTorch, Transformers, Diffusers, OOTDiffusion đều Python-native. <em>Không có Java equivalent</em> cho các AI model này.</li>
+                            <li><strong>GPU isolation</strong> — ML inference cần GPU (CUDA). Tách thành microservice riêng → backend chính (JVM) không bị ảnh hưởng bởi GPU memory.</li>
+                            <li><strong>Independent scaling</strong> — Try-on service scale riêng biệt (thêm GPU instances) mà không scale toàn bộ backend.</li>
+                            <li><strong>FastAPI async</strong> — <span class="inline-code">async def</span> + ASGI (uvicorn) cho concurrent image upload/processing. <span class="inline-code">StreamingResponse</span> trả ảnh trực tiếp (no base64 overhead).</li>
+                            <li><strong>Auto-documentation</strong> — FastAPI tự generate OpenAPI/Swagger docs. Pydantic validation cho request/response models.</li>
+                        </ol>
+                        <div class="key-point">
+                            <span class="kp-icon">🐍</span>
+                            <p><strong>Trade-off:</strong> Dual-language codebase cần broader skills. Thêm service deploy/monitor. Inter-service latency. Nhưng ML = Python, không có cách khác hợp lý.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Q47 -->
+            <div class="qa-card hot" data-q="47">
+                <div class="qa-question" onclick="toggleCard(this)">
+                    <span class="q-number">Q47</span>
+                    <span class="q-text">Tại sao dùng event-driven (Spring Events) thay vì gọi trực tiếp giữa services?</span>
+                    <span class="hot-badge">❓ WHY</span>
+                    <span class="q-toggle">▼</span>
+                </div>
+                <div class="qa-answer">
+                    <div class="answer-content">
+                        <p>Modules communicate qua <span class="inline-code">ApplicationEventPublisher.publishEvent()</span>:</p>
+                        <ol class="flow-steps">
+                            <li><strong>Module decoupling</strong> — Order module publish <span class="inline-code">OrderCreatedEvent</span>; notification, invoice, appointment modules react <em>independently</em>. Không circular dependencies.</li>
+                            <li><strong>Async processing</strong> — <span class="inline-code">@Async("eventExecutor")</span> offload side effects (email, invoice) sang background threads. API response trả về ngay.</li>
+                            <li><strong>Transaction safety</strong> — <span class="inline-code">@TransactionalEventListener(AFTER_COMMIT)</span> đảm bảo listeners chỉ fire nếu main transaction thành công. Không phantom notifications cho rolled-back orders.</li>
+                            <li><strong>Fault tolerance</strong> — <span class="inline-code">@RetryableEvent</span> + DLQ — failed events được retry exponential backoff + persist cho manual intervention.</li>
+                            <li><strong>Không cần message broker</strong> — Spring <span class="inline-code">ApplicationEventPublisher</span> là in-process. Không cần setup RabbitMQ/Kafka cho monolith.</li>
+                        </ol>
+                        <div class="diagram-box"><span class="highlight">Direct Call (BAD — tight coupling)</span>
+OrderService → NotificationService.send()
+             → InvoiceService.create()
+             → AppointmentService.schedule()
+  <span class="comment">// OrderService phụ thuộc 3 services → circular dependency risk</span>
+
+<span class="highlight">Event-Driven (GOOD — loose coupling)</span>
+OrderService → publish(OrderCreatedEvent)
+  NotificationListener → send notification  <span class="comment">@Async</span>
+  InvoiceListener → create invoice          <span class="comment">@Async</span>
+  AppointmentListener → schedule            <span class="comment">@Async</span>
+  <span class="comment">// OrderService không biết ai consume event</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Q48 -->
+            <div class="qa-card hot" data-q="48">
+                <div class="qa-question" onclick="toggleCard(this)">
+                    <span class="q-number">Q48</span>
+                    <span class="q-text">Tại sao dùng tiered TTL cho Redis caches thay vì 1 TTL chung?</span>
+                    <span class="hot-badge">❓ WHY</span>
+                    <span class="q-toggle">▼</span>
+                </div>
+                <div class="qa-answer">
+                    <div class="answer-content">
+                        <p>5 named caches với <strong>TTL khác nhau</strong> theo data volatility:</p>
+                        <table class="answer-table">
+                            <thead><tr><th>Cache</th><th>TTL</th><th>Tại sao TTL này?</th></tr></thead>
+                            <tbody>
+                                <tr><td><span class="inline-code">products</span></td><td>5 phút</td><td>Stock, giá thay đổi thường xuyên. Stale data = hiển thị sai giá/stock</td></tr>
+                                <tr><td><span class="inline-code">product-detail</span></td><td>10 phút</td><td>Chi tiết sản phẩm ít update hơn list</td></tr>
+                                <tr><td><span class="inline-code">fabrics</span></td><td>15 phút</td><td>Vải ít thay đổi, inventory update ít thường xuyên</td></tr>
+                                <tr><td><span class="inline-code">image-assets</span></td><td>30 phút</td><td>Ảnh gần như static sau upload</td></tr>
+                                <tr><td><span class="inline-code">categories</span></td><td>1 giờ</td><td>Danh mục gần như không bao giờ đổi</td></tr>
+                            </tbody>
+                        </table>
+                        <ol class="flow-steps">
+                            <li><strong>Data volatility matching</strong> — TTL phản ánh tần suất data thay đổi. Freshness vs performance trade-off.</li>
+                            <li><strong>Memory efficiency</strong> — Short TTL cho high-volume caches (products) tránh memory bloat. Long TTL cho low-volume (categories) maximize cache hits.</li>
+                            <li><strong>Business-aware</strong> — Khách thấy product list cũ 5 phút = acceptable. Thấy giá vải cũ 1 giờ = NOT acceptable.</li>
+                        </ol>
+                        <div class="key-point">
+                            <span class="kp-icon">💡</span>
+                            <p><strong>Trade-off:</strong> Phức tạp hơn (5 config vs 1). Không cache invalidation on write — rely thuần TTL expiry. Product update → cache stale tối đa 5 phút.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Q49 -->
+            <div class="qa-card hot" data-q="49">
+                <div class="qa-question" onclick="toggleCard(this)">
+                    <span class="q-number">Q49</span>
+                    <span class="q-text">Tại sao cần 5 file docker-compose thay vì 1 file duy nhất?</span>
+                    <span class="hot-badge">❓ WHY</span>
+                    <span class="q-toggle">▼</span>
+                </div>
+                <div class="qa-answer">
+                    <div class="answer-content">
+                        <table class="answer-table">
+                            <thead><tr><th>File</th><th>Mục đích</th><th>Use case</th></tr></thead>
+                            <tbody>
+                                <tr><td><span class="inline-code">docker-compose.yml</span></td><td>Base/default</td><td>Full stack local dev (MySQL + Redis + Backend + Frontend + Try-On)</td></tr>
+                                <tr><td><span class="inline-code">docker-compose.full.yml</span></td><td>+ Monitoring</td><td>Thêm Prometheus + Grafana cho metrics visualization</td></tr>
+                                <tr><td><span class="inline-code">docker-compose.local-db.yml</span></td><td>External DB</td><td>Kết nối host MySQL (MySQL Workbench) thay vì container MySQL</td></tr>
+                                <tr><td><span class="inline-code">docker-compose.prod.yml</span></td><td>Production overrides</td><td>Resource limits (CPU/memory), production logging, <span class="inline-code">restart: always</span></td></tr>
+                                <tr><td><span class="inline-code">docker-compose.cloudflare.yml</span></td><td>Tunnel</td><td>Cloudflare Tunnel — expose app không cần port forwarding</td></tr>
+                            </tbody>
+                        </table>
+                        <ol class="flow-steps">
+                            <li><strong>Compose override pattern</strong> — <span class="inline-code">docker-compose -f base.yml -f override.yml up</span>. Prod file chỉ chứa overrides, không lặp full service definitions.</li>
+                            <li><strong>Team flexibility</strong> — Dev có local MySQL dùng <span class="inline-code">local-db.yml</span>. Dev mới dùng <span class="inline-code">docker-compose.yml</span> (all-in-docker). Không ai sửa base config.</li>
+                            <li><strong>Separation of concerns</strong> — Cloudflare tunnel config isolate → thêm vào bất kỳ stack nào mà không conflict.</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Q50 -->
+            <div class="qa-card hot" data-q="50">
+                <div class="qa-question" onclick="toggleCard(this)">
+                    <span class="q-number">Q50</span>
+                    <span class="q-text">Tại sao Redis dùng @ConditionalOnProperty? Tại sao không bắt buộc?</span>
+                    <span class="hot-badge">❓ WHY</span>
+                    <span class="q-toggle">▼</span>
+                </div>
+                <div class="qa-answer">
+                    <div class="answer-content">
+                        <p><span class="inline-code">RedisConfig</span> và <span class="inline-code">CacheConfig</span> đều có <span class="inline-code">@ConditionalOnProperty(name = "spring.data.redis.host", matchIfMissing = false)</span>:</p>
+                        <ol class="flow-steps">
+                            <li><strong>Graceful degradation</strong> — App chạy được <em>không cần Redis</em>. Nếu <span class="inline-code">spring.data.redis.host</span> không set → RedisConfig/CacheConfig beans không tạo → fallback về no-cache.</li>
+                            <li><strong>Developer experience</strong> — Dev mới clone repo → chạy <span class="inline-code">./mvnw spring-boot:run</span> không cần Docker/Redis. Caching là performance optimization, không phải functional requirement.</li>
+                            <li><strong>Testing</strong> — Unit/integration tests không cần Redis running. Tránh <span class="inline-code">ConnectionRefusedException</span> khi test.</li>
+                            <li><strong>Docker-compose flexibility</strong> — <span class="inline-code">local-db.yml</span> kết nối host MySQL nhưng vẫn chạy Redis container. Running không compose → skip Redis.</li>
+                        </ol>
+                        <div class="key-point">
+                            <span class="kp-icon">🛡️</span>
+                            <p><strong>Trade-off:</strong> Không Redis = không caching + không rate limiting. App chậm hơn và unprotected against abuse trong dev mode. <span class="inline-code">matchIfMissing = false</span> = default "no Redis" → cần explicit opt-in.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Q51 -->
+            <div class="qa-card hot" data-q="51">
+                <div class="qa-question" onclick="toggleCard(this)">
+                    <span class="q-number">Q51</span>
+                    <span class="q-text">Tại sao dùng polymorphic Cart thay vì separate cart tables?</span>
+                    <span class="hot-badge">❓ WHY</span>
+                    <span class="q-toggle">▼</span>
+                </div>
+                <div class="qa-answer">
+                    <div class="answer-content">
+                        <p><span class="inline-code">CartItemEntity</span> dùng generic reference: <span class="inline-code">CartItemType itemType</span> (enum: PRODUCT, FABRIC, SERVICE) + <span class="inline-code">Long itemId</span>:</p>
+                        <ol class="flow-steps">
+                            <li><strong>Single cart table</strong> — 1 bảng <span class="inline-code">cart_items</span> xử lý tất cả item types. Không cần <span class="inline-code">cart_products</span>, <span class="inline-code">cart_fabrics</span>, <span class="inline-code">cart_services</span>. Schema đơn giản, query đơn giản.</li>
+                            <li><strong>Business domain fit</strong> — Tailor shop bán vải (theo mét), sản phẩm may sẵn, và dịch vụ (may đo, sửa đồ). Khách thêm tất cả vào <em>một giỏ hàng</em>.</li>
+                            <li><strong>Unified checkout</strong> — 1 giỏ hàng → 1 checkout flow dù mix product types.</li>
+                            <li><strong>Extensibility</strong> — Thêm item type mới: (1) thêm enum value, (2) thêm switch case trong validate/enrich. Không cần schema migration.</li>
+                        </ol>
+                        <div class="key-point">
+                            <span class="kp-icon">⚠️</span>
+                            <p><strong>Trade-off:</strong> Không có FK constraint từ <span class="inline-code">item_id</span> đến specific table (vì references nhiều tables). Referential integrity phải enforce bằng application code. <span class="inline-code">switch</span> statements ở nhiều nơi — mỗi type mới cần update nhiều chỗ.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Q52 -->
+            <div class="qa-card hot" data-q="52">
+                <div class="qa-question" onclick="toggleCard(this)">
+                    <span class="q-number">Q52</span>
+                    <span class="q-text">Tại sao CSRF disabled? Có an toàn không?</span>
+                    <span class="hot-badge">❓ WHY</span>
+                    <span class="q-toggle">▼</span>
+                </div>
+                <div class="qa-answer">
+                    <div class="answer-content">
+                        <p><span class="inline-code">SecurityConfig</span>: <span class="inline-code">csrf.disable()</span> — <strong>CÓ an toàn</strong> trong context này:</p>
+                        <ol class="flow-steps">
+                            <li><strong>Stateless JWT</strong> — Authentication qua <span class="inline-code">Authorization: Bearer</span> header. Browser <em>không tự động gửi</em> header này trong cross-site requests (khác cookie). CSRF attack vector không tồn tại.</li>
+                            <li><strong>Không dùng cookies cho auth</strong> — CSRF exploit dựa trên browser tự gửi session cookies. Project dùng JWT trong header → không vulnerable.</li>
+                            <li><strong>REST API standard</strong> — Stateless REST APIs thường disable CSRF. Spring Security docs cũng recommend disable khi dùng non-browser clients hoặc JWT.</li>
+                            <li><strong>SPA architecture</strong> — React frontend gửi requests qua <span class="inline-code">fetch()</span> với explicit headers. Không phải traditional form submission.</li>
+                        </ol>
+                        <div class="key-point">
+                            <span class="kp-icon">🔐</span>
+                            <p><strong>Khi nào cần enable CSRF?</strong> Nếu chuyển sang cookie-based sessions (httpOnly cookies cho JWT), hoặc hỗ trợ traditional form submissions. Hiện tại = an toàn.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Q53 -->
+            <div class="qa-card hot" data-q="53">
+                <div class="qa-question" onclick="toggleCard(this)">
+                    <span class="q-number">Q53</span>
+                    <span class="q-text">Tại sao rate limiter dùng fail-open (allow all) khi Redis down?</span>
+                    <span class="hot-badge">❓ WHY</span>
+                    <span class="q-toggle">▼</span>
+                </div>
+                <div class="qa-answer">
+                    <div class="answer-content">
+                        <p><span class="inline-code">RateLimitFilter</span> — khi Redis unavailable → <strong>allow all traffic</strong>:</p>
+                        <ol class="flow-steps">
+                            <li><strong>Availability > Protection</strong> — Business priority: khách hàng phải luôn mua được hàng. Redis down (hiếm) → chấp nhận temporarily unprotected hơn là block tất cả traffic.</li>
+                            <li><strong>Fail-open vs Fail-closed</strong> — Fail-closed (block all) khi Redis down = <em>DDoS chính mình</em>. Toàn bộ legitimate users bị block.</li>
+                            <li><strong>Redis down = temporary</strong> — Redis restart nhanh (seconds). Giai đoạn unprotected rất ngắn.</li>
+                            <li><strong>Defense in depth</strong> — Rate limiting không phải layer bảo vệ duy nhất. Nginx, Cloudflare cũng có rate limiting ở edge.</li>
+                        </ol>
+                        <div class="diagram-box"><span class="highlight">Fail-Open (Chosen) ✅</span>
+  Redis DOWN → Allow all requests → App vẫn hoạt động
+  Risk: Temporary unprotected (seconds)
+  Mitigation: Edge rate limiting (Nginx/Cloudflare)
+
+<span class="highlight">Fail-Closed (NOT chosen) ❌</span>
+  Redis DOWN → Block ALL requests → 503 cho mọi user
+  Risk: Self-inflicted outage
+  Impact: Revenue loss, customer frustration</div>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+
+    </div>
+
+    <!-- FOOTER -->
+    <div class="footer">
+        <p>📋 Interview Q&A Guide — My Hiền Tailor Shop | <a href="index.html">← Back to Documentation</a></p>
+        <p style="margin-top: 8px;">Full-stack: Java 21 • Spring Boot 3.3 • React 18 • MySQL 8 • Redis 7 • Docker • Gemini AI</p>
+    </div>
+
+    <!-- BACK TO TOP -->
+    <a href="#top" class="back-to-top" id="backToTop" title="Lên đầu trang">↑</a>
+
+    <script>
+        // ===== Toggle Q&A Card =====
+        function toggleCard(questionEl) {
+            const card = questionEl.closest('.qa-card');
+            card.classList.toggle('open');
+        }
+
+        // ===== Toggle All in Section =====
+        function toggleAll(section, open) {
+            const cards = section.querySelectorAll('.qa-card');
+            cards.forEach(card => {
+                if (open) {
+                    card.classList.add('open');
+                } else {
+                    card.classList.remove('open');
+                }
+            });
+        }
+
+        // ===== Search / Filter =====
+        function filterQuestions(query) {
+            const cards = document.querySelectorAll('.qa-card');
+            const searchCount = document.getElementById('searchCount');
+            const q = query.toLowerCase().trim();
+            let visible = 0;
+
+            cards.forEach(card => {
+                const text = card.textContent.toLowerCase();
+                const match = !q || text.includes(q);
+                card.style.display = match ? '' : 'none';
+                if (match) visible++;
+                if (match && q) {
+                    card.classList.add('open');
+                }
+            });
+
+            searchCount.textContent = q ? `${visible} kết quả` : '';
+        }
+
+        // ===== Progress Bar =====
+        window.addEventListener('scroll', () => {
+            const scrollTop = window.scrollY;
+            const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+            const progress = (scrollTop / docHeight) * 100;
+            document.getElementById('progressBar').style.width = progress + '%';
+
+            // Back to top button
+            const btn = document.getElementById('backToTop');
+            if (scrollTop > 500) {
+                btn.classList.add('visible');
+            } else {
+                btn.classList.remove('visible');
+            }
+        });
+
+        // ===== Active Nav Link =====
+        const sections = document.querySelectorAll('.section');
+        const navLinks = document.querySelectorAll('.nav-link');
+
+        const observer = new IntersectionObserver(entries => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const id = entry.target.id;
+                    navLinks.forEach(link => {
+                        link.classList.toggle('active', link.getAttribute('href') === '#' + id);
+                    });
+                }
+            });
+        }, { rootMargin: '-80px 0px -60% 0px' });
+
+        sections.forEach(section => observer.observe(section));
+
+        // ===== Keyboard Shortcuts =====
+        document.addEventListener('keydown', (e) => {
+            // Ctrl+K or / for search
+            if ((e.ctrlKey && e.key === 'k') || (e.key === '/' && document.activeElement.tagName !== 'INPUT')) {
+                e.preventDefault();
+                document.getElementById('searchInput').focus();
+            }
+            // Escape to clear search
+            if (e.key === 'Escape') {
+                const input = document.getElementById('searchInput');
+                input.value = '';
+                filterQuestions('');
+                input.blur();
+            }
+        });
+    </script>
+</body>
+
+</html>

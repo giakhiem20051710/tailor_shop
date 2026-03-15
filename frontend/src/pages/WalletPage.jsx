@@ -120,7 +120,7 @@ export default function WalletPage() {
               </button>
               <button
                 className="px-4 py-2 rounded-xl bg-indigo-600 text-white hover:bg-indigo-700"
-                onClick={() => navigate("/S")}
+                onClick={() => navigate("/challenges")}
               >
                 Thử thách
               </button>
@@ -221,10 +221,10 @@ export default function WalletPage() {
                     <div className="flex items-center gap-3">
                       <div
                         className={`w-10 h-10 rounded-full flex items-center justify-center text-lg ${tx.transactionType === "SPEND"
-                            ? "bg-rose-100 text-rose-600"
-                            : tx.transactionType === "EXPIRED"
-                              ? "bg-amber-100 text-amber-600"
-                              : "bg-emerald-100 text-emerald-600"
+                          ? "bg-rose-100 text-rose-600"
+                          : tx.transactionType === "EXPIRED"
+                            ? "bg-amber-100 text-amber-600"
+                            : "bg-emerald-100 text-emerald-600"
                           }`}
                       >
                         {tx.transactionType === "SPEND" ? "💸" : tx.transactionType === "EXPIRED" ? "⏰" : "💰"}
@@ -239,10 +239,10 @@ export default function WalletPage() {
                     <div className="text-right">
                       <p
                         className={`font-bold ${tx.transactionType === "SPEND"
-                            ? "text-rose-600"
-                            : tx.transactionType === "EXPIRED"
-                              ? "text-amber-600"
-                              : "text-emerald-600"
+                          ? "text-rose-600"
+                          : tx.transactionType === "EXPIRED"
+                            ? "text-amber-600"
+                            : "text-emerald-600"
                           }`}
                       >
                         {tx.transactionType === "SPEND" || tx.transactionType === "EXPIRED" ? "-" : "+"}

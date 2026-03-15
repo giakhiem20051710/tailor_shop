@@ -608,7 +608,7 @@ function CustomerDashboardPage() {
               <p className="text-xs text-slate-500 mt-1">Tăng streak mỗi ngày</p>
             </button>
             <button
-              onClick={() => navigate("/S")}
+              onClick={() => navigate("/challenges")}
               className="bg-white rounded-2xl p-4 border border-amber-100 shadow-sm text-left hover:shadow-md transition-all"
             >
               <p className="text-xs uppercase tracking-widest text-amber-600">Thử thách</p>

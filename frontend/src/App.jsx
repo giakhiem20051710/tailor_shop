@@ -30,6 +30,7 @@ const TailorOrdersPage = lazy(() => import("./pages/TailorOrdersPage.jsx"));
 const CompletedOrdersPage = lazy(() => import("./pages/CompletedOrdersPage.jsx"));
 const ProductManagerPage = lazy(() => import("./pages/ProductManagerPage.jsx"));
 const InvoicePage = lazy(() => import("./pages/InvoicePage.jsx"));
+const UnpaidCustomersPage = lazy(() => import("./pages/UnpaidCustomersPage.jsx"));
 const TransactionManagementPage = lazy(() =>
   import("./pages/TransactionManagementPage.jsx")
 );
@@ -84,6 +85,9 @@ const CategoryTemplatePage = lazy(() => import("./pages/CategoryTemplatePage.jsx
 const FlashSalePage = lazy(() => import("./pages/FlashSalePage.jsx"));
 const FlashSaleManagementPage = lazy(() => import("./pages/FlashSaleManagementPage.jsx"));
 
+// Kanban
+const OrderKanbanPage = lazy(() => import("./pages/OrderKanbanPage.jsx"));
+
 // Gamification
 const ChallengesPage = lazy(() => import("./pages/ChallengesPage.jsx"));
 const ChallengeManagementPage = lazy(() => import("./pages/ChallengeManagementPage.jsx"));
@@ -106,8 +110,8 @@ export default function App() {
       <SkipToContentLink />
       <Suspense fallback={<Loader />}>
         <Routes>
-          {/* Root - Redirect to Login */}
-          <Route path="/" element={<Navigate to="/login" replace />} />
+          {/* Root - Redirect to Customer Home */}
+          <Route path="/" element={<Navigate to="/customer-home" replace />} />
 
           {/* HomePage removed - use /customer-home instead */}
 
@@ -133,7 +137,7 @@ export default function App() {
           <Route path="/flash-sale" element={<FlashSalePage />} />
 
           {/* Gamification - Seasonal Challenges */}
-          <Route path="/S" element={<ChallengesPage />} />
+          <Route path="/challenges" element={<ChallengesPage />} />
           <Route path="/checkin" element={<CheckinPage />} />
 
           {/* Fabrics Page */}
@@ -184,6 +188,7 @@ export default function App() {
 
             {/* Orders Management - Admin/Staff only */}
             <Route path="/orders" element={<StaffAndAdmin><OrderListPage /></StaffAndAdmin>} />
+            <Route path="/order-kanban" element={<StaffAndAdmin><OrderKanbanPage /></StaffAndAdmin>} />
             <Route path="/orders/new" element={<StaffAndAdmin><OrderFormPage /></StaffAndAdmin>} />
             <Route path="/orders/edit/:id" element={<StaffAndAdmin><OrderFormPage /></StaffAndAdmin>} />
             <Route path="/orders/:id/quote" element={<StaffAndAdmin><OrderQuotePage /></StaffAndAdmin>} />
@@ -205,6 +210,7 @@ export default function App() {
             {/* Invoice & Transactions - Admin/Staff only */}
             <Route path="/invoice" element={<StaffAndAdmin><InvoicePage /></StaffAndAdmin>} />
             <Route path="/invoices/:id" element={<StaffAndAdmin><InvoicePage /></StaffAndAdmin>} />
+            <Route path="/unpaid-customers" element={<StaffAndAdmin><UnpaidCustomersPage /></StaffAndAdmin>} />
             <Route path="/transactions" element={<StaffAndAdmin><TransactionManagementPage /></StaffAndAdmin>} />
 
             {/* Promotions & Flash Sales - Admin/Staff only */}

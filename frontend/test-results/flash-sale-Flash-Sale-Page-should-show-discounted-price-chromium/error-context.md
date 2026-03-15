@@ -1,0 +1,73 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e2]:
+  - generic [ref=e3]:
+    - generic [ref=e4]:
+      - generic [ref=e5]: 🧧 Tết Nguyên Đán - Lì xì may mắn cho bạn! 🧧
+      - button "Xem thử thách →" [ref=e6] [cursor=pointer]
+    - button "Đóng banner" [ref=e7] [cursor=pointer]: ✕
+  - generic:
+    - generic: 🏮
+    - generic: 🎊
+    - generic: 💐
+    - generic: 🌸
+    - generic: 🧧
+    - generic: 🏮
+    - generic: 🎊
+    - generic: 💐
+    - generic: 🌸
+    - generic: 🧧
+    - generic: 🏮
+    - generic: 🎊
+  - generic [ref=e9]:
+    - button "✕" [ref=e10] [cursor=pointer]
+    - generic [ref=e11]:
+      - generic [ref=e12]: 🏮
+      - generic [ref=e13]: 🎊
+      - generic [ref=e14]: 💐
+    - generic [ref=e15]:
+      - paragraph [ref=e16]: SỰ KIỆN NỔI BẬT
+      - heading "Tết Nguyên Đán 2026" [level=2] [ref=e17]
+      - paragraph [ref=e18]: 🧧 Đầm - áo dài - vest gia đình, giảm đến 20%. Chương trình áp dụng tự động tại Tailor Shop.
+      - generic [ref=e19]:
+        - generic [ref=e20]:
+          - generic [ref=e21]: 👔
+          - generic [ref=e22]: Áo dài
+        - generic [ref=e23]:
+          - generic [ref=e24]: 👗
+          - generic [ref=e25]: Đầm dự tiệc
+        - generic [ref=e26]:
+          - generic [ref=e27]: 🧥
+          - generic [ref=e28]: Vest gia đình
+        - generic [ref=e29]:
+          - generic [ref=e30]: 🎁
+          - generic [ref=e31]: Quà tặng
+      - button "Xem chi tiết ưu đãi →" [ref=e32] [cursor=pointer]
+      - button "🎭 Tắt hiệu ứng" [ref=e33] [cursor=pointer]
+      - paragraph [ref=e34] [cursor=pointer]: Đóng cửa sổ này
+  - button "Tắt hiệu ứng" [ref=e35] [cursor=pointer]:
+    - generic [ref=e36]: 🧧
+  - link "Bỏ qua đến nội dung chính" [ref=e38] [cursor=pointer]:
+    - /url: "#main"
+  - generic [ref=e39]:
+    - generic [ref=e41]:
+      - generic [ref=e42]:
+        - generic [ref=e43]: ⚡
+        - heading "FLASH SALE" [level=1] [ref=e44]
+        - generic [ref=e45]: ⚡
+      - paragraph [ref=e46]: Vải cao cấp giá siêu sốc - Số lượng có hạn!
+    - generic [ref=e47]:
+      - generic [ref=e48]: Không thể tải flash sale. Vui lòng thử lại.
+      - generic [ref=e49]:
+        - generic [ref=e50]:
+          - generic [ref=e51]: 🔥
+          - heading "Đang diễn ra" [level=2] [ref=e52]
+          - generic [ref=e53]: 0 sản phẩm
+        - generic [ref=e54]:
+          - generic [ref=e55]: 😢
+          - paragraph [ref=e56]: Hiện không có flash sale nào đang diễn ra
+  - button "Mở chat" [ref=e57] [cursor=pointer]:
+    - img [ref=e58]
+    - generic [ref=e60]: "1"
+```

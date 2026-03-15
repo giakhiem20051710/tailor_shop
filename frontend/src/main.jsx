@@ -1,6 +1,6 @@
 // src/main.jsx
 import React from "react";
-import ReactDOM from "react-dom/client";
+import { createRoot } from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 import { HelmetProvider } from "react-helmet-async";
 import App from "./App.jsx";
@@ -14,7 +14,7 @@ import "./style.css"; // hoặc "./index.css"
 
 setupGlobalErrorHandler();
 
-ReactDOM.createRoot(document.getElementById("root")).render(
+createRoot(document.getElementById("root")).render(
   <HelmetProvider>
     <BrowserRouter>
       <PageMetaProvider>

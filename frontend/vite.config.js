@@ -22,10 +22,14 @@ export default defineConfig({
     },
   },
   optimizeDeps: {
-    include: ['react', 'react-dom', 'react-router-dom', 'react-helmet-async'],
-    force: true, // Force re-optimization
+    include: ['react', 'react-dom', 'react-dom/client', 'react-router-dom', 'react-helmet-async', 'sockjs-client/dist/sockjs', '@stomp/stompjs', 'lucide-react', 'three'],
+    noDiscovery: true,
     esbuildOptions: {
       jsx: 'automatic',
+      loader: {
+        '.js': 'jsx',
+        '.jsx': 'jsx',
+      },
     },
   },
   resolve: {

@@ -1,12 +1,16 @@
 {
-  "name": "My Hiền Tailor - Fashion Design Studio",
+  "name": "My Hiền Tailor - Quản lý tiệm may",
   "short_name": "My Hiền Tailor",
-  "description": "Tiệm may đo áo dài, vest, đầm chuẩn dáng người Việt",
-  "start_url": "/",
+  "description": "Hệ thống quản lý tiệm may đo áo dài, vest, đầm chuẩn dáng người Việt",
+  "start_url": "/dashboard",
+  "scope": "/",
   "display": "standalone",
-  "background_color": "#FFFBEA",
+  "background_color": "#f8fafc",
   "theme_color": "#1B4332",
-  "orientation": "portrait-primary",
+  "orientation": "any",
+  "lang": "vi",
+  "dir": "ltr",
+  "prefer_related_applications": false,
   "icons": [
     {
       "src": "/vite.svg",
@@ -15,23 +19,72 @@
       "purpose": "any maskable"
     }
   ],
-  "categories": ["fashion", "shopping", "business"],
+  "categories": [
+    "business",
+    "productivity",
+    "fashion"
+  ],
   "screenshots": [],
   "shortcuts": [
     {
-      "name": "Đặt may",
-      "short_name": "Đặt may",
-      "description": "Đặt may đo áo dài, vest, đầm",
-      "url": "/customer/order",
-      "icons": [{ "src": "/vite.svg", "sizes": "any" }]
+      "name": "Dashboard",
+      "short_name": "Dashboard",
+      "description": "Tổng quan tiệm may",
+      "url": "/dashboard",
+      "icons": [
+        {
+          "src": "/vite.svg",
+          "sizes": "any"
+        }
+      ]
     },
     {
-      "name": "Sản phẩm",
-      "short_name": "Sản phẩm",
-      "description": "Xem bộ sưu tập",
-      "url": "/products",
-      "icons": [{ "src": "/vite.svg", "sizes": "any" }]
+      "name": "Đơn đặt may",
+      "short_name": "Đơn hàng",
+      "description": "Quản lý đơn đặt may",
+      "url": "/orders",
+      "icons": [
+        {
+          "src": "/vite.svg",
+          "sizes": "any"
+        }
+      ]
+    },
+    {
+      "name": "Kanban",
+      "short_name": "Kanban",
+      "description": "Bảng Kanban đơn hàng",
+      "url": "/order-kanban",
+      "icons": [
+        {
+          "src": "/vite.svg",
+          "sizes": "any"
+        }
+      ]
+    },
+    {
+      "name": "Công nợ",
+      "short_name": "Công nợ",
+      "description": "Khách hàng chưa thanh toán",
+      "url": "/unpaid-customers",
+      "icons": [
+        {
+          "src": "/vite.svg",
+          "sizes": "any"
+        }
+      ]
+    },
+    {
+      "name": "Lịch hẹn",
+      "short_name": "Lịch hẹn",
+      "description": "Xem lịch hẹn hôm nay",
+      "url": "/schedule",
+      "icons": [
+        {
+          "src": "/vite.svg",
+          "sizes": "any"
+        }
+      ]
     }
   ]
 }
-

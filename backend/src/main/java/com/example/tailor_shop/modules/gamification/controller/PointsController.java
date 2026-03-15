@@ -4,6 +4,7 @@ import com.example.tailor_shop.modules.gamification.dto.*;
 import com.example.tailor_shop.modules.gamification.service.PointsService;
 import com.example.tailor_shop.common.ResponseUtil;
 import com.example.tailor_shop.common.TraceIdUtil;
+import com.example.tailor_shop.config.security.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -149,14 +150,12 @@ public class PointsController {
     // ==================== HELPER ====================
 
     private Long getUserId(Authentication auth) {
-        if (auth == null || auth.getName() == null)
+        if (auth == null || auth.getPrincipal() == null)
             return null;
-        try {
-            return Long.parseLong(auth.getName());
-        } catch (NumberFormatException e) {
-            // May need to look up by phone/email
-            return null;
+        if (auth.getPrincipal() instanceof CustomUserDetails userDetails) {
+            return userDetails.getId();
         }
+        return null;
     }
 
     // ==================== REQUEST DTOs ====================

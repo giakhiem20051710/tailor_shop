@@ -254,7 +254,7 @@ const Header = ({ currentPage = "" }) => {
       {/* Hàng dưới: menu + HCM / giờ / hotline */}
       <div className="bg-[#FFFBF2] border-b border-[#F3F4F6]">
         <div className="max-w-7xl mx-auto px-5 lg:px-8 flex items-center justify-between h-9 text-[11px]">
-          <nav className="flex items-center gap-4 uppercase tracking-[0.12em] text-[#374151] whitespace-nowrap overflow-x-auto scrollbar-hide">
+          <nav className="flex items-center gap-4 uppercase tracking-[0.12em] text-[#374151] whitespace-nowrap">
             <a
               href="/customer-home"
               className={`hover:text-[#111827] transition-colors ${isActive("/customer-home") ? "text-[#111827] font-semibold" : ""

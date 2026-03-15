@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Giải Thích: Spring Security RBAC & Phễu Lọc</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
+    <style>
+        :root {
+            --primary: #8B5CF6; /* Violet */
+            --danger: #EF4444; /* Red */
+            --success: #10B981; /* Green */
+            --warning: #F59E0B; /* Yellow */
+            --dark: #1E293B;
+            --blue: #3B82F6;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #F8FAFC;
+            color: #334155;
+            line-height: 1.6;
+            padding: 40px 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        h1 { color: var(--dark); font-size: 2.2rem; margin-bottom: 10px; text-align: center; }
+        h2 { color: var(--primary); font-size: 1.6rem; margin: 30px 0 15px; border-bottom: 2px solid #E2E8F0; padding-bottom: 5px; }
+
+        .subtitle {
+            text-align: center;
+            color: #64748B;
+            font-size: 1.1rem;
+            margin-bottom: 40px;
+        }
+
+        .box {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+        }
+
+        /* Architect Diagram */
+        .castle-diagram {
+            display: flex;
+            justify-content: space-between;
+            align-items: stretch;
+            margin: 40px 0;
+            background: white;
+            padding: 40px 20px;
+            border-radius: 12px;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.02), 0 10px 15px -3px rgba(0,0,0,0.1);
+            position: relative;
+        }
+
+        .area {
+            flex: 1;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            position: relative;
+            z-index: 2;
+        }
+
+        .area-title { font-weight: bold; font-size: 1.2rem; margin-bottom: 15px; }
+        .icon-large { font-size: 2.5rem; margin-bottom: 10px; }
+
+        .hacker { background: #FEF2F2; border: 2px dashed var(--danger); }
+        .hacker .icon-large { color: var(--danger); }
+
+        .gate { 
+            background: #EFF6FF; 
+            border: 3px solid var(--blue);
+            margin: 0 15px;
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.4);
+        }
+        .gate .icon-large { color: var(--blue); }
+        .gate .firewall {
+            background: var(--blue);
+            color: white;
+            padding: 10px;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            margin-top: 20px;
+            font-weight: bold;
+        }
+
+        .castle { background: #ECFDF5; border: 2px solid var(--success); }
+        .castle .icon-large { color: var(--success); }
+        .room {
+            background: white;
+            border: 1px solid var(--success);
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            position: relative;
+        }
+
+        /* Arrows */
+        .arrow-right {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 24px;
+            color: #94A3B8;
+            z-index: 1;
+        }
+        .arrow-1 { right: -25px; }
+
+        /* Code Comparison */
+        .code-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .code-box {
+            background: #1E293B;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .code-header {
+            padding: 10px 15px;
+            color: white;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .header-bad { background: var(--danger); }
+        .header-good { background: var(--success); }
+
+        .code-body {
+            padding: 15px;
+            color: #E2E8F0;
+            font-family: monospace;
+            font-size: 0.9rem;
+            white-space: pre-wrap;
+        }
+        .code-comment { color: #64748B; font-style: italic; }
+        .code-highlight { color: #FBBF24; }
+        .code-anno { color: #A78BFA; }
+
+        /* Summary Box */
+        .interview-box {
+            background: #F8FAFC;
+            border-left: 5px solid var(--primary);
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 30px;
+        }
+
+        ul.points { padding-left: 20px; }
+        ul.points li { margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Giải Nghĩa: Phân Quyền Vai Trò (RBAC) <br>& Lớp Lọc An Ninh (Filter Layer)</h1>
+    <p class="subtitle">Bí kíp thiết kế tường lửa bảo vệ Ứng dụng Backend (Spring Boot)</p>
+
+    <div class="box">
+        <h2><i class="fa-solid fa-users-gear"></i> 1. RBAC là gì? (Role-Based Access Control)</h2>
+        <p>Đây là cơ chế <strong>"Phân quyền dựa trên chức danh"</strong>. Trong Tailor Shop, bạn có 3 chức danh chính:</p>
+        <ul class="points">
+            <li><strong>CUSTOMER (Khách):</strong> Chỉ được đổi mật khẩu, xem lịch sử mua hàng của bản thân, xem sản phẩm.</li>
+            <li><strong>TAILOR (Thợ may):</strong> Được xem danh sách đơn may của chính mình, cập nhật tiến độ may. Không được đụng vào hóa đơn thanh toán.</li>
+            <li><strong>ADMIN/STAFF:</strong> Quyền sinh sát tối thượng. Được sửa giá, ban user, xem tổng doanh thu...</li>
+        </ul>
+        <p>Bất cứ ai gõ vào cửa Backend API (Controller) đều phải chìa thẻ căn cước (Tấm vé <strong>JWT Token</strong>) ra. Trên thẻ phải ghi rõ chức danh (Role).</p>
+    </div>
+
+    <h2><i class="fa-solid fa-shield-halved"></i> 2. Cuộc Chiến: Chặn ở Cổng Cảng (Filter) hay Chặn ở Từng Phòng (@PreAuthorize)</h2>
+    
+    <div class="castle-diagram">
+        <div class="area hacker">
+            <i class="fa-solid fa-user-ninja icon-large"></i>
+            <div class="area-title">Internet / Hacker</div>
+            <p style="font-size: 0.85rem; color: #64748B;">Cầm thẻ giả, hoặc thẻ hết hạn, hoặc thẻ Customer đòi vào phòng Admin.</p>
+            <i class="fa-solid fa-arrow-right arrow-right arrow-1"></i>
+        </div>
+
+        <div class="area gate">
+            <i class="fa-solid fa-door-closed icon-large"></i>
+            <div class="area-title">JwtAuthenticationFilter (Cổng Thành)</div>
+            <div class="firewall">Config: /admin/** -> Chỉ ADMIN</div>
+            <div class="firewall" style="background:#64748B;">Tước thẻ giả ngay đây!</div>
+        </div>
+
+        <div class="area castle">
+            <i class="fa-solid fa-chess-rook icon-large"></i>
+            <div class="area-title">Controller (Các Căn Phòng)</div>
+            <div class="room"><i class="fa-solid fa-lock" style="color:#EF4444;"></i> Phòng `deleteUser()`</div>
+            <div class="room"><i class="fa-solid fa-lock" style="color:#F59E0B;"></i> Phòng `getTailorOrders()`</div>
+            <div class="room"><i class="fa-solid fa-lock-open" style="color:#10B981;"></i> Phòng `getProducts()` (Mở)</div>
+        </div>
+    </div>
+
+    <div class="box">
+        <h3><i class="fa-solid fa-bug"></i> Vấn đề của Cách 1: Chặn Ở Từng Phòng (Dùng tag <code>@PreAuthorize</code>)</h3>
+        <p>Đây là cách các lập trình viên mới vào nghề hay làm: Viết ra 100 cái API (100 căn phòng), phòng nào quan trọng thì dán cái bùa <code>@PreAuthorize("hasRole('ADMIN')")</code> trước cửa phòng đó.</p>
+
+        <div class="code-grid">
+            <div class="code-box">
+                <div class="code-header header-bad">
+                    <i class="fa-solid fa-xmark"></i> Dùng @PreAuthorize (Rủi ro vỡ trận)
+                </div>
+                <div class="code-body">
+@RestController
+@RequestMapping("/api/admin/users")
+public class AdminUserController {
+
+    <span class="code-anno">@PreAuthorize("hasRole('ADMIN')")</span>
+    @DeleteMapping("/{id}")
+    public void deleteUser() { ... }
+
+    <span class="code-comment">// CHẾT DỞ!! Dev mới vào công ty 
+    // code vội quá QUÊN dán bùa ở đây!
+    // -> Hacker (Customer) xông thẳng vào
+    // gõ API này và chôm sạch thu nhập!!</span>
+    @GetMapping("/revenue") 
+    public Data getDoanhThu() { ... }
+}
+                </div>
+            </div>
+
+            <div class="code-box">
+                <div class="code-header header-good">
+                    <i class="fa-solid fa-check"></i> Dùng Filter Chain (Phòng Thủ Trùng Điệp)
+                </div>
+                <div class="code-body">
+<span class="code-comment">// Trong hàm SecurityFilterChain (Cổng Thành)
+// Mọi Request đi qua mạng đều BẮT BUỘC 
+// phải lọt qua cái trạm gác này trước!</span>
+
+http.authorizeHttpRequests(auth -> auth
+
+  <span class="code-comment">// Khai báo tính tổng quát cao (Enforce tập trung)</span>
+  <span class="code-highlight">.requestMatchers("/api/admin/**").hasRole("ADMIN")</span>
+  .requestMatchers("/api/tailor/**").hasRole("TAILOR")
+  
+  <span class="code-comment">// Phải khóa hết toàn bộ phòng còn lại</span>
+  .anyRequest().authenticated()
+);
+
+<span class="code-comment">// -> Lính canh ở Cổng Cảng sẽ đạp văng bất cứ
+// ai không có thẻ ADMIN mà dám bén mảng tới
+// nguyên khu vực /api/admin/*
+// Dev bên trong CÓ QUÊN dán bùa cũng chả sao!</span>
+                </div>
+            </div>
+        </div>
+        
+        <p style="margin-top: 20px;"><strong>🔑 Giải thích Keyword "Enforce Tập Trung":</strong><br>
+        Có nghĩa là bạn vạch ra <strong>quy tắc pháp luật (Policies) ở một chỗ duy nhất</strong> (file SecurityConfig). Nếu sếp yêu cầu đổi luật: <em>"Cho thêm ông Manager vào xem Doanh Thu"</em>, bạn chỉ cần mở ĐÚNG 1 FILE cổng thành ra sửa. Bạn không bao giờ lo cái rủi ro <strong>"Bỏ sót, quên gài pass" (Security bypass)</strong> do một cậu Dev Junior nào đó trong team vô tình code API mới mà quên gắn tag bảo vệ.</p>
+    </div>
+
+    <!-- TÓM TẮT TRẢ LỜI PHỎNG VẤN -->
+    <div class="interview-box">
+        <h3><i class="fa-solid fa-microphone"></i> Dịch sang Tiếng Người để Trả Lời Phỏng Vấn:</h3>
+        <p><strong>Dịch đoạn văn mẫu của bạn:</strong></p>
+        <p><i>"Dạ thưa anh, hệ thống của em thiết lập Cổng Cảng (SecurityFilterChain) ngay từ bên ngoài. Mọi gói tin (Request) bắn tới Server đều bị chặn lại ở trạm gác <strong>JwtAuthenticationFilter</strong>. Ở trạm này mổ cái thư (Token JWT) ra để xét xem người này cầm Căn cước gì (Role gì), rồi lưu vào não bộ của Server (Set SecurityContextHolder)."</i></p>
+        
+        <p><i>"Lý do em dùng Cổng Cảng (Filter) để phân quyền thay vì rải lính canh ở từng căn phòng (xài tag <code>@PreAuthorize</code> trên từng Method) là vì bài toán <strong>Thắt Chặt Tập Trung (Enforce)</strong>. Code cấu hình ở Filter cho phép em tuyên bố thẳng: <strong>Mọi thằng đi vào khu vực /api/admin/ đều phải có tag ADMIN. Cấm ngoại lệ!</strong>"</i></p>
+
+        <p><i>"Nếu em xài <code>@PreAuthorize</code> rải rác trong code Controller, lỡ sau này dự án mở rộng lên 500 cái Controller, dự án tuyển thêm thằng Dev mới (em nói dối xíu là dự án có team 🤣), thằng Dev lơ ngơ code cái hàm xóa Database mà QUÊN dán dòng <code>@PreAuthorize</code> lên đầu hàm, thế là cả ngàn lớp bảo vệ đứt gãy, Hacker (Bypass) xông thẳng vào xóa cạn Data. Làm ở Filter thì không bao giờ để lọt lỗi NGỚ NGẨN (Human Error) này!"</i></p>
+    </div>
+
+</div>
+
+</body>
+</html>

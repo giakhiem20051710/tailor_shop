@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Giải Thích: 2-Phase Inventory Reservation & LUA Script</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
+    <style>
+        :root {
+            --primary: #EF4444; /* Red for Flash Sale */
+            --secondary: #10B981; /* Green for success */
+            --blue: #3B82F6; /* MySQL blue */
+            --redis: #DC382D; /* Redis red */
+            --dark: #1E293B;
+            --light: #F8FAFC;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #F1F5F9;
+            color: #334155;
+            line-height: 1.6;
+            padding: 40px 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        h1 { color: var(--dark); font-size: 2.5rem; margin-bottom: 10px; }
+        h2 { color: var(--primary); font-size: 1.8rem; margin: 30px 0 15px; border-bottom: 2px solid #E2E8F0; padding-bottom: 5px; }
+        p { margin-bottom: 15px; font-size: 1.1rem; }
+
+        /* Highlight boxes */
+        .box {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+            border-left: 5px solid var(--primary);
+        }
+
+        .box.mysql { border-color: var(--blue); }
+        .box.redis { border-color: var(--redis); }
+
+        /* Diagram */
+        .diagram-container {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+            margin: 40px 0;
+            overflow-x: auto;
+        }
+
+        .flow {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            min-width: 800px;
+            margin-bottom: 20px;
+        }
+
+        .node {
+            text-align: center;
+            width: 220px;
+            padding: 20px;
+            border-radius: 10px;
+            color: white;
+            font-weight: bold;
+            position: relative;
+        }
+
+        .node i { font-size: 2rem; margin-bottom: 10px; display: block; }
+
+        .node.user { background: #64748B; }
+        .node.redis { background: var(--redis); }
+        .node.db { background: var(--blue); }
+
+        .arrow {
+            flex-grow: 1;
+            height: 4px;
+            background: #CBD5E1;
+            position: relative;
+            margin: 0 15px;
+        }
+
+        .arrow::after {
+            content: '';
+            position: absolute;
+            right: 0;
+            top: -6px;
+            border-top: 8px solid transparent;
+            border-bottom: 8px solid transparent;
+            border-left: 12px solid #CBD5E1;
+        }
+
+        .arrow-label {
+            position: absolute;
+            top: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.85rem;
+            color: #64748B;
+            font-weight: bold;
+            white-space: nowrap;
+            background: white;
+            padding: 2px 5px;
+        }
+
+        .step-label {
+            position: absolute;
+            bottom: -35px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #475569;
+            font-size: 0.9rem;
+            width: 250px;
+            line-height: 1.3;
+        }
+
+        /* Race Condition Explanation */
+        .race-comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .race-box {
+            background: #F8FAFC;
+            border: 1px solid #E2E8F0;
+            padding: 20px;
+            border-radius: 8px;
+        }
+
+        .bad-way { border-top: 4px solid #EF4444; }
+        .good-way { border-top: 4px solid #10B981; }
+
+        .code-snippet {
+            background: #1E293B;
+            color: #4ADE80;
+            padding: 15px;
+            border-radius: 6px;
+            font-family: monospace;
+            font-size: 0.9rem;
+            margin-top: 10px;
+            white-space: pre-wrap;
+        }
+        .code-snippet .comment { color: #64748B; }
+        .code-snippet .error { color: #F87171; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <h1>Giải Mã: 2-Phase Inventory Reservation & LUA Script</h1>
+        <p>Bí kíp chống "bán lỗ", chống "cháy hàng" trong các đợt Flash Sale / Bán vé siêu tốc.</p>
+    </div>
+
+    <!-- VÍ DỤ THỰC TẾ -->
+    <div class="box">
+        <h2><i class="fa-solid fa-cart-shopping"></i> Vấn đề thực tế (Bài toán "Giành giật áo vest")</h2>
+        <p><strong>Bối cảnh:</strong> Tailor Shop mở bán Flash Sale 1 cái áo vest "Limited Edition" giá giảm 90% siêu rẻ. Trong kho MySQL hiện tại <code>stock = 1</code>.</p>
+        <p><strong>Sự kiện:</strong> Đúng 12:00:00, cùng lúc có <strong>10,000 khách truy cập</strong> bấm nút "Cho vào giỏ hàng" cùng một mili-giây.</p>
+        <p><strong>Thảm họa (Nếu không dùng 2-Phase & Redis):</strong> Cả 10,000 luồng (threads) đều lao vào chọc Database: <em>"Ê áo còn không?"</em>. Database kiểm tra thấy <code>stock = 1</code>, nên trả lời 10,000 người là: <em>"Còn, mua đi"</em>. Kết quả: <strong>Hệ thống bán ra 10,000 cái áo dù trong kho chả có cái nào. Bạn đền tiền sấp mặt.</strong> Hơn nữa, với 10,000 kết nối MySQL cùng lúc, Database sẽ nổ tung (Quá tải).</p>
+    </div>
+
+    <!-- SƠ ĐỒ 2-PHASE -->
+    <h2><i class="fa-solid fa-diagram-project"></i> Sơ đồ 2-Phase Reservation (Giữ chỗ 2 giai đoạn)</h2>
+    <p>Giải pháp: Đem số lượng hàng bỏ lên RAM (Redis) để phản xạ cực nhanh. MySQL chỉ được đụng tới khi khách đã trả tiền thật.</p>
+
+    <div class="diagram-container">
+        <!-- Phase 1 -->
+        <h3 style="color: var(--redis); margin-bottom: 20px;">Phase 1: Giai đoạn giữ chỗ (Giật Cúp)</h3>
+        <div class="flow">
+            <div class="node user">
+                <i class="fa-solid fa-mobile-screen"></i> 10,000 User<br>Bấm Mua
+            </div>
+            <div class="arrow"><div class="arrow-label">DECR flash_sale:stock (Trừ 1)</div></div>
+            <div class="node redis">
+                <i class="fa-solid fa-database"></i> REDIS CACHE
+                <div class="step-label"><b>Chỉ 1 người</b> được kết quả >= 0 (Thành công).<br>9,999 người bị trả về < 0 (Hết hàng).</div>
+            </div>
+        </div>
+
+        <hr style="border: 1px dashed #E2E8F0; margin: 50px 0;">
+
+        <!-- Phase 2 -->
+        <h3 style="color: var(--blue); margin-bottom: 20px;">Phase 2: Giai đoạn kết toán (Chồng Bạc)</h3>
+        <div class="flow">
+            <div class="node user" style="background:#10B981;">
+                <i class="fa-solid fa-money-bill-wave"></i> 1 User May Mắn<br>Thanh toán VNPay
+            </div>
+            <div class="arrow"><div class="arrow-label">Thanh toán OK -> Update Stock</div></div>
+            <div class="node db">
+                <i class="fa-solid fa-server"></i> MySQL DATABASE
+                <div class="step-label">Lúc này mới vào Database trừ kho thật: <br><code>UPDATE stock = stock - 1</code></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TẠI SAO PHẢI LÀ LUA SCRIPT? -->
+    <div class="box redis">
+        <h2><i class="fa-solid fa-bolt"></i> Tại sao phải dùng LUA SCRIPT thay vì Code Java bình thường?</h2>
+        <p>Nhiều người hỏi: <em>"Tại sao không dùng Java để hỏi Redis: <code>Số lượng còn bao nhiêu</code>, nếu còn > 0 thì gọi lệnh <code>Trừ 1 đi</code>?"</em>.</p>
+        <p>Nguyên nhân là do <strong>Race Condition (Cuộc đua kỳ thú)</strong>. Giữa khoảnh khắc bạn "Hỏi" và bạn "Trừ", thằng khác đã chen ngang!</p>
+
+        <div class="race-comparison">
+            
+            <div class="race-box bad-way">
+                <h4 style="color:#EF4444;">1. Cách SAI (Dùng Code Java thường)</h4>
+                <div class="code-snippet">
+<span class="comment">// 2 Luồng code chạy song song (Thread 1 và Thread 2)</span>
+<span class="comment">// Kho đang có 1 áo.</span>
+
+<span class="comment">// Bước 1: GET số lượng</span>
+T1: int soLuong = redis.get("stock"); <span class="comment">// KQ: 1</span>
+T2: int soLuong = redis.get("stock"); <span class="comment">// KQ: 1</span>
+
+<span class="comment">// Bước 2: Kiểm tra (Cả 2 đều thấy đúng)</span>
+T1: if (soLuong > 0) {
+T2: if (soLuong > 0) {
+
+<span class="comment">// Bước 3: Trừ đi</span>
+T1:   redis.decr("stock"); <span class="comment">// Kho thành 0</span>
+T2:   redis.decr("stock"); <span class="error">// Kho thành -1 lố cmnr!</span>
+}
+                </div>
+                <p style="margin-top:10px; font-size: 0.9rem;">Kết quả: 2 người cùng trừ kho thành công trong khi chỉ có 1 áo. Lỗi nặng!</p>
+            </div>
+
+            <div class="race-box good-way">
+                <h4 style="color:#10B981;">2. Cách CHUẨN (Dùng LUA Script)</h4>
+                <div class="code-snippet">
+<span class="comment">-- Đây là đoạn code Lua chạy nằm nguyên cục BÊN TRONG thẻ nhớ Redis</span>
+
+local stock = tonumber(redis.call('get', KEYS[1]))
+if (stock > 0) then
+    redis.call('decr', KEYS[1])
+    return 1 <span class="comment">-- Thành công (Cho rớt vô giỏ hàng)</span>
+else
+    return 0 <span class="comment">-- Thất bại (Báo hết hàng)</span>
+end
+                </div>
+                <p style="margin-top:10px; font-size: 0.9rem;"><strong>ĐIỀU KỲ DIỆU CỦA LUA:</strong> Redis chạy trên 1 luồng (Single Thread). Khi nó đang chạy 1 đoạn Lua Script, <strong>NÓ KHÓA CHẶT MỌI THỨ KHÁC (Atomicity)</strong>. Không ai được phép chọc vào kho cho đến khi cục Code Lua này chạy xong từ trên xuống dưới. 100% không bao giờ bán âm kho.</p>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- TÓM TẮT TRẢ LỜI PHỎNG VẤN -->
+    <div class="box" style="background-color: #F8FAFC; border-color: #334155;">
+        <h3><i class="fa-solid fa-microphone"></i> Câu Trả Lời "Ăn Điểm" Khi Phỏng Vấn (Tóm Tắt)</h3>
+        <p><i>"Em dùng cơ chế 2-Phase để tránh chết Database. <strong>Phase 1 (Mua liền)</strong>: Em chặn hàng chục ngàn Request bằng cách trừ tồn kho tạm trên RAM (Redis) bằng lệnh DECR. Vì Redis chịu tải tới 100,000 req/s nên nó gánh vác rất nhẹ nhàng. Ngay lập tức từ chối 9,999 người hết hàng, chỉ đẩy đúng 1 người có hàng vô giỏ."</i></p>
+        <p><i>"Sau đấy, <strong>Phase 2 (Thanh toán)</strong>: Khi cái 1 người may mắn kia chuyển tiền VNPay thành công, em mới dùng luồng chạy ngầm chậm rãi (như Kafka hoặc cronjob/sync) chọc vào MySQL để <code>UPDATE stock = stock - 1</code> thực sự trên đĩa cứng. Nên MySQL không bao giờ sập."</i></p>
+        <p><i>"Đặc biệt ở Phase 1, em bắt buộc bọc logic kiểm tra và trừ kho vào một <strong>LUA Script</strong>. Vì nếu dùng Java gọi `GET` rồi gọi `DECR` rời rạc, giữa 2 lệnh đó sẽ xảy ra Race Condition gây bán lố hàng. Redis thực thi Lua Script mang tính Nguyên tủ (Atomic) - nghĩa là khoá toàn bộ cục script lại chạy trong đúng 1 tick, không request nào chen ngang được, dập tắt hoàn toàn lỗi Overselling (Bán lố)."</i></p>
+    </div>
+
+</div>
+
+</body>
+</html>

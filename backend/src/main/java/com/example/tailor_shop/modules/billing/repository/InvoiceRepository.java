@@ -17,19 +17,22 @@ public interface InvoiceRepository extends JpaRepository<InvoiceEntity, Long> {
             + "AND (:dateFrom IS NULL OR i.createdAt >= :dateFrom) "
             + "AND (:dateTo IS NULL OR i.createdAt <= :dateTo)")
     Page<InvoiceEntity> search(@Param("code") String code,
-                               @Param("customerId") Long customerId,
-                               @Param("status") InvoiceStatus status,
-                               @Param("dateFrom") java.time.OffsetDateTime dateFrom,
-                               @Param("dateTo") java.time.OffsetDateTime dateTo,
-                               Pageable pageable);
+            @Param("customerId") Long customerId,
+            @Param("status") InvoiceStatus status,
+            @Param("dateFrom") java.time.OffsetDateTime dateFrom,
+            @Param("dateTo") java.time.OffsetDateTime dateTo,
+            Pageable pageable);
 
     /**
      * Tìm invoice theo order ID
+     * 
      * @param orderId Order ID
      * @return Invoice entity nếu tìm thấy
      */
     @Query("SELECT i FROM InvoiceEntity i WHERE i.order.id = :orderId AND i.isDeleted = false")
     java.util.Optional<InvoiceEntity> findByOrderIdAndIsDeletedFalse(@Param("orderId") Long orderId);
+
+    @Query("SELECT i FROM InvoiceEntity i JOIN FETCH i.customer WHERE i.isDeleted = false AND i.status IN :statuses ORDER BY i.dueAmount DESC")
+    java.util.List<InvoiceEntity> findByStatusIn(
+            @Param("statuses") java.util.List<com.example.tailor_shop.modules.billing.domain.InvoiceStatus> statuses);
 }
-
-

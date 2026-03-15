@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bộ Câu Hỏi Phỏng Vấn Dựa Trên CV (Tailor Shop)</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
+    <style>
+        :root {
+            --primary: #4F46E5;
+            --secondary: #10B981;
+            --dark: #1E293B;
+            --light: #F8FAFC;
+            --text-main: #334155;
+            --text-light: #64748B;
+            --border: #E2E8F0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #F1F5F9;
+            color: var(--text-main);
+            line-height: 1.6;
+            padding: 40px 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            color: var(--dark);
+            font-size: 2.2rem;
+            margin-bottom: 15px;
+        }
+
+        .header p {
+            color: var(--text-light);
+            font-size: 1.1rem;
+        }
+
+        .qa-block {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+            border-left: 5px solid var(--primary);
+            transition: transform 0.2s ease;
+        }
+
+        .qa-block:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+        }
+
+        /* Color variations for different topics */
+        .qa-frontend { border-left-color: #0EA5E9; } /* Sky Blue */
+        .qa-database { border-left-color: #F59E0B; } /* Amber */
+        .qa-arch { border-left-color: #8B5CF6; } /* Violet */
+        .qa-security { border-left-color: #EF4444; } /* Red */
+
+        .question {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 15px;
+            display: flex;
+            align-items: flex-start;
+            gap: 15px;
+        }
+
+        .q-icon {
+            background: var(--light);
+            color: var(--primary);
+            width: 35px;
+            height: 35px;
+            min-width: 35px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            font-size: 1rem;
+        }
+
+        .answer {
+            color: var(--text-main);
+            padding-left: 50px;
+        }
+
+        .answer p {
+            margin-bottom: 12px;
+        }
+
+        .star-tag {
+            display: inline-block;
+            background: #EEF2FF;
+            color: #4F46E5;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            margin-right: 5px;
+            text-transform: uppercase;
+        }
+
+        .highlight-quote {
+            background: #F8FAFC;
+            border-left: 3px solid #CBD5E1;
+            padding: 15px;
+            margin: 15px 0;
+            font-style: italic;
+            color: #475569;
+        }
+
+        .tips {
+            font-size: 0.9rem;
+            color: #10B981;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            margin-top: 15px;
+        }
+
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <h1>Bộ Câu Hỏi "Sát Thủ" Cho CV Của Bạn</h1>
+        <p>Chuẩn bị kỹ lưỡng cho những câu hỏi xoáy sâu vào kỹ năng Fullstack và System Design.</p>
+    </div>
+
+    <!-- Frontend React -->
+    <div class="qa-block qa-frontend">
+        <div class="question">
+            <span class="q-icon"><i class="fa-brands fa-react" style="color: #0EA5E9;"></i></span>
+            Q1: Trong CV em ghi là "Self-built React frontend". Giao diện đặt hàng may đo (Bespoke tailoring) thường có cái form cấu hình rất phức tạp (Chọn vải, kiểu cổ, kiểu cúc...). Em quản lý State (Trạng thái) của cái form khổng lồ đó như thế nào để không bị re-render lag máy?
+        </div>
+        <div class="answer">
+            <p><span class="star-tag">S - Tình huống</span> Form Customize (Cấu hình áo) của Tailor Shop rất nặng, khách click chọn hàng chục option khác nhau và màn hình cần Preview ngay lập tức.</p>
+            <p><span class="star-tag">T - Thử thách</span> Nếu cứ dùng <code>useState</code> đặt tuốt trên component cha (Parent) rồi truyền Props xuống tầng tầng lớp lớp (Props drilling), thì mỗi lần khách nhấp chọn 1 cái cúc áo, Toàn Bộ cái màn hình sẽ bị vẽ lại (Re-render) làm web giật lag.</p>
+            <p><span class="star-tag">A - Hành động</span> Em áp dụng chiến thuật "Trạng thái cục bộ ở đâu, giữ nguyên ở đó". Nếu dữ liệu cần share toàn cục (như Giỏ hàng, Thông tin User), em dùng <strong>Redux Toolkit (hoặc Context API)</strong>. Còn riêng cái màn hình Customize đó, em thiết kế bằng thư viện xử lý Form chuyên dụng (như <strong>React Hook Form</strong>). Thư viện này dùng <em>uncontrolled components</em>, nghĩa là gõ phím tới đâu nó tự canh giữ State dưới background, không kích hoạt re-render màn hình cho tới khi user bấm nút Submit.</p>
+            <p><span class="star-tag">R - Kết quả</span> Khách bấm đổi vải, đổi màu cực kì mượt mà không có độ trễ (delay) nào. Code em viết cũng rất clean vì không phải ôm đồm truyền 1 tỉ prop dọc theo Component Tree.</p>
+            <div class="tips"><i class="fa-solid fa-lightbulb"></i> Điểm thăng hoa: Khoe kiến thức về "Props Drilling", "Re-render" dư thừa, và cách dùng thư viện Form (React Hook Form) để tối ưu Performance phía Client.</div>
+        </div>
+    </div>
+
+    <!-- DB Transactions & Async Events -->
+    <div class="qa-block qa-arch">
+        <div class="question">
+            <span class="q-icon"><i class="fa-solid fa-code-merge" style="color: #8B5CF6;"></i></span>
+            Q2: Em dùng @Async (Event Listener) để gọi hàm trừ kho GỬI Email. Vậy nếu bước TẠO ĐƠN HÀNG (Lưu DB) thành công, chuông reo lên, nhưng cái ông gửi Email ổng NÉM LỖI (Exception), lúc này Đơn hàng đã ở trong Database chưa? Và khách hàng có nhận được phản hồi là Thành công không?
+        </div>
+        <div class="answer">
+            <p><span class="star-tag">Giải quyết bẫy</span> Đây là câu hỏi gài bẫy về <strong>Database Transaction Border</strong> (Đường ranh giới của một phiên giao dịch).</p>
+            <div class="highlight-quote">"Dạ thưa anh, lúc này đơn hàng CHẮC CHẮN ĐÃ NẰM TRONG DATABASE và khách đã nhận được chữ THÀNH CÔNG trên màn hình rồi."</div>
+            <p><span class="star-tag">Giải thích</span> Lý do là em đánh dấu cái chuông (Publish Event) ở 1 chỗ, nhưng cái ông nghe chuông (Listener gửi Email) ổng đã bị tách ra chạy trên 1 <strong>Luồng (Thread) hoàn toàn khác</strong> nhờ Annotation <code>@Async</code>.</p>
+            <p>Hành trình của cô thu ngân (Main Thread) đã kết thúc bằng câu lệnh `return ResponseEntity.ok()` sau khi lưu DB thành công. Việc gửi Email rớt mạng ở một chiều không gian khác không hề ảnh hưởng hay kích hoạt lệnh Rollback lại cái Order vừa tạo. Mối thù của 2 thằng đã được "Decoupled" (Cắt đứt/Chia ly) hoàn toàn.</p>
+            <div class="tips"><i class="fa-solid fa-lightbulb"></i> Điểm thăng hoa: Bạn chứng tỏ được bạn hiểu rõ bản chất "Ngắt Transaction" của từ khóa Async trong môi trường Spring Boot. Không bị nhại như cái vẹt.</div>
+        </div>
+    </div>
+
+    <!-- JWT & Statelessness -->
+    <div class="qa-block qa-security">
+        <div class="question">
+            <span class="q-icon"><i class="fa-solid fa-shield-cat" style="color: #EF4444;"></i></span>
+            Q3: Nếu Cookie/Session thì Server phải nhớ (Stateful). Dùng JWT thì Server không cần nhớ (Stateless). Nhưng anh thấy em dùng JWT lại kết hợp với cả Redis để làm màn "Đăng Xuất". Vậy hệ thống của em rốt cuộc là Stateless hay Stateful? Có phá vỡ nguyên lý của JWT không?
+        </div>
+        <div class="answer">
+            <p><span class="star-tag">Sự thật phũ phàng</span> "Dạ anh, nói thật, một hệ thống 100% Stateless (Hoàn toàn không nhớ gì) thì... KHÔNG HỀ TỒN TẠI TÍNH NĂNG LOGOUT. Vì anh không nhớ người ta, lấy gì anh đuổi người ta?"</p>
+            <p><span class="star-tag">Biện luận</span> Ban đầu JWT sinh ra là để Server dứt tình 100% (Tiết kiệm cực đại RAM). Khách xòe thẻ -> Chữ ký đúng -> Chạy vô. Hết!<br>Tuy nhiên, thực tế kinh doanh đòi hỏi em phải có nút Đăng Xuất và chặn đứng Token bị lộ. Nên hệ thống của em hiện tại là một sự <strong>Lai tạp (Hybrid) đầy tính toán</strong>.</p>
+            <p><span class="star-tag">Kết luận</span> Đối với 99% các khách hàng <em>bình thường đang hoạt động</em>, hệ thống của em vẫn đúng chuẩn <strong>Stateless</strong>. Tức là Cán bộ ở cổng (Filter) lật thẻ JWT ra tự soi chữ ký và tự xử lí, không tốn thêm connection hỏi MySQL. Trừ khi khách có tên trong bảng đen (Blacklist nằm trên Redis) thì chặn lại.</p>
+            <p>Việc em dùng Redis làm bảng phong thần này chỉ tốn cỡ vài Byte (rất rẻ), tra cứu cực lẹ dưới 1mili-giây, nên chi phí đánh đổi này là hòa vốn và hoàn toàn xứng đáng để đổi lấy sự Bảo mật (Security) trong đời thực."</p>
+            <div class="tips"><i class="fa-solid fa-lightbulb"></i> Điểm thăng hoa: Tính thực chiến. Ai nói JWT là phải Stateless 100% đó là mọt sách. Đi làm 10 năm công ty ngoài đời đều "xé nháp" luật chơi một chút (bằng Redis Blacklist) để hệ thống an toàn nhất. Sếp sẽ vỗ đùi đánh đét vì bạn dám phản biện lại nguyên lý hàn lâm!</div>
+        </div>
+    </div>
+
+    <!-- DevOps & Docker -->
+    <div class="qa-block qa-database">
+        <div class="question">
+            <span class="q-icon"><i class="fa-brands fa-docker" style="color: #F59E0B;"></i></span>
+            Q4: Trong CV, em nói em dùng Docker-Compose để setup "one-command" cho cả môi trường Dev và Production. Anh hỏi thật, trên Production (Mạng thật chạy Live có trăm ngàn khách) người ta có gõ "docker compose up" giống y chang lúc em code ở dưới máy tính cá nhân ở nhà (Local/Dev) không?
+        </div>
+        <div class="answer">
+            <p><span class="star-tag">Né đòn</span> Dạ, câu trả lời thực Tế ở các Doanh nghiệp lớn là <strong>KHÔNG</strong> ạ.</p>
+            <p>Dự án cá nhân <code>hientailor</code> của em hiện tại đang chạy VPS giá rẻ một mình em quản lý (Monolithic deployment) nên em dùng đúng lệnh lệnh <code>docker-compose up -d</code> đó bứng qua luôn vì nó TIỆN, làm cái vèo một phát xong hết cả bệ phóng.</p>
+            <p><strong>NHƯNG em hiểu trên Production xịn xò:</strong></p>
+            <ul>
+                <li>Ít ai gộp chung Database (MySQL) và Redis chạy chung một cỗ xe bò Docker Compose với ứng dụng Backend (Nguy cơ sập dây chuyền). Họ thường mua dịch vụ Cloud bọc riêng Database cho an toàn cục mỡ (như AWS RDS). Mấy cái Docker con con chỉ nên chạy Code (Stateless App) thôi. Mình chết thì Docker cho thằng App mới mọc lên thế mạng.</li>
+                <li>Lúc triển khai xịn, thường người ta bỏ cái cục <code>docker-compose.yml</code> mà vác lên các nền tảng thuyền trưởng (Kubernetes) để con App tự động nhân bản vô tính khi nào có nhiều khách truy cập tới.</li>
+            </ul>
+            <p><span class="star-tag">Chốt</span> "Nên ghi trong CV là 'cross environments' (Đem nguyên xi Môi trường Dev lên Prod) ở quy mô Team Start-up cá nhân 1 mình em thì đúng. Nhưng vác vào công ty của anh lớn hơn thì em biết mình phải 'phá vỡ' cục Compose đó ra và tách việc ra cho Kubernetes xử lý."</p>
+            <div class="tips"><i class="fa-solid fa-lightbulb"></i> Điểm thăng hoa: Trung thực về tầm cỡ Dự Án cá nhân (Pet Project). Thừa nhận Docker Compose là món đồ chơi thần thánh ở Local, nhưng lên Scale Lớn thì phải đổi kiến trúc. Sếp Lớn siêu nể những đứa biết mình đứng ở đâu và biết "thực tế nó tàn khốc" thế nào!</div>
+        </div>
+    </div>
+
+</div>
+
+</body>
+</html>

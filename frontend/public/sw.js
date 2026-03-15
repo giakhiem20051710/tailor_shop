@@ -1,7 +1,10 @@
 // Service Worker for PWA
-const CACHE_NAME = "my-hien-tailor-v2"; // Updated version to clear old cache
+const CACHE_NAME = "my-hien-tailor-v3"; // Updated version
 const urlsToCache = [
   "/",
+  "/dashboard",
+  "/orders",
+  "/order-kanban",
   "/customer-home",
   "/products",
   "/fabrics",
@@ -83,9 +86,9 @@ self.addEventListener("fetch", (event) => {
       return fetch(event.request).then((networkResponse) => {
         // Chỉ cache successful responses cho static assets (HTML, CSS, JS, images)
         // KHÔNG cache API responses
-        if (networkResponse && networkResponse.status === 200 && 
-            !url.pathname.startsWith('/api/') && 
-            !url.hostname.includes('localhost:8083')) {
+        if (networkResponse && networkResponse.status === 200 &&
+          !url.pathname.startsWith('/api/') &&
+          !url.hostname.includes('localhost:8083')) {
           const responseToCache = networkResponse.clone();
           caches.open(CACHE_NAME).then((cache) => {
             cache.put(event.request, responseToCache);

@@ -1,0 +1,1339 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tailor Shop - Câu Hỏi Phỏng Vấn & Đáp Án</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f0f23 0%, #1a1a3e 50%, #0f0f23 100%);
+            color: #eee;
+            min-height: 100vh;
+            padding: 20px 20px 60px
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto
+        }
+
+        h1 {
+            text-align: center;
+            color: #00d9ff;
+            font-size: 2.5em;
+            margin-bottom: 8px;
+            text-shadow: 0 0 30px rgba(0, 217, 255, .5)
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #888;
+            margin-bottom: 30px;
+            font-size: 1.1em
+        }
+
+        .back-link {
+            display: inline-block;
+            color: #00d9ff;
+            text-decoration: none;
+            margin-bottom: 20px;
+            font-size: .95em;
+            opacity: .8;
+            transition: opacity .3s
+        }
+
+        .back-link:hover {
+            opacity: 1
+        }
+
+        .stats-bar {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            margin-bottom: 30px;
+            flex-wrap: wrap
+        }
+
+        .stat {
+            text-align: center
+        }
+
+        .stat-value {
+            font-size: 2.2em;
+            font-weight: bold;
+            color: #00ff88
+        }
+
+        .stat-label {
+            color: #888;
+            font-size: .9em
+        }
+
+        /* TOC */
+        .toc {
+            background: rgba(255, 255, 255, .04);
+            border-radius: 16px;
+            padding: 20px 28px;
+            margin-bottom: 30px;
+            border: 1px solid rgba(255, 255, 255, .08)
+        }
+
+        .toc h3 {
+            color: #ffd700;
+            margin-bottom: 12px;
+            font-size: 1.1em
+        }
+
+        .toc-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 6px
+        }
+
+        .toc a {
+            color: #00d9ff;
+            text-decoration: none;
+            font-size: .9em;
+            padding: 4px 0;
+            display: block;
+            transition: color .2s
+        }
+
+        .toc a:hover {
+            color: #fff
+        }
+
+        .toc .count {
+            color: #666;
+            font-size: .8em
+        }
+
+        /* Section */
+        .section {
+            margin-bottom: 24px
+        }
+
+        .section-title {
+            color: #ffd700;
+            font-size: 1.4em;
+            padding: 12px 0 8px;
+            border-bottom: 2px solid rgba(255, 215, 0, .3);
+            margin-bottom: 14px;
+            cursor: default
+        }
+
+        .section-icon {
+            margin-right: 8px
+        }
+
+        /* Q&A Card */
+        .qa {
+            background: rgba(255, 255, 255, .04);
+            border-radius: 14px;
+            margin-bottom: 10px;
+            border: 1px solid rgba(255, 255, 255, .07);
+            overflow: hidden;
+            transition: border-color .3s
+        }
+
+        .qa:hover {
+            border-color: rgba(0, 217, 255, .3)
+        }
+
+        .qa-header {
+            padding: 14px 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            user-select: none
+        }
+
+        .qa-num {
+            background: linear-gradient(135deg, #00d9ff, #0088ff);
+            color: #000;
+            font-weight: bold;
+            min-width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: .85em;
+            flex-shrink: 0
+        }
+
+        .qa-question {
+            flex: 1;
+            font-weight: 600;
+            font-size: 1em;
+            line-height: 1.4
+        }
+
+        .qa-arrow {
+            color: #00d9ff;
+            font-size: 1.2em;
+            transition: transform .3s;
+            flex-shrink: 0
+        }
+
+        .qa.open .qa-arrow {
+            transform: rotate(180deg)
+        }
+
+        .qa-body {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height .4s ease
+        }
+
+        .qa.open .qa-body {
+            max-height: 5000px
+        }
+
+        .qa-answer {
+            padding: 0 20px 18px 64px;
+            line-height: 1.7;
+            color: #ccc
+        }
+
+        .qa-answer strong,
+        .qa-answer b {
+            color: #fff
+        }
+
+        .qa-answer code {
+            background: rgba(0, 217, 255, .12);
+            color: #00d9ff;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: .88em;
+            font-family: 'Cascadia Code', 'Fira Code', monospace
+        }
+
+        .qa-answer pre {
+            background: rgba(0, 0, 0, .4);
+            border: 1px solid rgba(255, 255, 255, .08);
+            border-radius: 10px;
+            padding: 14px 16px;
+            margin: 10px 0;
+            overflow-x: auto;
+            font-size: .85em;
+            line-height: 1.5
+        }
+
+        .qa-answer pre code {
+            background: none;
+            padding: 0;
+            color: #ddd
+        }
+
+        .qa-answer table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 10px 0;
+            font-size: .9em
+        }
+
+        .qa-answer th {
+            background: rgba(0, 217, 255, .12);
+            color: #00d9ff;
+            text-align: left;
+            padding: 8px 12px;
+            border: 1px solid rgba(255, 255, 255, .1)
+        }
+
+        .qa-answer td {
+            padding: 8px 12px;
+            border: 1px solid rgba(255, 255, 255, .06)
+        }
+
+        .qa-answer tr:nth-child(even) {
+            background: rgba(255, 255, 255, .02)
+        }
+
+        .qa-answer ul,
+        .qa-answer ol {
+            padding-left: 20px;
+            margin: 6px 0
+        }
+
+        .qa-answer li {
+            margin: 4px 0
+        }
+
+        .qa-answer p {
+            margin: 6px 0
+        }
+
+        .qa-answer h4 {
+            color: #00d9ff;
+            margin: 12px 0 6px;
+            font-size: 1em
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: .75em;
+            font-weight: bold
+        }
+
+        .badge-cyan {
+            background: rgba(0, 217, 255, .15);
+            color: #00d9ff
+        }
+
+        .badge-green {
+            background: rgba(0, 255, 136, .15);
+            color: #00ff88
+        }
+
+        .badge-gold {
+            background: rgba(255, 215, 0, .15);
+            color: #ffd700
+        }
+
+        .badge-red {
+            background: rgba(255, 107, 157, .15);
+            color: #ff6b9d
+        }
+
+        /* Controls */
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            align-items: center
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, .15);
+            background: rgba(255, 255, 255, .06);
+            color: #ccc;
+            cursor: pointer;
+            font-size: .85em;
+            transition: all .2s
+        }
+
+        .btn:hover {
+            background: rgba(0, 217, 255, .15);
+            border-color: rgba(0, 217, 255, .4);
+            color: #fff
+        }
+
+        .search-box {
+            flex: 1;
+            min-width: 200px;
+            padding: 8px 14px;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, .15);
+            background: rgba(255, 255, 255, .06);
+            color: #eee;
+            font-size: .9em;
+            outline: none
+        }
+
+        .search-box:focus {
+            border-color: rgba(0, 217, 255, .5);
+            box-shadow: 0 0 10px rgba(0, 217, 255, .15)
+        }
+
+        .search-box::placeholder {
+            color: #666
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, .1);
+            color: #555;
+            font-size: .85em
+        }
+
+        @media(max-width:600px) {
+            h1 {
+                font-size: 1.8em
+            }
+
+            .qa-answer {
+                padding-left: 20px
+            }
+
+            .toc-grid {
+                grid-template-columns: 1fr
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <a href="index.html" class="back-link">← Quay lại Documentation</a>
+        <h1>📋 Câu Hỏi Phỏng Vấn</h1>
+        <p class="subtitle">Dự Án Tailor Shop — Hệ thống quản lý tiệm may đo trực tuyến</p>
+
+        <div class="stats-bar">
+            <div class="stat">
+                <div class="stat-value">57</div>
+                <div class="stat-label">Câu hỏi</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value">15</div>
+                <div class="stat-label">Chủ đề</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value">16</div>
+                <div class="stat-label">Modules</div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <input type="text" class="search-box" id="searchBox" placeholder="🔍 Tìm kiếm câu hỏi...">
+            <button class="btn" onclick="toggleAll(true)">📖 Mở tất cả</button>
+            <button class="btn" onclick="toggleAll(false)">📕 Đóng tất cả</button>
+        </div>
+
+        <div class="toc" id="toc">
+            <h3>📑 Mục Lục</h3>
+            <div class="toc-grid" id="tocGrid"></div>
+        </div>
+
+        <div id="content"></div>
+
+        <footer>
+            <p>Generated by Antigravity AI Assistant — 25/02/2026</p>
+            <p>Tailor Shop Interview Q&A v1.0</p>
+        </footer>
+    </div>
+
+    <script>
+        const DATA = [
+            {
+                title: "Tổng Quan Kiến Trúc", icon: "🏗️", questions: [
+                    {
+                        q: "Hãy mô tả tổng quan kiến trúc của dự án Tailor Shop?", a: `<p>Dự án Tailor Shop là hệ thống fullstack với kiến trúc <b>microservice-lite</b> gồm 5 service:</p>
+<table><tr><th>Service</th><th>Công nghệ</th><th>Mô tả</th></tr>
+<tr><td>Backend</td><td>Spring Boot 3.3.3 + Java 21</td><td>REST API chính</td></tr>
+<tr><td>Frontend</td><td>React + Vite</td><td>SPA với 70+ trang</td></tr>
+<tr><td>Database</td><td>MySQL 8.0</td><td>Lưu trữ dữ liệu</td></tr>
+<tr><td>Cache</td><td>Redis 7 Alpine</td><td>Caching & Rate Limiting</td></tr>
+<tr><td>Try-On</td><td>Python FastAPI</td><td>AI Virtual Try-On (GPU)</td></tr></table>
+<p>Backend theo mô hình <b>Domain-Driven Design (DDD)</b> với 16 module nghiệp vụ: <code>auth</code>, <code>fabric</code>, <code>order</code>, <code>billing</code>, <code>flashsale</code>, <code>gamification</code>, <code>notification</code>, <code>appointment</code>, <code>cart</code>, <code>event</code>, <code>favorite</code>, <code>measurement</code>, <code>product</code>, <code>promotion</code>, <code>review</code>, <code>user</code>.</p>`},
+
+                    {
+                        q: "Tại sao chọn kiến trúc DDD cho backend? Cấu trúc module như thế nào?", a: `<p>DDD được chọn vì domain nghiệp vụ phức tạp (may đo, quản lý vải, flash sale, gamification...). Mỗi module có cấu trúc <b>5 layer</b>:</p>
+<pre><code>modules/
+└── order/
+    ├── controller/   → REST API endpoints
+    ├── domain/       → Entity, Enum, Value Objects
+    ├── dto/          → Request/Response objects
+    ├── repository/   → JPA Repository interfaces
+    └── service/      → Business logic (interface + impl)</code></pre>
+<p>Một số module phức tạp hơn còn thêm: <code>event/</code> (Domain events) và <code>listener/</code> (Event listeners xử lý async).</p>
+<h4>Lợi ích:</h4>
+<ul><li><b>Separation of Concerns</b>: Mỗi module độc lập, dễ maintain</li>
+<li><b>Bounded Context</b>: Fabric domain tách biệt với Order domain</li>
+<li><b>Scalability</b>: Có thể tách module thành microservice riêng khi cần</li></ul>`},
+
+                    {
+                        q: "Dự án sử dụng những dependency/library nào? Giải thích vai trò?", a: `<table><tr><th>Dependency</th><th>Vai trò</th></tr>
+<tr><td><code>spring-boot-starter-web</code></td><td>REST API (Spring MVC)</td></tr>
+<tr><td><code>spring-boot-starter-security</code></td><td>Authentication & Authorization</td></tr>
+<tr><td><code>spring-boot-starter-data-jpa</code></td><td>ORM với Hibernate</td></tr>
+<tr><td><code>spring-boot-starter-validation</code></td><td>Bean Validation (<code>@Valid</code>)</td></tr>
+<tr><td><code>spring-boot-starter-websocket</code></td><td>WebSocket + STOMP protocol</td></tr>
+<tr><td><code>spring-boot-starter-data-redis</code></td><td>Redis caching & rate limiting</td></tr>
+<tr><td><code>spring-boot-starter-mail</code></td><td>Gửi email (password reset)</td></tr>
+<tr><td><code>spring-boot-starter-actuator</code></td><td>Health check, metrics</td></tr>
+<tr><td><code>flyway-core</code></td><td>Database migration versioning</td></tr>
+<tr><td><code>jjwt-api/impl/jackson</code></td><td>JWT token generation & validation</td></tr>
+<tr><td><code>springdoc-openapi</code></td><td>Swagger UI & API docs</td></tr>
+<tr><td><code>lombok</code></td><td>Giảm boilerplate code</td></tr>
+<tr><td><code>aws-sdk-s3</code></td><td>Upload file lên AWS S3</td></tr>
+<tr><td><code>javafaker</code></td><td>Seed dữ liệu test</td></tr>
+<tr><td><code>thumbnailator</code></td><td>Xử lý ảnh (resize, crop)</td></tr>
+<tr><td><code>micrometer-registry-prometheus</code></td><td>Metrics cho Prometheus/Grafana</td></tr></table>`}
+                ]
+            },
+
+            {
+                title: "Backend - Spring Boot", icon: "🍃", questions: [
+                    {
+                        q: "Giải thích cách xử lý exception trong dự án? Tại sao lại thiết kế như vậy?", a: `<p>Dự án sử dụng <code>@RestControllerAdvice</code> với class <code>GlobalExceptionHandler</code> để xử lý exception tập trung:</p>
+<pre><code>@RestControllerAdvice
+public class GlobalExceptionHandler {
+    private ResponseEntity&lt;CommonResponse&lt;Object&gt;&gt; buildError(
+        HttpStatus status, String code, String message) {
+        String traceId = TraceIdUtil.getOrCreateTraceId();
+        return ResponseEntity.status(status)
+            .body(ResponseUtil.error(traceId, code, message));
+    }
+}</code></pre>
+<table><tr><th>Exception</th><th>HTTP Status</th><th>Mục đích</th></tr>
+<tr><td><code>BadRequestException</code></td><td>400</td><td>Validation lỗi business</td></tr>
+<tr><td><code>BusinessException</code></td><td>Tùy ErrorCode</td><td>Lỗi business logic có error code</td></tr>
+<tr><td><code>NotFoundException</code></td><td>404</td><td>Resource không tồn tại</td></tr>
+<tr><td><code>AccessDeniedException</code></td><td>403</td><td>Không có quyền</td></tr>
+<tr><td><code>BadCredentialsException</code></td><td>401</td><td>Sai username/password</td></tr>
+<tr><td><code>MethodArgumentNotValidException</code></td><td>400</td><td>DTO validation (<code>@Valid</code>)</td></tr>
+<tr><td><code>DataIntegrityViolationException</code></td><td>400</td><td>Vi phạm DB constraint</td></tr>
+<tr><td><code>Exception</code> (fallback)</td><td>500</td><td>Lỗi không xác định</td></tr></table>
+<p><b>Điểm đặc biệt:</b> Mọi response có <code>traceId</code> để debug production. <code>BusinessException</code> sử dụng enum <code>ErrorCode</code> chứa cả HTTP status và error code.</p>`},
+
+                    {
+                        q: "<code>CommonResponse</code> được thiết kế như thế nào?", a: `<p><code>CommonResponse&lt;T&gt;</code> là <b>envelope pattern</b> đảm bảo tất cả API trả về cùng format:</p>
+<pre><code>// Thành công
+{ "success": true, "data": { ... }, "error": null, "traceId": "abc-123" }
+
+// Thất bại
+{ "success": false, "data": null,
+  "error": { "code": "400", "message": "Invalid email" },
+  "traceId": "abc-123" }</code></pre>
+<p><b>Lợi ích:</b></p>
+<ul><li>Frontend chỉ cần check <code>response.success</code></li>
+<li><code>traceId</code> giúp trace request xuyên suốt hệ thống</li>
+<li>Error format thống nhất, dễ hiển thị cho user</li></ul>`},
+
+                    {
+                        q: "Giải thích flow xử lý một Order từ khi tạo đến hoàn thành?", a: `<p>Dựa trên <code>OrderServiceImpl</code> (868 dòng):</p>
+<h4>1. Tạo Order (Wizard):</h4>
+<p>Customer tạo order → Chọn fabric/product → Nhập measurement → Chọn tailor → Đặt lịch hẹn</p>
+<h4>2. Order Status Transitions:</h4>
+<pre><code>DRAFT → PENDING → CONFIRMED → IN_PROGRESS → COMPLETED → DELIVERED
+                                                         ↘ CANCELLED</code></pre>
+<h4>3. Mỗi transition sẽ:</h4>
+<ul><li>Validate transition hợp lệ qua <code>isTransitionAllowed()</code></li>
+<li>Tạo <code>OrderTimeline</code> entry để track lịch sử</li>
+<li>Trigger event async (VD: gửi notification)</li></ul>
+<h4>4. Tạo Invoice tự động:</h4>
+<p>Khi order được confirm → tự động tạo <code>InvoiceEntity</code> qua <code>buildInvoiceRequestFromOrder()</code></p>`},
+
+                    {
+                        q: "Dự án có bao nhiêu module? Mô tả vai trò từng module?", a: `<table><tr><th>Module</th><th>Vai trò</th></tr>
+<tr><td><code>auth</code></td><td>Đăng nhập, đăng ký, quên mật khẩu</td></tr>
+<tr><td><code>user</code></td><td>Quản lý người dùng, roles</td></tr>
+<tr><td><code>fabric</code></td><td>Quản lý vải (inventory, hold requests)</td></tr>
+<tr><td><code>product</code></td><td>Quản lý sản phẩm may đo</td></tr>
+<tr><td><code>order</code></td><td>Quy trình đặt hàng may đo</td></tr>
+<tr><td><code>billing</code></td><td>Hóa đơn, thanh toán đa kênh</td></tr>
+<tr><td><code>cart</code></td><td>Giỏ hàng</td></tr>
+<tr><td><code>flashsale</code></td><td>Flash Sale vải (reservation, locking)</td></tr>
+<tr><td><code>promotion</code></td><td>Khuyến mãi, mã giảm giá</td></tr>
+<tr><td><code>gamification</code></td><td>Challenge theo mùa, tích điểm</td></tr>
+<tr><td><code>notification</code></td><td>Thông báo real-time (WebSocket)</td></tr>
+<tr><td><code>appointment</code></td><td>Đặt lịch hẹn, working slots</td></tr>
+<tr><td><code>measurement</code></td><td>Số đo cơ thể khách hàng</td></tr>
+<tr><td><code>review</code></td><td>Đánh giá sản phẩm/dịch vụ</td></tr>
+<tr><td><code>favorite</code></td><td>Danh sách yêu thích</td></tr>
+<tr><td><code>event</code></td><td>Domain events</td></tr></table>`}
+                ]
+            },
+
+            {
+                title: "Security & Authentication", icon: "🔐", questions: [
+                    {
+                        q: "Giải thích cơ chế bảo mật JWT? Access Token vs Refresh Token?", a: `<p>Dựa trên <code>JwtService</code>:</p>
+<table><tr><th>Loại</th><th>Thời hạn</th><th>Claims</th><th>Mục đích</th></tr>
+<tr><td>Access Token</td><td>30 phút</td><td><code>roles</code>, <code>type: "access"</code></td><td>API authentication</td></tr>
+<tr><td>Refresh Token</td><td>7 ngày</td><td><code>type: "refresh"</code></td><td>Lấy access token mới</td></tr></table>
+<h4>Security features:</h4>
+<ul><li><b>JTI (JWT ID)</b>: Mỗi token có UUID riêng → support revocation</li>
+<li><b>HMAC SHA-256</b>: Signing key tối thiểu 32 bytes</li>
+<li><b>Token type claim</b>: Phân biệt access vs refresh</li></ul>
+<h4>Validation flow (JwtAuthFilter):</h4>
+<ol><li>Extract <code>Authorization: Bearer &lt;token&gt;</code> từ header</li>
+<li>Parse JWT, extract username</li>
+<li>Load UserDetails từ database</li>
+<li>Validate: username khớp + chưa hết hạn</li>
+<li>Set <code>SecurityContextHolder</code> authentication</li></ol>`},
+
+                    {
+                        q: "SecurityConfig cấu hình những gì?", a: `<ul>
+<li><b>CSRF disabled</b> — stateless REST API không cần CSRF</li>
+<li><b>CORS</b> — origins từ <code>application.yml</code> (comma-separated)</li>
+<li><b>Session STATELESS</b> — dùng JWT thay session</li>
+<li><b>Security Headers</b>: chống MIME sniffing, clickjacking (<code>frameOptions.deny()</code>), XSS, cache control</li>
+<li><b>Authorization Rules</b>:
+  <ul><li><code>/api/v1/auth/**</code> → permitAll</li>
+  <li><code>/ws/**</code> → permitAll (WebSocket)</li>
+  <li><code>GET /api/v1/products/**</code> → permitAll (catalog)</li>
+  <li><code>/actuator/**</code> → hasRole("ADMIN")</li>
+  <li>Còn lại → authenticated</li></ul></li>
+<li><b>Password</b>: BCryptPasswordEncoder</li>
+<li><b>JWT Filter</b>: Thêm trước <code>UsernamePasswordAuthenticationFilter</code></li></ul>`},
+
+                    {
+                        q: "Auth flow đăng nhập và quên mật khẩu?", a: `<h4>Login Flow:</h4>
+<ol><li>Client gửi <code>{username, password}</code></li>
+<li><code>LoginAttemptService</code> kiểm tra account bị lock chưa</li>
+<li><code>AuthenticationManager</code> xác thực (BCrypt compare)</li>
+<li>Thành công → reset attempt counter → generate Access + Refresh Token → log audit</li>
+<li>Thất bại → tăng attempt counter → throw <code>BadCredentialsException</code></li></ol>
+<h4>Forgot Password Flow:</h4>
+<ol><li>Client gửi <code>{email}</code></li>
+<li>Generate OTP 6 chữ số (SecureRandom)</li>
+<li>Lưu <code>PasswordResetToken</code> vào DB (có hạn)</li>
+<li>Gửi email chứa OTP qua <code>EmailService</code></li></ol>
+<h4>Reset Password:</h4>
+<ol><li>Client gửi <code>{email, otp, newPassword}</code></li>
+<li>Validate OTP: tồn tại + chưa hết hạn + chưa dùng</li>
+<li>Encode password mới bằng BCrypt → update DB</li></ol>`},
+
+                    {
+                        q: "Hệ thống phân quyền (RBAC) hoạt động thế nào?", a: `<ul>
+<li><code>UserEntity</code> có <code>@ManyToOne</code> với <code>RoleEntity</code> (EAGER fetch)</li>
+<li><code>PredefinedRole</code> enum định nghĩa roles mặc định</li>
+<li><code>@EnableMethodSecurity</code> cho phép <code>@PreAuthorize</code> ở method level</li>
+<li><code>CustomUserDetails</code> implement <code>UserDetails</code>, chứa <code>userId</code> + <code>authorities</code></li>
+<li>Controller dùng <code>@AuthenticationPrincipal CustomUserDetails</code> để lấy user hiện tại</li></ul>
+<pre><code>// URL-level
+.requestMatchers("/actuator/**").hasRole("ADMIN")
+// Method-level
+@PreAuthorize("hasRole('ADMIN')")
+public void deleteUser(...) { ... }</code></pre>`}
+                ]
+            },
+
+            {
+                title: "Database & ORM", icon: "🗄️", questions: [
+                    {
+                        q: "Tại sao dùng Flyway? Nó hoạt động như thế nào?", a: `<p>Flyway là <b>database migration tool</b> giúp version control cho schema DB.</p>
+<h4>Cách hoạt động:</h4>
+<ol><li>Migration files: <code>V{version}__{description}.sql</code></li>
+<li>Khi app start → check <code>flyway_schema_history</code></li>
+<li>So sánh version → chạy migrations chưa apply (theo thứ tự)</li>
+<li>Ghi lại version đã apply</li></ol>
+<h4>Lợi ích:</h4>
+<ul><li>Mọi môi trường (dev/staging/prod) có cùng schema</li>
+<li>Rollback dễ dàng, migration history rõ ràng</li>
+<li>Team collaboration không bị conflict schema</li></ul>`},
+
+                    {
+                        q: "Giải thích entity FabricEntity và các quan hệ?", a: `<p><code>FabricEntity</code> mô phỏng hệ thống quản lý vải kiểu Shopee:</p>
+<table><tr><th>Nhóm</th><th>Trường</th></tr>
+<tr><td>Identity</td><td><code>id</code>, <code>code</code>, <code>slug</code></td></tr>
+<tr><td>Info</td><td><code>name</code>, <code>description</code>, <code>material</code>, <code>color</code></td></tr>
+<tr><td>Classification</td><td><code>category</code>, <code>pattern</code>, <code>season</code>, <code>stretch</code> (enums)</td></tr>
+<tr><td>Pricing</td><td><code>pricePerMeter</code> (BigDecimal)</td></tr>
+<tr><td>Stats</td><td><code>viewCount</code>, <code>soldCount</code>, <code>ratingAvg</code></td></tr>
+<tr><td>Flags</td><td><code>isAvailable</code>, <code>isFeatured</code>, <code>isDeleted</code></td></tr></table>
+<h4>Quan hệ:</h4>
+<ul><li><code>@ManyToOne</code> → <code>UserEntity createdBy</code> (LAZY)</li>
+<li><code>@OneToMany</code> → <code>List&lt;FabricInventoryEntity&gt;</code> (cascade ALL)</li>
+<li><code>@OneToMany</code> → <code>List&lt;FabricHoldRequestEntity&gt;</code> (cascade ALL)</li></ul>
+<p><b>Design:</b> <code>@Builder.Default</code> cho giá trị mặc định, <code>@ToString(exclude=...)</code> tránh <code>LazyInitializationException</code>, soft delete.</p>`},
+
+                    {
+                        q: "Tại sao OrderEntity không dùng Lombok nhưng FabricEntity lại dùng?", a: `<p>Đây là <b>inconsistency</b> trong codebase — do phát triển theo thời gian:</p>
+<ul><li><code>OrderEntity</code>: getter/setter thủ công (157 dòng) — phong cách truyền thống</li>
+<li><code>FabricEntity</code>: <code>@Getter @Setter @Builder</code> — Lombok style</li></ul>
+<h4>Khuyến nghị:</h4>
+<ul><li>Thống nhất dùng Lombok để giảm boilerplate</li>
+<li><code>@Builder</code> với JPA cần kèm <code>@NoArgsConstructor</code> + <code>@AllArgsConstructor</code></li>
+<li><code>@ToString</code> exclude lazy relationships</li>
+<li><code>@EqualsAndHashCode</code> chỉ dùng với <code>id</code></li></ul>`},
+
+                    {
+                        q: "Tại sao dùng BigDecimal thay vì Double cho tiền tệ?", a: `<p>Tất cả field tiền tệ đều dùng <code>BigDecimal</code>:</p>
+<pre><code>@Column(precision = 14, scale = 2)
+private BigDecimal total = BigDecimal.ZERO;</code></pre>
+<h4>Lý do:</h4>
+<ul><li><code>Double</code> có lỗi <b>floating point</b>: <code>0.1 + 0.2 = 0.30000000000000004</code></li>
+<li><code>BigDecimal</code> với <code>precision=14, scale=2</code> chính xác 2 chữ số thập phân</li>
+<li>Dùng <code>RoundingMode.HALF_UP</code> đúng quy tắc kế toán</li></ul>`}
+                ]
+            },
+
+            {
+                title: "Frontend - React", icon: "⚛️", questions: [
+                    {
+                        q: "Frontend được tổ chức như thế nào?", a: `<pre><code>frontend/src/
+├── App.jsx          → Routing (257 dòng, 70+ routes)
+├── layout.jsx       → Layout wrapper
+├── components/      → Reusable components
+├── pages/           → 70 page components
+├── services/        → 27 API service files
+├── contexts/        → React Context (global state)
+├── hooks/           → Custom hooks
+├── utils/           → Utility functions
+└── constants/       → Constants & config</code></pre>
+<h4>Key patterns:</h4>
+<ul><li><b>Lazy Loading</b> — Tất cả pages dùng <code>React.lazy()</code></li>
+<li><b>Service Layer</b> — Tách API calls vào service files</li>
+<li><b>Error Boundary</b> — Catch React errors</li>
+<li><b>Role-based Routing</b> — Layout riêng cho Admin, Tailor, Customer</li></ul>`},
+
+                    {
+                        q: "Hệ thống routing phân quyền thế nào?", a: `<h4>1. Public Routes:</h4>
+<p><code>/login</code>, <code>/register</code>, <code>/products</code>, <code>/fabrics</code>, <code>/flash-sales</code>, <code>/promotions</code></p>
+<h4>2. Admin Routes (Layout):</h4>
+<p><code>/dashboard</code>, <code>/orders</code>, <code>/customers</code>, <code>/invoices</code>, <code>/fabric-inventory</code>, <code>/promotion-management</code></p>
+<h4>3. Customer Routes:</h4>
+<p><code>/customer/dashboard</code>, <code>/customer/orders</code>, <code>/customer/favorites</code>, <code>/fabric-cart</code></p>
+<h4>4. Tailor Routes (TailorLayout):</h4>
+<p><code>/tailor/dashboard</code>, <code>/tailor/orders</code>, <code>/tailor/schedule</code></p>`},
+
+                    {
+                        q: "Service layer ở frontend hoạt động ra sao?", a: `<p>27 service files tạo abstraction layer cho API calls:</p>
+<pre><code>// fabricService.js
+import api from './api';
+export const fabricService = {
+  getAll: (params) => api.get('/fabrics', { params }),
+  getById: (id) => api.get(\`/fabrics/\${id}\`),
+  create: (data) => api.post('/fabrics', data),
+};</code></pre>
+<p><b>Services chính:</b> <code>authService</code>, <code>fabricService</code>, <code>orderService</code>, <code>invoiceService</code>, <code>gamificationService</code>, <code>notificationService</code>, <code>flashSaleService</code>, <code>tryOnService</code></p>`}
+                ]
+            },
+
+            {
+                title: "Docker & DevOps", icon: "🐳", questions: [
+                    {
+                        q: "Giải thích Docker Compose và cách các service kết nối?", a: `<p>5 services trên cùng network <code>tailor-shop-network</code>:</p>
+<pre><code>Frontend (:80) → Backend (:8083) → MySQL (:3306)
+                                  → Redis (:6379)
+Frontend (:80) → Try-On (:8084)</code></pre>
+<h4>Dependencies:</h4>
+<ul><li>Backend chờ MySQL + Redis <b>healthy</b> mới start</li>
+<li>Frontend chờ Backend start</li></ul>
+<h4>Health Checks:</h4>
+<table><tr><th>Service</th><th>Check</th></tr>
+<tr><td>MySQL</td><td><code>mysqladmin ping</code></td></tr>
+<tr><td>Redis</td><td><code>redis-cli ping</code></td></tr>
+<tr><td>Backend</td><td><code>curl /api/v1/health</code></td></tr>
+<tr><td>Frontend</td><td><code>wget --spider /health</code></td></tr></table>
+<p><b>Đặc biệt:</b> Try-On có GPU reservation (NVIDIA), Backend dùng Docker DNS (<code>mysql:3306</code>).</p>`},
+
+                    {
+                        q: "Backend Dockerfile được cấu hình thế nào?", a: `<p>Dùng <b>multi-stage build</b>:</p>
+<pre><code># Stage 1: Build (Maven + JDK)
+FROM maven:3.9-eclipse-temurin-21 AS builder
+RUN mvn clean package -DskipTests
+
+# Stage 2: Runtime (chỉ JRE)
+FROM eclipse-temurin:21-jre
+COPY --from=builder /target/*.jar app.jar
+ENTRYPOINT ["java", "-jar", "app.jar"]</code></pre>
+<h4>Lợi ích:</h4>
+<ul><li>Image nhỏ hơn (chỉ JRE, không Maven/JDK)</li>
+<li>Build dependencies không trong production image</li>
+<li>Security: ít attack surface</li></ul>`},
+
+                    {
+                        q: "Dự án có bao nhiêu Docker Compose variants?", a: `<table><tr><th>File</th><th>Mục đích</th></tr>
+<tr><td><code>docker-compose.yml</code></td><td>Full development (5 services)</td></tr>
+<tr><td><code>docker-compose.local-db.yml</code></td><td>Chỉ MySQL + Redis (dev local)</td></tr>
+<tr><td><code>docker-compose.full.yml</code></td><td>Full stack + monitoring</td></tr>
+<tr><td><code>docker-compose.prod.yml</code></td><td>Production (tối ưu resources)</td></tr>
+<tr><td><code>docker-compose.cloudflare.yml</code></td><td>Thêm Cloudflare Tunnel</td></tr></table>`}
+                ]
+            },
+
+            {
+                title: "Business Domain Logic", icon: "💼", questions: [
+                    {
+                        q: "Flash Sale module hoạt động thế nào? Quản lý tồn kho ra sao?", a: `<p><code>FlashSaleEntity</code> quản lý với <b>3 trạng thái số lượng</b>:</p>
+<pre><code>totalQuantity = soldQuantity + reservedQuantity + availableQuantity</code></pre>
+<h4>Computed methods:</h4>
+<ul><li><code>getAvailableQuantity()</code> — total - sold - reserved</li>
+<li><code>getSoldPercentage()</code> — % đã bán (0-100)</li>
+<li><code>getCalculatedDiscountPercent()</code> — % giảm giá</li>
+<li><code>isActive()</code> — status ACTIVE + trong thời gian + còn hàng</li></ul>
+<h4>Database indexes tối ưu:</h4>
+<pre><code>@Index(name = "idx_flash_sale_status", columnList = "status")
+@Index(name = "idx_flash_sale_time", columnList = "start_time, end_time")
+@Index(name = "idx_flash_sale_fabric", columnList = "fabric_id")</code></pre>
+<p><b>Reservation pattern:</b> Thêm cart → tăng <code>reservedQuantity</code> → checkout → chuyển sang <code>soldQuantity</code> → timeout → giải phóng</p>`},
+
+                    {
+                        q: "Billing module xử lý thanh toán thế nào?", a: `<p>Hỗ trợ <b>multi-payment provider</b>:</p>
+<pre><code>enum PaymentProvider {
+  vnpay, momo, zalopay, mbbank, cod, international, qr, sandbox
+}</code></pre>
+<h4>Invoice Structure:</h4>
+<ul><li><code>InvoiceEntity</code> → <code>InvoiceItemEntity[]</code> + <code>PaymentTransactionEntity[]</code></li>
+<li>Các trường: <code>subtotal</code>, <code>taxAmount</code>, <code>discountAmount</code>, <code>total</code>, <code>paidAmount</code>, <code>dueAmount</code></li></ul>
+<p><b>Sandbox:</b> Có <code>SandboxPaymentController</code> riêng cho testing — mock payment page HTML.</p>`},
+
+                    {
+                        q: "Gamification module có gì đặc biệt?", a: `<ul><li>Challenges theo mùa (Tết, Valentine, hè...)</li>
+<li>Hệ thống tích điểm (points)</li>
+<li>Leaderboard</li>
+<li>Rewards khi hoàn thành challenge</li></ul>
+<p>Frontend: <code>ChallengesPage.jsx</code> (customer) + <code>ChallengeManagementPage.jsx</code> (admin)</p>`},
+
+                    {
+                        q: "Hệ thống Appointment hoạt động ra sao?", a: `<h4>Entities:</h4>
+<ul><li><code>AppointmentEntity</code> — Lịch hẹn (status, type, customer, tailor)</li>
+<li><code>WorkingSlotEntity</code> — Các slot thời gian làm việc</li></ul>
+<h4>DTOs phong phú:</h4>
+<ul><li><code>CustomerAppointmentRequest</code> — Customer tự đặt</li>
+<li><code>RescheduleRequest</code> — Đổi lịch</li>
+<li><code>CloseDateRequest</code> — Đóng ngày</li>
+<li><code>BulkWorkingSlotRequest</code> — Tạo slot hàng loạt</li>
+<li><code>AvailableSlotResponse</code> — Slot còn trống</li></ul>`}
+                ]
+            },
+
+            {
+                title: "Real-time Features", icon: "⚡", questions: [
+                    {
+                        q: "WebSocket được cấu hình và sử dụng thế nào?", a: `<pre><code>@EnableWebSocketMessageBroker
+public class WebSocketConfig {
+  configureMessageBroker(MessageBrokerRegistry config) {
+    config.enableSimpleBroker("/topic", "/queue");
+    config.setApplicationDestinationPrefixes("/app");
+    config.setUserDestinationPrefix("/user");
+  }
+  registerStompEndpoints(StompEndpointRegistry registry) {
+    registry.addEndpoint("/ws")
+        .setAllowedOrigins(origins)
+        .withSockJS();
+  }
+}</code></pre>
+<table><tr><th>Channel</th><th>Mục đích</th></tr>
+<tr><td><code>/topic/*</code></td><td>Broadcast tới tất cả</td></tr>
+<tr><td><code>/queue/*</code></td><td>User-specific messages</td></tr>
+<tr><td><code>/user/{id}/queue/*</code></td><td>Private channel</td></tr></table>`},
+
+                    {
+                        q: "Notification system hoạt động end-to-end thế nào?", a: `<h4>Backend:</h4>
+<p>Event → Listener tạo NotificationEntity → Lưu DB → Push WebSocket</p>
+<h4>REST API:</h4>
+<ul><li><code>GET /notifications</code> — Paginated (max 50/page)</li>
+<li><code>GET /notifications/unread-count</code> — Badge count</li>
+<li><code>PUT /notifications/{id}/read</code> — Đánh dấu đã đọc</li>
+<li><code>PUT /notifications/read-all</code> — Đánh dấu tất cả</li></ul>
+<h4>Frontend:</h4>
+<p><code>notificationService.js</code> gọi REST API + WebSocket subscribe <code>/user/queue/notifications</code></p>`}
+                ]
+            },
+
+            {
+                title: "Performance & Caching", icon: "🚀", questions: [
+                    {
+                        q: "Redis được sử dụng để làm gì?", a: `<h4>1. Caching:</h4>
+<p>JSON serialization với <code>Jackson2JsonRedisSerializer</code>, String keys + JSON values</p>
+<h4>2. Rate Limiting:</h4>
+<p><code>RateLimitFilter</code> + <code>RateLimitProperties</code>, giới hạn request/giây, dùng Redis INCR + TTL</p>
+<h4>3. Login Attempt Tracking:</h4>
+<p><code>LoginAttemptService</code> đếm lần đăng nhập sai → lock account</p>
+<p><b>Đặc biệt:</b> <code>@ConditionalOnProperty(name = "spring.data.redis.host", matchIfMissing = false)</code> → Redis là <b>optional</b>, app vẫn chạy khi không có Redis.</p>`},
+
+                    {
+                        q: "File storage xử lý thế nào? Tại sao có Mock S3?", a: `<h4>Production — AWS S3:</h4>
+<p><code>S3StorageService</code>, <code>S3PreSignedUrlService</code>, <code>ImageProcessingService</code> (Thumbnailator)</p>
+<h4>Development — Mock S3:</h4>
+<p><code>MockS3StorageService</code> lưu file local vào <code>./uploads/</code></p>
+<p><b>Lý do:</b> Developer không cần AWS account khi dev local.</p>
+<p><b>Pattern:</b> Strategy pattern — interface chung, swap implementation dựa trên profile/config.</p>`},
+
+                    {
+                        q: "Prometheus và Grafana được tích hợp thế nào?", a: `<ul><li><code>spring-boot-starter-actuator</code> + <code>micrometer-registry-prometheus</code></li>
+<li>Endpoint <code>/actuator/prometheus</code> → permitAll</li>
+<li>Prometheus scrape metrics từ backend</li>
+<li>Grafana dashboard visualize: response times, JVM, DB pool, business metrics</li></ul>`}
+                ]
+            },
+
+            {
+                title: "Testing & Quality", icon: "🧪", questions: [
+                    {
+                        q: "Dự án có những loại test nào?", a: `<h4>Backend:</h4>
+<ul><li><code>spring-boot-starter-test</code> — JUnit 5, Mockito, AssertJ</li>
+<li><code>spring-security-test</code> — Test security config</li></ul>
+<h4>Frontend:</h4>
+<ul><li><b>Playwright</b> — E2E browser testing</li>
+<li><code>playwright.config.js</code>, <code>tests/</code> directory</li>
+<li>HTML reports trong <code>playwright-report/</code></li></ul>`},
+
+                    {
+                        q: "Async event handling hoạt động thế nào?", a: `<p>Modules <code>order</code> và <code>flashsale</code> có <code>event/</code> + <code>listener/</code>:</p>
+<pre><code>// 1. Define event
+class OrderStatusChangedEvent { orderId, oldStatus, newStatus }
+
+// 2. Publish
+applicationEventPublisher.publishEvent(new OrderStatusChangedEvent(...));
+
+// 3. Listen (async)
+@Async @EventListener
+void handleOrderStatusChanged(OrderStatusChangedEvent e) {
+    // Gửi notification, email, update stats
+}</code></pre>
+<p><b>Lợi ích:</b> Decouple business logic khỏi side effects, không block main thread.</p>`},
+
+                    {
+                        q: "Data seeding được thực hiện thế nào?", a: `<ol><li><b>Flyway Migrations</b> — SQL scripts cho schema + initial data</li>
+<li><b>DataInitializer</b> (6KB) — Java: tạo roles, admin user, config</li>
+<li><b>ProductDataSeeder</b> (18KB) — JavaFaker tạo data test phong phú</li>
+<li><b>seed_image_assets</b> — Script riêng (PowerShell + Python) seed ảnh vào DB</li></ol>`}
+                ]
+            },
+
+            {
+                title: "Câu Hỏi Tình Huống", icon: "🎯", questions: [
+                    {
+                        q: "Flash Sale có 1000 người cùng mua, xử lý race condition thế nào?", a: `<p>Hiện tại <code>FlashSaleEntity</code> <b>chưa có</b> optimistic/pessimistic locking rõ ràng.</p>
+<h4>Giải pháp đề xuất:</h4>
+<ol><li><b>Database-level:</b> Thêm <code>@Version</code> cho optimistic locking</li>
+<li><b>Redis-level:</b> Dùng Redis DECR atomic cho availableQuantity</li>
+<li><b>Application-level:</b> <code>@Transactional</code> + <code>SELECT ... FOR UPDATE</code></li></ol>
+<pre><code>// Optimistic locking
+@Version private Long version;
+
+// Pessimistic locking
+@Lock(LockModeType.PESSIMISTIC_WRITE)
+@Query("SELECT f FROM FlashSaleEntity f WHERE f.id = :id")
+Optional&lt;FlashSaleEntity&gt; findByIdWithLock(@Param("id") Long id);</code></pre>`},
+
+                    {
+                        q: "JWT token bị đánh cắp, xử lý thế nào?", a: `<ol><li><b>JTI blacklist với Redis:</b> Lưu JTI vào Redis với TTL = remaining expiry</li>
+<li><b>Check blacklist trong JwtAuthFilter</b> trước khi validate</li>
+<li><b>Short-lived access token</b> (30 min) giảm damage window</li>
+<li><b>Refresh token rotation:</b> Khi refresh → invalidate old token</li></ol>
+<pre><code>// JwtAuthFilter thêm logic
+if (redisTemplate.hasKey("blacklist:" + jti)) {
+    filterChain.doFilter(request, response);
+    return;
+}</code></pre>`},
+
+                    {
+                        q: "Scale cho 10,000 concurrent users, đề xuất gì?", a: `<ol><li><b>Horizontal scaling:</b> Multiple backend instances + load balancer</li>
+<li><b>Redis Cluster:</b> Chuyển từ single Redis sang cluster</li>
+<li><b>DB read replicas:</b> MySQL master-slave (đọc/ghi tách biệt)</li>
+<li><b>WebSocket broker:</b> Chuyển in-memory → Redis/RabbitMQ broker</li>
+<li><b>CDN:</b> Frontend static assets qua CDN</li>
+<li><b>Connection pool:</b> Tune HikariCP</li>
+<li><b>API Gateway:</b> Centralize rate limiting, auth, routing</li></ol>`},
+
+                    {
+                        q: "Nếu được cải thiện dự án, bạn sẽ làm gì?", a: `<ol><li>Thống nhất code style — Lombok cho tất cả entity</li>
+<li>Tăng Unit Test coverage</li>
+<li>API Versioning strategy cho v2</li>
+<li>Pagination Response chuẩn hóa</li>
+<li>Cache policy rõ ràng cho Redis</li>
+<li>Structured logging (MDC + TraceId)</li>
+<li>CI/CD Pipeline mở rộng</li>
+<li>Rate Limiting per endpoint</li>
+<li>WebSocket Authentication (hiện <code>/ws/**</code> permitAll)</li></ol>`}
+                ]
+            },
+
+            {
+                title: "Flash Sale — Thuật Toán Mua Hàng", icon: "⚡", questions: [
+                    {
+                        q: "Giải thích chi tiết thuật toán purchase trong FlashSaleServiceImpl? Tại sao dùng SERIALIZABLE isolation?", a: `<p>Method <code>purchase()</code> sử dụng <b>9 bước</b> với <code>@Transactional(isolation = Isolation.SERIALIZABLE)</code>:</p>
+<ol><li><b>LOCK & Load</b> — <code>findByIdForUpdate()</code> dùng <code>SELECT ... FOR UPDATE</code> (pessimistic lock)</li>
+<li><b>Validate status</b> — Kiểm tra CANCELLED, ENDED, SOLD_OUT, thời gian bắt đầu/kết thúc</li>
+<li><b>Validate minimum</b> — So sánh <code>quantity</code> với <code>sale.getMinPurchase()</code></li>
+<li><b>Check stock</b> — <code>getAvailableQuantity()</code> = total - sold - reserved</li>
+<li><b>Check user limit</b> — <code>sumQuantityByUserAndFlashSale()</code> so với <code>maxPerUser</code></li>
+<li><b>Create reservation</b> — TTL 10 phút (<code>RESERVATION_MINUTES</code>)</li>
+<li><b>Update reserved quantity</b> — <code>reservedQuantity += quantity</code></li>
+<li><b>Create order</b> — Status PENDING, payment deadline 10 phút</li>
+<li><b>Return result</b> — Gồm orderId, savedAmount, remainingStock, userRemainingLimit</li></ol>
+<pre><code>@Transactional(isolation = Isolation.SERIALIZABLE)
+public FlashSalePurchaseResult purchase(Long flashSaleId, ...) {
+    // 1. CRITICAL: Pessimistic lock prevents race condition
+    FlashSaleEntity sale = flashSaleRepository.findByIdForUpdate(flashSaleId);
+    // ... 9 steps ...
+}</code></pre>
+<p><b>Tại sao SERIALIZABLE?</b> Đây là mức isolation cao nhất, đảm bảo <b>phantom reads</b> và <b>dirty reads</b> không xảy ra khi hàng trăm user cùng mua Flash Sale.</p>`},
+
+                    {
+                        q: "Reservation Pattern trong Flash Sale hoạt động thế nào? Có mấy trạng thái?", a: `<p>Flash Sale sử dụng <b>Reservation Pattern</b> để giữ hàng tạm thời trước khi thanh toán:</p>
+<table><tr><th>Status</th><th>Ý nghĩa</th><th>Chuyển sang</th></tr>
+<tr><td><code>ACTIVE</code></td><td>Đang giữ hàng (10 phút)</td><td>CONVERTED / EXPIRED / CANCELLED</td></tr>
+<tr><td><code>CONVERTED</code></td><td>Đã thanh toán thành công</td><td>— (final)</td></tr>
+<tr><td><code>EXPIRED</code></td><td>Hết thời gian giữ hàng</td><td>— (final)</td></tr>
+<tr><td><code>CANCELLED</code></td><td>User hủy đơn</td><td>— (final)</td></tr></table>
+<h4>Luồng hoạt động:</h4>
+<pre><code>Purchase → Reservation(ACTIVE) + reservedQty↑
+  ├─ confirmPayment() → Reservation(CONVERTED) + soldQty↑ + reservedQty↓
+  ├─ cancelOrder()    → Reservation(CANCELLED) + reservedQty↓
+  └─ timeout(10min)   → Reservation(EXPIRED) + reservedQty↓ (scheduled)</code></pre>
+<p><b>Key insight:</b> Khi reservation expire, <code>@Scheduled(fixedRate = 30000)</code> sẽ tự động giải phóng stock mỗi 30 giây.</p>`},
+
+                    {
+                        q: "Flash Sale có những Scheduled Tasks nào? Tại sao cần chúng?", a: `<p><code>FlashSaleServiceImpl</code> có <b>3 scheduled tasks</b>:</p>
+<table><tr><th>Task</th><th>Interval</th><th>Chức năng</th></tr>
+<tr><td><code>updateFlashSaleStatuses()</code></td><td>60s</td><td>Activate SCHEDULED → ACTIVE khi đến giờ; End ACTIVE → ENDED khi hết giờ</td></tr>
+<tr><td><code>releaseExpiredReservations()</code></td><td>30s</td><td>Giải phóng ACTIVE reservations đã hết hạn → cập nhật reservedQuantity</td></tr>
+<tr><td><code>expirePendingOrders()</code></td><td>60s</td><td>Chuyển PENDING orders quá hạn thanh toán → EXPIRED</td></tr></table>
+<p><b>Lý do cần scheduled tasks:</b></p>
+<ul><li>Không thể dựa hoàn toàn vào user action (user có thể abandon)</li>
+<li>Stock phải được giải phóng tự động để user khác mua</li>
+<li>Flash Sale status phải chuyển đúng thời gian mà không cần admin trigger</li></ul>`},
+
+                    {
+                        q: "Khi user thanh toán Flash Sale (confirmPayment), các bước xử lý gì?", a: `<p>Method <code>confirmPayment()</code> thực hiện chuyển đổi từ reservation sang sold:</p>
+<ol><li><b>Validate order</b> — Phải ở trạng thái PENDING và chưa hết hạn (<code>order.isExpired()</code>)</li>
+<li><b>Convert reservation</b> — <code>ACTIVE → CONVERTED</code>, ghi <code>convertedAt</code></li>
+<li><b>Update flash sale quantities</b>:
+<pre><code>reservedQuantity -= order.quantity
+soldQuantity += order.quantity
+// Check sold out
+if (availableQuantity <= 0) → status = SOLD_OUT</code></pre></li>
+<li><b>Update order</b> — <code>PENDING → PAID</code>, ghi <code>paymentMethod</code> và <code>paidAt</code></li></ol>
+<p><b>Atomic operation:</b> Tất cả trong cùng 1 <code>@Transactional</code> — nếu bất kỳ bước nào fail, toàn bộ rollback.</p>`}
+                ]
+            },
+
+            {
+                title: "Rate Limiting & Security Audit", icon: "🛡️", questions: [
+                    {
+                        q: "RateLimitFilter hoạt động thế nào? Xử lý ra sao khi Redis down?", a: `<p><code>RateLimitFilter</code> extends <code>OncePerRequestFilter</code> với Redis sliding window:</p>
+<pre><code>// Algorithm: Redis INCR + TTL
+String key = "rate_limit:" + clientIp;
+Long count = redis.opsForValue().increment(key);
+if (count == 1) redis.expire(key, Duration.ofMinutes(1));
+if (count > requestsPerMinute) → 429 Too Many Requests</code></pre>
+<h4>Smart features:</h4>
+<ul><li><b>IP whitelist</b> — Skip rate limit cho trusted IPs</li>
+<li><b>Proxy-aware</b> — Đọc <code>X-Forwarded-For</code> rồi <code>X-Real-IP</code> rồi <code>getRemoteAddr()</code></li>
+<li><b>API-only</b> — Chỉ check requests bắt đầu bằng <code>/api/</code></li>
+<li><b>Response headers</b> — <code>X-RateLimit-Limit</code> và <code>X-RateLimit-Remaining</code></li>
+<li><b>Conditional bean</b> — <code>@ConditionalOnProperty(name = "rate-limit.enabled")</code></li></ul>
+<h4>Graceful degradation khi Redis down:</h4>
+<pre><code>catch (Exception e) {
+    // Redis down → ALLOW request but log error
+    log.error("Rate limiting error (Redis may be down): {}", e.getMessage());
+    filterChain.doFilter(request, response);
+}</code></pre>
+<p><b>Design decision:</b> Prefer availability over protection — Service vẫn chạy khi Redis unavailable.</p>`},
+
+                    {
+                        q: "SecurityAuditLogger ghi log những sự kiện gì? Tại sao cần format SIEM?", a: `<p><code>SecurityAuditLogger</code> là component chuyên track <b>12 loại security event</b>:</p>
+<table><tr><th>Nhóm</th><th>Events</th></tr>
+<tr><td>Authentication</td><td>LOGIN_SUCCESS, LOGIN_FAILURE, ACCOUNT_LOCKOUT, LOGOUT</td></tr>
+<tr><td>Token</td><td>TOKEN_REFRESH, TOKEN_REVOKED, INVALID_TOKEN</td></tr>
+<tr><td>Password</td><td>PASSWORD_CHANGE, PASSWORD_RESET_REQUEST, PASSWORD_RESET_SUCCESS</td></tr>
+<tr><td>Authorization</td><td>UNAUTHORIZED_ACCESS, ROLE_CHANGE</td></tr>
+<tr><td>Account</td><td>USER_REGISTRATION, ACCOUNT_DEACTIVATION</td></tr></table>
+<h4>Log format (SIEM-compatible):</h4>
+<pre><code>SECURITY_AUDIT | EVENT=LOGIN_FAILURE | user=admin | ip=192.168.1.1 | reason=bad_credentials | timestamp=2026-02-25T10:30:00Z</code></pre>
+<h4>Privacy & Security:</h4>
+<ul><li><b>Email masking</b> — <code>gi***@gmail.com</code> (show 2 chars + domain)</li>
+<li><b>Log injection prevention</b> — <code>sanitize()</code> removes newlines, limits to 200 chars</li></ul>
+<p><b>Tại sao SIEM format?</b> Structured key=value pairs giúp SIEM tools (Splunk, ELK) parse và tạo alert tự động.</p>`},
+
+                    {
+                        q: "ErrorCode enum được thiết kế thế nào? Lợi ích so với hardcode?", a: `<p><code>ErrorCode</code> là enum kết hợp <b>3 thông tin</b>: error code, message, HTTP status:</p>
+<pre><code>public enum ErrorCode {
+    UNAUTHENTICATED(401, "You need to log in...", HttpStatus.UNAUTHORIZED),
+    UNAUTHORIZED(403, "You do not have permission.", HttpStatus.FORBIDDEN),
+    EXPIRED_TOKEN(401, "Token expired.", HttpStatus.UNAUTHORIZED),
+    USER_NOT_FOUND(404, "User not found", HttpStatus.NOT_FOUND),
+    USER_DELETED(410, "User has been deleted", HttpStatus.GONE),
+    USERNAME_EXISTS(409, "Username already exists", HttpStatus.CONFLICT),
+    // ...
+}</code></pre>
+<h4>Lợi ích:</h4>
+<ul><li><b>Single source of truth</b> — Tất cả error codes 1 nơi</li>
+<li><b>Type-safe</b> — Compiler bắt lỗi typo, IDE autocomplete</li>
+<li><b>HTTP mapping tự động</b> — <code>BusinessException</code> tự lấy <code>errorCode.getHttpStatus()</code></li>
+<li><b>I18n ready</b> — Dễ dàng thêm multi-language messages</li></ul>`},
+
+                    {
+                        q: "CustomUserDetails chứa gì? Tại sao cần custom thay vì dùng mặc định?", a: `<p><code>CustomUserDetails</code> implements <code>UserDetails</code> để bridge giữa <code>UserEntity</code> và Spring Security:</p>
+<pre><code>public class CustomUserDetails implements UserDetails {
+    private final UserEntity user;
+
+    public Collection&lt;? extends GrantedAuthority&gt; getAuthorities() {
+        String roleCode = user.getRole().getCode(); // "admin"
+        return List.of(new SimpleGrantedAuthority("ROLE_" + roleCode.toUpperCase()));
+        // → "ROLE_ADMIN"
+    }
+
+    public boolean isEnabled() {
+        return user.getStatus() == UserStatus.active && !user.getIsDeleted();
+    }
+
+    public Long getId() { return user.getId(); } // Custom method
+}</code></pre>
+<h4>Tại sao cần custom:</h4>
+<ul><li><b>userId access</b> — <code>getId()</code> cho phép lấy user ID từ <code>@AuthenticationPrincipal</code></li>
+<li><b>Role prefix</b> — Tự động thêm <code>ROLE_</code> prefix (Spring Security convention)</li>
+<li><b>Account status</b> — <code>isEnabled()</code> check cả <code>status == active</code> và <code>isDeleted == false</code></li>
+<li><b>Flexible mapping</b> — Map từ <code>RoleEntity.code</code> thay vì hardcode</li></ul>`}
+                ]
+            },
+
+            {
+                title: "Cart & Inventory Management", icon: "🛒", questions: [
+                    {
+                        q: "Cart module hỗ trợ nhiều loại sản phẩm thế nào? Extensible ra sao?", a: `<p><code>CartServiceImpl</code> thiết kế theo <b>Strategy pattern</b> với <code>CartItemType</code> enum:</p>
+<pre><code>enum CartItemType { FABRIC, PRODUCT, SERVICE }
+
+// Validation dispatch by type
+private void validateItem(CartItemType type, Long itemId, BigDecimal qty) {
+    switch (type) {
+        case FABRIC:  validateFabricItem(itemId, qty); break;
+        case PRODUCT: // TODO: ProductService
+        case SERVICE: // TODO: ServiceService
+    }
+}</code></pre>
+<h4>Key behaviors:</h4>
+<ul><li><b>Merge duplicates</b> — Nếu cùng item đã có trong cart → cộng dồn quantity</li>
+<li><b>Auto-remove</b> — Update quantity ≤ 0 → xóa khỏi cart</li>
+<li><b>Inventory check</b> — <code>sumAvailableQuantityByFabricId()</code> kiểm tra tồn kho real-time</li>
+<li><b>Enrichment</b> — <code>toCartItemResponse()</code> tự load tên, ảnh, giá từ entity gốc</li></ul>
+<p><b>Extensibility:</b> Thêm loại sản phẩm mới chỉ cần: thêm enum value + thêm case trong switch + implement validate/enrich method.</p>`},
+
+                    {
+                        q: "CartSummaryResponse tính toán thế nào? Có xử lý edge case gì?", a: `<p>Cart summary tính tổng với các safety checks:</p>
+<pre><code>CartSummaryResponse {
+    items: CartItemResponse[],
+    itemCount: int,
+    subtotal: BigDecimal,      // Sum of (price × quantity)
+    discountAmount: BigDecimal, // ZERO (calculated at checkout)
+    shippingFee: BigDecimal,    // ZERO (calculated at checkout)
+    total: BigDecimal,          // subtotal - discount + shipping
+    hasAvailableItems: boolean  // ALL items available + in stock?
+}</code></pre>
+<h4>Edge cases xử lý:</h4>
+<ul><li><b>Null subtotal filter</b> — <code>.filter(sub -> sub != null)</code> trước khi sum</li>
+<li><b>Deleted items</b> — <code>.filter(f -> Boolean.FALSE.equals(f.getIsDeleted()))</code></li>
+<li><b>Stock validation</b> — Check <code>quantity <= availableQuantity</code> cho từng item</li>
+<li><b>Lazy discount/shipping</b> — Set ZERO ở cart, chỉ tính ở checkout step</li></ul>`},
+
+                    {
+                        q: "Fabric Inventory quản lý tồn kho theo location thế nào?", a: `<p><code>FabricInventoryEntity</code> track tồn kho <b>theo từng location</b>:</p>
+<pre><code>FabricInventory {
+    fabric: FabricEntity,
+    location: String,           // "Kho HCM", "Kho HN"
+    quantity: BigDecimal,       // Tổng số lượng
+    reservedQuantity: BigDecimal, // Đã giữ (hold requests)
+    minStockLevel: BigDecimal,  // Ngưỡng cảnh báo
+    maxStockLevel: BigDecimal,  // Tối đa
+    lastRestockedAt: OffsetDateTime
+}</code></pre>
+<h4>Computed values:</h4>
+<ul><li><code>availableQuantity</code> = quantity - reservedQuantity</li>
+<li><code>isLowStock</code> = availableQuantity < minStockLevel</li></ul>
+<h4>FabricService tính tổng:</h4>
+<pre><code>// Tổng tất cả locations
+BigDecimal totalQty = fabricInventoryRepo.calculateTotalQuantityByFabricId(id);
+BigDecimal totalReserved = fabricInventoryRepo.calculateTotalReservedQuantityByFabricId(id);
+BigDecimal available = totalQty.subtract(totalReserved);</code></pre>`},
+
+                    {
+                        q: "Hold Request cho Fabric hoạt động thế nào? Có mấy loại?", a: `<p><code>FabricHoldRequest</code> có <b>2 loại</b>:</p>
+<table><tr><th>Type</th><th>Mục đích</th><th>Yêu cầu</th></tr>
+<tr><td><code>HOLD</code></td><td>Giữ vải (reserve quantity)</td><td>quantity > 0, kiểm tra stock</td></tr>
+<tr><td><code>VISIT</code></td><td>Đặt lịch xem vải tại shop</td><td>requestedDate (không được quá khứ)</td></tr></table>
+<h4>Status flow:</h4>
+<pre><code>PENDING → APPROVED → COMPLETED
+       → REJECTED
+       → CANCELLED (by user)</code></pre>
+<h4>Khi APPROVED loại HOLD:</h4>
+<p>Tự động tăng <code>reservedQuantity</code> trong inventory. Khi user CANCEL request đã approved → giảm <code>reservedQuantity</code>.</p>
+<h4>Security:</h4>
+<ul><li>Chỉ owner mới cancel được (<code>entity.getUser().getId().equals(userId)</code>)</li>
+<li>Không thể update COMPLETED hoặc CANCELLED requests</li>
+<li>HOLD auto-expire sau 7 ngày nếu không set <code>expiryDate</code></li></ul>`}
+                ]
+            },
+
+            {
+                title: "Soft Delete & Data Patterns", icon: "🔄", questions: [
+                    {
+                        q: "Soft delete trong Fabric được xử lý thế nào? Tại sao cần giải phóng unique constraint?", a: `<p><code>FabricServiceImpl.delete()</code> không xóa thật mà <b>đánh dấu + rename</b>:</p>
+<pre><code>public void delete(Long id) {
+    entity.setIsDeleted(true);
+    // Giải phóng unique constraints (code, slug)
+    long timestamp = System.currentTimeMillis();
+    entity.setCode(entity.getCode() + "_DEL_" + timestamp);
+    entity.setSlug(entity.getSlug() + "_DEL_" + timestamp);
+    fabricRepository.save(entity);
+}</code></pre>
+<h4>Tại sao cần rename?</h4>
+<p>Nếu chỉ set <code>isDeleted=true</code> mà giữ nguyên <code>code</code>, user sẽ không thể tạo Fabric mới với code cũ do <b>unique constraint violation</b>.</p>
+<h4>Pattern áp dụng tương tự khi create/update:</h4>
+<pre><code>// Khi tạo fabric mới, nếu code đã tồn tại ở bản đã xóa
+fabricRepository.findByCode(request.getCode()).ifPresent(existing -> {
+    if (existing.getIsDeleted()) {
+        // Rename bản cũ để giải phóng code
+        existing.setCode(existing.getCode() + "_DEL_" + timestamp);
+    }
+});</code></pre>`},
+
+                    {
+                        q: "Slug generation cho SEO-friendly URLs hoạt động thế nào?", a: `<p><code>FabricServiceImpl</code> tự động tạo slug từ tên:</p>
+<pre><code>private String generateSlug(String name) {
+    return name.toLowerCase()
+        .replaceAll("[^a-z0-9]+", "-")  // Non-alphanumeric → dash
+        .replaceAll("^-|-$", "");         // Trim leading/trailing dashes
+}
+// "Vải Lụa Cao Cấp" → "v-i-l-a-cao-c-p" (note: Vietnamese chars removed)</code></pre>
+<h4>Collision handling:</h4>
+<pre><code>if (fabricRepository.existsBySlugAndIsDeletedFalse(slug)) {
+    slug = slug + "-" + System.currentTimeMillis();
+    // "vai-lua" → "vai-lua-1708844400000"
+}</code></pre>
+<h4>Lookup by slug:</h4>
+<p><code>/api/v1/fabrics/slug/{slug}</code> → <code>fabricRepository.findBySlugAndIsDeletedFalse(slug)</code> cho SEO-friendly URLs.</p>
+<p><b>Limitation:</b> Regex <code>[^a-z0-9]</code> xóa luôn ký tự tiếng Việt. Cải thiện: dùng thư viện Slugify hỗ trợ Unicode.</p>`},
+
+                    {
+                        q: "TraceIdUtil dùng để làm gì? Tại sao quan trọng trong production?", a: `<p><code>TraceIdUtil</code> tạo unique ID cho mỗi request để <b>trace xuyên suốt hệ thống</b>:</p>
+<pre><code>// Mọi log entry đều có traceId
+log.info("[TraceId: {}] Fabric created: id={}, code={}",
+    TraceIdUtil.getTraceId(), entity.getId(), entity.getCode());
+
+// Mọi error response đều có traceId
+{ "success": false, "traceId": "abc-123-def", "error": {...} }</code></pre>
+<h4>Tại sao quan trọng:</h4>
+<ul><li><b>Debug production</b> — User báo lỗi → search log bằng traceId → tìm ngay nguyên nhân</li>
+<li><b>Correlation</b> — 1 request có thể gọi nhiều service → cùng traceId</li>
+<li><b>Performance analysis</b> — Track thời gian xử lý từng bước</li>
+<li><b>Audit trail</b> — Ai làm gì, lúc nào, kết quả gì</li></ul>`},
+
+                    {
+                        q: "Promo Code integration trong Fabric checkout thế nào?", a: `<p><code>FabricServiceImpl.applyPromoCode()</code> kết nối Fabric module với Promotion module:</p>
+<ol><li><b>Validate fabric</b> — Tồn tại, available, đủ stock</li>
+<li><b>Tính subtotal</b> — <code>pricePerMeter × quantity</code></li>
+<li><b>Map category</b> — Convert <code>FabricCategory</code> enum → String cho promotion</li>
+<li><b>Call PromotionService</b> — Với <code>ApplyPromoCodeRequest { code, orderAmount, productIds, categoryIds }</code></li>
+<li><b>Build response</b> — <code>FabricOrderResponse { subtotal, discountAmount, finalAmount, promotionName }</code></li></ol>
+<p><b>Cross-module communication:</b> Fabric module <i>không biết</i> logic promotion — chỉ gọi <code>PromotionService</code> interface. Đây là ví dụ tốt của <b>DDD bounded context separation</b>.</p>`}
+                ]
+            },
+
+            {
+                title: "Câu Hỏi Nâng Cao", icon: "🎓", questions: [
+                    {
+                        q: "So sánh Pessimistic Locking vs Optimistic Locking. Dự án dùng cái nào và tại sao?", a: `<table><tr><th>Tiêu chí</th><th>Pessimistic Locking</th><th>Optimistic Locking</th></tr>
+<tr><td>Cơ chế</td><td><code>SELECT ... FOR UPDATE</code></td><td><code>@Version</code> column check</td></tr>
+<tr><td>Lock timing</td><td>Lock ngay khi đọc</td><td>Check version khi ghi</td></tr>
+<tr><td>Throughput</td><td>Thấp (block concurrent reads)</td><td>Cao (no blocking)</td></tr>
+<tr><td>Conflict handling</td><td>Prevent conflicts</td><td>Detect + retry</td></tr>
+<tr><td>Best for</td><td>High contention (flash sale)</td><td>Low contention (general CRUD)</td></tr></table>
+<p><b>Dự án sử dụng:</b></p>
+<ul><li><b>Flash Sale</b> — Pessimistic locking (<code>findByIdForUpdate()</code>) vì high contention, mỗi millisecond đều quan trọng</li>
+<li><b>General entities</b> — Chưa có locking rõ ràng (potential improvement: thêm <code>@Version</code>)</li></ul>
+<p><b>Trade-off:</b> Flash Sale chọn đúng vì hàng trăm user cùng mua 1 sản phẩm → pessimistic lock đảm bảo data integrity, dù giảm throughput.</p>`},
+
+                    {
+                        q: "@Transactional(readOnly = true) có tác dụng gì? Ảnh hưởng hiệu suất ra sao?", a: `<p>Dự án sử dụng class-level <code>@Transactional(readOnly = true)</code> trên <code>FlashSaleServiceImpl</code>:</p>
+<pre><code>@Transactional(readOnly = true) // Class-level default
+public class FlashSaleServiceImpl {
+    // Queries inherit readOnly = true
+    public List&lt;FlashSaleResponse&gt; getActiveSales() { ... }
+
+    @Transactional // Override: readOnly = false cho writes
+    public FlashSalePurchaseResult purchase() { ... }
+
+    @Transactional(isolation = Isolation.SERIALIZABLE) // Override: custom isolation
+    public FlashSalePurchaseResult purchase() { ... }
+}</code></pre>
+<h4>Tác dụng readOnly = true:</h4>
+<ul><li><b>Hibernate optimization</b> — Skip dirty checking, no flush needed</li>
+<li><b>DB optimization</b> — MySQL có thể route tới read replica</li>
+<li><b>Connection pool</b> — Có thể dùng connection pool riêng cho reads</li>
+<li><b>Safety</b> — Prevent accidental writes trong query methods</li></ul>`},
+
+                    {
+                        q: "Dự án có N+1 query problem ở đâu? Cách khắc phục?", a: `<h4>Điểm có thể gây N+1:</h4>
+<ol><li><b>FlashSaleServiceImpl.toResponse()</b> — Mỗi sale gọi <code>orderRepository.countByFlashSaleIdAndStatus()</code> → N+1 khi list sales</li>
+<li><b>CartServiceImpl.toCartItemResponse()</b> — Mỗi cart item gọi <code>fabricRepository.findById()</code> + <code>fabricInventoryRepository.sumAvailableQuantityByFabricId()</code></li>
+<li><b>FabricServiceImpl.toResponse()</b> — Mỗi fabric gọi 3 inventory queries</li></ol>
+<h4>Cách khắc phục:</h4>
+<ul><li><b>@EntityGraph</b> — Fetch related entities trong 1 query</li>
+<li><b>@BatchSize</b> — Batch lazy loading (VD: 20 records/batch)</li>
+<li><b>JOIN FETCH</b> — Custom JPQL với LEFT JOIN FETCH</li>
+<li><b>DTO Projection</b> — <code>@Query</code> trực tiếp return DTO, skip entity mapping</li></ul>
+<pre><code>// Thay vì N+1:
+@Query("SELECT new FlashSaleResponse(s, COUNT(o)) FROM FlashSaleEntity s LEFT JOIN s.orders o GROUP BY s")
+List&lt;FlashSaleResponse&gt; findAllWithOrderCount();</code></pre>`},
+
+                    {
+                        q: "Nếu phải triển khai WebSocket Authentication, bạn sẽ làm thế nào?", a: `<p>Hiện tại <code>/ws/**</code> là <code>permitAll</code> — security risk. Cách triển khai:</p>
+<h4>Option 1: Token qua query parameter</h4>
+<pre><code>// Frontend
+const socket = new SockJS('/ws?token=' + accessToken);
+
+// Backend: HandshakeInterceptor
+public class JwtHandshakeInterceptor implements HandshakeInterceptor {
+    public boolean beforeHandshake(ServerHttpRequest request, ...) {
+        String token = extractTokenFromQuery(request);
+        if (jwtService.isTokenValid(token)) {
+            attributes.put("userId", jwtService.extractUserId(token));
+            return true;
+        }
+        return false; // Reject connection
+    }
+}</code></pre>
+<h4>Option 2: STOMP Header Authentication</h4>
+<pre><code>// ChannelInterceptor
+public class StompAuthInterceptor implements ChannelInterceptor {
+    public Message&lt;?&gt; preSend(Message&lt;?&gt; message, ...) {
+        StompHeaderAccessor accessor = StompHeaderAccessor.wrap(message);
+        if (StompCommand.CONNECT.equals(accessor.getCommand())) {
+            String token = accessor.getFirstNativeHeader("Authorization");
+            // Validate + set user principal
+        }
+    }
+}</code></pre>
+<p><b>Recommendation:</b> Option 2 tốt hơn vì token không xuất hiện trong URL (logs, browser history).</p>`}
+                ]
+            }
+        ];
+
+        // Render
+        let qNum = 0;
+        const content = document.getElementById('content');
+        const tocGrid = document.getElementById('tocGrid');
+
+        DATA.forEach((section, si) => {
+            const secId = 'sec-' + si;
+            tocGrid.innerHTML += `<a href="#${secId}">${section.icon} ${section.title} <span class="count">(${section.questions.length})</span></a>`;
+
+            let html = `<div class="section" id="${secId}"><h2 class="section-title"><span class="section-icon">${section.icon}</span>${section.title}</h2>`;
+            section.questions.forEach(q => {
+                qNum++;
+                html += `<div class="qa" id="q${qNum}">
+            <div class="qa-header" onclick="this.parentElement.classList.toggle('open')">
+                <div class="qa-num">${qNum}</div>
+                <div class="qa-question">${q.q}</div>
+                <div class="qa-arrow">▼</div>
+            </div>
+            <div class="qa-body"><div class="qa-answer">${q.a}</div></div>
+        </div>`;
+            });
+            html += '</div>';
+            content.innerHTML += html;
+        });
+
+        function toggleAll(open) {
+            document.querySelectorAll('.qa').forEach(el => {
+                if (open) el.classList.add('open');
+                else el.classList.remove('open');
+            });
+        }
+
+        document.getElementById('searchBox').addEventListener('input', function () {
+            const term = this.value.toLowerCase();
+            document.querySelectorAll('.qa').forEach(el => {
+                const text = el.textContent.toLowerCase();
+                el.style.display = term && !text.includes(term) ? 'none' : '';
+            });
+        });
+    </script>
+</body>
+
+</html>

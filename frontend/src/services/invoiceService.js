@@ -78,16 +78,24 @@ class InvoiceService {
     try {
       const response = await this.list({ orderId }, { page: 0, size: 1 });
       // Xử lý các cấu trúc response khác nhau
-      const invoices = response?.data?.content || 
-                      response?.content || 
-                      response?.responseData?.content ||
-                      response?.data || 
-                      [];
+      const invoices = response?.data?.content ||
+        response?.content ||
+        response?.responseData?.content ||
+        response?.data ||
+        [];
       return Array.isArray(invoices) && invoices.length > 0 ? invoices[0] : null;
     } catch (error) {
       console.error("Error fetching invoice by orderId:", error);
       return null;
     }
+  }
+
+  /**
+   * Get unpaid customers summary
+   * @returns {Promise<Object>} List of unpaid customers
+   */
+  async getUnpaidCustomers() {
+    return httpClient.get(API_ENDPOINTS.INVOICE.UNPAID_CUSTOMERS);
   }
 }
 

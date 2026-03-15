@@ -7,11 +7,15 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install dependencies
-# Use npm install if package-lock.json is out of sync, otherwise use npm ci for faster installs
-RUN npm install --legacy-peer-deps || npm ci
+# Prefer npm ci for speed and reproducibility, fallback to npm install
+RUN npm ci || npm install --legacy-peer-deps
 
 # Copy source code
 COPY . .
+
+# Accept build-time env vars for Vite
+ARG VITE_API_BASE_URL
+ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
 
 # Build application
 RUN npm run build

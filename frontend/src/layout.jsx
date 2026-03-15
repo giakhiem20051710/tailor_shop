@@ -2,47 +2,77 @@ import { Outlet } from "react-router-dom";
 import { useState } from "react";
 import Sidebar from "./components/layout/Sidebar.jsx";
 import Topbar from "./components/layout/Topbar.jsx";
+import Breadcrumbs from "./components/layout/Breadcrumbs.jsx";
+import BottomNav from "./components/layout/BottomNav.jsx";
+import MobileFAB from "./components/layout/MobileFAB.jsx";
 
 export default function Layout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-
   const closeSidebar = () => setSidebarOpen(false);
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Mobile sidebar overlay */}
-      <div
-        className={`fixed inset-0 z-40 md:hidden transition-opacity ${sidebarOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
-          }`}
-      >
-        <div
-          className="absolute inset-0 bg-black/40"
-          onClick={closeSidebar}
-        />
-        <div
-          className={`absolute inset-y-0 left-0 w-64 bg-green-900 transform transition-transform ${sidebarOpen ? "translate-x-0" : "-translate-x-full"
-            }`}
-        >
-          <Sidebar onNavigate={closeSidebar} />
-        </div>
-      </div>
+    <>
+      <style>{`
+        .layout-root { min-height:100vh; background:#f8fafc; }
+        .layout-sidebar-desktop { display:none; flex-shrink:0; }
+        .layout-content { padding:24px 32px; flex:1; }
+        @media (min-width: 769px) { .layout-sidebar-desktop { display:flex; } }
+        @media (max-width: 768px) {
+          .layout-content {
+            padding:12px 12px 80px 12px; /* extra bottom padding for bottom nav */
+          }
+        }
+        @media (min-width:769px) and (max-width:1024px) { .layout-content { padding:16px 20px; } }
 
-      <div className="flex min-h-screen">
-        {/* Desktop sidebar */}
-        <div className="hidden md:flex">
-          <Sidebar />
-        </div>
+        /* Mobile touch improvements */
+        @media (max-width: 768px) {
+          button, a, input, select, textarea {
+            min-height: 40px; /* Bigger tap targets */
+          }
+          input, select, textarea {
+            font-size: 16px !important; /* Prevent iOS zoom on focus */
+          }
+          /* Smooth scrolling */
+          .layout-content {
+            -webkit-overflow-scrolling: touch;
+            scroll-behavior: smooth;
+          }
+        }
+      `}</style>
 
-        {/* MAIN CONTENT */}
-        <div className="flex-1 flex flex-col">
-          <Topbar onToggleSidebar={() => setSidebarOpen((v) => !v)} />
+      <div className="layout-root">
+        {/* Mobile sidebar overlay */}
+        {sidebarOpen && (
+          <div style={{ position: "fixed", inset: 0, zIndex: 40 }}>
+            <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.4)" }} onClick={closeSidebar} />
+            <div style={{
+              position: "absolute", top: 0, bottom: 0, left: 0, width: 260,
+              animation: "slideInLeft 0.2s ease-out",
+            }}>
+              <Sidebar onNavigate={closeSidebar} />
+            </div>
+          </div>
+        )}
 
-          {/* PAGE CONTENT */}
-          <div className="p-4 md:p-8">
-            <Outlet />
+        <div style={{ display: "flex", minHeight: "100vh" }}>
+          <div className="layout-sidebar-desktop"><Sidebar /></div>
+          <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0 }}>
+            <Topbar onToggleSidebar={() => setSidebarOpen((v) => !v)} />
+            <div className="layout-content">
+              <Breadcrumbs />
+              <Outlet />
+            </div>
           </div>
         </div>
+
+        {/* Mobile-only components */}
+        <MobileFAB />
+        <BottomNav />
       </div>
-    </div>
+
+      <style>{`
+        @keyframes slideInLeft { from { transform:translateX(-100%); } to { transform:translateX(0); } }
+      `}</style>
+    </>
   );
 }

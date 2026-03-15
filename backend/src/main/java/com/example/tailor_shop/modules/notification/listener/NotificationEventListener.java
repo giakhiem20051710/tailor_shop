@@ -2,6 +2,7 @@ package com.example.tailor_shop.modules.notification.listener;
 
 import com.example.tailor_shop.modules.flashsale.event.FlashSalePurchaseEvent;
 import com.example.tailor_shop.modules.flashsale.event.ReservationExpiredEvent;
+import com.example.tailor_shop.modules.notification.service.NotificationService;
 import com.example.tailor_shop.modules.order.event.OrderCancelledEvent;
 import com.example.tailor_shop.modules.order.event.OrderCreatedEvent;
 import com.example.tailor_shop.modules.order.event.OrderStatusChangedEvent;
@@ -16,7 +17,8 @@ import org.springframework.transaction.event.TransactionalEventListener;
  * Centralized Notification Event Listener.
  * 
  * Listens to ALL events that require customer notification.
- * Handles: Email, SMS, Push notifications.
+ * Handles: In-app real-time notifications (via WebSocket) + database
+ * persistence.
  * 
  * This is a cross-cutting concern that spans multiple domains.
  */
@@ -25,42 +27,37 @@ import org.springframework.transaction.event.TransactionalEventListener;
 @Slf4j
 public class NotificationEventListener {
 
-    // TODO: Inject notification services
-    // private final EmailService emailService;
-    // private final SmsService smsService;
-    // private final PushNotificationService pushService;
+    private final NotificationService notificationService;
 
     // ==================== ORDER EVENTS ====================
 
     /**
-     * Send order confirmation email when order is created.
+     * Send order confirmation when order is created.
      */
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     @Async
     public void sendOrderConfirmation(OrderCreatedEvent event) {
-        log.info("[{}] Sending order confirmation to: {}", 
+        log.info("[{}] Sending order confirmation to: {}",
                 event.getCorrelationId(), event.getCustomerEmail());
-        
+
         try {
-            // Email notification
-            // emailService.sendOrderConfirmation(
-            //     event.getCustomerEmail(),
-            //     event.getCustomerName(),
-            //     event.getOrderCode(),
-            //     event.getTotalAmount()
-            // );
-            
-            // SMS notification (optional)
-            if (event.getCustomerPhone() != null) {
-                // smsService.sendOrderConfirmationSms(event.getCustomerPhone(), event.getOrderCode());
+            if (event.getCustomerId() != null) {
+                notificationService.send(
+                        event.getCustomerId(),
+                        "ORDER",
+                        "Đơn hàng mới đã tạo",
+                        String.format("Đơn hàng %s đã được tạo thành công. Tổng tiền: %s đ",
+                                event.getOrderCode(),
+                                event.getTotalAmount() != null ? event.getTotalAmount().toPlainString() : "0"),
+                        "📦",
+                        "/orders");
             }
-            
-            log.info("[{}] Order confirmation sent successfully: {}", 
+
+            log.info("[{}] Order confirmation sent successfully: {}",
                     event.getCorrelationId(), event.getOrderCode());
         } catch (Exception e) {
-            log.error("[{}] Failed to send order confirmation for {}: {}", 
+            log.error("[{}] Failed to send order confirmation for {}: {}",
                     event.getCorrelationId(), event.getOrderCode(), e.getMessage(), e);
-            // TODO: Add to retry queue or dead-letter queue
         }
     }
 
@@ -70,24 +67,27 @@ public class NotificationEventListener {
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     @Async
     public void notifyOrderStatusChange(OrderStatusChangedEvent event) {
-        log.info("[{}] Notifying customer about order status change: {} -> {}", 
+        log.info("[{}] Notifying customer about order status change: {} -> {}",
                 event.getCorrelationId(), event.getOldStatus(), event.getNewStatus());
-        
+
         try {
             String message = buildStatusChangeMessage(event.getOrderCode(), event.getNewStatus());
-            
-            // Email
-            // emailService.sendStatusUpdate(event.getCustomerEmail(), event.getOrderCode(), message);
-            
-            // SMS for important status changes
-            if (isImportantStatusChange(event.getNewStatus())) {
-                // smsService.sendStatusUpdate(event.getCustomerPhone(), message);
+            String icon = getStatusIcon(event.getNewStatus());
+
+            if (event.getCustomerId() != null) {
+                notificationService.send(
+                        event.getCustomerId(),
+                        "ORDER",
+                        "Cập nhật đơn hàng",
+                        message,
+                        icon,
+                        "/orders");
             }
-            
-            log.info("[{}] Status change notification sent: order={}, status={}", 
+
+            log.info("[{}] Status change notification sent: order={}, status={}",
                     event.getCorrelationId(), event.getOrderCode(), event.getNewStatus());
         } catch (Exception e) {
-            log.error("[{}] Failed to notify status change for order {}: {}", 
+            log.error("[{}] Failed to notify status change for order {}: {}",
                     event.getCorrelationId(), event.getOrderCode(), e.getMessage(), e);
         }
     }
@@ -98,21 +98,28 @@ public class NotificationEventListener {
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     @Async
     public void notifyOrderCancellation(OrderCancelledEvent event) {
-        log.info("[{}] Notifying customer about order cancellation: {}", 
+        log.info("[{}] Notifying customer about order cancellation: {}",
                 event.getCorrelationId(), event.getOrderCode());
-        
+
         try {
-            // emailService.sendOrderCancellation(
-            //     event.getCustomerEmail(),
-            //     event.getOrderCode(),
-            //     event.getCancellationReason(),
-            //     event.isRequiresRefund()
-            // );
-            
-            log.info("[{}] Cancellation notification sent: {}", 
+            if (event.getCustomerId() != null) {
+                String reason = event.getCancellationReason() != null
+                        ? event.getCancellationReason()
+                        : "Không rõ lý do";
+                notificationService.send(
+                        event.getCustomerId(),
+                        "ORDER",
+                        "Đơn hàng đã huỷ",
+                        String.format("Đơn hàng %s đã bị huỷ. Lý do: %s",
+                                event.getOrderCode(), reason),
+                        "❌",
+                        "/orders");
+            }
+
+            log.info("[{}] Cancellation notification sent: {}",
                     event.getCorrelationId(), event.getOrderCode());
         } catch (Exception e) {
-            log.error("[{}] Failed to notify cancellation for order {}: {}", 
+            log.error("[{}] Failed to notify cancellation for order {}: {}",
                     event.getCorrelationId(), event.getOrderCode(), e.getMessage(), e);
         }
     }
@@ -125,21 +132,26 @@ public class NotificationEventListener {
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     @Async
     public void sendFlashSalePurchaseConfirmation(FlashSalePurchaseEvent event) {
-        log.info("[{}] Sending flash sale confirmation to: {}", 
+        log.info("[{}] Sending flash sale confirmation to: {}",
                 event.getCorrelationId(), event.getCustomerEmail());
-        
+
         try {
-            // emailService.sendFlashSaleConfirmation(
-            //     event.getCustomerEmail(),
-            //     event.getFlashSaleName(),
-            //     event.getQuantity(),
-            //     event.getTotalAmount()
-            // );
-            
-            log.info("[{}] Flash sale confirmation sent: orderId={}", 
+            if (event.getCustomerId() != null) {
+                notificationService.send(
+                        event.getCustomerId(),
+                        "FLASH_SALE",
+                        "Mua Flash Sale thành công!",
+                        String.format("Bạn đã mua thành công %s trong Flash Sale. Số lượng: %d",
+                                event.getFlashSaleName(),
+                                event.getQuantity()),
+                        "⚡",
+                        "/orders");
+            }
+
+            log.info("[{}] Flash sale confirmation sent: orderId={}",
                     event.getCorrelationId(), event.getFlashSaleOrderId());
         } catch (Exception e) {
-            log.error("[{}] Failed to send flash sale confirmation: {}", 
+            log.error("[{}] Failed to send flash sale confirmation: {}",
                     event.getCorrelationId(), e.getMessage(), e);
         }
     }
@@ -150,20 +162,26 @@ public class NotificationEventListener {
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     @Async
     public void notifyReservationExpiry(ReservationExpiredEvent event) {
-        log.info("[{}] Notifying customer about expired reservation: {}", 
+        log.info("[{}] Notifying customer about expired reservation: {}",
                 event.getCorrelationId(), event.getReservationId());
-        
+
         try {
-            // emailService.sendReservationExpiredNotification(
-            //     event.getCustomerEmail(),
-            //     event.getFlashSaleName(),
-            //     event.getQuantity()
-            // );
-            
-            log.info("[{}] Reservation expiry notification sent: reservationId={}", 
+            if (event.getCustomerId() != null) {
+                notificationService.send(
+                        event.getCustomerId(),
+                        "FLASH_SALE",
+                        "Đặt chỗ đã hết hạn",
+                        String.format("Đặt chỗ Flash Sale '%s' (SL: %d) đã hết hạn.",
+                                event.getFlashSaleName(),
+                                event.getQuantity()),
+                        "⏰",
+                        "/flash-sales");
+            }
+
+            log.info("[{}] Reservation expiry notification sent: reservationId={}",
                     event.getCorrelationId(), event.getReservationId());
         } catch (Exception e) {
-            log.error("[{}] Failed to notify reservation expiry: {}", 
+            log.error("[{}] Failed to notify reservation expiry: {}",
                     event.getCorrelationId(), e.getMessage(), e);
         }
     }
@@ -183,12 +201,23 @@ public class NotificationEventListener {
         };
     }
 
+    private String getStatusIcon(String status) {
+        return switch (status) {
+            case "CONFIRMED" -> "✅";
+            case "PROCESSING" -> "⚙️";
+            case "TAILORING" -> "✂️";
+            case "READY" -> "📦";
+            case "SHIPPED" -> "🚚";
+            case "DELIVERED" -> "🎉";
+            case "COMPLETED" -> "🌟";
+            default -> "📋";
+        };
+    }
+
     private boolean isImportantStatusChange(String status) {
-        return status != null && (
-            status.equals("SHIPPED") || 
-            status.equals("DELIVERED") || 
-            status.equals("READY") ||
-            status.equals("CANCELLED")
-        );
+        return status != null && (status.equals("SHIPPED") ||
+                status.equals("DELIVERED") ||
+                status.equals("READY") ||
+                status.equals("CANCELLED"));
     }
 }

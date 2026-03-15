@@ -80,6 +80,7 @@ export const API_ENDPOINTS = {
     VOID: (id) => `/invoices/${id}/void`,
     PAYMENT: '/invoices/payments',
     PAYMENT_CALLBACK: '/invoices/payments/callback',
+    UNPAID_CUSTOMERS: '/invoices/unpaid-customers',
   },
   // Promotion
   PROMOTION: {

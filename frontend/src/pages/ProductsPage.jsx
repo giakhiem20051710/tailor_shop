@@ -400,6 +400,26 @@ const ProductsPage = () => {
   const [search, setSearch] = useState(() => searchParams.get("search") || "");
   const [currentPage, setCurrentPage] = useState(() => parseInt(searchParams.get("page") || "1", 10));
 
+  // Sync URL -> state so searching from header works even when already on /products
+  useEffect(() => {
+    const nextNeedFilter = searchParams.get("occasion") || "all";
+    const nextCategoryFilter = searchParams.get("category") || "all";
+    const nextBudgetFilter = searchParams.get("budget") || "all";
+    const nextGenderFilter = searchParams.get("gender") || "all";
+    const nextSeasonFilter = searchParams.get("season") || "all";
+    const nextSearch = searchParams.get("search") || "";
+    const parsedPage = parseInt(searchParams.get("page") || "1", 10);
+    const nextPage = Number.isFinite(parsedPage) && parsedPage > 0 ? parsedPage : 1;
+
+    setNeedFilter((prev) => (prev === nextNeedFilter ? prev : nextNeedFilter));
+    setCategoryFilter((prev) => (prev === nextCategoryFilter ? prev : nextCategoryFilter));
+    setBudgetFilter((prev) => (prev === nextBudgetFilter ? prev : nextBudgetFilter));
+    setGenderFilter((prev) => (prev === nextGenderFilter ? prev : nextGenderFilter));
+    setSeasonFilter((prev) => (prev === nextSeasonFilter ? prev : nextSeasonFilter));
+    setSearch((prev) => (prev === nextSearch ? prev : nextSearch));
+    setCurrentPage((prev) => (prev === nextPage ? prev : nextPage));
+  }, [searchParams]);
+
   // Sync State -> URL
   useEffect(() => {
     if (isFirstRender.current) {
@@ -413,8 +433,23 @@ const ProductsPage = () => {
     if (seasonFilter !== "all") params.season = seasonFilter;
     if (search) params.search = search;
     if (currentPage > 1) params.page = currentPage.toString();
-    setSearchParams(params, { replace: true });
-  }, [needFilter, categoryFilter, budgetFilter, genderFilter, seasonFilter, search, currentPage, setSearchParams]);
+    const nextQueryString = new URLSearchParams(params).toString();
+    const currentQueryString = searchParams.toString();
+
+    if (nextQueryString !== currentQueryString) {
+      setSearchParams(params, { replace: true });
+    }
+  }, [
+    needFilter,
+    categoryFilter,
+    budgetFilter,
+    genderFilter,
+    seasonFilter,
+    search,
+    currentPage,
+    searchParams,
+    setSearchParams,
+  ]);
 
   const itemsPerPage = 20;
 

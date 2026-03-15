@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bí Kíp Trắc Nghiệm Java Core (FPT Fresher)</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
+    <style>
+        :root {
+            --fpt-orange: #F26F21;
+            --dark: #1E293B;
+            --primary: #2563EB;
+            --success: #16A34A;
+            --danger: #DC2626;
+            --bg-light: #F8FAFC;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #F1F5F9;
+            color: #334155;
+            line-height: 1.6;
+            padding: 40px 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        h1 { color: var(--dark); text-align: center; margin-bottom: 30px; font-size: 2.2rem; border-bottom: 4px solid var(--fpt-orange); padding-bottom: 10px; display: inline-block; margin-left: 50%; transform: translateX(-50%); }
+
+        .section-card {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 40px;
+            box-shadow: 0 4px 15px -3px rgba(0,0,0,0.1);
+        }
+
+        .section-title {
+            color: var(--primary);
+            font-size: 1.6rem;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            border-bottom: 2px solid #E2E8F0;
+            padding-bottom: 10px;
+        }
+
+        .qa-item {
+            margin-bottom: 25px;
+            background: var(--bg-light);
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid var(--sub-color, var(--success));
+        }
+
+        .question { font-weight: bold; font-size: 1.1rem; color: var(--dark); margin-bottom: 15px; }
+        .code-block {
+            background: #1E293B;
+            color: #E2E8F0;
+            padding: 15px;
+            border-radius: 6px;
+            font-family: 'Consolas', monospace;
+            overflow-x: auto;
+            margin: 10px 0;
+            border-left: 4px solid var(--fpt-orange);
+        }
+
+        .mcq-options { list-style-type: none; padding-left: 0; }
+        .mcq-options li { 
+            padding: 10px 15px; 
+            margin-bottom: 8px; 
+            background: white; 
+            border: 1px solid #CBD5E1; 
+            border-radius: 4px; 
+            cursor: pointer;
+        }
+        .mcq-options li.correct {
+            background: #DCFCE7;
+            border-color: #22C55E;
+            color: #15803D;
+            font-weight: bold;
+        }
+
+        .explanation {
+            font-size: 0.95rem;
+            margin-top: 15px;
+            padding: 15px;
+            background: #EFF6FF;
+            border-radius: 6px;
+            color: #1E3A8A;
+        }
+
+        .keyword { color: var(--danger); font-weight: bold; }
+        
+        /* Topic colors */
+        .topic-string { --sub-color: #8B5CF6; }
+        .topic-oop { --sub-color: #F59E0B; }
+        .topic-collec { --sub-color: #06B6D4; }
+
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Cẩm Nang Trắc Nghiệm: Core Java</h1>
+
+    <!-- SECTION 1: STRING & BỘ NHỚ -->
+    <div class="section-card">
+        <h2 class="section-title"><i class="fa-solid fa-quote-left"></i> Phần 1: Ma trận String & String Pool (Câu hỏi rớt nhiều nhất)</h2>
+        
+        <div class="qa-item topic-string">
+            <div class="question">Câu 1.1: Cho đoạn code sau, kết quả in ra màn hình là gì?</div>
+            <div class="code-block">
+String s1 = "FPT";
+String s2 = "FPT";
+String s3 = new String("FPT");
+
+System.out.println(s1 == s2);
+System.out.println(s1 == s3);
+System.out.println(s1.equals(s3));
+            </div>
+            <ul class="mcq-options">
+                <li>A) true, true, true</li>
+                <li>B) false, false, true</li>
+                <li class="correct">C) true, false, true (ĐÁP ÁN ĐÚNG)</li>
+                <li>D) true, false, false</li>
+            </ul>
+            <div class="explanation">
+                <strong><i class="fa-solid fa-bolt"></i> Giải thích cốt lõi:</strong><br>
+                - Ký hiệu <code>==</code> trong Java KHÔNG dùng để so sánh chữ viết, mà dùng để <strong>so sánh ĐỊA CHỈ BỘ NHỚ (O nhớ)</strong>.<br>
+                - Khi báo <code>String s1 = "FPT"</code>, chữ "FPT" được cất vào một kho báu đặc biệt gọi là <span class="keyword">String Pool</span>. Khi tạo <code>s2="FPT"</code>, Java qua kho báu tìm thấy chữ đó rồi, nên nó bắt <code>s2</code> chỉ chung 1 ô nhớ với <code>s1</code>. Suy ra <code>s1 == s2</code> là True.<br>
+                - Khi dùng từ khóa <span class="keyword">new</span>, Java BẮT BUỘC tạo một ô nhớ hoàn toàn MỚI nằm ngoài kho báu (trong vùng Heap). Nên <code>s1</code> và <code>s3</code> khác ô nhớ. Suy ra <code>s1 == s3</code> là False.<br>
+                - Lệnh <code>.equals()</code> KHÔNG quan tâm ô nhớ, nó lấy từng chữ cái ra so sánh ruột. Về mặt cái ruột (Giá trị thực) thì "FPT" giống hệt "FPT". Suy ra là True.
+            </div>
+        </div>
+
+        <div class="qa-item topic-string">
+            <div class="question">Câu 1.2: Tại sao String trong Java được gọi là "Immutable" (Không thể thay đổi)? Hãy xem đoạn code sau:</div>
+            <div class="code-block">
+String s = "Hello";
+s.concat(" Java");
+System.out.println(s);
+            </div>
+            <ul class="mcq-options">
+                <li class="correct">A) Sẽ in ra: "Hello" (ĐÁP ÁN ĐÚNG)</li>
+                <li>B) Sẽ in ra: "Hello Java"</li>
+                <li>C) Lỗi biên dịch (Compilation Error)</li>
+            </ul>
+            <div class="explanation">
+                <strong><i class="fa-solid fa-bolt"></i> Giải thích:</strong><br>
+                Immutable nghĩa là Một khi đã sinh ra thì mãi mãi không bao giờ thay đổi bản chất. Lệnh <code>s.concat(" Java")</code> sẽ tạo ra một chữ "Hello Java" <strong>MỚI TINH</strong> và ném nó vào khoảng không (vì không có ai gán lại biến để hứng nó). Bản thân biến <code>s</code> cũ vẫn đang trỏ về chữ "Hello" nguyên thủy. (Trừ khi bạn viết: <code>s = s.concat(" Java");</code> thì nó mới đổi hướng).
+            </div>
+        </div>
+    </div>
+
+    <!-- SECTION 2: ABSTRACT CLASS vs INTERFACE -->
+    <div class="section-card">
+        <h2 class="section-title"><i class="fa-solid fa-sitemap"></i> Phần 2: Hố đen Interface và Abstract Class</h2>
+        
+        <div class="qa-item topic-oop">
+            <div class="question">Câu 2.1: Điểm khác biệt CỐT LÕI NHẤT giữa Interface và Abstract Class trong Java (Java 8+) là gì?</div>
+            <ul class="mcq-options">
+                <li>A) Interface không thể có hàm có thân (body), Abstract Class thì được. (SAI vì Java 8 Interface đã có 'default' method)</li>
+                <li class="correct">B) Một class có thể implements (kế thừa) NHIỀU Interface cùng lúc, nhưng CHỈ ĐƯỢC extends (kế thừa) MỘT Abstract Class duy nhất. (ĐÁP ÁN ĐÚNG)</li>
+                <li>C) Biến trong Abstract Class mặc định là public static final.</li>
+                <li>D) Bạn có thể dùng từ khóa 'new' để tạo object từ Interface.</li>
+            </ul>
+            <div class="explanation">
+                <strong><i class="fa-solid fa-bolt"></i> Giải thích kiểu đời thực:</strong><br>
+                - <strong>Abstract Class (Người Bố):</strong> Mỗi người chỉ có tối đa 1 người bố ruột. Java cấm Đa kế thừa class để tránh tình trạng "Đẽo cày giữa đường" (Diamond Problem). Nếu 2 ông bố cùng rèn cách 'đánh kiếm', thằng con không biết nên nghe theo ông nào.<br>
+                - <strong>Interface (Kỹ năng nghề nghiệp / Chứng chỉ):</strong> Một người có thể học nhiều kỹ năng ngoài xã hội. Bạn vừa có thể <code>implements ChayXeMay, BietBoi, HatHay</code> cùng một lúc. Biến trong interface luôn bị ép cứng là <span class="keyword">public static final</span> (Hằng số bất di bất dịch).
+            </div>
+        </div>
+    </div>
+
+    <!-- SECTION 3: COLLECTIONS FRAMEWORK -->
+    <div class="section-card">
+        <h2 class="section-title"><i class="fa-solid fa-cubes"></i> Phần 3: Gia Phả Bộ Sưu Tập (Collections Framework)</h2>
+        
+        <div class="qa-item topic-collec">
+            <div class="question">Câu 3.1: Nếu bạn cần một cấu trúc dữ liệu LƯU TRỮ NHIỀU PHẦN TỬ, nhưng BẮT BUỘC KHÔNG ĐƯỢC CÓ PHẦN TỬ TRÙNG LẶP. Bạn xài cái nào?</div>
+            <ul class="mcq-options">
+                <li>A) ArrayList</li>
+                <li>B) LinkedList</li>
+                <li class="correct">C) HashSet (ĐÁP ÁN ĐÚNG)</li>
+                <li>D) HashMap</li>
+            </ul>
+            <div class="explanation">
+                <strong><i class="fa-solid fa-bolt"></i> Học thuộc lòng bảng vàng này:</strong><br>
+                📌 <strong>LIST (ArrayList / LinkedList):</strong> Là cái băng chuyền. Nhét vào sao thì in ra theo thứ tự y chang vậy. Mười số 1 nhét vô cũng nhận lấy hết (Cho phép TRÙNG LẶP).<br>
+                📌 <strong>SET (HashSet / TreeSet):</strong> Giống rổ rá sàng cát. <strong>TUYỆT ĐỐI KHÔNG CHỨA ĐỒ TRÙNG LẶP (No duplicates).</strong> Bạn nhét ba số 1 vào, Set chỉ lưu đúng 1 lần số 1. (HashSet không bảo đảm thứ tự in ra).<br>
+                📌 <strong>MAP (HashMap):</strong> Cặp đôi hoàn cảnh <code>(Key - Value)</code>. Ví dụ: ("SinhVien1" - "Gia Khiêm"). Cải <strong>Key</strong> thì cấm trùng, còn <strong>Value</strong> trùng bao nhiêu cũng được.
+            </div>
+        </div>
+
+        <div class="qa-item topic-collec">
+            <div class="question">Câu 3.2: Sự khác biệt lớn nhất về hiệu năng giữa ArrayList và LinkedList nằm ở đâu?</div>
+            <ul class="mcq-options">
+                <li>A) LinkedList ít tốn RAM hơn ArrayList.</li>
+                <li class="correct">B) Tốc độ truy xuất phần tử bất kỳ (get(i)) của ArrayList cực nhanh O(1), còn LinkedList phải mò từ đầu O(N). Ngược lại, LinkedList cắm thêm người vào giữa hàng (Insert) rất lẹ. (ĐÁP ÁN ĐÚNG)</li>
+                <li>C) ArrayList xài cho Multi-threading, LinkedList xài cho Single-threading.</li>
+            </ul>
+            <div class="explanation">
+                <strong><i class="fa-solid fa-bolt"></i> Hình ảnh tượng hình:</strong><br>
+                - <strong>ArrayList (Cái tủ thuốc Bắc nhiều ngăn kéo):</strong> Mỗi ngăn kéo được đánh số từ 0, 1, 2... Cần lấy thuốc ở ngăn số 99? Nhắm mắt móc vô ngăn 99 trong 0.1 giây là lôi ra cái kịch (Thời gian Truy xuất ngẫu nhiên là <code>O(1)</code>). Nhược điểm: Tủ đầy thì phải thuê thợ mộc đóng cái tủ mới bự hơn rồi nhọc nhằn bê đồ qua.<br>
+                - <strong>LinkedList (Trò chơi Nối toa tàu):</strong> Các bộ dữ liệu cầm tay nhau theo dây chuyền (Node nọ trỏ ruột Node kia). Muốn tìm toa số 99, ông soát vé phải đi qua mặt 98 toa trước đó (Rất chậm <code>O(N)</code>). Ưu điểm: Muốn nhét thêm 1 toa vào giữa? Chỉ cần móc sợi xích ra, nhét toa mới vô rồi móc cài lại là xong, rất lẹ!
+            </div>
+        </div>
+    </div>
+    
+    <div style="text-align: center; margin-top: 40px; padding: 20px; background: #FEF3C7; border-radius: 8px;">
+        <h3 style="color: #B45309;"><i class="fa-solid fa-fire"></i> LỜI KHUYÊN KHI THI TRẮC NGHIỆM TRÊN MÁY FPT</h3>
+        <p style="margin-bottom: 0;">FPT hay có màn đưa 1 đoạn code Java nho nhỏ rồi hỏi "In ra màn hình kết quả nào?".<br> 
+        Mẹo ăn tiền: <strong>HÃY TÌM KÍM NHỮNG CÁI BẪY (Exceptions)</strong>. Hãy để ý xem người ta có viết ngoặc nhọn <code>{}</code> ở sau lệnh `if/for` hay không. Nhìn kĩ coi có chấm phẩy <code>;</code> hớ hênh sau vòng <code>for(int i=0; i<10; i++);</code> làm nó kết thúc ngay tại chỗ hay không. Đừng bị lừa bởi vẻ ngoài đoạn code!</p>
+    </div>
+
+</div>
+
+</body>
+</html>

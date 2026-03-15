@@ -1,0 +1,146 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e2]:
+  - generic [ref=e3]:
+    - generic [ref=e4]:
+      - generic [ref=e5]: 🧧 Tết Nguyên Đán - Lì xì may mắn cho bạn! 🧧
+      - button "Xem thử thách →" [ref=e6] [cursor=pointer]
+    - button "Đóng banner" [ref=e7] [cursor=pointer]: ✕
+  - generic:
+    - generic: 🏮
+    - generic: 🎊
+    - generic: 💐
+    - generic: 🌸
+    - generic: 🧧
+    - generic: 🏮
+    - generic: 🎊
+    - generic: 💐
+    - generic: 🌸
+    - generic: 🧧
+    - generic: 🏮
+    - generic: 🎊
+  - generic [ref=e9]:
+    - button "✕" [ref=e10] [cursor=pointer]
+    - generic [ref=e11]:
+      - generic [ref=e12]: 🏮
+      - generic [ref=e13]: 🎊
+      - generic [ref=e14]: 💐
+    - generic [ref=e15]:
+      - paragraph [ref=e16]: SỰ KIỆN NỔI BẬT
+      - heading "Tết Nguyên Đán 2026" [level=2] [ref=e17]
+      - paragraph [ref=e18]: 🧧 Đầm - áo dài - vest gia đình, giảm đến 20%. Chương trình áp dụng tự động tại Tailor Shop.
+      - generic [ref=e19]:
+        - generic [ref=e20]:
+          - generic [ref=e21]: 👔
+          - generic [ref=e22]: Áo dài
+        - generic [ref=e23]:
+          - generic [ref=e24]: 👗
+          - generic [ref=e25]: Đầm dự tiệc
+        - generic [ref=e26]:
+          - generic [ref=e27]: 🧥
+          - generic [ref=e28]: Vest gia đình
+        - generic [ref=e29]:
+          - generic [ref=e30]: 🎁
+          - generic [ref=e31]: Quà tặng
+      - button "Xem chi tiết ưu đãi →" [ref=e32] [cursor=pointer]
+      - button "🎭 Tắt hiệu ứng" [ref=e33] [cursor=pointer]
+      - paragraph [ref=e34] [cursor=pointer]: Đóng cửa sổ này
+  - button "Tắt hiệu ứng" [ref=e35] [cursor=pointer]:
+    - generic [ref=e36]: 🧧
+  - link "Bỏ qua đến nội dung chính" [ref=e38] [cursor=pointer]:
+    - /url: "#main"
+  - generic [ref=e39]:
+    - generic [ref=e40]:
+      - img "Luxury tailor fabric" [ref=e42]
+      - generic [ref=e44]:
+        - generic [ref=e46]:
+          - img [ref=e48]
+          - generic [ref=e54]:
+            - heading "MỸ HIỀN TAILOR" [level=1] [ref=e55]
+            - paragraph [ref=e56]: Bespoke Tailoring Studio
+        - generic [ref=e57]:
+          - generic [ref=e58]:
+            - heading "Nghệ Thuật May Đo" [level=2] [ref=e59]
+            - paragraph [ref=e60]: Nơi mỗi đường kim mũi chỉ là một tác phẩm nghệ thuật. Chúng tôi tạo nên phong cách riêng biệt cho bạn.
+          - generic [ref=e61]:
+            - generic [ref=e62]:
+              - generic [ref=e63]: "01"
+              - generic [ref=e64]:
+                - heading "Đo lường chính xác" [level=3] [ref=e65]
+                - paragraph [ref=e66]: Hệ thống đo 50+ số đo cơ thể
+            - generic [ref=e67]:
+              - generic [ref=e68]: "02"
+              - generic [ref=e69]:
+                - heading "Vải cao cấp" [level=3] [ref=e70]
+                - paragraph [ref=e71]: Nhập khẩu từ Italy, Anh Quốc
+            - generic [ref=e72]:
+              - generic [ref=e73]: "03"
+              - generic [ref=e74]:
+                - heading "Thợ may lành nghề" [level=3] [ref=e75]
+                - paragraph [ref=e76]: Kinh nghiệm 20+ năm trong nghề
+        - paragraph [ref=e78]: © 2025 Elegance Tailor. Crafted with precision.
+    - generic [ref=e80]:
+      - generic [ref=e81]:
+        - generic [ref=e82]:
+          - heading "Tạo Tài Khoản" [level=2] [ref=e83]
+          - paragraph [ref=e84]: Bắt đầu hành trình may đo cao cấp cùng chúng tôi
+        - generic [ref=e85]:
+          - generic [ref=e86]:
+            - generic [ref=e87]: Họ và Tên
+            - generic [ref=e88]:
+              - generic:
+                - img
+              - textbox "Họ và Tên" [ref=e89]:
+                - /placeholder: Nguyễn Văn A
+          - generic [ref=e90]:
+            - generic [ref=e91]: Email hoặc Số điện thoại
+            - generic [ref=e92]:
+              - generic:
+                - img
+              - textbox "Email hoặc Số điện thoại" [ref=e93]:
+                - /placeholder: email@example.com hoặc 0912345678
+          - generic [ref=e94]:
+            - generic [ref=e95]: Số Điện Thoại
+            - generic [ref=e96]:
+              - generic:
+                - img
+              - textbox "Số Điện Thoại" [ref=e97]:
+                - /placeholder: 0912 345 678
+          - generic [ref=e98]:
+            - generic [ref=e99]: Mật Khẩu
+            - generic [ref=e100]:
+              - generic:
+                - img
+              - textbox "Mật Khẩu" [ref=e101]:
+                - /placeholder: ••••••••
+              - button [ref=e102] [cursor=pointer]:
+                - img [ref=e103]
+          - generic [ref=e107] [cursor=pointer]:
+            - checkbox "Tôi đồng ý với Điều khoản dịch vụ và Chính sách bảo mật" [ref=e108]
+            - generic [ref=e109]:
+              - text: Tôi đồng ý với
+              - link "Điều khoản dịch vụ" [ref=e110]:
+                - /url: "#"
+              - text: và
+              - link "Chính sách bảo mật" [ref=e111]:
+                - /url: "#"
+          - button "Tạo Tài Khoản" [ref=e112] [cursor=pointer]
+        - generic [ref=e115]: hoặc
+        - paragraph [ref=e118]:
+          - text: Đã có tài khoản?
+          - button "Đăng nhập" [active] [ref=e119] [cursor=pointer]
+      - generic [ref=e120]:
+        - generic [ref=e121]:
+          - generic [ref=e122]: 20+
+          - generic [ref=e123]: Năm kinh nghiệm
+        - generic [ref=e124]:
+          - generic [ref=e125]: 5000+
+          - generic [ref=e126]: Khách hàng
+        - generic [ref=e127]:
+          - generic [ref=e128]: 100%
+          - generic [ref=e129]: Hài lòng
+  - button "Mở chat" [ref=e130] [cursor=pointer]:
+    - img [ref=e131]
+    - generic [ref=e133]: "1"
+```

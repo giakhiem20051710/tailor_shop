@@ -17,6 +17,7 @@ import com.example.tailor_shop.modules.billing.dto.InvoiceResponse;
 import com.example.tailor_shop.modules.billing.dto.PaymentCallbackRequest;
 import com.example.tailor_shop.modules.billing.dto.PaymentRequest;
 import com.example.tailor_shop.modules.billing.dto.PaymentResponse;
+import com.example.tailor_shop.modules.billing.dto.UnpaidCustomerResponse;
 import com.example.tailor_shop.modules.billing.repository.InvoiceItemRepository;
 import com.example.tailor_shop.modules.billing.repository.InvoiceRepository;
 import com.example.tailor_shop.modules.billing.repository.PaymentTransactionRepository;
@@ -39,6 +40,7 @@ import com.example.tailor_shop.modules.promotion.dto.ApplyPromoCodeRequest;
 import com.example.tailor_shop.modules.promotion.dto.ApplyPromoCodeResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -68,6 +70,9 @@ public class InvoiceServiceImpl implements InvoiceService {
     private final PromotionService promotionService;
     private final PromotionUsageRepository promotionUsageRepository;
     private final PromotionRepository promotionRepository;
+
+    @Value("${server.base-url:http://localhost:8083}")
+    private String serverBaseUrl;
 
     @Override
     @Transactional(readOnly = true)
@@ -375,6 +380,57 @@ public class InvoiceServiceImpl implements InvoiceService {
         invoiceRepository.save(invoice);
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public List<UnpaidCustomerResponse> getUnpaidCustomers() {
+        List<InvoiceEntity> unpaidInvoices = invoiceRepository.findByStatusIn(
+                List.of(InvoiceStatus.issued, InvoiceStatus.partial_paid));
+
+        // Group by customer
+        java.util.Map<Long, List<InvoiceEntity>> groupedByCustomer = unpaidInvoices.stream()
+                .collect(Collectors.groupingBy(inv -> inv.getCustomer().getId()));
+
+        return groupedByCustomer.entrySet().stream().map(entry -> {
+            List<InvoiceEntity> invoices = entry.getValue();
+            UserEntity customer = invoices.get(0).getCustomer();
+
+            BigDecimal totalAmount = invoices.stream()
+                    .map(InvoiceEntity::getTotal)
+                    .reduce(ZERO, BigDecimal::add);
+            BigDecimal totalPaid = invoices.stream()
+                    .map(InvoiceEntity::getPaidAmount)
+                    .reduce(ZERO, BigDecimal::add);
+            BigDecimal totalDue = invoices.stream()
+                    .map(InvoiceEntity::getDueAmount)
+                    .reduce(ZERO, BigDecimal::add);
+
+            List<UnpaidCustomerResponse.UnpaidInvoiceSummary> invoiceSummaries = invoices.stream()
+                    .map(inv -> UnpaidCustomerResponse.UnpaidInvoiceSummary.builder()
+                            .id(inv.getId())
+                            .code(inv.getCode())
+                            .status(inv.getStatus().name())
+                            .total(inv.getTotal())
+                            .paidAmount(inv.getPaidAmount())
+                            .dueAmount(inv.getDueAmount())
+                            .createdAt(inv.getCreatedAt())
+                            .dueDate(inv.getDueDate())
+                            .build())
+                    .collect(Collectors.toList());
+
+            return UnpaidCustomerResponse.builder()
+                    .customerId(customer.getId())
+                    .customerName(customer.getName())
+                    .customerPhone(customer.getPhone())
+                    .totalInvoices(invoices.size())
+                    .totalAmount(totalAmount)
+                    .totalPaid(totalPaid)
+                    .totalDue(totalDue)
+                    .invoices(invoiceSummaries)
+                    .build();
+        }).sorted((a, b) -> b.getTotalDue().compareTo(a.getTotalDue()))
+                .collect(Collectors.toList());
+    }
+
     private void applyPayment(InvoiceEntity invoice, BigDecimal amount) {
         BigDecimal newPaid = invoice.getPaidAmount().add(amount);
         BigDecimal newDue = invoice.getTotal().subtract(newPaid);
@@ -526,7 +582,7 @@ public class InvoiceServiceImpl implements InvoiceService {
     private String buildDummyPaymentUrl(PaymentTransactionEntity transaction) {
         if (transaction.getProvider() == PaymentProvider.sandbox) {
             // Route to local sandbox payment gateway
-            String backendUrl = "http://localhost:8083"; // TODO: move to config
+            String backendUrl = serverBaseUrl;
             return backendUrl + "/api/v1/sandbox/payment/pay?ref=" + transaction.getProviderRef()
                     + "&amount=" + transaction.getAmount();
         }

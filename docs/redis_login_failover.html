@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Giải Mã: Redis Token & Sự Cố Máy Chủ</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
+    <style>
+        :root {
+            --primary: #EF4444; /* Red for Redis */
+            --blue: #3B82F6; /* Blue for MySQL */
+            --orange: #F97316; /* Orange for JWT */
+            --dark: #1E293B;
+            --success: #10B981;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #F8FAFC;
+            color: #334155;
+            line-height: 1.6;
+            padding: 40px 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        h1 { color: var(--dark); font-size: 2.2rem; margin-bottom: 20px; text-align: center; }
+        h2 { color: var(--primary); font-size: 1.5rem; margin: 30px 0 15px; border-bottom: 2px solid #E2E8F0; padding-bottom: 5px; }
+        
+        .box {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+        }
+
+        .box-blue { border-left: 5px solid var(--blue); }
+        .box-red { border-left: 5px solid var(--primary); }
+        .box-orange { border-left: 5px solid var(--orange); }
+
+        /* Diagram */
+        .diagram {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 40px 0;
+            padding: 20px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.02);
+            position: relative;
+        }
+
+        .node {
+            text-align: center;
+            width: 250px;
+            padding: 20px;
+            border-radius: 8px;
+            color: white;
+            font-weight: bold;
+            position: relative;
+        }
+
+        .node i { font-size: 2.5rem; margin-bottom: 10px; display: block; }
+        .node.jwt { background: var(--orange); }
+        .node.redis { background: var(--primary); }
+        .node.mysql { background: var(--blue); }
+
+        .line {
+            flex-grow: 1;
+            height: 4px;
+            background: #CBD5E1;
+            position: relative;
+            margin: 0 15px;
+        }
+
+        .desc {
+            font-size: 0.9rem;
+            margin-top: 15px;
+            color: #64748B;
+        }
+
+        /* Q&A Section */
+        .qa-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .qa-card {
+            background: #F1F5F9;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid var(--dark);
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Bí Ẩn Đằng Sau: Redis & Hệ Thống Đăng Nhập</h1>
+    
+    <div class="box box-orange">
+        <h2><i class="fa-solid fa-key"></i> 1. Tại sao Đăng nhập lại cần Redis (JWT Blacklist)?</h2>
+        <p>Bản chất của <strong>JWT (JSON Web Token)</strong> là một cái giấy thông hành (Ticket). Khi User gõ đúng Username/Password (Hệ thống tra trong MySQL thấy đúng), Backend sẽ cấp cho User 1 cái thẻ JWT có hạn sử dụng 7 ngày.</p>
+        <p><strong>Ưu điểm của JWT:</strong> Thằng Backend tự vác thẻ ra soi chữ ký là biết thật giả, KHÔNG CẦN hỏi lại Database (MySQL) nữa. Giúp MySQL siêu rảnh.</p>
+        
+        <p style="color:var(--primary); font-weight:bold; margin-top:20px;">VẬY NHIỆM VỤ CỦA REDIS LÀ GÌ?? LÀ ĐỂ GIẢI QUYẾT TÍNH NĂNG "ĐĂNG XUẤT" (LOGOUT)!</p>
+        
+        <p><strong>Nỗi đau của JWT:</strong> Một khi bạn đã phát cái thẻ 7 ngày cho khách, bạn <strong>KHÔNG CÁCH NÀO THU HỒI NÓ LẠI ĐƯỢC</strong> (vì máy chủ không lưu nó, nó nằm trong điện thoại của khách).</p>
+        <ul>
+            <li>Giả sử khách bị hack mất điện thoại, khách mượn máy khác bấm nút "Đăng Xuất Mọi Thiết Bị".</li>
+            <li>Ông Hacker vẫn cầm cái thẻ JWT cũ còn hạn 7 ngày đi gọi API, Backend soi chữ ký vẫn thấy đúng -> Server vẫn cho Hacker vô nhà!</li>
+        </ul>
+        
+        <p><strong>Và thế là Redis xuất hiện (Hiệp Sĩ Đen):</strong></p>
+        <p>Khi khách bấm nút "Đăng Xuất", thẻ JWT đó bị vứt vào 1 danh sách danh sách đen <strong>(JWT Blacklist)</strong> lưu trên Redis. Tại sao lại là Redis? Vì tốc độ truy xuất của nó tính bằng micro-giây! Mỗi lần có người xòe thẻ ngoài cửa, bảo vệ soi chữ ký xong, liếc mắt 1 mili-giây sang bảng Đen (Redis). Nếu thấy mã thẻ nằm trong bảng Đen -> Đuổi cổ ngay lập tức, dù trên thẻ vẫn ghi là còn hạn sử dụng!</p>
+    </div>
+
+    <!-- SƠ ĐỒ ĐĂNG NHẬP -->
+    <div class="diagram">
+        <div class="node jwt">
+            <i class="fa-solid fa-id-card"></i> Token Của User (JWT)
+            <div class="desc" style="color: white; font-weight: normal;">Thẻ còn hạn 7 ngày</div>
+        </div>
+        
+        <div class="line" style="background: var(--primary);"></div>
+        
+        <div class="node redis">
+            <i class="fa-solid fa-ban"></i> REDIS BLACKLIST
+            <div class="desc" style="color: white; font-weight: normal;">Chặn cửa nếu Token đã bị Đăng xuất / Hack</div>
+        </div>
+
+        <div class="line" style="background: var(--blue);"></div>
+
+        <div class="node mysql">
+            <i class="fa-solid fa-server"></i> MySQL DATABASE
+            <div class="desc" style="color: white; font-weight: normal;">Chỉ làm việc lúc User nhập Username/Pass</div>
+        </div>
+    </div>
+
+    <div class="box box-red">
+        <h2><i class="fa-solid fa-bomb"></i> 2. Chuyện gì xảy ra nếu REDIS BỊ SẬP (Crash)?</h2>
+        
+        <div class="qa-grid">
+            <div class="qa-card" style="border-color: var(--primary);">
+                <h4 style="color: var(--primary); margin-bottom: 10px;">Hệ Tụy 1: Mất quyền lực Đăng xuất tức thời</h4>
+                <p>Vì danh sách Đen (Blacklist) bị bốc hơi (hoặc RAM bị cháy), server tự kỷ bỗng mất trí nhớ, không biết ai đã từng Đăng xuất. Dẫn đến việc các Token đã bị Hủy trước đó... TỰ NHIÊN có tác dụng trở lại (miễn là nó chưa quá hạn 7 ngày). Hacker có quyền tung hoành nốt số ngày còn lại.</p>
+            </div>
+            
+            <div class="qa-card" style="border-color: var(--orange);">
+                <h4 style="color: var(--orange); margin-bottom: 10px;">Hệ Thụy 2: Mất Cache Sản Phẩm / Lỗ Flash Sale</h4>
+                <p>Website chạy chậm lại vì mọi câu hỏi đều bị đùn đẩy trực tiếp về cho MySQL (vốn chậm chạp). Flash Sale nếu đang diễn ra mà Redis sập thì phải khóa ngay chức năng Mua Hàng, nếu dính tới MySQL là over-selling cạn màng túi.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="box box-blue">
+        <h2><i class="fa-solid fa-database"></i> 3. Database MySQL có bị "Rollback" (Cuộn ngược) hay ảnh hưởng mẹ gì không?</h2>
+        <p><strong>CÂU TRẢ LỜI LÀ: KHÔNG HỀ! KHÔNG XI NHÊ GÌ TỚI MYSQL CẢ! 🎉</strong></p>
+        
+        <ul style="margin-left: 20px; margin-top: 15px;">
+            <li style="margin-bottom: 10px;">Redis và MySQL là hai thằng ở đợ hoàn toàn độc lập với nhau (Decoupled).</li>
+            <li style="margin-bottom: 10px;">Thằng MySQL (Ổ cứng) là nơi lưu trữ Sự thật Tuyệt đối (Source of Truth) của công ty: Thông tin khách hàng, số dư tài khoản, chi tiết đơn may đồ, giá tiền của áo vest. Tất cả những thứ đó <strong>nằm kĩ ở đĩa cứng</strong>.</li>
+            <li style="margin-bottom: 10px;">Thằng Redis (RAM) chỉ là một cái "bảng nháp cầm tay" hoặc Thùng Rác lưu danh sách Đen (Blacklist Token), Cache tạm bợ. Bảng nháp bị xé rách hay bốc cháy thì Data Trụ Cột (MySQL) không mất đi một cắc bạc nào.</li>
+            <li style="margin-bottom: 10px;"><strong>Về Rollback:</strong> Database chỉ thực hiện Rollback (Gạch bỏ Giao dịch) khi code Java đang chạy nửa chừng lệnh SQL thì ném Exception. Sự sống chết của Redis Server nằm ngoài vùng màng quản lý giao dịch (Transaction Border) của Database MySQL. Nên MySQL không rảnh mà đi Rollback hộ mấy lệnh của Redis.</li>
+        </ul>
+    </div>
+
+</div>
+
+</body>
+</html>

@@ -24,6 +24,24 @@ services:
       start_period: 60s
     command: --default-authentication-plugin=mysql_native_password --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
 
+  # Redis for Caching & Rate Limiting
+  redis:
+    image: redis:7-alpine
+    container_name: tailor-shop-redis
+    restart: unless-stopped
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - tailor-shop-network
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
   # Spring Boot Backend
   backend:
     build:
@@ -33,6 +51,8 @@ services:
     restart: unless-stopped
     depends_on:
       mysql:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     environment:
       # Database - must match application.yml variable names (DB_*)
@@ -50,6 +70,8 @@ services:
       AWS_S3_REGION: ${AWS_S3_REGION:-ap-southeast-2}
       AWS_S3_BASE_URL: ${AWS_S3_BASE_URL:-https://carbonx-storagee.s3.ap-southeast-2.amazonaws.com}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
     ports:
       - "${BACKEND_PORT:-8083}:8083"
     networks:
@@ -68,6 +90,8 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:8083/api/v1}
     container_name: tailor-shop-frontend
     restart: unless-stopped
     depends_on:
@@ -82,11 +106,44 @@ services:
       timeout: 3s
       retries: 3
       start_period: 10s
+
+  # Virtual Try-On Service (Python FastAPI)
+  try-on:
+    build:
+      context: ./try-on-service
+      dockerfile: Dockerfile
+    container_name: tailor-shop-tryon
+    restart: unless-stopped
+    ports:
+      - "${TRYON_PORT:-8084}:8084"
+    networks:
+      - tailor-shop-network
+    volumes:
+      - ./try-on-service/models:/app/models
+      - ./try-on-service/temp:/app/temp
     environment:
-      - VITE_API_BASE_URL=${VITE_API_BASE_URL:-http://localhost:8083/api/v1}
+      - USE_GPU=${USE_GPU:-true}
+      - HALF_PRECISION=${HALF_PRECISION:-true}
+      - MAX_IMAGE_SIZE=${MAX_IMAGE_SIZE:-1024}
+      - CORS_ORIGINS=http://localhost:5173,http://localhost:80,http://localhost:3000
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8084/api/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 120s
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [ gpu ]
 
 volumes:
   mysql_data:
+    driver: local
+  redis_data:
     driver: local
 
 networks:

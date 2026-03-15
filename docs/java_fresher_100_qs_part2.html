@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>100 Câu Hỏi Vàng FPT: Phần 2 (Câu 14 - 50)</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
+    <style>
+        :root {
+            --primary: #F26F21;
+            --dark: #1E293B;
+            --blue: #2563EB;
+            --success: #16A34A;
+        }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background-color: #F8FAFC; color: #334155; padding: 20px; line-height: 1.6; }
+        .container { max-width: 900px; margin: 0 auto; }
+        h1 { color: var(--dark); text-align: center; border-bottom: 3px solid var(--primary); padding-bottom: 10px; }
+        .intro { text-align: center; color: #64748B; margin-bottom: 30px; }
+        .q-card { background: white; border-left: 4px solid var(--blue); border-radius: 8px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
+        .q-title { font-weight: bold; font-size: 1.1rem; color: var(--dark); margin-bottom: 10px; }
+        .code-block { background: #1E293B; color: #E2E8F0; padding: 15px; border-radius: 6px; font-family: monospace; white-space: pre-wrap; margin: 10px 0; }
+        ul.options { list-style-type: none; padding-left: 0; }
+        ul.options li { margin-bottom: 8px; }
+        details { background: #EFF6FF; border: 1px solid #BFDBFE; border-radius: 6px; padding: 10px; margin-top: 15px; cursor: pointer; }
+        summary { font-weight: bold; color: var(--blue); outline: none; }
+        .answer-content { margin-top: 10px; padding-top: 10px; border-top: 1px dashed #BFDBFE; color: #1E3A8A; font-size: 0.95rem; }
+        .correct-opt { font-weight: bold; color: var(--success); }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1><i class="fa-solid fa-fire-flame-curved"></i> Luyện Thi FPT Fresher: Phần 2 (Câu 14 - 50)</h1>
+    <p class="intro">Đợt nhồi nhét cường độ cao! Các chủ đề: OOP, Mảng, Exceptions, Vòng Lặp, Multi-threading cơ bản.</p>
+
+    <!-- OOP -->
+    <div class="q-card">
+        <div class="q-title">CÂU 14: Method Overloading (Ghi đè) dựa vào yếu tố nào để phân biệt các hàm cùng tên?</div>
+        <ul class="options">
+            <li>A) Kiểu trả về (Return type) của hàm.</li>
+            <li>B) Số lượng, kiểu dữ liệu, và thứ tự của các tham số (Parameters).</li>
+            <li>C) Access modifier (public, private, protected).</li>
+            <li>D) Tên của tham số truyền vào.</li>
+        </ul>
+        <details>
+            <summary>Xem Đáp Án</summary>
+            <div class="answer-content">
+                <span class="correct-opt">✅ B</span><br>
+                Trình biên dịch Java chỉ nhìn vào Dấu Hiệu (Signature) của hàm gồm: Tên hàm + Danh sách tham số (số lượng, kiểu, thứ tự). Nó KHÔNG quan tâm đến Kiểu trả về. Nếu viết 2 hàm `int sum(int a, int b)` và `double sum(int a, int b)`, Java sẽ báo lỗi trùng lặp.
+            </div>
+        </details>
+    </div>
+
+    <div class="q-card">
+        <div class="q-title">CÂU 15: Chữ `super` đẫm máu</div>
+        <div class="code-block">
+class A {
+    A() { System.out.print("A"); }
+}
+class B extends A {
+    B() { System.out.print("B"); }
+}
+class C extends B {
+    C() { System.out.print("C"); }
+}
+public class Test {
+    public static void main(String[] args) { new C(); }
+}
+        </div>
+        <ul class="options">
+            <li>A) in ra "C"</li>
+            <li>B) in ra "CBA"</li>
+            <li>C) in ra "ABC"</li>
+            <li>D) Compilation error</li>
+        </ul>
+        <details>
+            <summary>Xem Đáp Án</summary>
+            <div class="answer-content">
+                <span class="correct-opt">✅ C</span><br>
+                Khi nổ lệnh `new C()`, Constructor của C chạy. Nhưng quy tắc sống còn của Java là: Dòng đầu tiên của bất kì hàm Constructor nào cũng bị CHÈN NGẦM một lệnh `super()`. Vậy nên nó gọi ngược lên B, B lại bị chèn ngầm gọi ngược lên A. Nên A in trước -> B -> C. Output: ABC.
+            </div>
+        </details>
+    </div>
+
+    <!-- MẢNG & BIẾN -->
+    <div class="q-card">
+        <div class="q-title">CÂU 16: Khởi tạo mảng kiểu cắm sừng</div>
+        <div class="code-block">
+int[] arr = new int[5];
+System.out.println(arr[0]);
+        </div>
+        <ul class="options">
+            <li>A) null</li>
+            <li>B) 0</li>
+            <li>C) Garbage value (Giá trị rác ngẫu nhiên)</li>
+            <li>D) ArrayIndexOutOfBoundsException</li>
+        </ul>
+        <details>
+            <summary>Xem Đáp Án</summary>
+            <div class="answer-content">
+                <span class="correct-opt">✅ B</span><br>
+                Khi dùng `new int[5]`, Java dọn sẵn 5 ô nhớ trên Heap. Với kiểu nguyên thủy (primitive) thuộc họ số (int, double, float, byte), Java mặc định rải số `0` (hoặc `0.0`) vào tất cả các ô chứ không để rỗng (null) hay giá trị rác như C/C++.
+            </div>
+        </details>
+    </div>
+
+    <div class="q-card">
+        <div class="q-title">CÂU 17: Phím mưu hèn kế bẩn của Switch-Case</div>
+        <div class="code-block">
+int x = 2;
+switch (x) {
+    case 1: System.out.print("A");
+    case 2: System.out.print("B");
+    case 3: System.out.print("C");
+    default: System.out.print("D");
+}
+        </div>
+        <ul class="options">
+            <li>A) B</li>
+            <li>B) B C</li>
+            <li>C) B C D</li>
+            <li>D) Lỗi biên dịch</li>
+        </ul>
+        <details>
+            <summary>Xem Đáp Án</summary>
+            <div class="answer-content">
+                <span class="correct-opt">✅ C</span><br>
+                Do thiếu từ khóa `break;`. Switch-case hoạt động theo kiểu "Thác nước" (Fall-through). Nó chạy khớp được `case 2` in ra B xong, nó rơi tuột tự do xuống các case bên dưới MÀ KHÔNG CẦN XÉT ĐIỀU KIỆN NỮA. Vậy nên nó hốt trọn in ra "BCD".
+            </div>
+        </details>
+    </div>
+
+    <!-- EXCEPTION HANDLING -->
+    <div class="q-card">
+        <div class="q-title">CÂU 18: Try-Catch nhiều lớp (Multiple Catch)</div>
+        <div class="code-block">
+try {
+    int x = 10 / 0;
+} catch (Exception e) {
+    System.out.print("1");
+} catch (ArithmeticException e) {
+    System.out.print("2");
+}
+        </div>
+        <ul class="options">
+            <li>A) 1</li>
+            <li>B) 2</li>
+            <li>C) 12</li>
+            <li>D) Compile Error (Lẽ ra Catch to phải nằm dưới)</li>
+        </ul>
+        <details>
+            <summary>Xem Đáp Án</summary>
+            <div class="answer-content">
+                <span class="correct-opt">✅ D</span><br>
+                Ngoại lệ (Exception) phải được bắt theo nguyên tắc: TỪ CON ĐẾN CHA. (Từ vụn vặt đến tổng quát). `Exception` là class ông nội vĩ đại nhất. Đặt nó ở trên cùng thì nó thầu hết mọi loại lỗi lọt vào rớ, thằng `ArithmeticException` nằm dưới sẽ KHÔNG BAO GIỜ chạm tới được (Unreachable code). Java cấm điều này và báo lỗi ngay lúc gõ code (Compile Error).
+            </div>
+        </details>
+    </div>
+
+    <div class="q-card">
+        <div class="q-title">CÂU 19: Từ khóa `throw` và `throws` khác nhau chỗ nào?</div>
+        <ul class="options">
+            <li>A) throw dùng sau đít tên hàm, throws dùng trong ruột thân hàm.</li>
+            <li>B) throw dùng để ném ngoại lệ có chủ đích (vd: throw new Exception()), còn throws dùng trên chữ ký hàm để cảnh báo (ném bom cho thằng gọi hàm tự xử).</li>
+            <li>C) Cả hai y chang nhau, do ngữ pháp thích ghi thêm chữ 's'.</li>
+        </ul>
+        <details>
+            <summary>Xem Đáp Án</summary>
+            <div class="answer-content">
+                <span class="correct-opt">✅ B</span><br>
+                - `throw` (động từ mạnh): Nằm TRONG BỤNG HÀM. Tự tay kích nổ quả bom. (Ví dụ: `if (age < 18) throw new RuntimeException("Chua du tuoi");`)<br>
+                - `throws` (từ cảnh báo): Nằm Ở CHỮ KÝ HÀM (Ví dụ: `void readFile() throws IOException {}`). Nó mang ý nghĩa "Hàm này có thể gây nổ bom đó nha, thằng nào gọi hàm tao thì tự móc try-catch ra mà đỡ đi!".
+            </div>
+        </details>
+    </div>
+
+    <!-- COLLECTIONS NÂNG CAO -->
+    <div class="q-card">
+        <div class="q-title">CÂU 20: ConcurrentModificationException là cái quái gì?</div>
+        <div class="code-block">
+List&lt;String&gt; list = new ArrayList&lt;&gt;(Arrays.asList("A", "B", "C"));
+for (String s : list) {
+    if (s.equals("B")) {
+        list.remove(s);
+    }
+}
+        </div>
+        <ul class="options">
+            <li>A) Nó in ra List chỉ còn [A, C]</li>
+            <li>B) Sinh lỗi ConcurrentModificationException</li>
+            <li>C) Sinh lỗi NullPointerException</li>
+        </ul>
+        <details>
+            <summary>Xem Đáp Án</summary>
+            <div class="answer-content">
+                <span class="correct-opt">✅ B</span><br>
+                Bẫy kinh điển! Khi đang dùng vòng lặp `for-each` (bản chất là Iterator) để đi dạo qua List, bạn TUYỆT ĐỐI KHÔNG ĐƯỢC dùng hàm `list.remove()` hoặc `list.add()` để thay đổi độ dài mảng. Việc bạn lén rút cái cục "B" ra làm sập hệ thống Iterator đang duyệt, nó giật mình ném lỗi ConcurrentModificationException. 
+                <br><em>Cách khắc phục: Dùng vòng for(int i=0..) duyệt ngược từ cuối lên đầu, hoặc dùng Iterator.remove().</em>
+            </div>
+        </details>
+    </div>
+
+    <div class="q-card">
+        <div class="q-title">CÂU 21: TreeSet dùng cái gì để bắt chép phạt mấy phần tử bắt phải đứng đúng thứ tự?</div>
+        <ul class="options">
+            <li>A) Nó xài thuật toán Bubble Sort mỗi lần thêm mới.</li>
+            <li>B) Class của các phần tử nhét vào bắt buộc phải implements Interface <code>Comparable</code> hoặc xài <code>Comparator</code> bên ngoài.</li>
+            <li>C) Nó tự động sort dựa trên lệnh <code>.hashCode()</code></li>
+        </ul>
+        <details>
+            <summary>Xem Đáp Án</summary>
+            <div class="answer-content">
+                <span class="correct-opt">✅ B</span><br>
+                TreeSet cấu trúc bằng cây Đỏ-Đen. Để biết nút áo nào đặt bên trái, nút nào bên phải, nó phải hỏi "Đứa nào bự hơn?". Mà đụng đến Đối tượng (Object Người, Object Xe), máy đứt bóng không biết ai bự. Nên class của bạn phải dạy nó cách so sánh (implements <code>Comparable</code> ghi đè hàm <code>compareTo()</code>) thì TreeSet mới cho nạp vào bình yên.
+            </div>
+        </details>
+    </div>
+    
+    <div class="q-card">
+        <div class="q-title">CÂU 22: Pass by Value hay Pass by Reference trong Java?</div>
+        <div class="code-block">
+class P { int x = 10; }
+public class Test {
+    static void change(P p) {
+        p.x = 20;
+        p = new P();
+        p.x = 30;
+    }
+    public static void main(String[] args) {
+        P mainP = new P();
+        change(mainP);
+        System.out.println(mainP.x);
+    }
+}
+        </div>
+        <ul class="options">
+            <li>A) 10</li>
+            <li>B) 20</li>
+            <li>C) 30</li>
+        </ul>
+        <details>
+            <summary>Xem Đáp Án</summary>
+            <div class="answer-content">
+                <span class="correct-opt">✅ B) 20</span><br>
+                Java 100% là <strong>Pass by Value</strong> (Nhưng copy giá trị của cái Địa Chí Nhớ).<br>
+                1. `mainP` cầm chìa khóa nhà (O nhớ A).<br>
+                2. Truyền vô hàm `change`, biến `p` cũng được copy cho một cái chìa khóa sao y bản chính vô trúng nhà A.<br>
+                3. Quậy banh chành `p.x = 20`. Ngôi nhà A bị đổi thành 20.<br>
+                4. `p = new P()`. Biến tên `p` xách mông đi mua nhà mới (nhà B), phá chìa khóa cũ. Nó đập phá `p.x = 30` ở bên nhà B.<br>
+                5. Hết hàm, `p` chết. Về lại main, `mainP` mở nhà A ra xem thì đồ đạc vẫn là 20 (do bị sửa lúc 3). Ngôi nhà B số 30 rác rưởi trôi nổi.
+            </div>
+        </details>
+    </div>
+
+    <!-- Mình tua nhanh các câu sau bằng format ngắn dồn dập -->
+    <div style="background: var(--dark); color: white; padding: 10px; text-align: center; border-radius: 4px; margin: 30px 0;">CHẠY NƯỚC RÚT 20 CÂU CÒN LẠI (ĐỌC NHANH - THẤM NHANH)</div>
+
+    <ul style="list-style: none; padding: 0;">
+        <li style="margin-bottom: 20px; background: white; padding: 15px; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+            <strong>CÂU 23:</strong> <code>String.valueOf(null)</code> trả về Lỗi `NullPointerException` hay in ra chữ "null"?<br>
+            <span style="color:var(--success);">✅ Đáp án: Lỗi NullPointerException. Hàm valueOf(Object) thấy dính Null nó chửi lộn và cháy máy ngay. Đừng nghịch dại.</span>
+        </li>
+        <li style="margin-bottom: 20px; background: white; padding: 15px; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+            <strong>CÂU 24:</strong> Lớp <code>System</code> trong `System.out.println` có được phép dùng <code>new System()</code> để tạo Object không?<br>
+            <span style="color:var(--success);">✅ Đáp án: KHÔNG THỂ. Lớp System có constructor giấu kín (private). Không ai sinh sôi lén lút được nó.</span>
+        </li>
+        <li style="margin-bottom: 20px; background: white; padding: 15px; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+            <strong>CÂU 25:</strong> <code>HashMap</code> cho phép mấy cái Key=null?<br>
+            <span style="color:var(--success);">✅ Đáp án: CHỈ VÀ ĐÚNG 1 CÁI KEY NULL. Mấy cái Value thì mớ null cũng được, nhưng chìa khóa Null thì chỉ có 1 cái (vì Key không được trùng lặp). Riêng HashTable thì tuyệt đối cấm tiệt Key,Value chứa Null.</span>
+        </li>
+        <li style="margin-bottom: 20px; background: white; padding: 15px; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+            <strong>CÂU 26:</strong> Class B kế thừa Class A, hai class đều có biến độc <code>int x = 10;</code> (A) và <code>int x = 20;</code> (B). <code>A obj = new B(); System.out.println(obj.x);</code> ra số mấy?<br>
+            <span style="color:var(--success);">✅ Đáp án: Số 10. Thuộc tính (Biến/Variable) KHÔNG BAO GIỜ bị Overridden (Ghi đè đa hình) như Hàm (Method). Cho nên biến mang mác loại nào (A) thì lòi đúng số loại đó ra (10).</span>
+        </li>
+        <li style="margin-bottom: 20px; background: white; padding: 15px; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+            <strong>CÂU 27:</strong> Hàm có keyword <code>final</code> thì có bị class con Overriding (đè đầu cưỡi cổ) được không?<br>
+            <span style="color:var(--success);">✅ Đáp án: CẤM TUYỆT ĐỐI. Class con chỉ biết đứng khóc.</span>
+        </li>
+        <li style="margin-bottom: 20px; background: white; padding: 15px; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+            <strong>CÂU 28:</strong> <code>List.of("A", "B").add("C");</code> Hệ quả?<br>
+            <span style="color:var(--success);">✅ Đáp án: Cháy máy (UnsupportedOperationException). Chữ List.of() và Arrays.asList() sinh ra cái mảng BÊ TÔNG, không bao giờ nở dài thêm được.</span>
+        </li>
+         <li style="margin-bottom: 20px; background: white; padding: 15px; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+            <strong>CÂU 29:</strong> Multithreading: Điểm khác nhau giữa `.start()` và `.run()` của một Thread?<br>
+            <span style="color:var(--success);">✅ Đáp án: Gọi `.start()` là tạo luồng mới siêu tốc, Main làm việc Main, luồng làm việc luồng. Gọi `.run()` là NÓ TRỞ THÀNH HÀM JAVA CÙI BẮP bình thường, luồng Main chui mẹ vô dòng code đó chạy cực nhọc rồi mới leo ra. Mất sạch ý nghĩa đa luồng.</span>
+        </li>
+        <li style="margin-bottom: 20px; background: white; padding: 15px; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+            <strong>CÂU 30:</strong> String vs StringBuilder vs StringBuffer. Thằng nào dùng cho Hệ Thống Nhiều Người Cùng Update Vô Cục String (Thread-safe)?<br>
+            <span style="color:var(--success);">✅ Đáp án: StringBuffer. Nó bị gắn cái khóa nhà tù `synchronized` lên mọi hàm, nên thằng này sờ vào thì thằng kia phải đợi, chậm hơn nhưng an toàn. StringBuilder dùng cho một mình anh cô đơn, chạy bạt mạng rất lẹ.</span>
+        </li>
+        <li style="margin-bottom: 20px; background: white; padding: 15px; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+            <strong>CÂU 31.. 50: (Tập trung CSDL):</strong> Lệnh TRUNCATE so với DELETE khác nhau lõi gì?<br>
+            <span style="color:var(--success);">✅ Đáp án: DELETE là thằng quét dọn lao công, xóa từng hàng một và CÓ LƯU sổ nhật ký (có thể Rollback hoàn về). TRUNCATE là thằng thả bom nguyên tử phá mẹ cái kho bãi nổ tan tành 0.1 giây rồi xây cái vỏ mới, XÓA DỨT CĂN, không có khái niệm Hoàn Liệt Rollback!</span>
+        </li>
+    </ul>
+
+    <div style="text-align: center; margin-top: 20px; color: var(--primary); font-weight: bold; font-size: 1.2rem;">
+        HÔM NAY ÔN 50 CÂU LÀ NÃO THEO KHÔNG KỊP RỒI BẠN ƠI!!!<br>
+        HÃY XEM KĨ MỚ NÀY RỒI LÊN LEETCODE GÕ CODE LẮC NÃO LẠI MỚI ĐẬU ĐƯỢC!
+    </div>
+
+</div>
+
+</body>
+</html>

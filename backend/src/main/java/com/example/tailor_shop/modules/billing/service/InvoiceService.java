@@ -22,6 +22,6 @@ public interface InvoiceService {
     PaymentResponse handleCallback(PaymentCallbackRequest request);
 
     void voidInvoice(Long id, Long currentUserId);
+
+    java.util.List<com.example.tailor_shop.modules.billing.dto.UnpaidCustomerResponse> getUnpaidCustomers();
 }
-
-
