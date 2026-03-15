@@ -18,7 +18,7 @@ git pull origin main
 echo "Step 2: Rebuilding and restarting containers..."
 # --build: Buộc xây dựng lại image nếu có thay đổi code
 # -d: Chạy ngầm 
-docker compose up -d --build
+docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
 
 echo "Step 3: Cleaning up old images..."
 docker image prune -f
