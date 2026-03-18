@@ -125,10 +125,10 @@ jobs:
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
-            cd /opt/tailor-shop
-            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-            docker compose pull
-            docker compose up -d --remove-orphans
+            cd /root/tailor_shop
+            git fetch origin
+            git reset --hard origin/main
+            docker compose up -d --build --remove-orphans
             docker image prune -f
             echo "✅ Deployment complete at $(date)"
 
