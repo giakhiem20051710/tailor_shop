@@ -174,7 +174,10 @@ jobs:
   security:
     name: 🔒 Security Scan
     runs-on: ubuntu-latest
-    
+    permissions:
+      contents: read
+      security-events: write
+
     steps:
       - name: 📥 Checkout code
         uses: actions/checkout@v4
@@ -188,6 +191,7 @@ jobs:
           exit-code: '0'  # Don't fail on vulnerabilities for now
           format: 'sarif'
           output: 'trivy-results.sarif'
+          github-pat: ${{ secrets.GITHUB_TOKEN }}
 
       - name: 📤 Upload Trivy scan results
         uses: actions/upload-artifact@v4
