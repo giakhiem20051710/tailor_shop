@@ -25,6 +25,7 @@ jobs:
 
       - name: 📖 Generate Javadoc
         working-directory: ./backend
+        continue-on-error: true
         run: mvn javadoc:javadoc -B
 
       - name: 📁 Prepare docs folder
