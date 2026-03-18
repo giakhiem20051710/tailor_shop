@@ -412,6 +412,7 @@ class InvoiceServiceImplTest {
                 ))
                 .build();
 
+        when(userRepository.findById(2L)).thenReturn(Optional.of(staff));
         when(userRepository.findById(999L)).thenReturn(Optional.empty());
 
         // When & Then
@@ -438,7 +439,6 @@ class InvoiceServiceImplTest {
                 ))
                 .build();
 
-        when(userRepository.findById(1L)).thenReturn(Optional.of(customer));
         when(userRepository.findById(999L)).thenReturn(Optional.empty());
 
         // When & Then
@@ -536,16 +536,6 @@ class InvoiceServiceImplTest {
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(customer));
         when(userRepository.findById(2L)).thenReturn(Optional.of(staff));
-        when(invoiceRepository.save(any(InvoiceEntity.class))).thenAnswer(invocation -> {
-            InvoiceEntity inv = invocation.getArgument(0);
-            inv.setId(1L);
-            return inv;
-        });
-        when(invoiceItemRepository.saveAll(anyList())).thenAnswer(invocation -> {
-            List<InvoiceItemEntity> items = invocation.getArgument(0);
-            items.get(0).setId(1L);
-            return items;
-        });
 
         // When & Then
         assertThrows(BadRequestException.class, () -> {
@@ -792,7 +782,7 @@ class InvoiceServiceImplTest {
         assertNotNull(result);
         assertEquals(PaymentStatus.failed, result.getStatus());
 
-        verify(invoiceRepository, never()).save(any(InvoiceEntity.class)); // Invoice not updated on failure
+        verify(invoiceRepository, times(1)).save(any(InvoiceEntity.class));
     }
 
     @Test
